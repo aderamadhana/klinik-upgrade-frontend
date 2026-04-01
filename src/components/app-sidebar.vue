@@ -15,8 +15,14 @@
     </div>
 
     <!-- Navigation List -->
-    <v-list density="comfortable" nav class="sidebar-nav">
-      <template v-for="(item, i) in menu" :key="i">
+    <v-list
+      density="comfortable"
+      nav
+      class="sidebar-nav"
+      :opened="openedValues"
+      @update:opened="onUpdateOpened"
+    >
+      <template v-for="(item, i) in menu" :key="item.key || `menu-${i}`">
         <!-- HEADER -->
         <div v-if="item.header" class="menu-section-header">
           <span class="header-line"></span>
@@ -29,60 +35,84 @@
           v-else-if="!item.children"
           :to="item.to"
           class="nav-item"
+          :class="{
+            'nav-item--active': isRouteActive(item.to),
+            'nav-item--active-l1': isRouteActive(item.to),
+          }"
           rounded="xl"
-          active-class="nav-item--active"
         >
           <template #prepend>
             <div class="icon-wrap">
               <v-icon size="18">{{ item.icon }}</v-icon>
             </div>
           </template>
-          <v-list-item-title class="nav-label">{{
-            item.title
-          }}</v-list-item-title>
+
+          <v-list-item-title class="nav-label">
+            {{ item.title }}
+          </v-list-item-title>
         </v-list-item>
 
         <!-- GROUP LEVEL 1 -->
-        <v-list-group v-else :value="item.title" class="nav-group">
+        <v-list-group v-else :value="item.key" class="nav-group">
           <template #activator="{ props }">
-            <v-list-item v-bind="props" class="nav-item" rounded="xl">
+            <v-list-item
+              v-bind="props"
+              class="nav-item"
+              :class="{
+                'nav-item--active': hasActiveChild(item.children),
+                'nav-item--open-l1': hasActiveChild(item.children),
+              }"
+              rounded="xl"
+            >
               <template #prepend>
                 <div class="icon-wrap">
                   <v-icon size="18">{{ item.icon }}</v-icon>
                 </div>
               </template>
-              <v-list-item-title class="nav-label">{{
-                item.title
-              }}</v-list-item-title>
+
+              <v-list-item-title class="nav-label">
+                {{ item.title }}
+              </v-list-item-title>
             </v-list-item>
           </template>
 
           <!-- LEVEL 2 -->
-          <template v-for="(child, j) in item.children" :key="j">
+          <template
+            v-for="(child, j) in item.children"
+            :key="child.key || `${item.key}-child-${j}`"
+          >
             <!-- LEVEL 2 NORMAL -->
             <v-list-item
               v-if="!child.children"
               :to="child.to"
               class="nav-item nav-item--l2"
+              :class="{
+                'nav-item--active': isRouteActive(child.to),
+                'nav-item--active-l2': isRouteActive(child.to),
+              }"
               rounded="xl"
-              active-class="nav-item--active"
             >
               <template #prepend>
                 <div class="l2-bullet">
                   <span class="bullet-dot"></span>
                 </div>
               </template>
-              <v-list-item-title class="nav-label">{{
-                child.title
-              }}</v-list-item-title>
+
+              <v-list-item-title class="nav-label">
+                {{ child.title }}
+              </v-list-item-title>
             </v-list-item>
 
             <!-- LEVEL 2 GROUP -->
-            <v-list-group v-else :value="child.title" class="nav-group-l2">
+            <v-list-group v-else :value="child.key" class="nav-group-l2">
               <template #activator="{ props }">
                 <v-list-item
                   v-bind="props"
                   class="nav-item nav-item--l2"
+                  :class="{
+                    'nav-item--active': hasActiveChild(child.children),
+                    'nav-item--open-l2': hasActiveChild(child.children),
+                  }"
                   rounded="xl"
                 >
                   <template #prepend>
@@ -90,29 +120,34 @@
                       <span class="bullet-dot"></span>
                     </div>
                   </template>
-                  <v-list-item-title class="nav-label">{{
-                    child.title
-                  }}</v-list-item-title>
+
+                  <v-list-item-title class="nav-label">
+                    {{ child.title }}
+                  </v-list-item-title>
                 </v-list-item>
               </template>
 
               <!-- LEVEL 3 -->
               <v-list-item
                 v-for="(sub, k) in child.children"
-                :key="k"
+                :key="sub.key || `${child.key}-sub-${k}`"
                 :to="sub.to"
                 class="nav-item nav-item--l3"
+                :class="{
+                  'nav-item--active': isRouteActive(sub.to),
+                  'nav-item--active-l3': isRouteActive(sub.to),
+                }"
                 rounded="xl"
-                active-class="nav-item--active"
               >
                 <template #prepend>
                   <div class="l3-bullet">
                     <span class="bullet-dash"></span>
                   </div>
                 </template>
-                <v-list-item-title class="nav-label">{{
-                  sub.title
-                }}</v-list-item-title>
+
+                <v-list-item-title class="nav-label">
+                  {{ sub.title }}
+                </v-list-item-title>
               </v-list-item>
             </v-list-group>
           </template>
@@ -124,12 +159,15 @@
     <template #append>
       <div class="sidebar-footer">
         <div class="footer-divider"></div>
+
         <div class="footer-content">
           <div class="footer-avatar">IT</div>
+
           <div class="footer-info">
             <div class="footer-name">IT JKS</div>
             <div class="footer-role">Administrator</div>
           </div>
+
           <v-icon size="16" color="#6b7280">mdi-chevron-right</v-icon>
         </div>
       </div>
@@ -139,226 +177,484 @@
 
 <script>
 export default {
+  name: "AppSidebar",
+
   props: {
     modelValue: Boolean,
   },
+
+  emits: ["update:modelValue"],
+
   data() {
     return {
       logo: new URL("@/assets/logowebsitenew.png", import.meta.url).href,
+      manualOpened: [],
+
       menu: [
         {
+          key: "dashboard",
           title: "Dashboard",
           icon: "mdi-view-dashboard-outline",
           to: "/dashboard",
         },
         {
+          key: "antrian",
           title: "Nomor Antrian",
           icon: "mdi-timer-sand-empty",
           to: "/antrian",
         },
 
-        // ================= MASTER =================
         { header: "MASTER" },
 
         {
+          key: "administrasi",
           title: "Administrasi",
           icon: "mdi-file-document-outline",
           children: [
-            { title: "Dokter & Beautician", to: "/administrasi/dokter" },
             {
-              title: "Pasien & Non Pasien",
-              children: [{ title: "Data Pasien", to: "/administrasi/pasien" }],
+              key: "administrasi-dokter",
+              title: "Dokter & Beautician",
+              to: "/administrasi/dokter",
             },
-            { title: "Supplier", to: "/administrasi/supplier" },
-            { title: "Jadwal Dokter", to: "/administrasi/jadwal-dokter" },
             {
+              key: "administrasi-pasien-group",
+              title: "Pasien & Non Pasien",
+              children: [
+                {
+                  key: "administrasi-pasien",
+                  title: "Data Pasien",
+                  to: "/administrasi/pasien",
+                },
+              ],
+            },
+            {
+              key: "administrasi-supplier",
+              title: "Supplier",
+              to: "/administrasi/supplier",
+            },
+            {
+              key: "administrasi-jadwal-dokter",
+              title: "Jadwal Dokter",
+              to: "/administrasi/jadwal-dokter",
+            },
+            {
+              key: "administrasi-jadwal-nurse",
               title: "Jadwal Nurse & Beautician",
               to: "/administrasi/jadwal-nurse",
             },
-            { title: "Treatment", to: "/administrasi/treatment" },
-            { title: "Stock Apotek", to: "/administrasi/stock-apotek" },
-            { title: "Merchandise", to: "/administrasi/merchandise" },
-            { title: "Voucher Diskon", to: "/administrasi/voucher" },
+            {
+              key: "administrasi-treatment",
+              title: "Treatment",
+              to: "/administrasi/treatment",
+            },
+            {
+              key: "administrasi-stock-apotek",
+              title: "Stock Apotek",
+              to: "/administrasi/stock-apotek",
+            },
+            {
+              key: "administrasi-merchandise",
+              title: "Merchandise",
+              to: "/administrasi/merchandise",
+            },
+            {
+              key: "administrasi-voucher",
+              title: "Voucher Diskon",
+              to: "/administrasi/voucher",
+            },
           ],
         },
 
-        // ================= RESEPSIONIS =================
         { header: "Menu Resepsionis" },
 
         {
+          key: "resepsionis",
           title: "Resepsionis",
           icon: "mdi-account-voice",
           children: [
             {
+              key: "resepsionis-daftar-baru",
               title: "Pendaftaran Pasien Baru",
               to: "/resepsionis/daftar-baru",
             },
-            { title: "Daftar Konsultasi", to: "/resepsionis/konsultasi" },
             {
+              key: "resepsionis-konsultasi",
+              title: "Daftar Konsultasi",
+              to: "/resepsionis/konsultasi",
+            },
+            {
+              key: "resepsionis-konsultasi-online",
               title: "Daftar Konsultasi Online",
               to: "/resepsionis/konsultasi-online",
             },
-            { title: "Daftar Treatment", to: "/resepsionis/treatment" },
             {
+              key: "resepsionis-treatment",
+              title: "Daftar Treatment",
+              to: "/resepsionis/treatment",
+            },
+            {
+              key: "resepsionis-pembayaran-recipe",
               title: "Pembayaran Recipe",
               to: "/resepsionis/pembayaran-recipe",
             },
-            { title: "Penjualan Langsung", to: "/resepsionis/penjualan" },
-            { title: "Penukaran Poin", to: "/resepsionis/poin" },
-            { title: "Booking", to: "/resepsionis/booking" },
+            {
+              key: "resepsionis-penjualan",
+              title: "Penjualan Langsung",
+              to: "/resepsionis/penjualan",
+            },
+            {
+              key: "resepsionis-poin",
+              title: "Penukaran Poin",
+              to: "/resepsionis/poin",
+            },
+            {
+              key: "resepsionis-booking",
+              title: "Booking",
+              to: "/resepsionis/booking",
+            },
           ],
         },
 
-        // ================= DOKTER =================
         { header: "Menu Dokter" },
 
         {
+          key: "konsultasi",
           title: "Konsultasi",
           icon: "mdi-stethoscope",
           children: [
-            { title: "List Konsultasi", to: "/dokter/list-konsultasi" },
-            { title: "List Konsultasi Online", to: "/dokter/list-online" },
-            { title: "List Konsultasi Selesai", to: "/dokter/list-selesai" },
             {
+              key: "dokter-list-konsultasi",
+              title: "List Konsultasi",
+              to: "/dokter/list-konsultasi",
+            },
+            {
+              key: "dokter-list-online",
+              title: "List Konsultasi Online",
+              to: "/dokter/list-online",
+            },
+            {
+              key: "dokter-list-selesai",
+              title: "List Konsultasi Selesai",
+              to: "/dokter/list-selesai",
+            },
+            {
+              key: "dokter-list-online-selesai",
               title: "List Konsultasi Online Selesai",
               to: "/dokter/list-online-selesai",
             },
           ],
         },
         {
+          key: "perawatan",
           title: "Perawatan",
           icon: "mdi-hospital-box",
-          children: [{ title: "List Perawatan", to: "/dokter/list-perawatan" }],
+          children: [
+            {
+              key: "dokter-list-perawatan",
+              title: "List Perawatan",
+              to: "/dokter/list-perawatan",
+            },
+          ],
         },
 
-        // ================= PERAWAT =================
         { header: "Menu Perawat" },
 
         {
+          key: "nurse-station",
           title: "Nurse Station",
           icon: "mdi-doctor",
           children: [
-            { title: "List Tindakan Perawat", to: "/perawat/tindakan" },
+            {
+              key: "perawat-tindakan",
+              title: "List Tindakan Perawat",
+              to: "/perawat/tindakan",
+            },
           ],
         },
 
-        // ================= BOOKING =================
         { header: "Menu Booking" },
 
         {
+          key: "booking",
           title: "Booking",
           icon: "mdi-calendar-month",
           children: [
-            { title: "List Booking", to: "/booking/list" },
-            { title: "List Booking Selesai", to: "/booking/selesai" },
+            {
+              key: "booking-list",
+              title: "List Booking",
+              to: "/booking/list",
+            },
+            {
+              key: "booking-selesai",
+              title: "List Booking Selesai",
+              to: "/booking/selesai",
+            },
           ],
         },
 
-        // ================= DEPO =================
         { header: "Menu Depo / Apotek" },
 
         {
+          key: "apotek",
           title: "Depo/Apotek",
           icon: "mdi-flask-outline",
           children: [
-            { title: "Resep Dokter Selesai", to: "/apotek/resep-selesai" },
+            {
+              key: "apotek-resep-selesai",
+              title: "Resep Dokter Selesai",
+              to: "/apotek/resep-selesai",
+            },
           ],
         },
 
-        // ================= KASIR =================
         { header: "Menu Kasir" },
 
         {
+          key: "kasir",
           title: "Kasir Pembayaran",
           icon: "mdi-cash-register",
           children: [
-            { title: "Pembayaran", to: "/kasir/pembayaran" },
-            { title: "List Pembayaran Selesai", to: "/kasir/selesai" },
+            {
+              key: "kasir-pembayaran",
+              title: "Pembayaran",
+              to: "/kasir/pembayaran",
+            },
+            {
+              key: "kasir-selesai",
+              title: "List Pembayaran Selesai",
+              to: "/kasir/selesai",
+            },
           ],
         },
 
-        // ================= TRANSAKSI =================
         { header: "Menu Transaksi" },
 
         {
+          key: "transaksi",
           title: "Data Transaksi",
           icon: "mdi-swap-horizontal",
           children: [
-            { title: "Data Tr Semua", to: "/transaksi/semua" },
-            { title: "Data Tr Poin", to: "/transaksi/poin" },
+            {
+              key: "transaksi-semua",
+              title: "Data Tr Semua",
+              to: "/transaksi/semua",
+            },
+            {
+              key: "transaksi-poin",
+              title: "Data Tr Poin",
+              to: "/transaksi/poin",
+            },
           ],
         },
 
-        // ================= WHATSAPP =================
         { header: "Menu WhatsApp" },
 
         {
+          key: "whatsapp",
           title: "WhatsApp Logs",
           icon: "mdi-whatsapp",
-          children: [{ title: "Kirim Undian", to: "/wa/undian" }],
-        },
-
-        // ================= ACCURATE =================
-        { header: "Settlement Accurate" },
-
-        {
-          title: "Report Accurate",
-          icon: "mdi-alpha-a-circle",
           children: [
-            { title: "Upload Faktur Umum", to: "/accurate/faktur-umum" },
             {
-              title: "Upload Faktur EliteGlobal",
-              to: "/accurate/faktur-elite",
+              key: "wa-undian",
+              title: "Kirim Undian",
+              to: "/wa/undian",
             },
-            { title: "Upload Faktur Owner", to: "/accurate/faktur-owner" },
-            { title: "Upload Faktur Deposit", to: "/accurate/faktur-deposit" },
-            {
-              title: "Upload Faktur Realisasi Deposit",
-              to: "/accurate/faktur-realisasi",
-            },
-            { title: "Upload STO", to: "/accurate/sto" },
           ],
         },
 
-        // ================= LAPORAN =================
+        { header: "Settlement Accurate" },
+
+        {
+          key: "accurate",
+          title: "Report Accurate",
+          icon: "mdi-alpha-a-circle",
+          children: [
+            {
+              key: "accurate-faktur-umum",
+              title: "Upload Faktur Umum",
+              to: "/accurate/faktur-umum",
+            },
+            {
+              key: "accurate-faktur-elite",
+              title: "Upload Faktur EliteGlobal",
+              to: "/accurate/faktur-elite",
+            },
+            {
+              key: "accurate-faktur-owner",
+              title: "Upload Faktur Owner",
+              to: "/accurate/faktur-owner",
+            },
+            {
+              key: "accurate-faktur-deposit",
+              title: "Upload Faktur Deposit",
+              to: "/accurate/faktur-deposit",
+            },
+            {
+              key: "accurate-faktur-realisasi",
+              title: "Upload Faktur Realisasi Deposit",
+              to: "/accurate/faktur-realisasi",
+            },
+            {
+              key: "accurate-sto",
+              title: "Upload STO",
+              to: "/accurate/sto",
+            },
+          ],
+        },
+
         { header: "Menu Laporan" },
 
         {
+          key: "laporan",
           title: "Pelaporan",
           icon: "mdi-file-chart-outline",
           children: [
-            { title: "Insentif Dokter", to: "/laporan/insentif-dokter" },
             {
+              key: "laporan-insentif-dokter",
+              title: "Insentif Dokter",
+              to: "/laporan/insentif-dokter",
+            },
+            {
+              key: "laporan-insentif-nurse",
               title: "Insentif Nurse/Beautician",
               to: "/laporan/insentif-nurse",
             },
             {
+              key: "laporan-insentif-apoteker",
               title: "Insentif Apoteker / Asisten Apoteker",
               to: "/laporan/insentif-apoteker",
             },
-            { title: "Data Laporan Detail", to: "/laporan/detail" },
-            { title: "Data Laporan Pemasukan", to: "/laporan/pemasukan" },
-            { title: "Data Laporan Treatment", to: "/laporan/treatment" },
-            { title: "Data Laporan Obat", to: "/laporan/obat" },
             {
+              key: "laporan-detail",
+              title: "Data Laporan Detail",
+              to: "/laporan/detail",
+            },
+            {
+              key: "laporan-pemasukan",
+              title: "Data Laporan Pemasukan",
+              to: "/laporan/pemasukan",
+            },
+            {
+              key: "laporan-treatment",
+              title: "Data Laporan Treatment",
+              to: "/laporan/treatment",
+            },
+            {
+              key: "laporan-obat",
+              title: "Data Laporan Obat",
+              to: "/laporan/obat",
+            },
+            {
+              key: "laporan-top-treatment",
               title: "Pasien Treatment Terbanyak",
               to: "/laporan/top-treatment",
             },
-            { title: "Top Nominal Terbanyak", to: "/laporan/top-nominal" },
-            { title: "Data Tindakan Terlaris", to: "/laporan/terlaris" },
+            {
+              key: "laporan-top-nominal",
+              title: "Top Nominal Terbanyak",
+              to: "/laporan/top-nominal",
+            },
+            {
+              key: "laporan-terlaris",
+              title: "Data Tindakan Terlaris",
+              to: "/laporan/terlaris",
+            },
           ],
         },
 
-        // ================= USER =================
         { header: "Menu User" },
 
         {
+          key: "users",
           title: "Users",
           icon: "mdi-account-multiple",
           to: "/users",
         },
       ],
     };
+  },
+
+  computed: {
+    activeOpenGroups() {
+      const opened = [];
+
+      this.menu.forEach((item) => {
+        if (!item.children) return;
+
+        if (this.hasActiveChild(item.children)) {
+          opened.push(item.key);
+        }
+
+        item.children.forEach((child) => {
+          if (child.children && this.hasActiveChild(child.children)) {
+            opened.push(child.key);
+            opened.push(item.key);
+          }
+        });
+      });
+
+      return [...new Set(opened)];
+    },
+
+    openedValues() {
+      return [...new Set([...this.manualOpened, ...this.activeOpenGroups])];
+    },
+  },
+
+  watch: {
+    "$route.path"() {
+      this.cleanManualOpened();
+    },
+  },
+
+  mounted() {
+    this.cleanManualOpened();
+  },
+
+  methods: {
+    normalizePath(path) {
+      if (!path) return "/";
+
+      const cleanPath = String(path)
+        .split("?")[0]
+        .split("#")[0]
+        .replace(/\/+$/, "");
+
+      return cleanPath || "/";
+    },
+
+    isRouteActive(targetPath) {
+      const currentPath = this.normalizePath(this.$route.path);
+      const basePath = this.normalizePath(targetPath);
+
+      if (basePath === "/") {
+        return currentPath === "/";
+      }
+
+      return currentPath === basePath || currentPath.startsWith(`${basePath}/`);
+    },
+
+    hasActiveChild(children = []) {
+      return children.some((child) => {
+        if (child.children) {
+          return this.hasActiveChild(child.children);
+        }
+
+        return this.isRouteActive(child.to);
+      });
+    },
+
+    onUpdateOpened(values) {
+      this.manualOpened = values.filter(
+        (value) => !this.activeOpenGroups.includes(value),
+      );
+    },
+
+    cleanManualOpened() {
+      this.manualOpened = this.manualOpened.filter((value) => {
+        return !this.activeOpenGroups.includes(value);
+      });
+    },
   },
 };
 </script>
@@ -654,5 +950,89 @@ export default {
   font-size: 11px;
   color: #6b7280;
   line-height: 1.3;
+}
+
+/* === ACTIVE BASE === */
+.nav-item--active {
+  color: #ffffff !important;
+}
+
+.nav-item--active .nav-label {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+/* === LEVEL 1: item aktif asli (mis. Dashboard, Users) === */
+.nav-item--active-l1 {
+  background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.nav-item--active-l1 .icon-wrap {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+/* === LEVEL 1: parent terbuka karena ada child aktif === */
+.nav-item--open-l1 {
+  background: rgba(37, 99, 235, 0.16) !important;
+  color: #bfdbfe !important;
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.2);
+}
+
+.nav-item--open-l1 .icon-wrap {
+  background: rgba(37, 99, 235, 0.2);
+  color: #93c5fd;
+}
+
+.nav-item--open-l1 .nav-label {
+  color: #dbeafe !important;
+}
+
+.nav-item--open-l1 :deep(.v-list-item__append .v-icon) {
+  color: #93c5fd !important;
+}
+
+/* === LEVEL 2: item aktif === */
+.nav-item--active-l2 {
+  background: rgba(14, 165, 233, 0.2) !important;
+  color: #e0f2fe !important;
+  border-left: 3px solid #38bdf8;
+}
+
+.nav-item--active-l2 .bullet-dot {
+  background: #38bdf8;
+  border-color: #7dd3fc;
+}
+
+/* === LEVEL 2: group terbuka karena ada level 3 aktif === */
+.nav-item--open-l2 {
+  background: rgba(56, 189, 248, 0.12) !important;
+  color: #bae6fd !important;
+}
+
+.nav-item--open-l2 .bullet-dot {
+  background: #7dd3fc;
+  border-color: #bae6fd;
+}
+
+.nav-item--open-l2 .nav-label {
+  color: #bae6fd !important;
+}
+
+.nav-item--open-l2 :deep(.v-list-item__append .v-icon) {
+  color: #7dd3fc !important;
+}
+
+/* === LEVEL 3: item aktif === */
+.nav-item--active-l3 {
+  background: rgba(16, 185, 129, 0.18) !important;
+  color: #d1fae5 !important;
+  border-left: 3px solid #34d399;
+}
+
+.nav-item--active-l3 .bullet-dash {
+  background: #34d399;
+  width: 14px;
 }
 </style>

@@ -31,16 +31,20 @@ export default {
 <style scoped>
 .admin-layout {
   height: 100vh;
+  overflow: hidden;
 }
 
 .main-area {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .content-area {
+  flex: 1;
+  overflow-y: auto;
   background: #f8fafc;
-  min-height: 100vh;
 }
 </style>

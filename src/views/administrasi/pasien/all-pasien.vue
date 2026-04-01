@@ -37,7 +37,7 @@
               size="small"
               color="info"
               class="mr-2"
-              :to="'/administrasi/pasien/edit/' + item.kode"
+              :to="'/administrasi/pasien/riwayat/' + item.kode"
             >
               Riwayat
             </v-btn>

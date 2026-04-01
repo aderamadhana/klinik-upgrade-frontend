@@ -3,9 +3,11 @@ import { createRouter, createWebHistory } from "vue-router";
 import Login from "@/views/login.vue";
 import NotFound from "@/components/pages/not-found.vue";
 import administrasiRoutes from "./modules/administrasi";
+import resepsionisRoutes from "./modules/resepsionis";
 
 const routes = [
   ...administrasiRoutes,
+  ...resepsionisRoutes,
   {
     path: "/",
     name: "Login",

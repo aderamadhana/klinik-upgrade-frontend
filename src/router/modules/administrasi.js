@@ -21,6 +21,24 @@ const administrasiRoutes = [
         component: () => import("@/views/administrasi/pasien/all-pasien.vue"),
       },
       {
+        path: "pasien/riwayat/:id",
+        name: "Riwayat Pasien",
+        component: () =>
+          import("@/views/administrasi/pasien/riwayat-pasien.vue"),
+      },
+      {
+        path: "pasien/riwayat/pengkajian-awal/:id",
+        name: "Pengkajian Pasien",
+        component: () =>
+          import("@/views/administrasi/pasien/pengkajian-awal.vue"),
+      },
+      {
+        path: "pasien/riwayat/saldo-deposit/:id",
+        name: "Saldo Deposit",
+        component: () =>
+          import("@/views/administrasi/pasien/saldo-deposit.vue"),
+      },
+      {
         path: "supplier",
         name: "Supplier",
         component: () =>
