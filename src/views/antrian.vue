@@ -1,11 +1,10 @@
 <template>
   <div>
-    <!-- PAGE HEADER -->
     <div class="page-header">
       <div>
         <h1 class="page-title">Antrian</h1>
         <p class="page-subtitle">
-          Kelola dan monitor antrian pasien (panggil, IN/OUT, counter)
+          Kelola dan monitor antrian pasien (panggil, proses, selesai, skip)
         </p>
       </div>
 
@@ -34,6 +33,17 @@
           </v-btn>
         </div>
 
+        <v-alert
+          v-if="errorMessage"
+          class="mt-4"
+          type="error"
+          variant="tonal"
+          closable
+          @click:close="errorMessage = ''"
+        >
+          {{ errorMessage }}
+        </v-alert>
+
         <v-tabs v-model="tab" class="mt-4" color="primary">
           <v-tab value="product">Antrian Product</v-tab>
           <v-tab value="treatment">Antrian Treatment</v-tab>
@@ -44,30 +54,36 @@
           <v-window-item value="product">
             <QueueTable
               type="product"
-              :items="dummyProduct"
-              :base-url="baseUrl"
+              :items="queueMap.product"
               :counter-options="counterOptions"
               @call="handleCall"
+              @start="handleStart"
+              @finish="handleFinish"
+              @skip="handleSkip"
             />
           </v-window-item>
 
           <v-window-item value="treatment">
             <QueueTable
               type="treatment"
-              :items="dummyTreatment"
-              :base-url="baseUrl"
+              :items="queueMap.treatment"
               :counter-options="counterOptions"
               @call="handleCall"
+              @start="handleStart"
+              @finish="handleFinish"
+              @skip="handleSkip"
             />
           </v-window-item>
 
           <v-window-item v-if="showVip" value="vip">
             <QueueTable
               type="vip"
-              :items="dummyVip"
-              :base-url="baseUrl"
+              :items="queueMap.vip"
               :counter-options="counterOptions"
               @call="handleCall"
+              @start="handleStart"
+              @finish="handleFinish"
+              @skip="handleSkip"
             />
           </v-window-item>
         </v-window>
@@ -82,19 +98,22 @@ import QueueTable from "./queue-table.vue";
 export default {
   name: "Antrian",
   components: { QueueTable },
+
   props: {
     baseUrl: { type: String, default: "/" },
-    tokoId: { type: Number, default: 2 }, // default 2 biar VIP bisa muncul saat testing
+    tokoId: { type: Number, default: 2 },
     antrianProduct: { type: Array, default: () => [] },
     antrianTreatment: { type: Array, default: () => [] },
     antrianVip: { type: Array, default: () => [] },
   },
+
   data() {
     return {
       tab: "product",
+      errorMessage: "",
       breadcrumbs: [{ title: "Antrian", disabled: true }],
+
       counterOptions: [
-        { title: "Panggil Nomor", value: 0 },
         { title: "Counter 1", value: 1 },
         { title: "Counter 2", value: 2 },
         { title: "Counter 3", value: 3 },
@@ -103,7 +122,12 @@ export default {
         { title: "Counter 6", value: 6 },
       ],
 
-      // ===== Dummy data =====
+      queueMap: {
+        product: [],
+        treatment: [],
+        vip: [],
+      },
+
       dummyProduct: [
         {
           id: 101,
@@ -128,6 +152,7 @@ export default {
           kode: "P",
           no: "003",
           status: 1,
+          counter: 2,
         },
         {
           id: 104,
@@ -136,8 +161,10 @@ export default {
           kode: "P",
           no: "004",
           status: 2,
+          counter: 2,
         },
       ],
+
       dummyTreatment: [
         {
           id: 201,
@@ -154,6 +181,7 @@ export default {
           kode: "T",
           no: "012",
           status: 1,
+          counter: 1,
         },
         {
           id: 203,
@@ -164,6 +192,7 @@ export default {
           status: 0,
         },
       ],
+
       dummyVip: [
         {
           id: 301,
@@ -180,34 +209,268 @@ export default {
           kode: "V",
           no: "002",
           status: 1,
+          counter: 3,
         },
       ],
     };
   },
+
   computed: {
     showVip() {
       return this.tokoId === 2 || this.tokoId === 8;
     },
-    // fallback: kalau props kosong -> dummy
-    antrianProductList() {
-      return this.dummyProduct;
+
+    sourceProduct() {
+      return this.antrianProduct?.length
+        ? this.antrianProduct
+        : this.dummyProduct;
     },
-    antrianTreatmentList() {
-      return this.dummyTreatment;
+
+    sourceTreatment() {
+      return this.antrianTreatment?.length
+        ? this.antrianTreatment
+        : this.dummyTreatment;
     },
-    antrianVipList() {
-      return this.dummyVip;
+
+    sourceVip() {
+      return this.antrianVip?.length ? this.antrianVip : this.dummyVip;
     },
   },
-  methods: {
-    handleCall(payload) {
-      // payload: { type, id, counter }
-      console.log("CALL", payload);
 
-      // Kalau mau langsung hit API, taruh di sini.
-      // contoh:
-      // this.$axios.post(`${this.baseUrl}Antrian/panggil_${payload.type}/${payload.id}`, { counter: payload.counter })
+  watch: {
+    sourceProduct: {
+      immediate: true,
+      deep: true,
+      handler(val) {
+        this.queueMap.product = this.normalizeList(val);
+      },
+    },
+
+    sourceTreatment: {
+      immediate: true,
+      deep: true,
+      handler(val) {
+        this.queueMap.treatment = this.normalizeList(val);
+      },
+    },
+
+    sourceVip: {
+      immediate: true,
+      deep: true,
+      handler(val) {
+        this.queueMap.vip = this.normalizeList(val);
+      },
+    },
+  },
+
+  methods: {
+    normalizeList(list = []) {
+      return list.map((item) => ({
+        ...item,
+        status: this.normalizeStatus(item.status),
+        counter: item.counter || null,
+        isLoading: false,
+      }));
+    },
+
+    normalizeStatus(status) {
+      if (status === "waiting" || status === 0) return "waiting";
+      if (status === "called") return "called";
+      if (status === "in_service" || status === 1) return "in_service";
+      if (status === "done" || status === 2) return "done";
+      if (status === "skipped") return "skipped";
+      return "waiting";
+    },
+
+    buildUrl(path) {
+      const cleanBase = this.baseUrl.endsWith("/")
+        ? this.baseUrl
+        : `${this.baseUrl}/`;
+      return `${cleanBase}${path}`;
+    },
+
+    setItemLoading(type, id, value) {
+      const index = this.queueMap[type].findIndex((x) => x.id === id);
+      if (index === -1) return;
+
+      this.queueMap[type][index] = {
+        ...this.queueMap[type][index],
+        isLoading: value,
+      };
+    },
+
+    patchItem(type, id, patch) {
+      const index = this.queueMap[type].findIndex((x) => x.id === id);
+      if (index === -1) return;
+
+      this.queueMap[type][index] = {
+        ...this.queueMap[type][index],
+        ...patch,
+      };
+    },
+
+    async request(url, options = {}) {
+      const response = await fetch(url, {
+        method: options.method || "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(options.headers || {}),
+        },
+        body: options.body ? JSON.stringify(options.body) : undefined,
+      });
+
+      if (!response.ok) {
+        let message = `Request gagal (${response.status})`;
+        try {
+          const result = await response.json();
+          if (result?.message) message = result.message;
+        } catch (_) {}
+        throw new Error(message);
+      }
+
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        return await response.json();
+      }
+
+      return await response.text();
+    },
+
+    async runAction({ type, id, action, counter = null }) {
+      this.errorMessage = "";
+      this.setItemLoading(type, id, true);
+
+      const current = this.queueMap[type].find((x) => x.id === id);
+      if (!current) {
+        this.setItemLoading(type, id, false);
+        return;
+      }
+
+      const previous = { ...current };
+
+      try {
+        if (action === "call") {
+          this.patchItem(type, id, {
+            status: "called",
+            counter,
+          });
+
+          await this.request(
+            this.buildUrl(`Antrian/No_antrian/panggil_${type}/${id}`),
+            {
+              method: "POST",
+              body: { counter },
+            },
+          );
+        }
+
+        if (action === "start") {
+          this.patchItem(type, id, {
+            status: "in_service",
+          });
+
+          await this.request(
+            this.buildUrl(`Antrian/No_antrian/in_${type}/${id}`),
+            {
+              method: "POST",
+            },
+          );
+        }
+
+        if (action === "finish") {
+          this.patchItem(type, id, {
+            status: "done",
+          });
+
+          await this.request(
+            this.buildUrl(`Antrian/No_antrian/out_${type}/${id}`),
+            {
+              method: "POST",
+            },
+          );
+        }
+
+        if (action === "skip") {
+          this.patchItem(type, id, {
+            status: "skipped",
+          });
+
+          await this.request(
+            this.buildUrl(`Antrian/No_antrian/skip_${type}/${id}`),
+            {
+              method: "POST",
+            },
+          );
+        }
+      } catch (error) {
+        this.patchItem(type, id, previous);
+        this.errorMessage =
+          error?.message || "Terjadi kesalahan saat memproses antrian.";
+      } finally {
+        this.setItemLoading(type, id, false);
+      }
+    },
+
+    async handleCall(payload) {
+      await this.runAction({
+        type: payload.type,
+        id: payload.id,
+        counter: payload.counter,
+        action: "call",
+      });
+    },
+
+    async handleStart(payload) {
+      await this.runAction({
+        type: payload.type,
+        id: payload.id,
+        action: "start",
+      });
+    },
+
+    async handleFinish(payload) {
+      await this.runAction({
+        type: payload.type,
+        id: payload.id,
+        action: "finish",
+      });
+    },
+
+    async handleSkip(payload) {
+      await this.runAction({
+        type: payload.type,
+        id: payload.id,
+        action: "skip",
+      });
     },
   },
 };
 </script>
+
+<style scoped>
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.page-subtitle {
+  margin: 6px 0 0;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+  }
+}
+</style>
