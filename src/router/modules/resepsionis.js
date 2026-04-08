@@ -4,6 +4,32 @@ const resepsionisRoutes = [
     component: () => import("@/layouts/main-layout.vue"),
     children: [
       {
+        path: "registrasi-layanan",
+        name: "Registrasi Layanan",
+        component: () => import("@/views/resepsionis/registrasi-layanan.vue"),
+      },
+      // {
+      //   path: "detail-registrasi-layanan",
+      //   name: "Detail Registrasi Layanan",
+      //   component: () =>
+      //     import("@/views/resepsionis/detail-registrasi-layanan.vue"),
+      // },
+      // {
+      //   path: "proses-layanan",
+      //   name: "Proses Layanan",
+      //   component: () => import("@/views/resepsionis/proses-layanan.vue"),
+      // },
+      // {
+      //   path: "finalisasi-layanan",
+      //   name: "Finalisasi Layanan",
+      //   component: () => import("@/views/resepsionis/finalisasi-layanan.vue"),
+      // },
+      {
+        path: "pembayaran",
+        name: "Pembayaran Layanan",
+        component: () => import("@/views/resepsionis/pembayaran-layanan.vue"),
+      },
+      {
         path: "daftar-baru",
         name: "Daftar Baru",
         component: () =>

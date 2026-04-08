@@ -278,6 +278,31 @@ export default {
               to: "/resepsionis/daftar-baru",
             },
             {
+              key: "registrasi-layanan",
+              title: "Registrasi Layanan",
+              to: "/resepsionis/registrasi-layanan",
+            },
+            // {
+            //   key: "detail-registrasi-layanan",
+            //   title: "Detail Registrasi Layanan",
+            //   to: "/resepsionis/detail-registrasi-layanan",
+            // },
+            // {
+            //   key: "proses-layanan",
+            //   title: "Proses Layanan",
+            //   to: "/resepsionis/proses-layanan",
+            // },
+            // {
+            //   key: "finalisasi",
+            //   title: "Finalisasi",
+            //   to: "/resepsionis/finalisasi-layanan",
+            // },
+            {
+              key: "pembayaran",
+              title: "Pembayaran",
+              to: "/resepsionis/pembayaran",
+            },
+            {
               key: "resepsionis-konsultasi",
               title: "Daftar Konsultasi",
               to: "/resepsionis/konsultasi",
