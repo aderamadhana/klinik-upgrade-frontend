@@ -1,376 +1,348 @@
 <template>
-  <v-card elevation="2" class="mb-5">
-    <v-card-text class="pa-6">
-      <div class="section-header mb-5">
-        <div>
-          <div class="section-title">Konsultasi Online</div>
-          <div class="section-subtitle">
-            Isi data pendukung konsultasi online, termasuk keluhan, kondisi
-            khusus, dokumentasi foto, dan riwayat konsultasi
-          </div>
-        </div>
+  <div class="mt-3">
+    <v-alert
+      type="info"
+      variant="tonal"
+      rounded="lg"
+      border="start"
+      class="mb-5"
+    >
+      Bagian ini hanya muncul jika layanan konsultasi dipilih dan channel
+      konsultasi adalah online.
+    </v-alert>
 
-        <v-chip
-          color="primary"
-          variant="tonal"
-          prepend-icon="mdi-video-outline"
-        >
-          Step 4 - Konsultasi Online
-        </v-chip>
+    <!-- FORM UTAMA -->
+    <div class="group-wrap mb-5">
+      <div class="group-head mb-4">
+        <div class="group-title">
+          <v-icon class="mr-2" color="primary">
+            mdi-file-document-edit-outline
+          </v-icon>
+          Form Konsultasi
+        </div>
+        <div class="group-subtitle">
+          Informasi utama yang dibutuhkan dokter sebelum meninjau pasien secara
+          online
+        </div>
       </div>
 
-      <v-alert
-        type="info"
-        variant="tonal"
-        rounded="lg"
-        border="start"
-        class="mb-5"
-      >
-        Bagian ini hanya muncul jika layanan konsultasi dipilih dan channel
-        konsultasi adalah online.
-      </v-alert>
+      <v-row dense>
+        <v-col cols="12" md="6">
+          <v-text-field
+            :model-value="form.konsultasi_online.request_dokter"
+            label="Request Dokter Khusus"
+            placeholder="Opsional"
+            variant="outlined"
+            density="comfortable"
+            prepend-inner-icon="mdi-doctor"
+            hide-details="auto"
+            @update:modelValue="updateField('request_dokter', $event)"
+          >
+            <template #message>
+              Isi jika pasien meminta dokter tertentu
+            </template>
+          </v-text-field>
+        </v-col>
 
-      <!-- FORM UTAMA -->
-      <div class="group-wrap mb-5">
-        <div class="group-head mb-4">
-          <div class="group-title">
-            <v-icon class="mr-2" color="primary">
-              mdi-file-document-edit-outline
-            </v-icon>
-            Form Konsultasi
+        <v-col cols="12">
+          <v-textarea
+            :model-value="form.konsultasi_online.alergi"
+            label="Alergi"
+            rows="3"
+            auto-grow
+            variant="outlined"
+            density="comfortable"
+            :rules="[rules.required]"
+            placeholder="Sebutkan alergi, jika tidak ada tulis 'Tidak ada'"
+            hide-details="auto"
+            @update:modelValue="updateField('alergi', $event)"
+          >
+            <template #message>
+              Wajib diisi. Jika tidak ada alergi, tulis dengan jelas.
+            </template>
+          </v-textarea>
+        </v-col>
+
+        <v-col cols="12">
+          <v-textarea
+            :model-value="form.konsultasi_online.keluhan"
+            label="Keluhan Utama"
+            rows="4"
+            auto-grow
+            variant="outlined"
+            density="comfortable"
+            :rules="[rules.required]"
+            placeholder="Jelaskan keluhan pasien secara detail"
+            hide-details="auto"
+            @update:modelValue="updateField('keluhan', $event)"
+          >
+            <template #message>
+              Jelaskan kondisi utama pasien sejelas mungkin agar konsultasi
+              lebih efektif.
+            </template>
+          </v-textarea>
+        </v-col>
+
+        <v-col cols="12">
+          <v-textarea
+            :model-value="form.konsultasi_online.produk_sebelumnya"
+            label="Produk / Obat Sebelumnya"
+            rows="3"
+            auto-grow
+            variant="outlined"
+            density="comfortable"
+            placeholder="Tuliskan produk atau obat yang pernah/sedang digunakan"
+            hide-details="auto"
+            @update:modelValue="updateField('produk_sebelumnya', $event)"
+          >
+            <template #message>
+              Opsional, namun sangat membantu untuk menilai kondisi pasien
+            </template>
+          </v-textarea>
+        </v-col>
+
+        <v-col cols="12" md="6">
+          <div class="radio-card">
+            <div class="radio-card__title">Sedang hamil?</div>
+            <div class="radio-card__desc">
+              Informasi ini diperlukan untuk pertimbangan tindakan atau obat
+            </div>
+
+            <v-radio-group
+              :model-value="form.konsultasi_online.sedang_hamil"
+              inline
+              hide-details="auto"
+              @update:modelValue="updateField('sedang_hamil', $event)"
+            >
+              <v-radio label="Ya" value="ya" />
+              <v-radio label="Tidak" value="tidak" />
+            </v-radio-group>
           </div>
-          <div class="group-subtitle">
-            Informasi utama yang dibutuhkan dokter sebelum meninjau pasien
-            secara online
+        </v-col>
+
+        <v-col cols="12" md="6">
+          <div class="radio-card">
+            <div class="radio-card__title">Sedang menyusui?</div>
+            <div class="radio-card__desc">
+              Informasi ini membantu dokter dalam menentukan rekomendasi aman
+            </div>
+
+            <v-radio-group
+              :model-value="form.konsultasi_online.sedang_menyusui"
+              inline
+              hide-details="auto"
+              @update:modelValue="updateField('sedang_menyusui', $event)"
+            >
+              <v-radio label="Ya" value="ya" />
+              <v-radio label="Tidak" value="tidak" />
+            </v-radio-group>
           </div>
+        </v-col>
+      </v-row>
+    </div>
+
+    <!-- FOTO -->
+    <div class="group-wrap mb-5">
+      <div class="group-head mb-4">
+        <div class="group-title">
+          <v-icon class="mr-2" color="primary">
+            mdi-image-multiple-outline
+          </v-icon>
+          Dokumentasi Foto
         </div>
+        <div class="group-subtitle">
+          Upload foto pasien untuk membantu peninjauan visual sebelum konsultasi
+        </div>
+      </div>
 
+      <template v-if="photoCards && photoCards.length">
         <v-row dense>
-          <v-col cols="12" md="6">
-            <v-text-field
-              :model-value="form.konsultasi_online.request_dokter"
-              label="Request Dokter Khusus"
-              placeholder="Opsional"
-              variant="outlined"
-              density="comfortable"
-              prepend-inner-icon="mdi-doctor"
-              hide-details="auto"
-              @update:modelValue="updateField('request_dokter', $event)"
-            >
-              <template #message>
-                Isi jika pasien meminta dokter tertentu
-              </template>
-            </v-text-field>
-          </v-col>
+          <v-col v-for="photo in photoCards" :key="photo.key" cols="12" md="4">
+            <v-card variant="outlined" rounded="xl" class="photo-card h-100">
+              <v-card-title class="font-weight-bold">
+                {{ photo.title }}
+              </v-card-title>
 
-          <v-col cols="12">
-            <v-textarea
-              :model-value="form.konsultasi_online.alergi"
-              label="Alergi"
-              rows="3"
-              auto-grow
-              variant="outlined"
-              density="comfortable"
-              :rules="[rules.required]"
-              placeholder="Sebutkan alergi, jika tidak ada tulis 'Tidak ada'"
-              hide-details="auto"
-              @update:modelValue="updateField('alergi', $event)"
-            >
-              <template #message>
-                Wajib diisi. Jika tidak ada alergi, tulis dengan jelas.
-              </template>
-            </v-textarea>
-          </v-col>
-
-          <v-col cols="12">
-            <v-textarea
-              :model-value="form.konsultasi_online.keluhan"
-              label="Keluhan Utama"
-              rows="4"
-              auto-grow
-              variant="outlined"
-              density="comfortable"
-              :rules="[rules.required]"
-              placeholder="Jelaskan keluhan pasien secara detail"
-              hide-details="auto"
-              @update:modelValue="updateField('keluhan', $event)"
-            >
-              <template #message>
-                Jelaskan kondisi utama pasien sejelas mungkin agar konsultasi
-                lebih efektif.
-              </template>
-            </v-textarea>
-          </v-col>
-
-          <v-col cols="12">
-            <v-textarea
-              :model-value="form.konsultasi_online.produk_sebelumnya"
-              label="Produk / Obat Sebelumnya"
-              rows="3"
-              auto-grow
-              variant="outlined"
-              density="comfortable"
-              placeholder="Tuliskan produk atau obat yang pernah/sedang digunakan"
-              hide-details="auto"
-              @update:modelValue="updateField('produk_sebelumnya', $event)"
-            >
-              <template #message>
-                Opsional, namun sangat membantu untuk menilai kondisi pasien
-              </template>
-            </v-textarea>
-          </v-col>
-
-          <v-col cols="12" md="6">
-            <div class="radio-card">
-              <div class="radio-card__title">Sedang hamil?</div>
-              <div class="radio-card__desc">
-                Informasi ini diperlukan untuk pertimbangan tindakan atau obat
-              </div>
-
-              <v-radio-group
-                :model-value="form.konsultasi_online.sedang_hamil"
-                inline
-                hide-details="auto"
-                @update:modelValue="updateField('sedang_hamil', $event)"
-              >
-                <v-radio label="Ya" value="ya" />
-                <v-radio label="Tidak" value="tidak" />
-              </v-radio-group>
-            </div>
-          </v-col>
-
-          <v-col cols="12" md="6">
-            <div class="radio-card">
-              <div class="radio-card__title">Sedang menyusui?</div>
-              <div class="radio-card__desc">
-                Informasi ini membantu dokter dalam menentukan rekomendasi aman
-              </div>
-
-              <v-radio-group
-                :model-value="form.konsultasi_online.sedang_menyusui"
-                inline
-                hide-details="auto"
-                @update:modelValue="updateField('sedang_menyusui', $event)"
-              >
-                <v-radio label="Ya" value="ya" />
-                <v-radio label="Tidak" value="tidak" />
-              </v-radio-group>
-            </div>
-          </v-col>
-        </v-row>
-      </div>
-
-      <!-- FOTO -->
-      <div class="group-wrap mb-5">
-        <div class="group-head mb-4">
-          <div class="group-title">
-            <v-icon class="mr-2" color="primary">
-              mdi-image-multiple-outline
-            </v-icon>
-            Dokumentasi Foto
-          </div>
-          <div class="group-subtitle">
-            Upload foto pasien untuk membantu peninjauan visual sebelum
-            konsultasi
-          </div>
-        </div>
-
-        <template v-if="photoCards && photoCards.length">
-          <v-row dense>
-            <v-col
-              v-for="photo in photoCards"
-              :key="photo.key"
-              cols="12"
-              md="4"
-            >
-              <v-card variant="outlined" rounded="xl" class="photo-card h-100">
-                <v-card-title class="font-weight-bold">
-                  {{ photo.title }}
-                </v-card-title>
-
-                <v-card-text>
-                  <div
-                    class="upload-dropzone"
-                    :class="{
-                      'upload-dropzone--active': dragActive === photo.key,
-                    }"
-                    @click="triggerFileInput(photo.key)"
-                    @dragover.prevent="$emit('drag-over', photo.key)"
-                    @dragleave.prevent="$emit('drag-leave')"
-                    @drop.prevent="$emit('file-drop', $event, photo.key)"
-                  >
-                    <div>
-                      <div class="text-body-1 font-weight-medium">
-                        Klik atau drag gambar ke sini
-                      </div>
-                      <div class="text-body-2 text-medium-emphasis">
-                        PNG, JPG, JPEG, WEBP
-                      </div>
+              <v-card-text>
+                <div
+                  class="upload-dropzone"
+                  :class="{
+                    'upload-dropzone--active': dragActive === photo.key,
+                  }"
+                  @click="triggerFileInput(photo.key)"
+                  @dragover.prevent="$emit('drag-over', photo.key)"
+                  @dragleave.prevent="$emit('drag-leave')"
+                  @drop.prevent="$emit('file-drop', $event, photo.key)"
+                >
+                  <div>
+                    <div class="text-body-1 font-weight-medium">
+                      Klik atau drag gambar ke sini
+                    </div>
+                    <div class="text-body-2 text-medium-emphasis">
+                      PNG, JPG, JPEG, WEBP
                     </div>
                   </div>
+                </div>
 
-                  <input
-                    :ref="`fileInput_${photo.key}`"
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg,image/webp"
-                    class="d-none"
-                    @change="$emit('file-change', $event, photo.key)"
-                  />
+                <input
+                  :ref="`fileInput_${photo.key}`"
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  class="d-none"
+                  @change="$emit('file-change', $event, photo.key)"
+                />
 
-                  <v-img
-                    :src="getPreviewSrc(photo.previewKey)"
-                    height="220"
-                    cover
-                    rounded="lg"
-                    class="mt-4 bg-grey-lighten-3"
-                  />
+                <v-img
+                  :src="getPreviewSrc(photo.previewKey)"
+                  height="220"
+                  cover
+                  rounded="lg"
+                  class="mt-4 bg-grey-lighten-3"
+                />
 
-                  <div
-                    class="d-flex justify-space-between align-center mt-3 ga-2"
-                  >
-                    <div class="text-body-2 text-medium-emphasis text-truncate">
-                      {{ ko[photo.fileNameKey] || "Belum ada file dipilih" }}
-                    </div>
-
-                    <v-btn
-                      v-if="ko[photo.fileNameKey]"
-                      size="small"
-                      variant="text"
-                      color="error"
-                      prepend-icon="mdi-delete-outline"
-                      @click.stop="$emit('remove-image', photo.key)"
-                    >
-                      Hapus
-                    </v-btn>
+                <div
+                  class="d-flex justify-space-between align-center mt-3 ga-2"
+                >
+                  <div class="text-body-2 text-medium-emphasis text-truncate">
+                    {{ ko[photo.fileNameKey] || "Belum ada file dipilih" }}
                   </div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-          </v-row>
-        </template>
 
-        <template v-else>
-          <div class="empty-state">
-            <v-icon size="36" color="grey">mdi-image-off-outline</v-icon>
-            <div class="empty-state__title">Belum ada slot upload foto</div>
-            <div class="empty-state__text">
-              Data foto belum disiapkan dari parent, jadi area upload belum
-              dapat ditampilkan.
-            </div>
-          </div>
-        </template>
-      </div>
-
-      <!-- RIWAYAT -->
-      <div class="group-wrap mb-5">
-        <div class="group-head mb-4">
-          <div class="group-title">
-            <v-icon class="mr-2" color="success"> mdi-history </v-icon>
-            Riwayat Konsultasi
-          </div>
-          <div class="group-subtitle">
-            Riwayat konsultasi sebelumnya untuk referensi dokter
-          </div>
-        </div>
-
-        <template v-if="consultationHistory && consultationHistory.length">
-          <v-card rounded="xl" variant="outlined">
-            <v-data-table
-              :headers="historyHeaders"
-              :items="consultationHistory"
-              item-value="id"
-              density="comfortable"
-            >
-              <template #item.tindakan_html="{ item }">
-                <div v-html="item.tindakan_html || '-'" />
-              </template>
-
-              <template #item.obat_html="{ item }">
-                <div v-html="item.obat_html || '-'" />
-              </template>
-
-              <template #item.catatan_html="{ item }">
-                <div v-html="item.catatan_html || '-'" />
-              </template>
-            </v-data-table>
-          </v-card>
-        </template>
-
-        <template v-else>
-          <div class="empty-state">
-            <v-icon size="36" color="grey">mdi-history</v-icon>
-            <div class="empty-state__title">Belum ada riwayat konsultasi</div>
-            <div class="empty-state__text">
-              Sistem belum menemukan riwayat konsultasi sebelumnya untuk pasien
-              ini.
-            </div>
-          </div>
-        </template>
-      </div>
-
-      <!-- RINGKASAN -->
-      <div class="group-wrap">
-        <div class="group-head mb-4">
-          <div class="group-title">
-            <v-icon class="mr-2" color="success">
-              mdi-clipboard-check-outline
-            </v-icon>
-            Ringkasan Konsultasi Online
-          </div>
-          <div class="group-subtitle">
-            Preview singkat data yang telah diisi
-          </div>
-        </div>
-
-        <v-row dense>
-          <v-col cols="12" md="6">
-            <div class="summary-box">
-              <div class="summary-label">Keluhan Utama</div>
-              <div class="summary-value summary-value--multiline">
-                {{ form.konsultasi_online.keluhan || "-" }}
-              </div>
-            </div>
-          </v-col>
-
-          <v-col cols="12" md="6">
-            <div class="summary-box">
-              <div class="summary-label">Alergi</div>
-              <div class="summary-value summary-value--multiline">
-                {{ form.konsultasi_online.alergi || "-" }}
-              </div>
-            </div>
-          </v-col>
-
-          <v-col cols="12" md="4">
-            <div class="summary-box">
-              <div class="summary-label">Request Dokter</div>
-              <div class="summary-value">
-                {{ form.konsultasi_online.request_dokter || "-" }}
-              </div>
-            </div>
-          </v-col>
-
-          <v-col cols="12" md="4">
-            <div class="summary-box">
-              <div class="summary-label">Sedang Hamil</div>
-              <div class="summary-value">
-                {{ form.konsultasi_online.sedang_hamil || "-" }}
-              </div>
-            </div>
-          </v-col>
-
-          <v-col cols="12" md="4">
-            <div class="summary-box">
-              <div class="summary-label">Sedang Menyusui</div>
-              <div class="summary-value">
-                {{ form.konsultasi_online.sedang_menyusui || "-" }}
-              </div>
-            </div>
+                  <v-btn
+                    v-if="ko[photo.fileNameKey]"
+                    size="small"
+                    variant="text"
+                    color="error"
+                    prepend-icon="mdi-delete-outline"
+                    @click.stop="$emit('remove-image', photo.key)"
+                  >
+                    Hapus
+                  </v-btn>
+                </div>
+              </v-card-text>
+            </v-card>
           </v-col>
         </v-row>
+      </template>
+
+      <template v-else>
+        <div class="empty-state">
+          <v-icon size="36" color="grey">mdi-image-off-outline</v-icon>
+          <div class="empty-state__title">Belum ada slot upload foto</div>
+          <div class="empty-state__text">
+            Data foto belum disiapkan dari parent, jadi area upload belum dapat
+            ditampilkan.
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- RIWAYAT -->
+    <div class="group-wrap mb-5">
+      <div class="group-head mb-4">
+        <div class="group-title">
+          <v-icon class="mr-2" color="success"> mdi-history </v-icon>
+          Riwayat Konsultasi
+        </div>
+        <div class="group-subtitle">
+          Riwayat konsultasi sebelumnya untuk referensi dokter
+        </div>
       </div>
-    </v-card-text>
-  </v-card>
+
+      <template v-if="consultationHistory && consultationHistory.length">
+        <v-card rounded="xl" variant="outlined">
+          <v-data-table
+            :headers="historyHeaders"
+            :items="consultationHistory"
+            item-value="id"
+            density="comfortable"
+          >
+            <template #item.tindakan_html="{ item }">
+              <div v-html="item.tindakan_html || '-'" />
+            </template>
+
+            <template #item.obat_html="{ item }">
+              <div v-html="item.obat_html || '-'" />
+            </template>
+
+            <template #item.catatan_html="{ item }">
+              <div v-html="item.catatan_html || '-'" />
+            </template>
+          </v-data-table>
+        </v-card>
+      </template>
+
+      <template v-else>
+        <div class="empty-state">
+          <v-icon size="36" color="grey">mdi-history</v-icon>
+          <div class="empty-state__title">Belum ada riwayat konsultasi</div>
+          <div class="empty-state__text">
+            Sistem belum menemukan riwayat konsultasi sebelumnya untuk pasien
+            ini.
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- RINGKASAN -->
+    <div class="group-wrap">
+      <div class="group-head mb-4">
+        <div class="group-title">
+          <v-icon class="mr-2" color="success">
+            mdi-clipboard-check-outline
+          </v-icon>
+          Ringkasan Konsultasi Online
+        </div>
+        <div class="group-subtitle">Preview singkat data yang telah diisi</div>
+      </div>
+
+      <v-row dense>
+        <v-col cols="12" md="6">
+          <div class="summary-box">
+            <div class="summary-label">Keluhan Utama</div>
+            <div class="summary-value summary-value--multiline">
+              {{ form.konsultasi_online.keluhan || "-" }}
+            </div>
+          </div>
+        </v-col>
+
+        <v-col cols="12" md="6">
+          <div class="summary-box">
+            <div class="summary-label">Alergi</div>
+            <div class="summary-value summary-value--multiline">
+              {{ form.konsultasi_online.alergi || "-" }}
+            </div>
+          </div>
+        </v-col>
+
+        <v-col cols="12" md="4">
+          <div class="summary-box">
+            <div class="summary-label">Request Dokter</div>
+            <div class="summary-value">
+              {{ form.konsultasi_online.request_dokter || "-" }}
+            </div>
+          </div>
+        </v-col>
+
+        <v-col cols="12" md="4">
+          <div class="summary-box">
+            <div class="summary-label">Sedang Hamil</div>
+            <div class="summary-value">
+              {{ form.konsultasi_online.sedang_hamil || "-" }}
+            </div>
+          </div>
+        </v-col>
+
+        <v-col cols="12" md="4">
+          <div class="summary-box">
+            <div class="summary-label">Sedang Menyusui</div>
+            <div class="summary-value">
+              {{ form.konsultasi_online.sedang_menyusui || "-" }}
+            </div>
+          </div>
+        </v-col>
+      </v-row>
+    </div>
+  </div>
 </template>
 
 <script>

@@ -302,31 +302,31 @@ export default {
               title: "Pembayaran",
               to: "/resepsionis/pembayaran",
             },
-            {
-              key: "resepsionis-konsultasi",
-              title: "Daftar Konsultasi",
-              to: "/resepsionis/konsultasi",
-            },
-            {
-              key: "resepsionis-konsultasi-online",
-              title: "Daftar Konsultasi Online",
-              to: "/resepsionis/konsultasi-online",
-            },
-            {
-              key: "resepsionis-treatment",
-              title: "Daftar Treatment",
-              to: "/resepsionis/treatment",
-            },
+            // {
+            //   key: "resepsionis-konsultasi",
+            //   title: "Daftar Konsultasi",
+            //   to: "/resepsionis/konsultasi",
+            // },
+            // {
+            //   key: "resepsionis-konsultasi-online",
+            //   title: "Daftar Konsultasi Online",
+            //   to: "/resepsionis/konsultasi-online",
+            // },
+            // {
+            //   key: "resepsionis-treatment",
+            //   title: "Daftar Treatment",
+            //   to: "/resepsionis/treatment",
+            // },
             {
               key: "resepsionis-pembayaran-recipe",
               title: "Pembayaran Recipe",
               to: "/resepsionis/pembayaran-recipe",
             },
-            {
-              key: "resepsionis-penjualan",
-              title: "Penjualan Langsung",
-              to: "/resepsionis/penjualan",
-            },
+            // {
+            //   key: "resepsionis-penjualan",
+            //   title: "Penjualan Langsung",
+            //   to: "/resepsionis/penjualan",
+            // },
             {
               key: "resepsionis-poin",
               title: "Penukaran Poin",

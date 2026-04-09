@@ -1,121 +1,106 @@
 <template>
-  <v-card elevation="2" class="mb-5">
-    <v-card-text class="pa-6">
-      <div class="section-header mb-5">
-        <div>
-          <div class="section-title">Konsultasi Offline</div>
-          <div class="section-subtitle">
-            Isi keluhan awal dan catatan singkat untuk konsultasi tatap muka
-          </div>
-        </div>
+  <div class="mt-3">
+    <v-alert
+      type="info"
+      variant="tonal"
+      rounded="lg"
+      border="start"
+      class="mb-5"
+    >
+      Bagian ini hanya muncul jika layanan konsultasi dipilih dan channel
+      konsultasi adalah offline.
+    </v-alert>
 
-        <v-chip color="primary" variant="tonal" prepend-icon="mdi-stethoscope">
-          Step 3 - Konsultasi Offline
-        </v-chip>
+    <div class="group-wrap">
+      <div class="group-head mb-4">
+        <div class="group-title">
+          <v-icon class="mr-2" color="primary">
+            mdi-clipboard-text-outline
+          </v-icon>
+          Detail Konsultasi
+        </div>
+        <div class="group-subtitle">
+          Catatan awal yang membantu dokter memahami kondisi pasien sebelum
+          pemeriksaan
+        </div>
       </div>
 
-      <v-alert
-        type="info"
-        variant="tonal"
-        rounded="lg"
-        border="start"
-        class="mb-5"
-      >
-        Bagian ini hanya muncul jika layanan konsultasi dipilih dan channel
-        konsultasi adalah offline.
-      </v-alert>
+      <v-row dense>
+        <v-col cols="12">
+          <v-textarea
+            :model-value="form.konsultasi_offline.keluhan_awal"
+            label="Keluhan Awal"
+            rows="4"
+            auto-grow
+            variant="outlined"
+            density="comfortable"
+            :rules="[rules.required]"
+            placeholder="Tuliskan keluhan utama pasien, misalnya jerawat, flek, iritasi, atau keluhan lainnya"
+            hide-details="auto"
+            @update:modelValue="updateField('keluhan_awal', $event)"
+          >
+            <template #message>
+              Wajib diisi. Jelaskan keluhan utama pasien secara singkat dan
+              jelas.
+            </template>
+          </v-textarea>
+        </v-col>
 
-      <div class="group-wrap">
-        <div class="group-head mb-4">
-          <div class="group-title">
-            <v-icon class="mr-2" color="primary">
-              mdi-clipboard-text-outline
-            </v-icon>
-            Detail Konsultasi
-          </div>
-          <div class="group-subtitle">
-            Catatan awal yang membantu dokter memahami kondisi pasien sebelum
-            pemeriksaan
-          </div>
+        <v-col cols="12">
+          <v-textarea
+            :model-value="form.konsultasi_offline.catatan"
+            label="Catatan Awal Konsultasi"
+            rows="4"
+            auto-grow
+            variant="outlined"
+            density="comfortable"
+            placeholder="Catatan tambahan dari front office atau petugas sebelum pasien bertemu dokter"
+            hide-details="auto"
+            @update:modelValue="updateField('catatan', $event)"
+          >
+            <template #message>
+              Opsional. Gunakan untuk informasi tambahan yang perlu diketahui
+              petugas atau dokter.
+            </template>
+          </v-textarea>
+        </v-col>
+      </v-row>
+    </div>
+
+    <div class="group-wrap mt-5">
+      <div class="group-head mb-4">
+        <div class="group-title">
+          <v-icon class="mr-2" color="success">
+            mdi-clipboard-check-outline
+          </v-icon>
+          Ringkasan Input
         </div>
-
-        <v-row dense>
-          <v-col cols="12">
-            <v-textarea
-              :model-value="form.konsultasi_offline.keluhan_awal"
-              label="Keluhan Awal"
-              rows="4"
-              auto-grow
-              variant="outlined"
-              density="comfortable"
-              :rules="[rules.required]"
-              placeholder="Tuliskan keluhan utama pasien, misalnya jerawat, flek, iritasi, atau keluhan lainnya"
-              hide-details="auto"
-              @update:modelValue="updateField('keluhan_awal', $event)"
-            >
-              <template #message>
-                Wajib diisi. Jelaskan keluhan utama pasien secara singkat dan
-                jelas.
-              </template>
-            </v-textarea>
-          </v-col>
-
-          <v-col cols="12">
-            <v-textarea
-              :model-value="form.konsultasi_offline.catatan"
-              label="Catatan Awal Konsultasi"
-              rows="4"
-              auto-grow
-              variant="outlined"
-              density="comfortable"
-              placeholder="Catatan tambahan dari front office atau petugas sebelum pasien bertemu dokter"
-              hide-details="auto"
-              @update:modelValue="updateField('catatan', $event)"
-            >
-              <template #message>
-                Opsional. Gunakan untuk informasi tambahan yang perlu diketahui
-                petugas atau dokter.
-              </template>
-            </v-textarea>
-          </v-col>
-        </v-row>
+        <div class="group-subtitle">
+          Preview singkat data konsultasi offline yang telah diisi
+        </div>
       </div>
 
-      <div class="group-wrap mt-5">
-        <div class="group-head mb-4">
-          <div class="group-title">
-            <v-icon class="mr-2" color="success">
-              mdi-clipboard-check-outline
-            </v-icon>
-            Ringkasan Input
-          </div>
-          <div class="group-subtitle">
-            Preview singkat data konsultasi offline yang telah diisi
-          </div>
-        </div>
-
-        <v-row dense>
-          <v-col cols="12" md="6">
-            <div class="summary-box">
-              <div class="summary-label">Keluhan Awal</div>
-              <div class="summary-value summary-value--multiline">
-                {{ form.konsultasi_offline.keluhan_awal || "-" }}
-              </div>
+      <v-row dense>
+        <v-col cols="12" md="6">
+          <div class="summary-box">
+            <div class="summary-label">Keluhan Awal</div>
+            <div class="summary-value summary-value--multiline">
+              {{ form.konsultasi_offline.keluhan_awal || "-" }}
             </div>
-          </v-col>
+          </div>
+        </v-col>
 
-          <v-col cols="12" md="6">
-            <div class="summary-box">
-              <div class="summary-label">Catatan Awal</div>
-              <div class="summary-value summary-value--multiline">
-                {{ form.konsultasi_offline.catatan || "-" }}
-              </div>
+        <v-col cols="12" md="6">
+          <div class="summary-box">
+            <div class="summary-label">Catatan Awal</div>
+            <div class="summary-value summary-value--multiline">
+              {{ form.konsultasi_offline.catatan || "-" }}
             </div>
-          </v-col>
-        </v-row>
-      </div>
-    </v-card-text>
-  </v-card>
+          </div>
+        </v-col>
+      </v-row>
+    </div>
+  </div>
 </template>
 
 <script>

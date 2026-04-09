@@ -1,258 +1,131 @@
 <template>
-  <v-card elevation="2" class="mb-5">
-    <v-card-text class="pa-6">
-      <div class="section-header mb-5">
-        <div>
-          <div class="section-title">Detail Treatment</div>
-          <div class="section-subtitle">
-            Tambahkan tindakan treatment yang akan dijalani pasien
-          </div>
+  <div class="mt-3">
+    <div class="section-head mb-4">
+      <div>
+        <div class="section-title">Treatment</div>
+        <div class="section-subtitle">
+          Tambahkan tindakan yang akan diberikan ke pasien
         </div>
-
-        <v-chip color="primary" variant="tonal" prepend-icon="mdi-spa">
-          Step 5 - Treatment
-        </v-chip>
       </div>
 
-      <v-alert
-        type="warning"
+      <v-btn
+        color="primary"
         variant="tonal"
-        rounded="lg"
-        border="start"
-        class="mb-5"
+        prepend-icon="mdi-plus"
+        @click="$emit('add-item')"
       >
-        Nominal di bagian ini masih bersifat estimasi awal. Finalisasi harga
-        dilakukan pada tahap layanan atau tagihan.
-      </v-alert>
+        Tambah Treatment
+      </v-btn>
+    </div>
 
-      <div class="group-wrap mb-5">
-        <div class="group-head mb-4">
-          <div class="group-title">
-            <v-icon class="mr-2" color="primary">
-              mdi-clipboard-list-outline
-            </v-icon>
-            Informasi Treatment
-          </div>
-          <div class="group-subtitle">
-            Pilih tindakan, beautician, jumlah, dan estimasi nominal treatment
-          </div>
-        </div>
+    <div
+      v-for="(item, index) in safeItems"
+      :key="'treatment-' + index"
+      class="item-box mb-4"
+    >
+      <v-row dense>
+        <v-col cols="12" md="4">
+          <v-select
+            :model-value="item.tindakan_id"
+            :items="tindakanList"
+            item-title="nama"
+            item-value="id"
+            label="Treatment"
+            variant="outlined"
+            density="comfortable"
+            @update:modelValue="updateItem(index, 'tindakan_id', $event)"
+          />
+        </v-col>
 
-        <div
-          v-for="(item, index) in form.treatment.items"
-          :key="'treatment-' + index"
-          class="line-item mb-4"
-        >
-          <div class="line-item__header mb-3">
-            <div class="line-item__title">Treatment #{{ index + 1 }}</div>
+        <v-col cols="6" md="2">
+          <v-text-field
+            :model-value="item.harga"
+            label="Harga"
+            type="number"
+            variant="outlined"
+            density="comfortable"
+            @update:modelValue="updateItem(index, 'harga', toNumber($event))"
+          />
+        </v-col>
 
-            <div class="d-flex ga-2">
-              <v-btn
-                color="warning"
-                variant="flat"
-                size="small"
-                prepend-icon="mdi-plus"
-                @click="$emit('add-treatment-item')"
-              >
-                Tambah
-              </v-btn>
+        <v-col cols="6" md="2">
+          <v-text-field
+            :model-value="item.jumlah"
+            label="Qty"
+            type="number"
+            variant="outlined"
+            density="comfortable"
+            @update:modelValue="updateItem(index, 'jumlah', toNumber($event))"
+          />
+        </v-col>
 
-              <v-btn
-                color="error"
-                variant="flat"
-                size="small"
-                prepend-icon="mdi-minus"
-                :disabled="form.treatment.items.length === 1"
-                @click="$emit('remove-treatment-item', index)"
-              >
-                Hapus
-              </v-btn>
-            </div>
-          </div>
+        <v-col cols="6" md="2">
+          <v-select
+            :model-value="item.diskon_type"
+            :items="['%', 'Rp']"
+            label="Tipe Diskon"
+            variant="outlined"
+            density="comfortable"
+            @update:modelValue="updateItem(index, 'diskon_type', $event)"
+          />
+        </v-col>
 
-          <v-row dense>
-            <v-col cols="12" md="4">
-              <v-select
-                :model-value="item.tindakan_id"
-                label="Tindakan"
-                :items="tindakanList"
-                item-title="nama"
-                item-value="id"
-                variant="outlined"
-                density="comfortable"
-                :rules="[rules.required]"
-                hide-details="auto"
-                @update:modelValue="
-                  updateItemField(index, 'tindakan_id', $event)
-                "
-              >
-                <template #message>
-                  Pilih treatment yang akan dijalani pasien
-                </template>
-              </v-select>
-            </v-col>
+        <v-col cols="6" md="2">
+          <v-text-field
+            :model-value="item.diskon_value"
+            label="Diskon"
+            type="number"
+            variant="outlined"
+            density="comfortable"
+            @update:modelValue="
+              updateItem(index, 'diskon_value', toNumber($event))
+            "
+          />
+        </v-col>
 
-            <v-col cols="12" md="2">
-              <v-text-field
-                :model-value="item.jumlah"
-                label="Jumlah"
-                type="number"
-                min="1"
-                variant="outlined"
-                density="comfortable"
-                hide-details="auto"
-                @update:modelValue="
-                  updateItemField(index, 'jumlah', normalizeNumber($event, 1))
-                "
-              >
-                <template #message> Minimal 1 </template>
-              </v-text-field>
-            </v-col>
+        <v-col cols="12" md="3">
+          <v-text-field
+            :model-value="item.diskon_referral"
+            label="Diskon Referral"
+            type="number"
+            variant="outlined"
+            density="comfortable"
+            @update:modelValue="
+              updateItem(index, 'diskon_referral', toNumber($event))
+            "
+          />
+        </v-col>
 
-            <v-col cols="12" md="3">
-              <v-select
-                :model-value="item.beautician_id"
-                label="Beautician"
-                :items="perawatList"
-                item-title="nama"
-                item-value="id"
-                variant="outlined"
-                density="comfortable"
-                clearable
-                hide-details="auto"
-                @update:modelValue="
-                  updateItemField(index, 'beautician_id', $event)
-                "
-              />
-            </v-col>
+        <v-col cols="12" md="3">
+          <v-text-field
+            :model-value="formatRupiah(getSubtotal(item))"
+            label="Subtotal"
+            readonly
+            variant="outlined"
+            density="comfortable"
+          />
+        </v-col>
 
-            <v-col cols="12" md="3">
-              <v-text-field
-                :model-value="item.harga"
-                label="Harga Estimasi"
-                type="number"
-                variant="outlined"
-                density="comfortable"
-                hide-details="auto"
-                @update:modelValue="
-                  updateItemField(index, 'harga', normalizeNumber($event))
-                "
-              >
-                <template #message>
-                  Otomatis terisi saat tindakan dipilih, tapi tetap bisa diubah
-                </template>
-              </v-text-field>
-            </v-col>
+        <v-col cols="12" md="6" class="d-flex justify-end align-center">
+          <v-btn
+            color="error"
+            variant="text"
+            prepend-icon="mdi-delete"
+            @click="$emit('remove-item', index)"
+          >
+            Hapus
+          </v-btn>
+        </v-col>
+      </v-row>
+    </div>
 
-            <v-col cols="12" md="2">
-              <v-select
-                :model-value="item.diskon_type"
-                label="Tipe Diskon"
-                :items="diskonTypeList"
-                variant="outlined"
-                density="comfortable"
-                hide-details="auto"
-                @update:modelValue="
-                  updateItemField(index, 'diskon_type', $event)
-                "
-              />
-            </v-col>
-
-            <v-col cols="12" md="2">
-              <v-text-field
-                :model-value="item.diskon_value"
-                label="Diskon"
-                type="number"
-                variant="outlined"
-                density="comfortable"
-                hide-details="auto"
-                @update:modelValue="
-                  updateItemField(
-                    index,
-                    'diskon_value',
-                    normalizeNumber($event),
-                  )
-                "
-              />
-            </v-col>
-
-            <v-col cols="12" md="2">
-              <v-text-field
-                :model-value="item.diskon_referral"
-                label="Referral"
-                type="number"
-                variant="outlined"
-                density="comfortable"
-                hide-details="auto"
-                @update:modelValue="
-                  updateItemField(
-                    index,
-                    'diskon_referral',
-                    normalizeNumber($event),
-                  )
-                "
-              />
-            </v-col>
-
-            <v-col cols="12" md="3">
-              <v-text-field
-                :model-value="'Rp ' + formatNumber(getTreatmentSubtotal(item))"
-                label="Subtotal Estimasi"
-                variant="outlined"
-                density="comfortable"
-                readonly
-                hide-details="auto"
-              />
-            </v-col>
-
-            <v-col cols="12" md="3">
-              <div class="summary-mini h-100">
-                <div class="summary-mini__label">Ringkasan</div>
-                <div class="summary-mini__text">
-                  {{
-                    getSelectedTreatmentName(item.tindakan_id) ||
-                    "Belum pilih tindakan"
-                  }}
-                </div>
-              </div>
-            </v-col>
-          </v-row>
-        </div>
+    <div class="total-box">
+      <div class="total-box__label">Total Treatment</div>
+      <div class="total-box__value">
+        Rp {{ formatNumber(totalTreatment || 0) }}
       </div>
-
-      <div class="group-wrap">
-        <div class="group-head mb-4">
-          <div class="group-title">
-            <v-icon class="mr-2" color="success"> mdi-cash-register </v-icon>
-            Ringkasan Treatment
-          </div>
-          <div class="group-subtitle">
-            Total estimasi seluruh treatment yang sudah dipilih
-          </div>
-        </div>
-
-        <v-row dense>
-          <v-col cols="12" md="4">
-            <div class="summary-box">
-              <div class="summary-label">Total Item Treatment</div>
-              <div class="summary-value">
-                {{ form.treatment.items.length }}
-              </div>
-            </div>
-          </v-col>
-
-          <v-col cols="12" md="4">
-            <div class="summary-box">
-              <div class="summary-label">Total Estimasi</div>
-              <div class="summary-value">
-                Rp {{ formatNumber(totalTreatment) }}
-              </div>
-            </div>
-          </v-col>
-        </v-row>
-      </div>
-    </v-card-text>
-  </v-card>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -263,19 +136,7 @@ export default {
       type: Object,
       required: true,
     },
-    rules: {
-      type: Object,
-      required: true,
-    },
     tindakanList: {
-      type: Array,
-      default: () => [],
-    },
-    perawatList: {
-      type: Array,
-      default: () => [],
-    },
-    diskonTypeList: {
       type: Array,
       default: () => [],
     },
@@ -287,45 +148,37 @@ export default {
       type: Function,
       required: true,
     },
-    getTreatmentSubtotal: {
+    getSubtotal: {
       type: Function,
       required: true,
     },
   },
-  emits: [
-    "update-treatment-meta",
-    "update-treatment-item",
-    "add-treatment-item",
-    "remove-treatment-item",
-  ],
+  emits: ["update-item", "add-item", "remove-item"],
+  computed: {
+    safeItems() {
+      return this.form?.treatment?.items || [];
+    },
+  },
   methods: {
-    updateMetaField(field, value) {
-      this.$emit("update-treatment-meta", { field, value });
+    updateItem(index, field, value) {
+      this.$emit("update-item", { index, field, value });
     },
-
-    updateItemField(index, field, value) {
-      this.$emit("update-treatment-item", { index, field, value });
+    toNumber(value) {
+      return Number(value || 0);
     },
-
-    normalizeNumber(value, fallback = 0) {
-      const num = Number(value);
-      return Number.isNaN(num) ? fallback : num;
-    },
-
-    getSelectedTreatmentName(tindakanId) {
-      const item = this.tindakanList.find((x) => x.id === tindakanId);
-      return item ? item.nama : "";
+    formatRupiah(value) {
+      return `Rp ${this.formatNumber(value || 0)}`;
     },
   },
 };
 </script>
 
 <style scoped>
-.treatment-card {
+.section-card {
   border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
-.section-header {
+.section-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -337,7 +190,6 @@ export default {
   font-size: 20px;
   font-weight: 700;
   color: #0f172a;
-  line-height: 1.2;
 }
 
 .section-subtitle {
@@ -346,111 +198,32 @@ export default {
   color: #64748b;
 }
 
-.group-wrap {
+.item-box {
   border: 1px solid #e5e7eb;
   border-radius: 18px;
-  padding: 20px;
+  padding: 16px;
   background: #fff;
 }
 
-.group-head {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.group-title {
-  display: flex;
-  align-items: center;
-  font-size: 16px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.group-subtitle {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.line-item {
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 16px;
-  background: #fcfcfd;
-}
-
-.line-item__header {
+.total-box {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.line-item__title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.summary-box {
-  height: 100%;
+  padding: 18px 20px;
   border-radius: 16px;
-  padding: 16px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
 }
 
-.summary-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.summary-value {
+.total-box__label {
   font-size: 15px;
   font-weight: 700;
-  color: #0f172a;
-  word-break: break-word;
+  color: #334155;
 }
 
-.summary-mini {
-  border: 1px dashed #cbd5e1;
-  border-radius: 14px;
-  padding: 12px;
-  background: #f8fafc;
-}
-
-.summary-mini__label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-}
-
-.summary-mini__text {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
-  line-height: 1.5;
-}
-
-.h-100 {
-  height: 100%;
-}
-
-@media (max-width: 768px) {
-  .section-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .group-wrap {
-    padding: 16px;
-  }
+.total-box__value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #16a34a;
 }
 </style>
