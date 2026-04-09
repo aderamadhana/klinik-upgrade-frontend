@@ -446,31 +446,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.page-subtitle {
-  margin: 6px 0 0;
-  color: rgba(0, 0, 0, 0.65);
-}
-
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-  }
-}
-</style>

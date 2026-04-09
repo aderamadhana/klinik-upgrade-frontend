@@ -1204,25 +1204,6 @@ export default {
   padding: 20px;
   background: #f5f7fb;
 }
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-.page-title {
-  margin: 0;
-  font-size: 30px;
-  font-weight: 800;
-  line-height: 1.1;
-  color: #111827;
-}
-.page-subtitle {
-  margin: 8px 0 0;
-  color: #6b7280;
-  font-size: 14px;
-}
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -1543,10 +1524,6 @@ export default {
 @media (max-width: 768px) {
   .payment-page {
     padding: 14px;
-  }
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
   }
   .promo-code-row,
   .payment-card-grid {

@@ -369,11 +369,6 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
   .action-bar {
     flex-direction: column-reverse;
     align-items: stretch;

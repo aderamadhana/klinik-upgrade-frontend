@@ -1539,12 +1539,6 @@ export default {
     padding: 16px;
   }
 
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
   .status-row {
     flex-direction: column;
     align-items: flex-start;

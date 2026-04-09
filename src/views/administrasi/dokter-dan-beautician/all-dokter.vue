@@ -9,7 +9,7 @@
       <v-breadcrumbs :items="breadcrumbs" divider="/" />
     </div>
 
-    <v-card elevation="1">
+    <v-card>
       <!-- HEADER ACTION -->
       <!-- ACTION BAR -->
       <v-card-title class="d-flex justify-space-between align-center">
