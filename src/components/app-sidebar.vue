@@ -225,47 +225,16 @@ export default {
               roles: ["administrator", "sudo", "it", "management"],
             },
             {
-              key: "master-dokter-beautician",
-              title: "Dokter & Beautician",
-              to: "/master/dokter",
+              key: "master-karyawan",
+              title: "Karyawan",
+              to: "/master/karyawan",
               roles: ["administrator", "sudo", "it", "management"],
             },
             {
-              key: "master-pasien-group",
-              title: "Pasien & Non Pasien",
-              roles: [
-                "administrator",
-                "sudo",
-                "it",
-                "management",
-                "front office",
-              ],
-              children: [
-                {
-                  key: "master-pasien",
-                  title: "Data Pasien",
-                  to: "/master/pasien",
-                  roles: [
-                    "administrator",
-                    "sudo",
-                    "it",
-                    "management",
-                    "front office",
-                  ],
-                },
-                {
-                  key: "master-non-pasien",
-                  title: "Data Non Pasien",
-                  to: "/master/non-pasien",
-                  roles: [
-                    "administrator",
-                    "sudo",
-                    "it",
-                    "management",
-                    "front office",
-                  ],
-                },
-              ],
+              key: "master-pasien",
+              title: "Pasien",
+              to: "/master/pasien",
+              roles: ["administrator", "sudo", "it", "management"],
             },
             {
               key: "master-supplier",
@@ -281,19 +250,19 @@ export default {
             },
             {
               key: "master-treatment-global",
-              title: "Master Treatment Global",
+              title: "Treatment Global",
               to: "/master/treatment-global",
               roles: ["sudo"], // superadmin only
             },
             {
               key: "master-product-global",
-              title: "Master Product Global",
+              title: "Product Global",
               to: "/master/product-global",
               roles: ["sudo"], // superadmin only
             },
             {
               key: "master-merchandise",
-              title: "Master Merchandise",
+              title: "Merchandise",
               to: "/master/merchandise",
               roles: ["administrator", "sudo", "it", "management"],
             },
@@ -451,9 +420,9 @@ export default {
               roles: ["administrator", "sudo", "it", "management", "apoteker"],
             },
             {
-              key: "administrasi-merchandise",
-              title: "Merchandise",
-              to: "/administrasi/merchandise",
+              key: "administrasi-voucher-diskon",
+              title: "Voucher Diskon",
+              to: "/administrasi/voucher-diskon",
               roles: ["administrator", "sudo", "it", "management"],
             },
           ],

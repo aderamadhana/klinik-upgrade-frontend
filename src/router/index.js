@@ -4,8 +4,10 @@ import Login from "@/views/login.vue";
 import NotFound from "@/components/pages/not-found.vue";
 import administrasiRoutes from "./modules/administrasi";
 import resepsionisRoutes from "./modules/resepsionis";
+import masterRoutes from "./modules/master";
 
 const routes = [
+  ...masterRoutes,
   ...administrasiRoutes,
   ...resepsionisRoutes,
   {

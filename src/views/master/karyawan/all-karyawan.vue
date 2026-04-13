@@ -2,8 +2,10 @@
   <div>
     <div class="page-header">
       <div>
-        <h1 class="page-title">Dokter</h1>
-        <p class="page-subtitle">Kelola data dokter yang terdaftar di sistem</p>
+        <h1 class="page-title">Master Karyawan</h1>
+        <p class="page-subtitle">
+          Kelola data karyawan yang terdaftar di sistem
+        </p>
       </div>
 
       <v-breadcrumbs :items="breadcrumbs" divider="/" />
@@ -16,7 +18,7 @@
         <v-btn
           color="success"
           prepend-icon="mdi-plus"
-          :to="'/administrasi/dokter/add'"
+          :to="'/master/karyawan/add'"
         >
           Entry Data
         </v-btn>
@@ -95,8 +97,8 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { title: "Administrasi", disabled: true },
-        { title: "Dokter", disabled: false, to: "/administrasi/dokter" },
+        { title: "Master", disabled: true },
+        { title: "Karyawan", disabled: false, to: "/master/karyawan" },
       ],
       tokoId: 1,
 

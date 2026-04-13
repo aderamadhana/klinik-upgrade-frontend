@@ -2,7 +2,7 @@
   <div>
     <div class="page-header">
       <div>
-        <h1 class="page-title">Pasien</h1>
+        <h1 class="page-title">Master Pasien</h1>
         <p class="page-subtitle">Kelola data pasien yang terdaftar di sistem</p>
       </div>
 
@@ -37,7 +37,7 @@
               size="small"
               color="info"
               class="mr-2"
-              :to="'/administrasi/pasien/riwayat/' + item.kode"
+              :to="'/master/pasien/riwayat/' + item.kode"
             >
               Riwayat
             </v-btn>
@@ -53,8 +53,8 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { title: "Administrasi", disabled: true },
-        { title: "Pasien", disabled: false, to: "/administrasi/pasien" },
+        { title: "Master", disabled: true },
+        { title: "Pasien", disabled: false, to: "/master/pasien" },
       ],
       tokoId: 1,
       search: "",
