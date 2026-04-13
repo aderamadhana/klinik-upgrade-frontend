@@ -1,11 +1,12 @@
 <template>
   <v-layout class="admin-layout">
-    <!-- SIDEBAR -->
-    <AppSidebar v-model="drawer" />
+    <AppSidebar v-model="drawer" :current-role="selectedRole" />
 
-    <!-- HEADER + CONTENT -->
     <div class="main-area">
-      <AppHeader @toggle="drawer = !drawer" />
+      <AppHeader
+        @toggle="drawer = !drawer"
+        @update:role="selectedRole = $event"
+      />
 
       <v-main class="content-area">
         <v-container fluid class="pa-6">
@@ -21,9 +22,13 @@ import AppHeader from "@/components/app-header.vue";
 import AppSidebar from "@/components/app-sidebar.vue";
 
 export default {
+  name: "AdminLayout",
   components: { AppSidebar, AppHeader },
   data() {
-    return { drawer: true };
+    return {
+      drawer: true,
+      selectedRole: "administrator",
+    };
   },
 };
 </script>

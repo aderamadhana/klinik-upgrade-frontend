@@ -6,7 +6,6 @@
     width="270"
     class="sidebar"
   >
-    <!-- Logo Area -->
     <div class="sidebar-header">
       <div class="logo-wrapper">
         <img :src="logo" alt="MS Glow" class="logo-img" />
@@ -14,7 +13,6 @@
       <div class="logo-divider"></div>
     </div>
 
-    <!-- Navigation List -->
     <v-list
       density="comfortable"
       nav
@@ -22,15 +20,13 @@
       :opened="openedValues"
       @update:opened="onUpdateOpened"
     >
-      <template v-for="(item, i) in menu" :key="item.key || `menu-${i}`">
-        <!-- HEADER -->
+      <template v-for="(item, i) in visibleMenu" :key="item.key || `menu-${i}`">
         <div v-if="item.header" class="menu-section-header">
           <span class="header-line"></span>
           <span class="header-text">{{ item.header }}</span>
           <span class="header-line"></span>
         </div>
 
-        <!-- NORMAL ITEM -->
         <v-list-item
           v-else-if="!item.children"
           :to="item.to"
@@ -52,7 +48,6 @@
           </v-list-item-title>
         </v-list-item>
 
-        <!-- GROUP LEVEL 1 -->
         <v-list-group v-else :value="item.key" class="nav-group">
           <template #activator="{ props }">
             <v-list-item
@@ -76,12 +71,10 @@
             </v-list-item>
           </template>
 
-          <!-- LEVEL 2 -->
           <template
             v-for="(child, j) in item.children"
             :key="child.key || `${item.key}-child-${j}`"
           >
-            <!-- LEVEL 2 NORMAL -->
             <v-list-item
               v-if="!child.children"
               :to="child.to"
@@ -103,7 +96,6 @@
               </v-list-item-title>
             </v-list-item>
 
-            <!-- LEVEL 2 GROUP -->
             <v-list-group v-else :value="child.key" class="nav-group-l2">
               <template #activator="{ props }">
                 <v-list-item
@@ -127,7 +119,6 @@
                 </v-list-item>
               </template>
 
-              <!-- LEVEL 3 -->
               <v-list-item
                 v-for="(sub, k) in child.children"
                 :key="sub.key || `${child.key}-sub-${k}`"
@@ -155,17 +146,16 @@
       </template>
     </v-list>
 
-    <!-- Bottom user info -->
     <template #append>
       <div class="sidebar-footer">
         <div class="footer-divider"></div>
 
         <div class="footer-content">
-          <div class="footer-avatar">IT</div>
+          <div class="footer-avatar">{{ currentUserInitialComputed }}</div>
 
           <div class="footer-info">
-            <div class="footer-name">IT JKS</div>
-            <div class="footer-role">Administrator</div>
+            <div class="footer-name">{{ currentUserName }}</div>
+            <div class="footer-role">{{ currentRoleLabel }}</div>
           </div>
 
           <v-icon size="16" color="#6b7280">mdi-chevron-right</v-icon>
@@ -181,6 +171,18 @@ export default {
 
   props: {
     modelValue: Boolean,
+    currentRole: {
+      type: String,
+      default: "administrator",
+    },
+    currentUserName: {
+      type: String,
+      default: "IT JKS",
+    },
+    currentUserInitial: {
+      type: String,
+      default: "IT",
+    },
   },
 
   emits: ["update:modelValue"],
@@ -189,183 +191,414 @@ export default {
     return {
       logo: new URL("@/assets/logowebsitenew.png", import.meta.url).href,
       manualOpened: [],
-
       menu: [
         {
           key: "dashboard",
           title: "Dashboard",
           icon: "mdi-view-dashboard-outline",
           to: "/dashboard",
+          roles: ["all"],
         },
         {
           key: "antrian",
           title: "Nomor Antrian",
           icon: "mdi-timer-sand-empty",
           to: "/antrian",
+          roles: ["all"],
         },
 
-        { header: "MASTER" },
-
         {
-          key: "administrasi",
-          title: "Administrasi",
-          icon: "mdi-file-document-outline",
+          header: "MASTER DATA",
+          key: "header-master-data",
+          roles: ["administrator", "sudo", "it", "management", "front office"],
+        },
+        {
+          key: "master-data",
+          title: "Master Data",
+          icon: "mdi-database-outline",
+          roles: ["administrator", "sudo", "it", "management", "front office"],
           children: [
             {
-              key: "administrasi-dokter",
-              title: "Dokter & Beautician",
-              to: "/administrasi/dokter",
+              key: "master-toko",
+              title: "Toko",
+              to: "/master/toko",
+              roles: ["administrator", "sudo", "it", "management"],
             },
             {
-              key: "administrasi-pasien-group",
+              key: "master-dokter-beautician",
+              title: "Dokter & Beautician",
+              to: "/master/dokter",
+              roles: ["administrator", "sudo", "it", "management"],
+            },
+            {
+              key: "master-pasien-group",
               title: "Pasien & Non Pasien",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "front office",
+              ],
               children: [
                 {
-                  key: "administrasi-pasien",
+                  key: "master-pasien",
                   title: "Data Pasien",
-                  to: "/administrasi/pasien",
+                  to: "/master/pasien",
+                  roles: [
+                    "administrator",
+                    "sudo",
+                    "it",
+                    "management",
+                    "front office",
+                  ],
+                },
+                {
+                  key: "master-non-pasien",
+                  title: "Data Non Pasien",
+                  to: "/master/non-pasien",
+                  roles: [
+                    "administrator",
+                    "sudo",
+                    "it",
+                    "management",
+                    "front office",
+                  ],
                 },
               ],
             },
             {
+              key: "master-supplier",
+              title: "Supplier",
+              to: "/master/supplier",
+              roles: ["administrator", "sudo", "it", "management"],
+            },
+            {
+              key: "master-brand-ambassador",
+              title: "Brand Ambassador",
+              to: "/master/brand-ambassador",
+              roles: ["administrator", "sudo", "it", "management"],
+            },
+            {
+              key: "master-treatment-global",
+              title: "Master Treatment Global",
+              to: "/master/treatment-global",
+              roles: ["sudo"], // superadmin only
+            },
+            {
+              key: "master-product-global",
+              title: "Master Product Global",
+              to: "/master/product-global",
+              roles: ["sudo"], // superadmin only
+            },
+            {
+              key: "master-merchandise",
+              title: "Master Merchandise",
+              to: "/master/merchandise",
+              roles: ["administrator", "sudo", "it", "management"],
+            },
+          ],
+        },
+
+        {
+          header: "OPERASIONAL KLINIK",
+          key: "header-operasional-klinik",
+          roles: [
+            "administrator",
+            "sudo",
+            "it",
+            "management",
+            "sp",
+            "apoteker",
+          ],
+        },
+        {
+          key: "operasional-klinik",
+          title: "Operasional Klinik",
+          icon: "mdi-hospital-building",
+          roles: [
+            "administrator",
+            "sudo",
+            "it",
+            "management",
+            "sp",
+            "apoteker",
+          ],
+          children: [
+            {
+              key: "operasional-jadwal-dokter",
+              title: "Jadwal Dokter",
+              to: "/operasional/jadwal-dokter",
+              roles: ["administrator", "sudo", "it", "management"],
+            },
+            {
+              key: "operasional-jadwal-nurse",
+              title: "Jadwal Nurse & Beautician",
+              to: "/operasional/jadwal-nurse",
+              roles: ["administrator", "sudo", "it", "management", "sp"],
+            },
+            {
+              key: "operasional-treatment-klinik",
+              title: "Treatment Klinik",
+              to: "/operasional/treatment-klinik",
+              roles: ["administrator", "sudo", "it", "management"],
+            },
+            {
+              key: "operasional-stock-apotek",
+              title: "Stock Apotek",
+              to: "/operasional/stock-apotek",
+              roles: ["administrator", "sudo", "it", "management", "apoteker"],
+            },
+          ],
+        },
+
+        {
+          header: "PROMO & CONTENT",
+          key: "header-promo-content",
+          roles: ["administrator", "sudo", "it", "management"],
+        },
+        {
+          key: "promo-content",
+          title: "Promo & Content",
+          icon: "mdi-bullhorn-outline",
+          roles: ["administrator", "sudo", "it", "management"],
+          children: [
+            {
+              key: "promo-voucher-diskon",
+              title: "Voucher Diskon",
+              to: "/promo/voucher",
+              roles: ["administrator", "sudo", "it", "management"],
+            },
+            {
+              key: "content-banner-upload",
+              title: "Banner Upload",
+              to: "/content/banner-upload",
+              roles: ["administrator", "sudo", "it", "management"],
+            },
+            {
+              key: "content-news-upload",
+              title: "News Upload",
+              to: "/content/news-upload",
+              roles: ["administrator", "sudo", "it", "management"],
+            },
+            {
+              key: "content-promo-upload",
+              title: "Promo Upload",
+              to: "/content/promo-upload",
+              roles: ["administrator", "sudo", "it", "management"],
+            },
+            {
+              key: "content-dashboard-upload",
+              title: "Upload Content Dashboard",
+              to: "/content/dashboard-upload",
+              roles: ["administrator", "sudo", "it", "management"],
+            },
+          ],
+        },
+        {
+          header: "ADMINISTRASI",
+          key: "header-administrasi",
+          roles: [
+            "administrator",
+            "sudo",
+            "it",
+            "management",
+            "sp",
+            "apoteker",
+          ],
+        },
+        {
+          key: "administrasi",
+          title: "Administrasi",
+          icon: "mdi-cog-outline",
+          roles: [
+            "administrator",
+            "sudo",
+            "it",
+            "management",
+            "sp",
+            "apoteker",
+          ],
+          children: [
+            {
               key: "administrasi-supplier",
               title: "Supplier",
               to: "/administrasi/supplier",
+              roles: ["administrator", "sudo", "it", "management"],
             },
             {
               key: "administrasi-jadwal-dokter",
               title: "Jadwal Dokter",
               to: "/administrasi/jadwal-dokter",
+              roles: ["administrator", "sudo", "it", "management"],
             },
             {
               key: "administrasi-jadwal-nurse",
               title: "Jadwal Nurse & Beautician",
               to: "/administrasi/jadwal-nurse",
+              roles: ["administrator", "sudo", "it", "management", "sp"],
             },
             {
-              key: "administrasi-treatment",
-              title: "Treatment",
-              to: "/administrasi/treatment",
+              key: "administrasi-treatment-klinik",
+              title: "Treatment Klinik",
+              to: "/administrasi/treatment-klinik",
+              roles: ["administrator", "sudo", "it", "management"],
             },
             {
               key: "administrasi-stock-apotek",
               title: "Stock Apotek",
               to: "/administrasi/stock-apotek",
+              roles: ["administrator", "sudo", "it", "management", "apoteker"],
             },
             {
               key: "administrasi-merchandise",
               title: "Merchandise",
               to: "/administrasi/merchandise",
-            },
-            {
-              key: "administrasi-voucher",
-              title: "Voucher Diskon",
-              to: "/administrasi/voucher",
+              roles: ["administrator", "sudo", "it", "management"],
             },
           ],
         },
-
-        { header: "Menu Resepsionis" },
+        {
+          header: "PENGATURAN SISTEM",
+          key: "header-pengaturan-sistem",
+          roles: ["administrator", "sudo", "it"],
+        },
+        {
+          key: "pengaturan-sistem",
+          title: "Pengaturan Sistem",
+          icon: "mdi-cog-outline",
+          roles: ["administrator", "sudo", "it"],
+          children: [
+            {
+              key: "pengaturan-whatsapp",
+              title: "Pengaturan WhatsApp",
+              to: "/pengaturan/whatsapp",
+              roles: ["administrator", "sudo", "it"],
+            },
+          ],
+        },
+        {
+          header: "MENU RESEPSIONIS",
+          key: "header-resepsionis",
+          roles: ["administrator", "sudo", "it", "management", "front office"],
+        },
 
         {
           key: "resepsionis",
           title: "Resepsionis",
           icon: "mdi-account-voice",
+          roles: ["administrator", "sudo", "it", "management", "front office"],
           children: [
             {
               key: "resepsionis-daftar-baru",
               title: "Pendaftaran Pasien Baru",
               to: "/resepsionis/daftar-baru",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "front office",
+              ],
             },
             {
               key: "registrasi-layanan",
               title: "Registrasi Layanan",
               to: "/resepsionis/registrasi-layanan",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "front office",
+              ],
             },
-            // {
-            //   key: "detail-registrasi-layanan",
-            //   title: "Detail Registrasi Layanan",
-            //   to: "/resepsionis/detail-registrasi-layanan",
-            // },
-            // {
-            //   key: "proses-layanan",
-            //   title: "Proses Layanan",
-            //   to: "/resepsionis/proses-layanan",
-            // },
-            // {
-            //   key: "finalisasi",
-            //   title: "Finalisasi",
-            //   to: "/resepsionis/finalisasi-layanan",
-            // },
             {
               key: "pembayaran",
               title: "Pembayaran",
               to: "/resepsionis/pembayaran",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "front office",
+              ],
             },
-            // {
-            //   key: "resepsionis-konsultasi",
-            //   title: "Daftar Konsultasi",
-            //   to: "/resepsionis/konsultasi",
-            // },
-            // {
-            //   key: "resepsionis-konsultasi-online",
-            //   title: "Daftar Konsultasi Online",
-            //   to: "/resepsionis/konsultasi-online",
-            // },
-            // {
-            //   key: "resepsionis-treatment",
-            //   title: "Daftar Treatment",
-            //   to: "/resepsionis/treatment",
-            // },
             {
               key: "resepsionis-pembayaran-recipe",
               title: "Pembayaran Recipe",
               to: "/resepsionis/pembayaran-recipe",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "front office",
+              ],
             },
-            // {
-            //   key: "resepsionis-penjualan",
-            //   title: "Penjualan Langsung",
-            //   to: "/resepsionis/penjualan",
-            // },
             {
               key: "resepsionis-poin",
               title: "Penukaran Poin",
               to: "/resepsionis/poin",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "front office",
+              ],
             },
             {
               key: "resepsionis-booking",
               title: "Booking",
               to: "/resepsionis/booking",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "front office",
+              ],
             },
           ],
         },
 
-        { header: "Menu Dokter" },
+        {
+          header: "MENU DOKTER",
+          key: "header-dokter",
+          roles: ["administrator", "sudo", "it", "management", "dokter"],
+        },
 
         {
           key: "konsultasi",
           title: "Konsultasi",
           icon: "mdi-stethoscope",
+          roles: ["administrator", "sudo", "it", "management", "dokter"],
           children: [
             {
               key: "dokter-list-konsultasi",
               title: "List Konsultasi",
               to: "/dokter/list-konsultasi",
+              roles: ["administrator", "sudo", "it", "management", "dokter"],
             },
             {
               key: "dokter-list-online",
               title: "List Konsultasi Online",
               to: "/dokter/list-online",
+              roles: ["administrator", "sudo", "it", "management", "dokter"],
             },
             {
               key: "dokter-list-selesai",
               title: "List Konsultasi Selesai",
               to: "/dokter/list-selesai",
+              roles: ["administrator", "sudo", "it", "management", "dokter"],
             },
             {
               key: "dokter-list-online-selesai",
               title: "List Konsultasi Online Selesai",
               to: "/dokter/list-online-selesai",
+              roles: ["administrator", "sudo", "it", "management", "dokter"],
             },
           ],
         },
@@ -373,237 +606,549 @@ export default {
           key: "perawatan",
           title: "Perawatan",
           icon: "mdi-hospital-box",
+          roles: ["administrator", "sudo", "it", "management", "dokter"],
           children: [
             {
               key: "dokter-list-perawatan",
               title: "List Perawatan",
               to: "/dokter/list-perawatan",
+              roles: ["administrator", "sudo", "it", "management", "dokter"],
             },
           ],
         },
 
-        { header: "Menu Perawat" },
+        {
+          header: "MENU PERAWAT",
+          key: "header-perawat",
+          roles: ["administrator", "sudo", "it", "management", "sp"],
+        },
 
         {
           key: "nurse-station",
           title: "Nurse Station",
           icon: "mdi-doctor",
+          roles: ["administrator", "sudo", "it", "management", "sp"],
           children: [
             {
               key: "perawat-tindakan",
               title: "List Tindakan Perawat",
               to: "/perawat/tindakan",
+              roles: ["administrator", "sudo", "it", "management", "sp"],
             },
           ],
         },
 
-        { header: "Menu Booking" },
+        {
+          header: "MENU BOOKING",
+          key: "header-booking",
+          roles: [
+            "administrator",
+            "sudo",
+            "it",
+            "management",
+            "front office",
+            "security",
+          ],
+        },
 
         {
           key: "booking",
           title: "Booking",
           icon: "mdi-calendar-month",
+          roles: [
+            "administrator",
+            "sudo",
+            "it",
+            "management",
+            "front office",
+            "security",
+          ],
           children: [
             {
               key: "booking-list",
               title: "List Booking",
               to: "/booking/list",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "front office",
+                "security",
+              ],
             },
             {
               key: "booking-selesai",
               title: "List Booking Selesai",
               to: "/booking/selesai",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "front office",
+              ],
             },
           ],
         },
 
-        { header: "Menu Depo / Apotek" },
+        {
+          header: "MENU DEPO / APOTEK",
+          key: "header-apotek",
+          roles: ["administrator", "sudo", "it", "management", "apoteker"],
+        },
 
         {
           key: "apotek",
           title: "Depo/Apotek",
           icon: "mdi-flask-outline",
+          roles: ["administrator", "sudo", "it", "management", "apoteker"],
           children: [
             {
               key: "apotek-resep-selesai",
               title: "Resep Dokter Selesai",
               to: "/apotek/resep-selesai",
+              roles: ["administrator", "sudo", "it", "management", "apoteker"],
             },
           ],
         },
 
-        { header: "Menu Kasir" },
+        {
+          header: "MENU KASIR",
+          key: "header-kasir",
+          roles: [
+            "administrator",
+            "sudo",
+            "it",
+            "management",
+            "front office",
+            "branch accounting",
+          ],
+        },
 
         {
           key: "kasir",
           title: "Kasir Pembayaran",
           icon: "mdi-cash-register",
+          roles: [
+            "administrator",
+            "sudo",
+            "it",
+            "management",
+            "front office",
+            "branch accounting",
+          ],
           children: [
             {
               key: "kasir-pembayaran",
               title: "Pembayaran",
               to: "/kasir/pembayaran",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "front office",
+                "branch accounting",
+              ],
             },
             {
               key: "kasir-selesai",
               title: "List Pembayaran Selesai",
               to: "/kasir/selesai",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "front office",
+                "branch accounting",
+              ],
             },
           ],
         },
 
-        { header: "Menu Transaksi" },
+        {
+          header: "MENU TRANSAKSI",
+          key: "header-transaksi",
+          roles: [
+            "administrator",
+            "sudo",
+            "it",
+            "management",
+            "branch accounting",
+          ],
+        },
 
         {
           key: "transaksi",
           title: "Data Transaksi",
           icon: "mdi-swap-horizontal",
+          roles: [
+            "administrator",
+            "sudo",
+            "it",
+            "management",
+            "branch accounting",
+          ],
           children: [
             {
               key: "transaksi-semua",
               title: "Data Tr Semua",
               to: "/transaksi/semua",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "transaksi-poin",
               title: "Data Tr Poin",
               to: "/transaksi/poin",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
           ],
         },
 
-        { header: "Menu WhatsApp" },
+        {
+          header: "MENU WHATSAPP",
+          key: "header-whatsapp",
+          roles: ["administrator", "sudo", "it", "management"],
+        },
 
         {
           key: "whatsapp",
           title: "WhatsApp Logs",
           icon: "mdi-whatsapp",
+          roles: ["administrator", "sudo", "it", "management"],
           children: [
             {
               key: "wa-undian",
               title: "Kirim Undian",
               to: "/wa/undian",
+              roles: ["administrator", "sudo", "it", "management"],
             },
           ],
         },
 
-        { header: "Settlement Accurate" },
+        {
+          header: "SETTLEMENT ACCURATE",
+          key: "header-accurate",
+          roles: [
+            "administrator",
+            "sudo",
+            "it",
+            "management",
+            "branch accounting",
+          ],
+        },
 
         {
           key: "accurate",
           title: "Report Accurate",
           icon: "mdi-alpha-a-circle",
+          roles: [
+            "administrator",
+            "sudo",
+            "it",
+            "management",
+            "branch accounting",
+          ],
           children: [
             {
               key: "accurate-faktur-umum",
               title: "Upload Faktur Umum",
               to: "/accurate/faktur-umum",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "accurate-faktur-elite",
               title: "Upload Faktur EliteGlobal",
               to: "/accurate/faktur-elite",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "accurate-faktur-owner",
               title: "Upload Faktur Owner",
               to: "/accurate/faktur-owner",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "accurate-faktur-deposit",
               title: "Upload Faktur Deposit",
               to: "/accurate/faktur-deposit",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "accurate-faktur-realisasi",
               title: "Upload Faktur Realisasi Deposit",
               to: "/accurate/faktur-realisasi",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "accurate-sto",
               title: "Upload STO",
               to: "/accurate/sto",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
           ],
         },
 
-        { header: "Menu Laporan" },
+        {
+          header: "MENU LAPORAN",
+          key: "header-laporan",
+          roles: [
+            "administrator",
+            "sudo",
+            "it",
+            "management",
+            "branch accounting",
+          ],
+        },
 
         {
           key: "laporan",
           title: "Pelaporan",
           icon: "mdi-file-chart-outline",
+          roles: [
+            "administrator",
+            "sudo",
+            "it",
+            "management",
+            "branch accounting",
+          ],
           children: [
             {
               key: "laporan-insentif-dokter",
               title: "Insentif Dokter",
               to: "/laporan/insentif-dokter",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "laporan-insentif-nurse",
               title: "Insentif Nurse/Beautician",
               to: "/laporan/insentif-nurse",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "laporan-insentif-apoteker",
               title: "Insentif Apoteker / Asisten Apoteker",
               to: "/laporan/insentif-apoteker",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "laporan-detail",
               title: "Data Laporan Detail",
               to: "/laporan/detail",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "laporan-pemasukan",
               title: "Data Laporan Pemasukan",
               to: "/laporan/pemasukan",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "laporan-treatment",
               title: "Data Laporan Treatment",
               to: "/laporan/treatment",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "laporan-obat",
               title: "Data Laporan Obat",
               to: "/laporan/obat",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "laporan-top-treatment",
               title: "Pasien Treatment Terbanyak",
               to: "/laporan/top-treatment",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "laporan-top-nominal",
               title: "Top Nominal Terbanyak",
               to: "/laporan/top-nominal",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
             {
               key: "laporan-terlaris",
               title: "Data Tindakan Terlaris",
               to: "/laporan/terlaris",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "branch accounting",
+              ],
             },
           ],
         },
 
-        { header: "Menu User" },
+        {
+          header: "MENU USER",
+          key: "header-users",
+          roles: ["administrator", "sudo", "it"],
+        },
 
         {
           key: "users",
           title: "Users",
           icon: "mdi-account-multiple",
           to: "/users",
+          roles: ["administrator", "sudo", "it"],
         },
       ],
     };
   },
 
   computed: {
+    normalizedCurrentRole() {
+      return this.normalizeRole(this.currentRole);
+    },
+
+    currentUserInitialComputed() {
+      const value = (this.currentUserInitial || "").trim();
+      if (value) return value.toUpperCase();
+
+      return (
+        this.currentUserName
+          .split(" ")
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((part) => part[0])
+          .join("")
+          .toUpperCase() || "US"
+      );
+    },
+
+    currentRoleLabel() {
+      const map = {
+        all: "All Role",
+        administrator: "Administrator",
+        dokter: "Dokter",
+        front_office: "Front Office",
+        apoteker: "Apoteker",
+        branch_accounting: "Branch Accounting",
+        security: "Security",
+        sudo: "Sudo",
+        sp: "SP",
+        it: "IT",
+        management: "Management",
+      };
+
+      return map[this.normalizedCurrentRole] || this.currentRole;
+    },
+
+    visibleMenu() {
+      return this.filterMenuByRole(this.menu);
+    },
+
     activeOpenGroups() {
       const opened = [];
 
-      this.menu.forEach((item) => {
+      this.visibleMenu.forEach((item) => {
         if (!item.children) return;
 
         if (this.hasActiveChild(item.children)) {
@@ -630,6 +1175,9 @@ export default {
     "$route.path"() {
       this.cleanManualOpened();
     },
+    currentRole() {
+      this.cleanManualOpened();
+    },
   },
 
   mounted() {
@@ -637,6 +1185,64 @@ export default {
   },
 
   methods: {
+    normalizeRole(role) {
+      return String(role || "all")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "_");
+    },
+
+    normalizeRoles(roles = []) {
+      return roles.map((role) => this.normalizeRole(role));
+    },
+
+    isAllowed(item) {
+      if (!item.roles || item.roles.length === 0) return true;
+
+      const roles = this.normalizeRoles(item.roles);
+
+      if (roles.includes("all")) return true;
+      if (this.normalizedCurrentRole === "all") return true;
+
+      return roles.includes(this.normalizedCurrentRole);
+    },
+
+    filterMenuByRole(items = []) {
+      const result = [];
+
+      items.forEach((item) => {
+        if (item.header) {
+          if (this.isAllowed(item)) {
+            result.push({ ...item });
+          }
+          return;
+        }
+
+        if (!item.children) {
+          if (this.isAllowed(item)) {
+            result.push({ ...item });
+          }
+          return;
+        }
+
+        const filteredChildren = this.filterMenuByRole(item.children);
+
+        if (this.isAllowed(item) || filteredChildren.length > 0) {
+          result.push({
+            ...item,
+            children: filteredChildren,
+          });
+        }
+      });
+
+      return result.filter((item, index, arr) => {
+        if (!item.header) return true;
+
+        const nextItem = arr[index + 1];
+        return !!nextItem && !nextItem.header;
+      });
+    },
+
     normalizePath(path) {
       if (!path) return "/";
 
@@ -687,14 +1293,12 @@ export default {
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
 
-/* === BASE === */
 .sidebar {
   background: #2c3136 !important;
   border-right: none !important;
   font-family: "Plus Jakarta Sans", sans-serif;
 }
 
-/* Custom scrollbar */
 .sidebar :deep(.v-navigation-drawer__content) {
   overflow-y: auto;
   scrollbar-width: thin;
@@ -718,7 +1322,6 @@ export default {
   background: #2c3136;
 }
 
-/* === HEADER === */
 .sidebar-header {
   padding: 20px 20px 0;
   background: #2c3136;
@@ -745,7 +1348,6 @@ export default {
   margin-bottom: 0;
 }
 
-/* === NAV === */
 .sidebar-nav {
   padding: 8px 10px !important;
 }
@@ -783,7 +1385,6 @@ export default {
   font-weight: 600;
 }
 
-/* === ICON === */
 .icon-wrap {
   width: 30px;
   height: 30px;
@@ -798,14 +1399,12 @@ export default {
   transition: all 0.18s ease;
 }
 
-/* === LABEL === */
 .nav-label {
   font-size: 13.5px !important;
   font-weight: 500 !important;
   letter-spacing: 0.1px;
 }
 
-/* === SECTION HEADER === */
 .menu-section-header {
   display: flex;
   align-items: center;
@@ -826,7 +1425,6 @@ export default {
   text-transform: uppercase;
 }
 
-/* === LEVEL 2 === */
 .nav-item--l2 {
   padding-left: 16px !important;
 }
@@ -871,7 +1469,6 @@ export default {
   border-color: white;
 }
 
-/* === LEVEL 3 === */
 .nav-item--l3 {
   padding-left: 28px !important;
 }
@@ -903,7 +1500,6 @@ export default {
   width: 14px;
 }
 
-/* === GROUP overrides === */
 .nav-group :deep(.v-list-group__items) {
   padding: 0 !important;
 }
@@ -912,14 +1508,12 @@ export default {
   padding: 0 !important;
 }
 
-/* Chevron color */
 :deep(.v-list-group__header .v-list-item__append .v-icon) {
   color: #ced4da !important;
   font-size: 18px !important;
   opacity: 1 !important;
 }
 
-/* === FOOTER === */
 .sidebar-footer {
   padding: 0 10px 16px;
 }
@@ -977,7 +1571,6 @@ export default {
   line-height: 1.3;
 }
 
-/* === ACTIVE BASE === */
 .nav-item--active {
   color: #ffffff !important;
 }
@@ -987,7 +1580,6 @@ export default {
   font-weight: 600;
 }
 
-/* === LEVEL 1: item aktif asli (mis. Dashboard, Users) === */
 .nav-item--active-l1 {
   background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%) !important;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
@@ -998,7 +1590,6 @@ export default {
   color: #ffffff;
 }
 
-/* === LEVEL 1: parent terbuka karena ada child aktif === */
 .nav-item--open-l1 {
   background: rgba(37, 99, 235, 0.16) !important;
   color: #bfdbfe !important;
@@ -1018,7 +1609,6 @@ export default {
   color: #93c5fd !important;
 }
 
-/* === LEVEL 2: item aktif === */
 .nav-item--active-l2 {
   background: rgba(14, 165, 233, 0.2) !important;
   color: #e0f2fe !important;
@@ -1030,7 +1620,6 @@ export default {
   border-color: #7dd3fc;
 }
 
-/* === LEVEL 2: group terbuka karena ada level 3 aktif === */
 .nav-item--open-l2 {
   background: rgba(56, 189, 248, 0.12) !important;
   color: #bae6fd !important;
@@ -1049,7 +1638,6 @@ export default {
   color: #7dd3fc !important;
 }
 
-/* === LEVEL 3: item aktif === */
 .nav-item--active-l3 {
   background: rgba(16, 185, 129, 0.18) !important;
   color: #d1fae5 !important;
