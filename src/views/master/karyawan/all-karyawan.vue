@@ -49,7 +49,7 @@
                 size="small"
                 color="primary"
                 prepend-icon="mdi-pencil"
-                :to="'/administrasi/karyawan/edit/' + item.kode"
+                :to="'/master/karyawan/edit/' + item.kode"
               >
                 Edit
               </v-btn>

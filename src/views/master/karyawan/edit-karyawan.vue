@@ -2,9 +2,9 @@
   <div>
     <div class="d-flex justify-space-between align-center mb-6 flex-wrap ga-3">
       <div>
-        <h1 class="text-h5 font-weight-bold mb-1">Tambah Karyawan</h1>
+        <h1 class="text-h5 font-weight-bold mb-1">Edit Karyawan</h1>
         <div class="text-body-2 text-medium-emphasis">
-          Tambahkan data master karyawan dan penempatannya
+          Ubah data master karyawan dan penempatannya
         </div>
       </div>
 
@@ -15,13 +15,16 @@
 
     <v-card>
       <v-card-title class="text-h6 font-weight-bold">
-        Form Master Karyawan
+        Form Edit Karyawan
       </v-card-title>
 
       <v-divider />
 
       <v-card-text class="pt-6">
+        <v-skeleton-loader v-if="loadingPage" type="article" />
+
         <v-form
+          v-else
           ref="formRef"
           v-model="isValid"
           validate-on="submit lazy"
@@ -296,7 +299,7 @@
               :loading="loadingSave"
               :disabled="loadingSave"
             >
-              Simpan
+              Update
             </v-btn>
           </div>
         </v-form>
@@ -309,10 +312,11 @@
 import axios from "axios";
 
 export default {
-  name: "AddKaryawan",
+  name: "EditKaryawan",
   data() {
     return {
       isValid: false,
+      loadingPage: false,
       loadingMaster: false,
       loadingSave: false,
       jabatanOptions: [],
@@ -351,10 +355,26 @@ export default {
   },
 
   mounted() {
-    this.fetchMasterData();
+    this.initPage();
   },
 
   methods: {
+    async initPage() {
+      this.loadingPage = true;
+
+      try {
+        await Promise.all([this.fetchMasterData(), this.fetchDetail()]);
+      } catch (error) {
+        console.error(error);
+
+        if (this.$toast?.error) {
+          this.$toast.error("Gagal memuat data karyawan");
+        }
+      } finally {
+        this.loadingPage = false;
+      }
+    },
+
     async fetchMasterData() {
       this.loadingMaster = true;
 
@@ -366,15 +386,46 @@ export default {
 
         this.jabatanOptions = jabatanRes.data?.data || [];
         this.tokoOptions = tokoRes.data?.data || [];
-      } catch (error) {
-        console.error(error);
-
-        if (this.$toast?.error) {
-          this.$toast.error("Gagal memuat data master");
-        }
       } finally {
         this.loadingMaster = false;
       }
+    },
+
+    async fetchDetail() {
+      const id = this.$route.params.id;
+      const res = await axios.get(`/api/master/karyawan/${id}`);
+      const data = res.data?.data;
+
+      this.form = {
+        kode: data?.kode || "",
+        jabatan_id: data?.jabatan_id || null,
+        nama: data?.nama || "",
+        alamat: data?.alamat || "",
+        foto_karyawan: data?.foto_karyawan || "",
+        no_telp: data?.no_telp || "",
+        nik: data?.nik || "",
+        no_ihs: data?.no_ihs || "",
+        gender: data?.gender || null,
+        birthday_date: data?.birthday_date || "",
+        no_sip_dok: data?.no_sip_dok || "",
+        is_dokter_spesialis: Number(data?.is_dokter_spesialis || 0) === 1,
+        sort_order: Number(data?.sort_order || 0),
+        penempatan: (data?.penempatan || []).length
+          ? data.penempatan.map((item) => ({
+              toko_id: item.toko_id,
+              is_primary: Number(item.is_primary || 0) === 1,
+              tanggal_mulai: item.tanggal_mulai || "",
+              tanggal_selesai: item.tanggal_selesai || "",
+            }))
+          : [
+              {
+                toko_id: null,
+                is_primary: true,
+                tanggal_mulai: "",
+                tanggal_selesai: "",
+              },
+            ],
+      };
     },
 
     addPenempatan() {
@@ -479,10 +530,13 @@ export default {
       this.loadingSave = true;
 
       try {
-        await axios.post("/api/master/karyawan", this.buildPayload());
+        await axios.put(
+          `/api/master/karyawan/${this.$route.params.id}`,
+          this.buildPayload(),
+        );
 
         if (this.$toast?.success) {
-          this.$toast.success("Data karyawan berhasil disimpan");
+          this.$toast.success("Data karyawan berhasil diupdate");
         }
 
         this.$router.push("/master/karyawan");
@@ -490,7 +544,7 @@ export default {
         console.error(error);
 
         const message =
-          error?.response?.data?.message || "Gagal menyimpan data karyawan";
+          error?.response?.data?.message || "Gagal mengupdate data karyawan";
 
         if (this.$toast?.error) {
           this.$toast.error(message);

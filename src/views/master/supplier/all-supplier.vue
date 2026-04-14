@@ -2,7 +2,7 @@
   <div>
     <div class="page-header">
       <div>
-        <h1 class="page-title">Supplier</h1>
+        <h1 class="page-title">Master Supplier</h1>
         <p class="page-subtitle">
           Kelola data supplier yang terdaftar di sistem
         </p>
@@ -20,7 +20,7 @@
           <v-btn
             prepend-icon="mdi-plus"
             color="success"
-            :to="'/administrasi/supplier/add'"
+            :to="'/master/supplier/add'"
           >
             Entry Data
           </v-btn>
@@ -52,9 +52,9 @@
                 color="primary"
                 size="small"
                 prepend-icon="mdi-pencil"
-                :to="'/administrasi/supplier/edit/' + item.kode"
+                :to="'/master/supplier/edit/' + item.kode"
               >
-                Edit Supplier
+                Edit
               </v-btn>
 
               <v-btn
@@ -63,7 +63,7 @@
                 prepend-icon="mdi-delete"
                 @click="deleteSupplier(item)"
               >
-                Hapus Supplier
+                Hapus
               </v-btn>
             </div>
           </template>
@@ -80,8 +80,8 @@ export default {
     return {
       search: "",
       breadcrumbs: [
-        { title: "Administrasi", disabled: true },
-        { title: "Supplier", disabled: false, to: "/administrasi/supplier" },
+        { title: "Master", disabled: true },
+        { title: "Supplier", disabled: false, to: "/master/supplier" },
       ],
 
       headers: [

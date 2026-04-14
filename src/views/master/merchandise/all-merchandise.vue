@@ -2,9 +2,9 @@
   <div>
     <div class="page-header">
       <div>
-        <h1 class="page-title">Voucher</h1>
+        <h1 class="page-title">Master Merchandise</h1>
         <p class="page-subtitle">
-          Kelola data voucher yang terdaftar di sistem
+          Kelola data merchandise yang terdaftar di sistem
         </p>
       </div>
 
@@ -19,7 +19,7 @@
           <v-btn
             color="success"
             prepend-icon="mdi-plus"
-            :to="'/administrasi/voucher/add'"
+            :to="'/master/merchandise/add'"
           >
             Entry Data
           </v-btn>
@@ -27,7 +27,7 @@
 
         <v-text-field
           v-model="search"
-          placeholder="Cari voucher..."
+          placeholder="Cari merchandise..."
           prepend-inner-icon="mdi-magnify"
           variant="outlined"
           density="compact"
@@ -64,7 +64,7 @@
                   size="small"
                   color="primary"
                   prepend-icon="mdi-pencil"
-                  :to="'/administrasi/voucher/edit/' + item.id"
+                  :to="'/master/merchandise/edit/' + item.id"
                 >
                   Edit
                 </v-btn>
@@ -90,8 +90,8 @@
         <v-card-title class="text-h6"> Konfirmasi Hapus </v-card-title>
 
         <v-card-text>
-          Yakin ingin menghapus voucher
-          <strong>{{ selectedItem?.nama_voucher }}</strong
+          Yakin ingin menghapus merchandise
+          <strong>{{ selectedItem?.nama_merchandise }}</strong
           >?
         </v-card-text>
 
@@ -114,12 +114,12 @@ export default {
       selectedItem: null,
 
       breadcrumbs: [
-        { title: "Administrasi", disabled: true },
-        { title: "Voucher", disabled: false, to: "/administrasi/voucher" },
+        { title: "Master", disabled: true },
+        { title: "Merchandise", disabled: false, to: "/master/merchandise" },
       ],
 
       headers: [
-        { title: "NAMA VOUCHER", key: "nama_voucher" },
+        { title: "NAMA MERCHANDISE", key: "nama_merchandise" },
         { title: "DISKON", key: "diskon_display" },
         { title: "HARGA POIN", key: "harga_poin" },
         { title: "STOK", key: "stok_merchant" },
@@ -127,10 +127,10 @@ export default {
       ],
 
       // dummy data
-      vouchers: [
+      merchandises: [
         {
           id: 1,
-          nama_voucher: "Voucher Hemat 10%",
+          nama_merchandise: "Voucher Hemat 10%",
           diskon_tipe: "pr",
           diskon: 10,
           harga_poin: 100,
@@ -138,7 +138,7 @@ export default {
         },
         {
           id: 2,
-          nama_voucher: "Voucher Potongan Rp50.000",
+          nama_merchandise: "Voucher Potongan Rp50.000",
           diskon_tipe: "rp",
           diskon: 50000,
           harga_poin: 200,
@@ -146,7 +146,7 @@ export default {
         },
         {
           id: 3,
-          nama_voucher: "Souvenir Special",
+          nama_merchandise: "Souvenir Special",
           diskon_tipe: "sv",
           diskon: 0,
           harga_poin: 150,
@@ -158,7 +158,7 @@ export default {
 
   computed: {
     formattedVouchers() {
-      return this.vouchers.map((v) => ({
+      return this.merchandises.map((v) => ({
         ...v,
         diskon_display: this.formatDiskon(v),
       }));
@@ -199,7 +199,7 @@ export default {
 
     deleteVoucher() {
       // sesuaikan dengan flow backend/API kamu
-      console.log("hapus voucher", this.selectedItem);
+      console.log("hapus merchandise", this.selectedItem);
       this.deleteDialog = false;
     },
   },
