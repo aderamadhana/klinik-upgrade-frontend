@@ -11,13 +11,20 @@
       <v-breadcrumbs :items="breadcrumbs" divider="/" />
     </div>
 
-    <v-form ref="formRef" v-model="isFormValid">
-      <!-- Section: Identitas -->
-      <v-card class="mb-4" rounded="lg">
-        <v-card-title class="text-subtitle-1 font-weight-bold">
-          Identitas Pasien
-        </v-card-title>
-        <v-card-text>
+    <v-card elevation="1">
+      <v-card-title class="text-h6 font-weight-bold">
+        Form Pendaftaran Pasien Baru
+      </v-card-title>
+
+      <v-divider />
+
+      <v-card-text>
+        <v-form ref="formRef" v-model="isFormValid">
+          <!-- IDENTITAS PASIEN -->
+          <div class="text-subtitle-1 font-weight-bold mb-3">
+            Identitas Pasien
+          </div>
+
           <v-row>
             <v-col cols="12" md="6">
               <v-text-field
@@ -35,7 +42,7 @@
             <v-col cols="12" md="6">
               <v-text-field
                 v-model="form.nama"
-                label="Nama Lengkap"
+                label="Nama Lengkap *"
                 variant="outlined"
                 density="comfortable"
                 prepend-inner-icon="mdi-account-outline"
@@ -47,7 +54,7 @@
             <v-col cols="12" md="6">
               <v-text-field
                 v-model="form.ktp_passport"
-                label="KTP / SIM / Passport"
+                label="KTP / SIM / Passport *"
                 variant="outlined"
                 density="comfortable"
                 prepend-inner-icon="mdi-card-bulleted-outline"
@@ -61,7 +68,7 @@
             <v-col cols="12" md="6">
               <v-select
                 v-model="form.jenis_kelamin"
-                label="Jenis Kelamin"
+                label="Jenis Kelamin *"
                 variant="outlined"
                 density="comfortable"
                 prepend-inner-icon="mdi-human-male-female"
@@ -76,7 +83,7 @@
             <v-col cols="12" md="4">
               <v-text-field
                 v-model="form.tempat_lahir"
-                label="Tempat Lahir"
+                label="Tempat Lahir *"
                 variant="outlined"
                 density="comfortable"
                 prepend-inner-icon="mdi-map-marker-outline"
@@ -87,7 +94,7 @@
             <v-col cols="12" md="4">
               <v-text-field
                 v-model="form.tgl_lahir"
-                label="Tanggal Lahir"
+                label="Tanggal Lahir *"
                 type="date"
                 variant="outlined"
                 density="comfortable"
@@ -109,20 +116,19 @@
               />
             </v-col>
           </v-row>
-        </v-card-text>
-      </v-card>
 
-      <!-- Section: Kontak -->
-      <v-card class="mb-4" rounded="lg">
-        <v-card-title class="text-subtitle-1 font-weight-bold">
-          Kontak & Alamat
-        </v-card-title>
-        <v-card-text>
+          <v-divider class="my-6" />
+
+          <!-- KONTAK & ALAMAT -->
+          <div class="text-subtitle-1 font-weight-bold mb-3">
+            Kontak & Alamat
+          </div>
+
           <v-row>
             <v-col cols="12" md="4">
               <v-text-field
                 v-model="form.no_hp"
-                label="Nomor HP"
+                label="Nomor HP *"
                 variant="outlined"
                 density="comfortable"
                 prepend-inner-icon="mdi-cellphone"
@@ -136,7 +142,7 @@
             <v-col cols="12" md="4">
               <v-text-field
                 v-model="form.no_wa"
-                label="Nomor WhatsApp"
+                label="Nomor WhatsApp *"
                 variant="outlined"
                 density="comfortable"
                 prepend-inner-icon="mdi-whatsapp"
@@ -231,7 +237,7 @@
             <v-col cols="12">
               <v-textarea
                 v-model="form.alamat"
-                label="Alamat Lengkap"
+                label="Alamat Lengkap *"
                 variant="outlined"
                 density="comfortable"
                 rows="3"
@@ -241,15 +247,14 @@
               />
             </v-col>
           </v-row>
-        </v-card-text>
-      </v-card>
 
-      <!-- Section: Informasi Pribadi -->
-      <v-card class="mb-4" rounded="lg">
-        <v-card-title class="text-subtitle-1 font-weight-bold">
-          Informasi Pribadi
-        </v-card-title>
-        <v-card-text>
+          <v-divider class="my-6" />
+
+          <!-- INFORMASI PRIBADI -->
+          <div class="text-subtitle-1 font-weight-bold mb-3">
+            Informasi Pribadi
+          </div>
+
           <v-row>
             <v-col cols="12" md="4">
               <v-text-field
@@ -332,15 +337,14 @@
               />
             </v-col>
           </v-row>
-        </v-card-text>
-      </v-card>
 
-      <!-- Section: Medis -->
-      <v-card rounded="lg">
-        <v-card-title class="text-subtitle-1 font-weight-bold">
-          Informasi Medis Tambahan
-        </v-card-title>
-        <v-card-text>
+          <v-divider class="my-6" />
+
+          <!-- INFORMASI MEDIS -->
+          <div class="text-subtitle-1 font-weight-bold mb-3">
+            Informasi Medis Tambahan
+          </div>
+
           <v-row>
             <v-col cols="12" md="6">
               <v-textarea
@@ -386,35 +390,45 @@
               />
             </v-col>
           </v-row>
-        </v-card-text>
-      </v-card>
-    </v-form>
+
+          <div class="d-flex flex-column flex-md-row justify-end ga-3 mt-6">
+            <v-btn
+              color="secondary"
+              variant="outlined"
+              size="large"
+              :to="'/resepsionis'"
+            >
+              Batal
+            </v-btn>
+
+            <v-btn
+              color="info"
+              variant="flat"
+              size="large"
+              prepend-icon="mdi-content-save"
+              @click="submitForm"
+              :loading="loading"
+            >
+              Simpan Data Pasien
+            </v-btn>
+
+            <v-btn
+              color="success"
+              variant="flat"
+              size="large"
+              prepend-icon="mdi-key"
+              @click="generateToken"
+            >
+              Buat Token Registrasi Mandiri
+            </v-btn>
+          </div>
+        </v-form>
+      </v-card-text>
+    </v-card>
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color">
       {{ snackbar.text }}
     </v-snackbar>
-    <div class="d-flex flex-column flex-md-row justify-end ga-3 mt-6">
-      <v-btn
-        color="info"
-        variant="flat"
-        size="large"
-        prepend-icon="mdi-content-save"
-        @click="submitForm"
-        :loading="loading"
-      >
-        Simpan Data Pasien
-      </v-btn>
-
-      <v-btn
-        color="success"
-        variant="flat"
-        size="large"
-        prepend-icon="mdi-key"
-        @click="generateToken"
-      >
-        Buat Token Registrasi Mandiri
-      </v-btn>
-    </div>
   </div>
 </template>
 

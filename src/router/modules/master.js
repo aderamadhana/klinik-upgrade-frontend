@@ -101,13 +101,13 @@ const masterRoutes = [
       },
       {
         path: "merchandise/add",
-        name: "Tambah Brand Ambassador",
+        name: "Tambah Merchandise",
         component: () =>
           import("@/views/master/merchandise/add-merchandise.vue"),
       },
       {
         path: "merchandise/edit/:id",
-        name: "Edit Brand Ambassador",
+        name: "Edit Merchandise",
         component: () =>
           import("@/views/master/merchandise/edit-merchandise.vue"),
       },
@@ -120,10 +120,35 @@ const masterRoutes = [
           import("@/views/master/product-global/all-product-global.vue"),
       },
       {
+        path: "product-global/add",
+        name: "Add Product Global",
+        component: () =>
+          import("@/views/master/product-global/add-product-global.vue"),
+      },
+      {
+        path: "product-global/edit/:id",
+        name: "Edit Product Global",
+        component: () =>
+          import("@/views/master/product-global/edit-product-global.vue"),
+      },
+
+      {
         path: "treatment-global",
         name: "Master Treatment Global",
         component: () =>
           import("@/views/master/treatment-global/all-treatment-global.vue"),
+      },
+      {
+        path: "treatment-global/add",
+        name: "Tambah Treatment Global",
+        component: () =>
+          import("@/views/master/treatment-global/add-treatment-global.vue"),
+      },
+      {
+        path: "treatment-global/edit/:id",
+        name: "Edit Treatment Global",
+        component: () =>
+          import("@/views/master/treatment-global/edit-treatment-global.vue"),
       },
     ],
   },

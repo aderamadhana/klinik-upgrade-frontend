@@ -76,23 +76,26 @@ export default {
 
 <style scoped>
 .hero {
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100svh;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 
   display: grid;
-  grid-template-columns: 44% 56%;
+  grid-template-columns: 42% 58%;
 }
 
 .left-area {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 24px;
 }
 
 .login-wrapper {
   width: 520px;
+  max-width: 100%;
 }
 
 .login-header {
@@ -102,6 +105,7 @@ export default {
 
 .logo {
   width: 300px;
+  max-width: 100%;
 }
 
 .title {
@@ -140,5 +144,75 @@ export default {
 .copyright {
   font-size: 12px;
   color: #777;
+}
+
+/* =========================
+   RESPONSIVE MOBILE / TABLET
+   ========================= */
+@media (max-width: 768px) {
+  .hero {
+    background-image: none !important;
+    background-color: #f7eef6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .left-area {
+    width: 100%;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .login-wrapper {
+    width: 100%;
+    max-width: 430px;
+    background: #ffffff;
+    padding: 34px 24px 28px;
+    border-radius: 24px;
+    box-shadow: 0 16px 40px rgba(142, 63, 145, 0.16);
+  }
+
+  .login-header {
+    margin-bottom: 32px;
+  }
+
+  .logo {
+    width: 230px;
+  }
+
+  .title {
+    font-size: 21px;
+    margin-top: 8px;
+  }
+
+  .login-btn {
+    height: 54px;
+    border-radius: 13px;
+  }
+
+  .login-footer {
+    margin-top: 24px;
+  }
+}
+
+@media (max-width: 420px) {
+  .hero {
+    padding: 18px 12px;
+  }
+
+  .login-wrapper {
+    padding: 30px 20px 24px;
+    border-radius: 20px;
+  }
+
+  .logo {
+    width: 210px;
+  }
+
+  .title {
+    font-size: 19px;
+  }
 }
 </style>

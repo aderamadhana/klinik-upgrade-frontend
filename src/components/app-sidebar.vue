@@ -281,89 +281,89 @@ export default {
             "apoteker",
           ],
         },
-        {
-          key: "operasional-klinik",
-          title: "Operasional Klinik",
-          icon: "mdi-hospital-building",
-          roles: [
-            "administrator",
-            "sudo",
-            "it",
-            "management",
-            "sp",
-            "apoteker",
-          ],
-          children: [
-            {
-              key: "operasional-jadwal-dokter",
-              title: "Jadwal Dokter",
-              to: "/operasional/jadwal-dokter",
-              roles: ["administrator", "sudo", "it", "management"],
-            },
-            {
-              key: "operasional-jadwal-nurse",
-              title: "Jadwal Nurse & Beautician",
-              to: "/operasional/jadwal-nurse",
-              roles: ["administrator", "sudo", "it", "management", "sp"],
-            },
-            {
-              key: "operasional-treatment-klinik",
-              title: "Treatment Klinik",
-              to: "/operasional/treatment-klinik",
-              roles: ["administrator", "sudo", "it", "management"],
-            },
-            {
-              key: "operasional-stock-apotek",
-              title: "Stock Apotek",
-              to: "/operasional/stock-apotek",
-              roles: ["administrator", "sudo", "it", "management", "apoteker"],
-            },
-          ],
-        },
+        // {
+        //   key: "operasional-klinik",
+        //   title: "Operasional Klinik",
+        //   icon: "mdi-hospital-building",
+        //   roles: [
+        //     "administrator",
+        //     "sudo",
+        //     "it",
+        //     "management",
+        //     "sp",
+        //     "apoteker",
+        //   ],
+        //   children: [
+        //     {
+        //       key: "operasional-jadwal-dokter",
+        //       title: "Jadwal Dokter",
+        //       to: "/operasional/jadwal-dokter",
+        //       roles: ["administrator", "sudo", "it", "management"],
+        //     },
+        //     {
+        //       key: "operasional-jadwal-nurse",
+        //       title: "Jadwal Nurse & Beautician",
+        //       to: "/operasional/jadwal-nurse",
+        //       roles: ["administrator", "sudo", "it", "management", "sp"],
+        //     },
+        //     {
+        //       key: "operasional-treatment-klinik",
+        //       title: "Treatment Klinik",
+        //       to: "/operasional/treatment-klinik",
+        //       roles: ["administrator", "sudo", "it", "management"],
+        //     },
+        //     {
+        //       key: "operasional-stock-apotek",
+        //       title: "Stock Apotek",
+        //       to: "/operasional/stock-apotek",
+        //       roles: ["administrator", "sudo", "it", "management", "apoteker"],
+        //     },
+        //   ],
+        // },
 
-        {
-          header: "PROMO & CONTENT",
-          key: "header-promo-content",
-          roles: ["administrator", "sudo", "it", "management"],
-        },
-        {
-          key: "promo-content",
-          title: "Promo & Content",
-          icon: "mdi-bullhorn-outline",
-          roles: ["administrator", "sudo", "it", "management"],
-          children: [
-            {
-              key: "promo-voucher-diskon",
-              title: "Voucher Diskon",
-              to: "/promo/voucher",
-              roles: ["administrator", "sudo", "it", "management"],
-            },
-            {
-              key: "content-banner-upload",
-              title: "Banner Upload",
-              to: "/content/banner-upload",
-              roles: ["administrator", "sudo", "it", "management"],
-            },
-            {
-              key: "content-news-upload",
-              title: "News Upload",
-              to: "/content/news-upload",
-              roles: ["administrator", "sudo", "it", "management"],
-            },
-            {
-              key: "content-promo-upload",
-              title: "Promo Upload",
-              to: "/content/promo-upload",
-              roles: ["administrator", "sudo", "it", "management"],
-            },
-            {
-              key: "content-dashboard-upload",
-              title: "Upload Content Dashboard",
-              to: "/content/dashboard-upload",
-              roles: ["administrator", "sudo", "it", "management"],
-            },
-          ],
-        },
+        // {
+        //   header: "PROMO & CONTENT",
+        //   key: "header-promo-content",
+        //   roles: ["administrator", "sudo", "it", "management"],
+        // },
+        // {
+        //   key: "promo-content",
+        //   title: "Promo & Content",
+        //   icon: "mdi-bullhorn-outline",
+        //   roles: ["administrator", "sudo", "it", "management"],
+        //   children: [
+        //     {
+        //       key: "promo-voucher-diskon",
+        //       title: "Voucher Diskon",
+        //       to: "/promo/voucher",
+        //       roles: ["administrator", "sudo", "it", "management"],
+        //     },
+        //     {
+        //       key: "content-banner-upload",
+        //       title: "Banner Upload",
+        //       to: "/content/banner-upload",
+        //       roles: ["administrator", "sudo", "it", "management"],
+        //     },
+        //     {
+        //       key: "content-news-upload",
+        //       title: "News Upload",
+        //       to: "/content/news-upload",
+        //       roles: ["administrator", "sudo", "it", "management"],
+        //     },
+        //     {
+        //       key: "content-promo-upload",
+        //       title: "Promo Upload",
+        //       to: "/content/promo-upload",
+        //       roles: ["administrator", "sudo", "it", "management"],
+        //     },
+        //     {
+        //       key: "content-dashboard-upload",
+        //       title: "Upload Content Dashboard",
+        //       to: "/content/dashboard-upload",
+        //       roles: ["administrator", "sudo", "it", "management"],
+        //     },
+        //   ],
+        // },
         {
           header: "ADMINISTRASI",
           key: "header-administrasi",
@@ -389,12 +389,12 @@ export default {
             "apoteker",
           ],
           children: [
-            {
-              key: "administrasi-supplier",
-              title: "Supplier",
-              to: "/administrasi/supplier",
-              roles: ["administrator", "sudo", "it", "management"],
-            },
+            // {
+            //   key: "administrasi-supplier",
+            //   title: "Supplier",
+            //   to: "/administrasi/supplier",
+            //   roles: ["administrator", "sudo", "it", "management"],
+            // },
             {
               key: "administrasi-jadwal-dokter",
               title: "Jadwal Dokter",
@@ -407,12 +407,12 @@ export default {
               to: "/administrasi/jadwal-nurse",
               roles: ["administrator", "sudo", "it", "management", "sp"],
             },
-            {
-              key: "administrasi-treatment-klinik",
-              title: "Treatment Klinik",
-              to: "/administrasi/treatment-klinik",
-              roles: ["administrator", "sudo", "it", "management"],
-            },
+            // {
+            //   key: "administrasi-treatment-klinik",
+            //   title: "Treatment Klinik",
+            //   to: "/administrasi/treatment-klinik",
+            //   roles: ["administrator", "sudo", "it", "management"],
+            // },
             {
               key: "administrasi-stock-apotek",
               title: "Stock Apotek",
@@ -474,18 +474,6 @@ export default {
               key: "registrasi-layanan",
               title: "Registrasi Layanan",
               to: "/resepsionis/registrasi-layanan",
-              roles: [
-                "administrator",
-                "sudo",
-                "it",
-                "management",
-                "front office",
-              ],
-            },
-            {
-              key: "pembayaran",
-              title: "Pembayaran",
-              to: "/resepsionis/pembayaran",
               roles: [
                 "administrator",
                 "sudo",

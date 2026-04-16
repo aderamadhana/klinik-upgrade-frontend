@@ -5,11 +5,13 @@ import NotFound from "@/components/pages/not-found.vue";
 import administrasiRoutes from "./modules/administrasi";
 import resepsionisRoutes from "./modules/resepsionis";
 import masterRoutes from "./modules/master";
+import kasirRoutes from "./modules/kasir";
 
 const routes = [
   ...masterRoutes,
   ...administrasiRoutes,
   ...resepsionisRoutes,
+  ...kasirRoutes,
   {
     path: "/",
     name: "Login",

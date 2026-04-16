@@ -25,11 +25,6 @@ const resepsionisRoutes = [
       //   component: () => import("@/views/resepsionis/finalisasi-layanan.vue"),
       // },
       {
-        path: "pembayaran",
-        name: "Pembayaran Layanan",
-        component: () => import("@/views/resepsionis/pembayaran-layanan.vue"),
-      },
-      {
         path: "daftar-baru",
         name: "Daftar Baru",
         component: () =>
