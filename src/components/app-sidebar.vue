@@ -482,10 +482,22 @@ export default {
                 "front office",
               ],
             },
+            // {
+            //   key: "resepsionis-pembayaran-recipe",
+            //   title: "Pembayaran Recipe",
+            //   to: "/resepsionis/pembayaran-recipe",
+            //   roles: [
+            //     "administrator",
+            //     "sudo",
+            //     "it",
+            //     "management",
+            //     "front office",
+            //   ],
+            // },
             {
-              key: "resepsionis-pembayaran-recipe",
-              title: "Pembayaran Recipe",
-              to: "/resepsionis/pembayaran-recipe",
+              key: "resepsionis-booking",
+              title: "Daftar Booking",
+              to: "/resepsionis/booking",
               roles: [
                 "administrator",
                 "sudo",
@@ -506,172 +518,83 @@ export default {
                 "front office",
               ],
             },
-            {
-              key: "resepsionis-booking",
-              title: "Booking",
-              to: "/resepsionis/booking",
-              roles: [
-                "administrator",
-                "sudo",
-                "it",
-                "management",
-                "front office",
-              ],
-            },
           ],
         },
 
         {
-          header: "MENU DOKTER",
-          key: "header-dokter",
-          roles: ["administrator", "sudo", "it", "management", "dokter"],
+          header: "PELAYANAN MEDIS",
+          key: "header-pelayanan-medis",
+          roles: ["administrator", "sudo", "it", "management", "dokter", "sp"],
         },
-
         {
-          key: "konsultasi",
-          title: "Konsultasi",
+          key: "pelayanan-medis",
+          title: "Pelayanan Medis",
           icon: "mdi-stethoscope",
-          roles: ["administrator", "sudo", "it", "management", "dokter"],
+          roles: ["administrator", "sudo", "it", "management", "dokter", "sp"],
           children: [
             {
-              key: "dokter-list-konsultasi",
-              title: "List Konsultasi",
-              to: "/dokter/list-konsultasi",
+              key: "medis-antrian-konsultasi",
+              title: "Antrian Konsultasi",
+              to: "/pelayanan-medis/antrian-konsultasi",
               roles: ["administrator", "sudo", "it", "management", "dokter"],
             },
             {
-              key: "dokter-list-online",
-              title: "List Konsultasi Online",
-              to: "/dokter/list-online",
-              roles: ["administrator", "sudo", "it", "management", "dokter"],
-            },
-            {
-              key: "dokter-list-selesai",
-              title: "List Konsultasi Selesai",
-              to: "/dokter/list-selesai",
-              roles: ["administrator", "sudo", "it", "management", "dokter"],
-            },
-            {
-              key: "dokter-list-online-selesai",
-              title: "List Konsultasi Online Selesai",
-              to: "/dokter/list-online-selesai",
-              roles: ["administrator", "sudo", "it", "management", "dokter"],
-            },
-          ],
-        },
-        {
-          key: "perawatan",
-          title: "Perawatan",
-          icon: "mdi-hospital-box",
-          roles: ["administrator", "sudo", "it", "management", "dokter"],
-          children: [
-            {
-              key: "dokter-list-perawatan",
-              title: "List Perawatan",
-              to: "/dokter/list-perawatan",
-              roles: ["administrator", "sudo", "it", "management", "dokter"],
-            },
-          ],
-        },
-
-        {
-          header: "MENU PERAWAT",
-          key: "header-perawat",
-          roles: ["administrator", "sudo", "it", "management", "sp"],
-        },
-
-        {
-          key: "nurse-station",
-          title: "Nurse Station",
-          icon: "mdi-doctor",
-          roles: ["administrator", "sudo", "it", "management", "sp"],
-          children: [
-            {
-              key: "perawat-tindakan",
-              title: "List Tindakan Perawat",
-              to: "/perawat/tindakan",
-              roles: ["administrator", "sudo", "it", "management", "sp"],
-            },
-          ],
-        },
-
-        {
-          header: "MENU BOOKING",
-          key: "header-booking",
-          roles: [
-            "administrator",
-            "sudo",
-            "it",
-            "management",
-            "front office",
-            "security",
-          ],
-        },
-
-        {
-          key: "booking",
-          title: "Booking",
-          icon: "mdi-calendar-month",
-          roles: [
-            "administrator",
-            "sudo",
-            "it",
-            "management",
-            "front office",
-            "security",
-          ],
-          children: [
-            {
-              key: "booking-list",
-              title: "List Booking",
-              to: "/booking/list",
+              key: "medis-antrian-tindakan",
+              title: "Antrian Tindakan",
+              to: "/pelayanan-medis/antrian-tindakan",
               roles: [
                 "administrator",
                 "sudo",
                 "it",
                 "management",
-                "front office",
-                "security",
+                "dokter",
+                "sp",
               ],
             },
             {
-              key: "booking-selesai",
-              title: "List Booking Selesai",
-              to: "/booking/selesai",
+              key: "medis-riwayat",
+              title: "Riwayat Pelayanan",
+              to: "/pelayanan-medis/riwayat-pelayanan",
               roles: [
                 "administrator",
                 "sudo",
                 "it",
                 "management",
-                "front office",
+                "dokter",
+                "sp",
               ],
             },
           ],
         },
 
         {
-          header: "MENU DEPO / APOTEK",
-          key: "header-apotek",
+          header: "FARMASI",
+          key: "header-farmasi",
           roles: ["administrator", "sudo", "it", "management", "apoteker"],
         },
-
         {
-          key: "apotek",
-          title: "Depo/Apotek",
+          key: "farmasi",
+          title: "Farmasi / Depo",
           icon: "mdi-flask-outline",
           roles: ["administrator", "sudo", "it", "management", "apoteker"],
           children: [
             {
-              key: "apotek-resep-selesai",
-              title: "Resep Dokter Selesai",
-              to: "/apotek/resep-selesai",
+              key: "farmasi-antrian-resep",
+              title: "Antrian Resep",
+              to: "/farmasi/antrian-resep",
+              roles: ["administrator", "sudo", "it", "management", "apoteker"],
+            },
+            {
+              key: "farmasi-riwayat-resep",
+              title: "Riwayat Resep",
+              to: "/farmasi/riwayat-resep",
               roles: ["administrator", "sudo", "it", "management", "apoteker"],
             },
           ],
         },
 
         {
-          header: "MENU KASIR",
+          header: "KASIR",
           key: "header-kasir",
           roles: [
             "administrator",
@@ -682,10 +605,9 @@ export default {
             "branch accounting",
           ],
         },
-
         {
           key: "kasir",
-          title: "Kasir Pembayaran",
+          title: "Kasir",
           icon: "mdi-cash-register",
           roles: [
             "administrator",
@@ -697,9 +619,9 @@ export default {
           ],
           children: [
             {
-              key: "kasir-pembayaran",
-              title: "Pembayaran",
-              to: "/kasir/pembayaran",
+              key: "kasir-daftar-pembayaran",
+              title: "Daftar Pembayaran",
+              to: "/kasir/daftar-pembayaran",
               roles: [
                 "administrator",
                 "sudo",
@@ -710,9 +632,22 @@ export default {
               ],
             },
             {
-              key: "kasir-selesai",
-              title: "List Pembayaran Selesai",
-              to: "/kasir/selesai",
+              key: "kasir-pembayaran-resep",
+              title: "Pembayaran Resep",
+              to: "/kasir/pembayaran-resep",
+              roles: [
+                "administrator",
+                "sudo",
+                "it",
+                "management",
+                "front office",
+                "branch accounting",
+              ],
+            },
+            {
+              key: "kasir-riwayat",
+              title: "Riwayat Pembayaran",
+              to: "/kasir/riwayat-pembayaran",
               roles: [
                 "administrator",
                 "sudo",
@@ -725,56 +660,56 @@ export default {
           ],
         },
 
-        {
-          header: "MENU TRANSAKSI",
-          key: "header-transaksi",
-          roles: [
-            "administrator",
-            "sudo",
-            "it",
-            "management",
-            "branch accounting",
-          ],
-        },
+        // {
+        //   header: "MENU TRANSAKSI",
+        //   key: "header-transaksi",
+        //   roles: [
+        //     "administrator",
+        //     "sudo",
+        //     "it",
+        //     "management",
+        //     "branch accounting",
+        //   ],
+        // },
 
-        {
-          key: "transaksi",
-          title: "Data Transaksi",
-          icon: "mdi-swap-horizontal",
-          roles: [
-            "administrator",
-            "sudo",
-            "it",
-            "management",
-            "branch accounting",
-          ],
-          children: [
-            {
-              key: "transaksi-semua",
-              title: "Data Tr Semua",
-              to: "/transaksi/semua",
-              roles: [
-                "administrator",
-                "sudo",
-                "it",
-                "management",
-                "branch accounting",
-              ],
-            },
-            {
-              key: "transaksi-poin",
-              title: "Data Tr Poin",
-              to: "/transaksi/poin",
-              roles: [
-                "administrator",
-                "sudo",
-                "it",
-                "management",
-                "branch accounting",
-              ],
-            },
-          ],
-        },
+        // {
+        //   key: "transaksi",
+        //   title: "Data Transaksi",
+        //   icon: "mdi-swap-horizontal",
+        //   roles: [
+        //     "administrator",
+        //     "sudo",
+        //     "it",
+        //     "management",
+        //     "branch accounting",
+        //   ],
+        //   children: [
+        //     {
+        //       key: "transaksi-semua",
+        //       title: "Data Tr Semua",
+        //       to: "/transaksi/semua",
+        //       roles: [
+        //         "administrator",
+        //         "sudo",
+        //         "it",
+        //         "management",
+        //         "branch accounting",
+        //       ],
+        //     },
+        //     {
+        //       key: "transaksi-poin",
+        //       title: "Data Tr Poin",
+        //       to: "/transaksi/poin",
+        //       roles: [
+        //         "administrator",
+        //         "sudo",
+        //         "it",
+        //         "management",
+        //         "branch accounting",
+        //       ],
+        //     },
+        //   ],
+        // },
 
         {
           header: "MENU WHATSAPP",

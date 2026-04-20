@@ -6,12 +6,14 @@ import administrasiRoutes from "./modules/administrasi";
 import resepsionisRoutes from "./modules/resepsionis";
 import masterRoutes from "./modules/master";
 import kasirRoutes from "./modules/kasir";
+import pelayananMedisRoutes from "./modules/pelayanan-medis";
 
 const routes = [
   ...masterRoutes,
   ...administrasiRoutes,
   ...resepsionisRoutes,
   ...kasirRoutes,
+  ...pelayananMedisRoutes,
   {
     path: "/",
     name: "Login",
