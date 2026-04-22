@@ -28,6 +28,88 @@
           Lengkapi data SOAP, resep, dan treatment pasien sebelum diselesaikan.
         </v-alert>
 
+        <!-- INFORMASI MEDIS PENDAFTARAN (KHUSUS KONSULTASI ONLINE) -->
+        <div v-if="isOnlineConsultation" class="mb-6">
+          <div class="form-group-title">Informasi Medis Pendaftaran</div>
+
+          <div class="online-medical-card">
+            <div class="online-medical-header">
+              <v-icon size="20" class="mr-2">mdi-stethoscope</v-icon>
+              <span>Informasi Medis Pendaftaran</span>
+            </div>
+
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-textarea
+                  v-model="onlineRegistration.alergi"
+                  label="Alergi *"
+                  variant="outlined"
+                  density="comfortable"
+                  rows="2"
+                  auto-grow
+                  readonly
+                />
+              </v-col>
+
+              <v-col cols="12" md="6">
+                <v-textarea
+                  v-model="onlineRegistration.keluhan_utama"
+                  label="Keluhan Utama *"
+                  variant="outlined"
+                  density="comfortable"
+                  rows="2"
+                  auto-grow
+                  readonly
+                />
+              </v-col>
+
+              <v-col cols="12" md="6">
+                <v-textarea
+                  v-model="onlineRegistration.produk_sebelumnya"
+                  label="Produk yang Dipakai Sebelumnya"
+                  variant="outlined"
+                  density="comfortable"
+                  rows="3"
+                  auto-grow
+                  readonly
+                />
+              </v-col>
+
+              <v-col cols="12" md="3">
+                <v-text-field
+                  v-model="onlineRegistration.sedang_hamil"
+                  label="Sedang Hamil? *"
+                  variant="outlined"
+                  density="comfortable"
+                  readonly
+                />
+              </v-col>
+
+              <v-col cols="12" md="3">
+                <v-text-field
+                  v-model="onlineRegistration.sedang_menyusui"
+                  label="Sedang Menyusui? *"
+                  variant="outlined"
+                  density="comfortable"
+                  readonly
+                />
+              </v-col>
+
+              <v-col cols="12">
+                <v-textarea
+                  v-model="onlineRegistration.catatan_cs"
+                  label="Catatan Tambahan Customer Service"
+                  variant="outlined"
+                  density="comfortable"
+                  rows="2"
+                  auto-grow
+                  readonly
+                />
+              </v-col>
+            </v-row>
+          </div>
+        </div>
+
         <!-- DATA PASIEN -->
         <div class="form-group-title">Data Pasien</div>
 
@@ -70,6 +152,11 @@
             <div class="patient-detail-item">
               <div class="patient-detail-label">Klinik</div>
               <div class="patient-detail-value">{{ patient.klinik }}</div>
+            </div>
+
+            <div class="patient-detail-item">
+              <div class="patient-detail-label">Channel</div>
+              <div class="patient-detail-value">{{ patient.channel }}</div>
             </div>
           </div>
 
@@ -453,6 +540,17 @@ export default {
         waktu_kunjungan: "09:00",
         dokter: "Dr. Rayi Vialita Poetri",
         klinik: "MALANG",
+        channel: "Online",
+      },
+
+      onlineRegistration: {
+        alergi: "-",
+        keluhan_utama: "Terkadang kering di area sekitar mulut dan hidung",
+        produk_sebelumnya:
+          "skin barrier nutri cream 2 (pagi & malam)\n?white glow 3 (pagi)",
+        sedang_hamil: "tidak",
+        sedang_menyusui: "tidak",
+        catatan_cs: "",
       },
 
       form: {
@@ -568,6 +666,10 @@ export default {
   },
 
   computed: {
+    isOnlineConsultation() {
+      return this.patient.channel === "Online";
+    },
+
     grandTotal() {
       const totalObat = this.obatItems.reduce(
         (sum, item) => sum + Number(item.total || 0),
@@ -668,6 +770,9 @@ export default {
     submitForm() {
       const payload = {
         patient: this.patient,
+        online_registration: this.isOnlineConsultation
+          ? this.onlineRegistration
+          : null,
         soap: this.form,
         resep: this.obatItems,
         treatment: this.treatmentItems,
@@ -734,6 +839,55 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.patient-detail-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  padding: 16px;
+}
+
+.patient-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.patient-detail-item {
+  border: 1px solid #eef2f7;
+  border-radius: 6px;
+  padding: 12px 14px;
+  background: #f8fafc;
+}
+
+.patient-detail-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.patient-detail-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.4;
+}
+
+.online-medical-card {
+  border: 1px solid #f5c2d3;
+  border-radius: 8px;
+  background: #fff5f8;
+  padding: 16px;
+}
+
+.online-medical-header {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 16px;
 }
 
 .block-section {
@@ -823,6 +977,10 @@ export default {
   border-radius: 6px !important;
 }
 
+:deep(.online-medical-card .v-field) {
+  background: #ffffff;
+}
+
 :deep(.v-selection-control) {
   min-height: 32px;
 }
@@ -839,6 +997,12 @@ export default {
 
 :deep(.history-list li) {
   margin-bottom: 4px;
+}
+
+@media (max-width: 1264px) {
+  .patient-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 960px) {
@@ -859,6 +1023,16 @@ export default {
   }
 
   .footer-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .patient-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .row-actions {
     justify-content: flex-start;
   }
 }

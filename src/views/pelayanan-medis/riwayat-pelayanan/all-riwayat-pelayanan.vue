@@ -130,13 +130,19 @@
           </template>
 
           <template #item.jenis="{ item }">
-            <v-chip
-              size="small"
-              :color="getJenisColor(item.jenis)"
-              variant="tonal"
-            >
-              {{ item.jenis }}
-            </v-chip>
+            <div class="d-flex flex-column">
+              <v-chip
+                size="small"
+                :color="getJenisColor(item.jenis)"
+                variant="tonal"
+                class="mb-1"
+              >
+                {{ item.jenis }}
+              </v-chip>
+              <span class="text-caption text-medium-emphasis">
+                {{ item.channel }}
+              </span>
+            </div>
           </template>
 
           <template #item.layanan="{ item }">
@@ -146,6 +152,31 @@
                 {{ item.dokter }}
               </span>
             </div>
+          </template>
+
+          <template #item.bukti_konsultasi="{ item }">
+            <div v-if="showBuktiKonsultasi(item)">
+              <v-chip
+                v-if="item.bukti_konsultasi_url"
+                size="small"
+                color="success"
+                variant="tonal"
+              >
+                Sudah upload bukti konsultasi online
+              </v-chip>
+
+              <v-chip
+                v-else
+                size="small"
+                color="warning"
+                variant="flat"
+                class="warning-chip"
+              >
+                Belum upload bukti konsultasi online!
+              </v-chip>
+            </div>
+
+            <span v-else class="text-medium-emphasis">-</span>
           </template>
 
           <template #item.status="{ item }">
@@ -162,12 +193,27 @@
             <div class="d-flex flex-wrap gap-2">
               <v-btn
                 size="small"
-                color="primary"
+                color="info"
                 variant="tonal"
-                prepend-icon="mdi-printer-outline"
-                @click="reprintNota(item)"
+                prepend-icon="mdi-eye-outline"
+                @click="lihatDetail(item)"
               >
-                Reprint Nota
+                Detail
+              </v-btn>
+
+              <v-btn
+                v-if="showBuktiKonsultasi(item)"
+                size="small"
+                color="warning"
+                variant="flat"
+                prepend-icon="mdi-tray-arrow-up"
+                @click="uploadBukti(item)"
+              >
+                {{
+                  item.bukti_konsultasi_url
+                    ? "Ganti Bukti Konsultasi Online"
+                    : "Upload Bukti Konsultasi Online"
+                }}
               </v-btn>
 
               <v-btn
@@ -184,6 +230,116 @@
         </v-data-table>
       </v-card-text>
     </v-card>
+
+    <input
+      ref="fileInput"
+      type="file"
+      accept="image/*,.pdf"
+      class="d-none"
+      @change="handleFileUpload"
+    />
+
+    <v-dialog v-model="dialogDetail" max-width="760">
+      <v-card class="dialog-card">
+        <v-card-title class="dialog-title">
+          Detail Riwayat Pelayanan
+        </v-card-title>
+
+        <v-divider />
+
+        <v-card-text v-if="selectedItem" class="pa-5">
+          <div class="detail-card">
+            <div class="detail-grid">
+              <div class="detail-item">
+                <div class="detail-label">Nomor</div>
+                <div class="detail-value">{{ selectedItem.nomor }}</div>
+              </div>
+
+              <div class="detail-item">
+                <div class="detail-label">Nama Pasien</div>
+                <div class="detail-value">{{ selectedItem.nama_pasien }}</div>
+              </div>
+
+              <div class="detail-item">
+                <div class="detail-label">No. RM</div>
+                <div class="detail-value">{{ selectedItem.no_rm }}</div>
+              </div>
+
+              <div class="detail-item">
+                <div class="detail-label">No. Telepon</div>
+                <div class="detail-value">{{ selectedItem.no_hp }}</div>
+              </div>
+
+              <div class="detail-item">
+                <div class="detail-label">Tanggal Kunjungan</div>
+                <div class="detail-value">
+                  {{ formatDate(selectedItem.tanggal_kunjungan) }}
+                </div>
+              </div>
+
+              <div class="detail-item">
+                <div class="detail-label">Waktu Kunjungan</div>
+                <div class="detail-value">
+                  {{ selectedItem.waktu_kunjungan }}
+                </div>
+              </div>
+
+              <div class="detail-item">
+                <div class="detail-label">Jenis</div>
+                <div class="detail-value">
+                  {{ selectedItem.jenis }} - {{ selectedItem.channel }}
+                </div>
+              </div>
+
+              <div class="detail-item">
+                <div class="detail-label">Layanan</div>
+                <div class="detail-value">{{ selectedItem.layanan }}</div>
+              </div>
+
+              <div class="detail-item">
+                <div class="detail-label">Dokter</div>
+                <div class="detail-value">{{ selectedItem.dokter }}</div>
+              </div>
+
+              <div class="detail-item">
+                <div class="detail-label">Status</div>
+                <div class="detail-value">{{ selectedItem.status }}</div>
+              </div>
+            </div>
+
+            <div class="detail-note mt-4">
+              <div class="detail-label">Keterangan</div>
+              <div class="detail-value">
+                {{ selectedItem.keterangan || "-" }}
+              </div>
+            </div>
+
+            <div
+              v-if="
+                showBuktiKonsultasi(selectedItem) &&
+                selectedItem.bukti_konsultasi_url
+              "
+              class="detail-note mt-4"
+            >
+              <div class="detail-label">Bukti Konsultasi Online</div>
+              <div class="detail-value">File sudah diupload</div>
+            </div>
+          </div>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="justify-end pa-4">
+          <v-btn
+            variant="outlined"
+            color="secondary"
+            @click="dialogDetail = false"
+          >
+            Tutup
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <v-dialog v-model="dialogDelete" max-width="420">
       <v-card class="dialog-card">
@@ -232,9 +388,11 @@ export default {
       filterJenis: "Semua",
       filterStatus: "Semua",
 
+      dialogDetail: false,
       dialogDelete: false,
       deleteLoading: false,
       selectedItem: null,
+      uploadTargetItem: null,
 
       breadcrumbs: [
         { title: "Home", disabled: false, href: "/" },
@@ -251,6 +409,7 @@ export default {
         { title: "Kunjungan", key: "kunjungan", sortable: false },
         { title: "Jenis", key: "jenis", sortable: false },
         { title: "Layanan", key: "layanan", sortable: false },
+        { title: "Bukti Konsultasi", key: "bukti_konsultasi", sortable: false },
         { title: "Status", key: "status", sortable: false },
         { title: "Aksi", key: "aksi", sortable: false, align: "end" },
       ],
@@ -265,9 +424,11 @@ export default {
           tanggal_kunjungan: "2026-04-20",
           waktu_kunjungan: "10:00",
           jenis: "Konsultasi",
+          channel: "Offline",
           layanan: "Konsultasi Dokter Estetik",
           dokter: "Dr. Fajar Nugroho",
           status: "Selesai",
+          bukti_konsultasi_url: "",
           keterangan: "Keluhan flek dan kulit kusam",
         },
         {
@@ -279,9 +440,11 @@ export default {
           tanggal_kunjungan: "2026-04-20",
           waktu_kunjungan: "10:20",
           jenis: "Tindakan",
+          channel: "Offline",
           layanan: "Infus Whitening",
           dokter: "Dr. Fajar Nugroho",
           status: "Selesai",
+          bukti_konsultasi_url: "",
           keterangan: "Pasien telah menyelesaikan tindakan",
         },
         {
@@ -293,9 +456,11 @@ export default {
           tanggal_kunjungan: "2026-04-19",
           waktu_kunjungan: "14:00",
           jenis: "Konsultasi",
+          channel: "Online",
           layanan: "Konsultasi Online",
           dokter: "Dr. Rayi Vialita Poetri",
           status: "Selesai",
+          bukti_konsultasi_url: "",
           keterangan: "Konsultasi online treatment lanjutan",
         },
         {
@@ -307,10 +472,28 @@ export default {
           tanggal_kunjungan: "2026-04-18",
           waktu_kunjungan: "09:30",
           jenis: "Tindakan",
+          channel: "Offline",
           layanan: "Facial Acne",
           dokter: "Dr. Rayi Vialita Poetri",
           status: "Selesai",
+          bukti_konsultasi_url: "",
           keterangan: "Lanjut dari konsultasi dokter",
+        },
+        {
+          id: 5,
+          nomor: "K-015",
+          nama_pasien: "Rina Oktavia",
+          no_rm: "B20250112007",
+          no_hp: "6285767788990",
+          tanggal_kunjungan: "2026-04-17",
+          waktu_kunjungan: "11:00",
+          jenis: "Konsultasi",
+          channel: "Online",
+          layanan: "Konsultasi Online",
+          dokter: "Dr. Fajar Nugroho",
+          status: "Selesai",
+          bukti_konsultasi_url: "https://example.com/bukti-konsultasi-rina.jpg",
+          keterangan: "Follow up kondisi kulit sensitif",
         },
       ],
     };
@@ -358,8 +541,6 @@ export default {
       if (!silent) this.loading = true;
 
       try {
-        // const response = await this.$axios.get('/pelayanan-medis/riwayat');
-        // this.items = response.data?.data || [];
         await new Promise((resolve) => setTimeout(resolve, 400));
       } catch (error) {
         console.error("Gagal memuat data riwayat pelayanan:", error);
@@ -410,13 +591,42 @@ export default {
       return colors[status] || "secondary";
     },
 
-    reprintNota(item) {
-      console.log("Reprint nota:", item);
-
-      window.open(
-        `/pelayanan-medis/riwayat-pelayanan/${item.id}/print`,
-        "_blank",
+    showBuktiKonsultasi(item) {
+      return (
+        item.jenis === "Konsultasi" &&
+        item.channel === "Online" &&
+        item.status === "Selesai"
       );
+    },
+
+    lihatDetail(item) {
+      this.selectedItem = { ...item };
+      this.dialogDetail = true;
+    },
+
+    uploadBukti(item) {
+      this.uploadTargetItem = item;
+      this.$refs.fileInput.click();
+    },
+
+    handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file || !this.uploadTargetItem) return;
+
+      const target = this.items.find(
+        (row) => row.id === this.uploadTargetItem.id,
+      );
+      if (target) {
+        target.bukti_konsultasi_url = URL.createObjectURL(file);
+      }
+
+      console.log("Upload bukti konsultasi:", {
+        item: this.uploadTargetItem,
+        file,
+      });
+
+      this.uploadTargetItem = null;
+      event.target.value = "";
     },
 
     confirmDelete(item) {
@@ -430,8 +640,6 @@ export default {
       this.deleteLoading = true;
 
       try {
-        // await this.$axios.delete(`/pelayanan-medis/riwayat-pelayanan/${this.selectedItem.id}`);
-
         this.items = this.items.filter(
           (row) => row.id !== this.selectedItem.id,
         );
@@ -550,6 +758,48 @@ export default {
   padding: 16px 20px;
 }
 
+.detail-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  padding: 16px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 14px 16px;
+}
+
+.detail-item {
+  grid-column: span 3;
+  border: 1px solid #eef2f7;
+  border-radius: 6px;
+  padding: 12px 14px;
+  background: #f8fafc;
+}
+
+.detail-note {
+  border: 1px solid #eef2f7;
+  border-radius: 6px;
+  padding: 12px 14px;
+  background: #f8fafc;
+}
+
+.detail-label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.detail-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
 .delete-dialog-info {
   margin-top: 12px;
   padding: 12px;
@@ -558,6 +808,10 @@ export default {
   background: #f9fafb;
   font-size: 14px;
   line-height: 1.6;
+}
+
+.warning-chip {
+  font-weight: 700;
 }
 
 :deep(.v-field) {
@@ -569,10 +823,22 @@ export default {
   font-size: 13px;
 }
 
+@media (max-width: 1264px) {
+  .detail-item {
+    grid-column: span 6;
+  }
+}
+
 @media (max-width: 960px) {
   .filter-search,
   .filter-select {
     min-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .detail-item {
+    grid-column: span 12;
   }
 }
 </style>

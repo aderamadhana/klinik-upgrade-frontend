@@ -533,15 +533,15 @@ export default {
           roles: ["administrator", "sudo", "it", "management", "dokter", "sp"],
           children: [
             {
-              key: "medis-antrian-konsultasi",
-              title: "Antrian Konsultasi",
-              to: "/pelayanan-medis/antrian-konsultasi",
+              key: "medis-antrian-dokter",
+              title: "Antrian Dokter",
+              to: "/pelayanan-medis/antrian-dokter",
               roles: ["administrator", "sudo", "it", "management", "dokter"],
             },
             {
-              key: "medis-antrian-tindakan",
-              title: "Antrian Tindakan",
-              to: "/pelayanan-medis/antrian-tindakan",
+              key: "medis-antrian-perawat",
+              title: "Antrian Perawat",
+              to: "/pelayanan-medis/antrian-perawat",
               roles: [
                 "administrator",
                 "sudo",
@@ -563,6 +563,32 @@ export default {
                 "dokter",
                 "sp",
               ],
+            },
+          ],
+        },
+
+        {
+          header: "NURSE STATION",
+          key: "header-nurse-station",
+          roles: ["administrator", "sudo", "it", "management", "sp"],
+        },
+        {
+          key: "nurse-station",
+          title: "Nurse Station",
+          icon: "mdi-medical-bag",
+          roles: ["administrator", "sudo", "it", "management", "sp"],
+          children: [
+            {
+              key: "nurse-station-antrian",
+              title: "Antrian Perawat",
+              to: "/nurse-station/antrian-perawat",
+              roles: ["administrator", "sudo", "it", "management", "sp"],
+            },
+            {
+              key: "nurse-station-riwayat",
+              title: "Riwayat Tindakan Perawat",
+              to: "/nurse-station/riwayat",
+              roles: ["administrator", "sudo", "it", "management", "sp"],
             },
           ],
         },

@@ -99,6 +99,7 @@
           :total-treatment="totalTreatment"
           :format-number="formatNumber"
           :get-subtotal="getTreatmentSubtotal"
+          @update-treatment="form.treatment = $event"
           @update-item="updateTreatmentItem"
           @add-item="addTreatmentItem"
           @remove-item="removeTreatmentItem"
@@ -623,6 +624,13 @@ export default {
 
       if (field === "ada_konsultasi" && !value) {
         this.form.layanan.channel_konsultasi = "";
+      }
+
+      if (field === "ada_treatment" && value === false) {
+        this.form.treatment = {
+          perlu_tindakan_perawat: null,
+          items: [],
+        };
       }
 
       if (

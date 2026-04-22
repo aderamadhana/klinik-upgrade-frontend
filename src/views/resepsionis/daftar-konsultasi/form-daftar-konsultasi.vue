@@ -203,10 +203,21 @@ export default {
       ],
 
       form: {
-        tanggal: this.getToday(),
+        tanggal: "",
         pasien_new_id: null,
         dokter_id: null,
         perawat_id: null,
+        catatan_registrasi: "",
+        layanan: {
+          ada_konsultasi: false,
+          channel_konsultasi: "",
+          ada_treatment: false,
+          ada_penjualan: false,
+        },
+        treatment: {
+          perlu_tindakan_perawat: null,
+          items: [],
+        },
       },
 
       pasienList: [

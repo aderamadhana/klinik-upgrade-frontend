@@ -30,7 +30,7 @@ const pelayananMedisRoutes = [
       },
       {
         path: "antrian-tindakan/:id/form-tindakan",
-        name: "Isi SOAP",
+        name: "Isi Tindakan",
         component: () =>
           import("@/views/pelayanan-medis/antrian-tindakan/form-tindakan.vue"),
       },
@@ -40,6 +40,20 @@ const pelayananMedisRoutes = [
         name: "Riwayat Pelayanan",
         component: () =>
           import("@/views/pelayanan-medis/riwayat-pelayanan/all-riwayat-pelayanan.vue"),
+      },
+
+      {
+        path: "antrian-dokter",
+        name: "Antrian Dokter",
+        component: () =>
+          import("@/views/pelayanan-medis/antrian-dokter/all-antrian-dokter.vue"),
+      },
+
+      {
+        path: "antrian-perawat",
+        name: "Antrian Perawat",
+        component: () =>
+          import("@/views/pelayanan-medis/antrian-perawat/all-antrian-perawat.vue"),
       },
     ],
   },
