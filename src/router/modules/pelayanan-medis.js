@@ -4,38 +4,6 @@ const pelayananMedisRoutes = [
     component: () => import("@/layouts/main-layout.vue"),
     children: [
       {
-        path: "antrian-konsultasi",
-        name: "Antrian Konsultasi",
-        component: () =>
-          import("@/views/pelayanan-medis/antrian-konsultasi/all-antrian-konsultasi.vue"),
-      },
-      {
-        path: "antrian-konsultasi/:id/isi-soap",
-        name: "Isi SOAP",
-        component: () =>
-          import("@/views/pelayanan-medis/antrian-konsultasi/isi-soap.vue"),
-      },
-      {
-        path: "antrian-konsultasi/:id/isi-pengkajian-awal",
-        name: "Isi Pengkajian Awal",
-        component: () =>
-          import("@/views/pelayanan-medis/antrian-konsultasi/isi-pengkajian-awal.vue"),
-      },
-
-      {
-        path: "antrian-tindakan",
-        name: "Antrian Tindakan",
-        component: () =>
-          import("@/views/pelayanan-medis/antrian-tindakan/all-antrian-tindakan.vue"),
-      },
-      {
-        path: "antrian-tindakan/:id/form-tindakan",
-        name: "Isi Tindakan",
-        component: () =>
-          import("@/views/pelayanan-medis/antrian-tindakan/form-tindakan.vue"),
-      },
-
-      {
         path: "riwayat-pelayanan",
         name: "Riwayat Pelayanan",
         component: () =>
@@ -48,12 +16,42 @@ const pelayananMedisRoutes = [
         component: () =>
           import("@/views/pelayanan-medis/antrian-dokter/all-antrian-dokter.vue"),
       },
+      {
+        path: "antrian-dokter/:id/proses-antrian-dokter",
+        name: "Proses Antrian Dokter",
+        component: () =>
+          import("@/views/pelayanan-medis/antrian-dokter/proses-antrian-dokter.vue"),
+      },
+      {
+        path: "antrian-dokter/:id/isi-pengkajian-awal",
+        name: "Isi Pengkajian Awal",
+        component: () =>
+          import("@/views/pelayanan-medis/antrian-dokter/isi-pengkajian-awal.vue"),
+      },
 
       {
         path: "antrian-perawat",
         name: "Antrian Perawat",
         component: () =>
           import("@/views/pelayanan-medis/antrian-perawat/all-antrian-perawat.vue"),
+      },
+      {
+        path: "antrian-perawat/:id/input-cppt",
+        name: "Input CPPT",
+        component: () =>
+          import("@/views/pelayanan-medis/antrian-perawat/input-cppt.vue"),
+      },
+      {
+        path: "antrian-perawat/:id/input-before-after",
+        name: "Input Before After",
+        component: () =>
+          import("@/views/pelayanan-medis/antrian-perawat/input-before-after.vue"),
+      },
+      {
+        path: "antrian-perawat/:id/input-bahan-treatment",
+        name: "Input Bahan Treatment",
+        component: () =>
+          import("@/views/pelayanan-medis/antrian-perawat/input-bahan-treatment.vue"),
       },
     ],
   },

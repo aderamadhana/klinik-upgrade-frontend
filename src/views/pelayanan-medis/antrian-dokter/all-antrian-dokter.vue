@@ -181,58 +181,13 @@
           <template #item.aksi="{ item }">
             <div class="d-flex flex-wrap gap-2">
               <v-btn
-                v-if="item.status === 'menunggu'"
-                size="small"
-                color="warning"
-                variant="tonal"
-                prepend-icon="mdi-bullhorn-outline"
-                @click="updateStatus(item, 'dipanggil')"
-              >
-                Panggil
-              </v-btn>
-
-              <v-btn
-                v-if="item.status === 'dipanggil' || item.status === 'proses'"
-                size="small"
-                color="secondary"
-                variant="outlined"
-                prepend-icon="mdi-file-document-edit-outline"
-                @click="goToFormDokter(item)"
-              >
-                Layani
-              </v-btn>
-
-              <v-btn
-                v-if="item.status === 'dipanggil'"
                 size="small"
                 color="primary"
                 variant="tonal"
                 prepend-icon="mdi-play-circle-outline"
-                @click="updateStatus(item, 'proses')"
+                @click="goToProsesAntrianDokter(item)"
               >
                 Proses
-              </v-btn>
-
-              <v-btn
-                v-if="item.status !== 'selesai'"
-                size="small"
-                color="success"
-                variant="tonal"
-                prepend-icon="mdi-check-circle-outline"
-                @click="updateStatus(item, 'selesai')"
-              >
-                Selesai
-              </v-btn>
-
-              <v-btn
-                v-if="item.status === 'selesai'"
-                size="small"
-                color="secondary"
-                variant="outlined"
-                prepend-icon="mdi-eye-outline"
-                @click="goToFormDokter(item)"
-              >
-                Lihat
               </v-btn>
 
               <v-btn
@@ -455,7 +410,6 @@ export default {
       if (!silent) this.loading = true;
 
       try {
-        // Ganti dengan API asli
         // const response = await this.$axios.get('/pelayanan-medis/antrian-dokter');
         // this.items = response.data?.data || [];
         await new Promise((resolve) => setTimeout(resolve, 400));
@@ -535,23 +489,10 @@ export default {
       return colors[status] || "secondary";
     },
 
-    goToFormDokter(item) {
-      const target = this.items.find((row) => row.id === item.id);
-
-      if (target && target.status === "menunggu") {
-        target.status = "dipanggil";
-      }
-
+    goToProsesAntrianDokter(item) {
       this.$router.push(
-        `/pelayanan-medis/antrian-dokter/${item.id}/form-dokter`,
+        `/pelayanan-medis/antrian-dokter/${item.id}/proses-antrian-dokter`,
       );
-    },
-
-    updateStatus(item, status) {
-      const target = this.items.find((row) => row.id === item.id);
-      if (target) {
-        target.status = status;
-      }
     },
 
     confirmDelete(item) {
@@ -594,119 +535,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.page-title {
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
-  margin: 0 0 6px;
-}
-
-.page-subtitle {
-  font-size: 14px;
-  color: rgba(0, 0, 0, 0.6);
-  margin: 0;
-}
-
-.gap-2 {
-  gap: 8px;
-}
-
-.main-card {
-  border-radius: 10px !important;
-  border: 1px solid #e5e7eb;
-  box-shadow: none !important;
-  overflow: hidden;
-}
-
-.section-header {
-  font-size: 18px;
-  font-weight: 700;
-  padding: 14px 20px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #fff;
-}
-
-.toolbar-wrap {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.toolbar-filter {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.filter-search {
-  min-width: 320px;
-}
-
-.filter-select {
-  min-width: 180px;
-}
-
-.summary-card {
-  border-radius: 8px !important;
-  border: 1px solid #e5e7eb;
-  box-shadow: none !important;
-}
-
-.summary-label {
-  font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 8px;
-}
-
-.summary-value {
-  font-size: 26px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.table-section {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: none !important;
-}
-
-.dialog-card {
-  border-radius: 10px !important;
-}
-
-.dialog-title {
-  font-size: 18px;
-  font-weight: 700;
-  padding: 16px 20px;
-}
-
-.delete-dialog-info {
-  margin-top: 12px;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #f9fafb;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-:deep(.v-field) {
-  border-radius: 6px !important;
-}
-
-:deep(.v-data-table .v-table__wrapper table thead th) {
-  font-weight: 700;
-  font-size: 13px;
-}
-
-@media (max-width: 960px) {
-  .filter-search,
-  .filter-select {
-    min-width: 100%;
-  }
-}
-</style>

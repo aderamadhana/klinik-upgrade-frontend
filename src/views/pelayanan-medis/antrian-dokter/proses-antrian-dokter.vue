@@ -2,9 +2,9 @@
   <div class="soap-page">
     <div class="page-header d-flex justify-space-between align-start mb-6">
       <div>
-        <h1 class="page-title">Isi SOAP</h1>
+        <h1 class="page-title">Proses Antrian Dokter</h1>
         <p class="page-subtitle">
-          Input SOAP, resep, dan treatment pasien konsultasi
+          Input SOAP, resep, dan treatment pasien dokter
         </p>
       </div>
 
@@ -21,12 +21,82 @@
     </div>
 
     <v-card class="main-card">
-      <div class="section-header">Form SOAP Pasien</div>
+      <div class="section-header">Form Proses Antrian Dokter</div>
 
       <v-card-text class="pa-5">
         <v-alert type="info" variant="tonal" class="mb-6">
-          Lengkapi data SOAP, resep, dan treatment pasien sebelum diselesaikan.
+          Lengkapi SOAP, resep, dan treatment pasien sebelum diselesaikan.
         </v-alert>
+
+        <!-- DATA PASIEN -->
+        <div class="form-group-title">Data Pasien</div>
+
+        <div class="patient-detail-card mb-6">
+          <div class="patient-detail-grid">
+            <div class="patient-detail-item">
+              <div class="patient-detail-label">Nama Pasien</div>
+              <div class="patient-detail-value">{{ patient.nama_pasien }}</div>
+            </div>
+
+            <div class="patient-detail-item">
+              <div class="patient-detail-label">No. RM</div>
+              <div class="patient-detail-value">{{ patient.no_rm }}</div>
+            </div>
+
+            <div class="patient-detail-item">
+              <div class="patient-detail-label">No. Telepon</div>
+              <div class="patient-detail-value">{{ patient.no_hp }}</div>
+            </div>
+
+            <div class="patient-detail-item">
+              <div class="patient-detail-label">Tanggal Kunjungan</div>
+              <div class="patient-detail-value">
+                {{ patient.tanggal_kunjungan }}
+              </div>
+            </div>
+
+            <div class="patient-detail-item">
+              <div class="patient-detail-label">Waktu Kunjungan</div>
+              <div class="patient-detail-value">
+                {{ patient.waktu_kunjungan }}
+              </div>
+            </div>
+
+            <div class="patient-detail-item">
+              <div class="patient-detail-label">Dokter</div>
+              <div class="patient-detail-value">{{ patient.dokter }}</div>
+            </div>
+
+            <div class="patient-detail-item">
+              <div class="patient-detail-label">Klinik</div>
+              <div class="patient-detail-value">{{ patient.klinik }}</div>
+            </div>
+
+            <div class="patient-detail-item">
+              <div class="patient-detail-label">Channel</div>
+              <div class="patient-detail-value">{{ patient.channel }}</div>
+            </div>
+          </div>
+
+          <div class="top-action-row mt-4">
+            <v-btn
+              color="secondary"
+              variant="outlined"
+              prepend-icon="mdi-clipboard-text-outline"
+              @click="goToPengkajianAwal"
+            >
+              Pengkajian Awal
+            </v-btn>
+
+            <v-btn
+              color="info"
+              variant="flat"
+              prepend-icon="mdi-face-recognition"
+            >
+              Skin Analyzer
+            </v-btn>
+          </div>
+        </div>
 
         <!-- INFORMASI MEDIS PENDAFTARAN (KHUSUS KONSULTASI ONLINE) -->
         <div v-if="isOnlineConsultation" class="mb-6">
@@ -107,76 +177,6 @@
                 />
               </v-col>
             </v-row>
-          </div>
-        </div>
-
-        <!-- DATA PASIEN -->
-        <div class="form-group-title">Data Pasien</div>
-
-        <div class="patient-detail-card mb-6">
-          <div class="patient-detail-grid">
-            <div class="patient-detail-item">
-              <div class="patient-detail-label">Nama Pasien</div>
-              <div class="patient-detail-value">{{ patient.nama_pasien }}</div>
-            </div>
-
-            <div class="patient-detail-item">
-              <div class="patient-detail-label">No. RM</div>
-              <div class="patient-detail-value">{{ patient.no_rm }}</div>
-            </div>
-
-            <div class="patient-detail-item">
-              <div class="patient-detail-label">No. Telepon</div>
-              <div class="patient-detail-value">{{ patient.no_hp }}</div>
-            </div>
-
-            <div class="patient-detail-item">
-              <div class="patient-detail-label">Tanggal Kunjungan</div>
-              <div class="patient-detail-value">
-                {{ patient.tanggal_kunjungan }}
-              </div>
-            </div>
-
-            <div class="patient-detail-item">
-              <div class="patient-detail-label">Waktu Kunjungan</div>
-              <div class="patient-detail-value">
-                {{ patient.waktu_kunjungan }}
-              </div>
-            </div>
-
-            <div class="patient-detail-item">
-              <div class="patient-detail-label">Dokter</div>
-              <div class="patient-detail-value">{{ patient.dokter }}</div>
-            </div>
-
-            <div class="patient-detail-item">
-              <div class="patient-detail-label">Klinik</div>
-              <div class="patient-detail-value">{{ patient.klinik }}</div>
-            </div>
-
-            <div class="patient-detail-item">
-              <div class="patient-detail-label">Channel</div>
-              <div class="patient-detail-value">{{ patient.channel }}</div>
-            </div>
-          </div>
-
-          <div class="top-action-row mt-4">
-            <v-btn
-              color="secondary"
-              variant="outlined"
-              prepend-icon="mdi-clipboard-text-outline"
-              @click="goToPengkajianAwal"
-            >
-              Pengkajian Awal
-            </v-btn>
-
-            <v-btn
-              color="info"
-              variant="flat"
-              prepend-icon="mdi-face-recognition"
-            >
-              Skin Analyzer
-            </v-btn>
           </div>
         </div>
 
@@ -529,7 +529,7 @@
 
 <script>
 export default {
-  name: "IsiSoap",
+  name: "ProsesAntrianDokter",
   data() {
     return {
       patient: {
@@ -547,7 +547,7 @@ export default {
         alergi: "-",
         keluhan_utama: "Terkadang kering di area sekitar mulut dan hidung",
         produk_sebelumnya:
-          "skin barrier nutri cream 2 (pagi & malam)\n?white glow 3 (pagi)",
+          "skin barrier nutri cream 2 (pagi & malam)\nwhite glow 3 (pagi)",
         sedang_hamil: "tidak",
         sedang_menyusui: "tidak",
         catatan_cs: "",
@@ -763,7 +763,7 @@ export default {
     goToPengkajianAwal() {
       const id = this.$route.params.id;
       this.$router.push(
-        `/pelayanan-medis/antrian-konsultasi/${id}/isi-pengkajian-awal`,
+        `/pelayanan-medis/antrian-dokter/${id}/isi-pengkajian-awal`,
       );
     },
 
@@ -779,8 +779,8 @@ export default {
         total_pembayaran: this.grandTotal,
       };
 
-      console.log("Submit SOAP:", payload);
-      this.$router.push("/pelayanan-medis/antrian-konsultasi");
+      console.log("Submit Proses Antrian Dokter:", payload);
+      this.$router.push("/pelayanan-medis/antrian-dokter");
     },
   },
 };

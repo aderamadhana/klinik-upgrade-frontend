@@ -572,26 +572,26 @@ export default {
           key: "header-nurse-station",
           roles: ["administrator", "sudo", "it", "management", "sp"],
         },
-        {
-          key: "nurse-station",
-          title: "Nurse Station",
-          icon: "mdi-medical-bag",
-          roles: ["administrator", "sudo", "it", "management", "sp"],
-          children: [
-            {
-              key: "nurse-station-antrian",
-              title: "Antrian Perawat",
-              to: "/nurse-station/antrian-perawat",
-              roles: ["administrator", "sudo", "it", "management", "sp"],
-            },
-            {
-              key: "nurse-station-riwayat",
-              title: "Riwayat Tindakan Perawat",
-              to: "/nurse-station/riwayat",
-              roles: ["administrator", "sudo", "it", "management", "sp"],
-            },
-          ],
-        },
+        // {
+        //   key: "nurse-station",
+        //   title: "Nurse Station",
+        //   icon: "mdi-medical-bag",
+        //   roles: ["administrator", "sudo", "it", "management", "sp"],
+        //   children: [
+        //     {
+        //       key: "nurse-station-antrian",
+        //       title: "Antrian Perawat",
+        //       to: "/nurse-station/antrian-perawat",
+        //       roles: ["administrator", "sudo", "it", "management", "sp"],
+        //     },
+        //     {
+        //       key: "nurse-station-riwayat",
+        //       title: "Riwayat Tindakan Perawat",
+        //       to: "/nurse-station/riwayat",
+        //       roles: ["administrator", "sudo", "it", "management", "sp"],
+        //     },
+        //   ],
+        // },
 
         {
           header: "FARMASI",

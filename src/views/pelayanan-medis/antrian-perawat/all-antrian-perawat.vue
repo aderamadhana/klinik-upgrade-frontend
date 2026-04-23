@@ -103,10 +103,8 @@
           loading-text="Memuat data antrian perawat..."
           no-data-text="Data antrian perawat tidak ditemukan"
         >
-          <template #item.nomor_antrian="{ item }">
-            <v-chip size="small" color="primary" variant="tonal">
-              {{ item.nomor_antrian }}
-            </v-chip>
+          <template #item.no="{ item }">
+            {{ item.no }}
           </template>
 
           <template #item.pasien="{ item }">
@@ -118,32 +116,55 @@
             </div>
           </template>
 
-          <template #item.kunjungan="{ item }">
+          <template #item.tanggal="{ item }">
             <div class="d-flex flex-column">
               <span class="font-weight-medium">
-                {{ formatDate(item.tanggal_kunjungan) }}
+                {{ item.tanggal_kunjungan }}
               </span>
               <span class="text-caption text-medium-emphasis">
-                {{ item.waktu_kunjungan || "-" }}
+                {{ item.nama_tindakan }}
               </span>
             </div>
           </template>
 
-          <template #item.tindakan="{ item }">
-            <div class="d-flex flex-column">
-              <span class="font-weight-medium">{{ item.nama_tindakan }}</span>
-              <span class="text-caption text-medium-emphasis">
-                Qty {{ item.qty }} • {{ formatRupiah(item.harga) }}
-              </span>
-            </div>
-          </template>
+          <template #item.keterangan="{ item }">
+            <div class="d-flex flex-wrap gap-2">
+              <v-chip
+                size="small"
+                :color="item.cppt ? 'indigo' : 'indigo'"
+                variant="tonal"
+                class="badge-chip badge-chip--cppt"
+              >
+                {{ item.cppt ? "CPPT sudah diinput" : "CPPT belum diinput" }}
+              </v-chip>
 
-          <template #item.dokter="{ item }">
-            <div class="d-flex flex-column">
-              <span class="font-weight-medium">{{ item.dokter }}</span>
-              <span class="text-caption text-medium-emphasis">
-                {{ item.petugas }}
-              </span>
+              <v-chip
+                size="small"
+                :color="item.before_after ? 'cyan-darken-1' : 'cyan-darken-1'"
+                variant="tonal"
+                class="badge-chip badge-chip--before-after"
+              >
+                {{
+                  item.before_after
+                    ? "Before/After sudah diinput"
+                    : "Before/After belum diinput"
+                }}
+              </v-chip>
+
+              <v-chip
+                size="small"
+                :color="
+                  item.bahan_treatment ? 'orange-darken-1' : 'orange-darken-1'
+                "
+                variant="tonal"
+                class="badge-chip badge-chip--bahan"
+              >
+                {{
+                  item.bahan_treatment
+                    ? "Bahan Treatment sudah diinput"
+                    : "Bahan Treatment belum diinput"
+                }}
+              </v-chip>
             </div>
           </template>
 
@@ -157,42 +178,39 @@
             </v-chip>
           </template>
 
-          <template #item.catatan="{ item }">
-            <span class="text-body-2">{{ item.catatan || "-" }}</span>
-          </template>
-
           <template #item.aksi="{ item }">
-            <div class="d-flex flex-wrap gap-2">
+            <div class="action-group">
               <v-btn
-                size="small"
-                color="secondary"
-                variant="outlined"
-                prepend-icon="mdi-file-document-edit-outline"
-                @click="goToFormTindakan(item)"
-              >
-                Update
-              </v-btn>
-
-              <v-btn
-                v-if="item.status === 'Menunggu'"
                 size="small"
                 color="primary"
                 variant="tonal"
-                prepend-icon="mdi-play-circle-outline"
-                @click="updateStatus(item, 'Diproses')"
+                prepend-icon="mdi-stethoscope"
+                class="action-btn"
+                @click="goToInputCppt(item)"
               >
-                Proses
+                CPPT
               </v-btn>
 
               <v-btn
-                v-if="item.status !== 'Selesai'"
                 size="small"
                 color="success"
                 variant="tonal"
-                prepend-icon="mdi-check-circle-outline"
-                @click="updateStatus(item, 'Selesai')"
+                prepend-icon="mdi-camera"
+                class="action-btn"
+                @click="goToInputBeforeAfter(item)"
               >
-                Selesai
+                Before/After
+              </v-btn>
+
+              <v-btn
+                size="small"
+                color="warning"
+                variant="tonal"
+                prepend-icon="mdi-flask"
+                class="action-btn"
+                @click="goToInputBahanTreatment(item)"
+              >
+                Bahan Treatment
               </v-btn>
 
               <v-btn
@@ -200,6 +218,7 @@
                 color="error"
                 variant="tonal"
                 prepend-icon="mdi-delete-outline"
+                class="action-btn"
                 @click="confirmDelete(item)"
               >
                 Hapus
@@ -275,13 +294,11 @@ export default {
       petugasOptions: ["Semua", "Perawat", "Beautician"],
 
       headers: [
-        { title: "No. Antrian", key: "nomor_antrian", sortable: false },
+        { title: "No", key: "no", sortable: false },
         { title: "Pasien", key: "pasien", sortable: false },
-        { title: "Kunjungan", key: "kunjungan", sortable: false },
-        { title: "Tindakan", key: "tindakan", sortable: false },
-        { title: "Dokter / Petugas", key: "dokter", sortable: false },
+        { title: "Tanggal", key: "tanggal", sortable: false },
+        { title: "Keterangan", key: "keterangan", sortable: false },
         { title: "Status", key: "status", sortable: false },
-        { title: "Catatan", key: "catatan", sortable: false },
         { title: "Aksi", key: "aksi", sortable: false, align: "end" },
       ],
 
@@ -289,39 +306,41 @@ export default {
         {
           id: 1,
           nomor_antrian: "P-001",
-          nama_pasien: "Siti Aisyah",
+          nama_pasien: "ADE RAMADHANA PRATAMA",
           no_rm: "B20240101001",
           no_hp: "6281234567890",
-          tanggal_kunjungan: "2026-04-20",
+          tanggal_kunjungan: "2026-04-23",
           waktu_kunjungan: "09:15",
           nama_tindakan: "Facial Acne",
           qty: 1,
           harga: 250000,
           dokter: "Dr. Rayi Vialita Poetri",
           petugas: "Beautician",
-          status: "Menunggu",
-          catatan: "Lanjut dari konsultasi dokter",
+          cppt: false,
+          before_after: false,
+          bahan_treatment: false,
         },
         {
           id: 2,
           nomor_antrian: "P-002",
-          nama_pasien: "Nadia Putri",
+          nama_pasien: "TIARA THERESIA",
           no_rm: "B20240214012",
           no_hp: "6282233344455",
-          tanggal_kunjungan: "2026-04-20",
+          tanggal_kunjungan: "2026-04-22",
           waktu_kunjungan: "09:40",
           nama_tindakan: "Laser Toning",
           qty: 1,
           harga: 450000,
           dokter: "Dr. Rayi Vialita Poetri",
           petugas: "Perawat",
-          status: "Diproses",
-          catatan: "Pastikan area wajah sudah dibersihkan",
+          cppt: false,
+          before_after: false,
+          bahan_treatment: false,
         },
         {
           id: 3,
           nomor_antrian: "P-003",
-          nama_pasien: "Vina Maharani",
+          nama_pasien: "SULISTIANA WATI",
           no_rm: "B20231107088",
           no_hp: "6281119998877",
           tanggal_kunjungan: "2026-04-20",
@@ -331,60 +350,78 @@ export default {
           harga: 350000,
           dokter: "Dr. Fajar Nugroho",
           petugas: "Perawat",
-          status: "Selesai",
-          catatan: "",
+          cppt: true,
+          before_after: false,
+          bahan_treatment: false,
         },
         {
           id: 4,
           nomor_antrian: "P-004",
-          nama_pasien: "Rina Oktavia",
+          nama_pasien: "SILATUL AZIZAH",
           no_rm: "B20250112007",
           no_hp: "6285767788990",
-          tanggal_kunjungan: "2026-04-20",
+          tanggal_kunjungan: "2026-04-19",
           waktu_kunjungan: "10:30",
           nama_tindakan: "Chemical Peeling",
           qty: 1,
           harga: 300000,
           dokter: "Dr. Fajar Nugroho",
           petugas: "Beautician",
-          status: "Menunggu",
-          catatan: "Perhatikan sensitivitas kulit pasien",
+          cppt: true,
+          before_after: true,
+          bahan_treatment: true,
         },
       ],
     };
   },
 
   computed: {
+    normalizedItems() {
+      return this.items.map((item) => ({
+        ...item,
+        status: this.getCalculatedStatus(item),
+      }));
+    },
+
     filteredItems() {
-      return this.items.filter((item) => {
-        const keyword = this.search.toLowerCase();
+      return this.normalizedItems
+        .filter((item) => {
+          const keyword = this.search.toLowerCase();
 
-        const matchSearch =
-          !keyword ||
-          item.nomor_antrian.toLowerCase().includes(keyword) ||
-          item.nama_pasien.toLowerCase().includes(keyword) ||
-          item.no_rm.toLowerCase().includes(keyword) ||
-          item.no_hp.toLowerCase().includes(keyword) ||
-          item.nama_tindakan.toLowerCase().includes(keyword) ||
-          item.dokter.toLowerCase().includes(keyword) ||
-          item.petugas.toLowerCase().includes(keyword);
+          const matchSearch =
+            !keyword ||
+            String(item.nomor_antrian).toLowerCase().includes(keyword) ||
+            String(item.nama_pasien).toLowerCase().includes(keyword) ||
+            String(item.no_rm).toLowerCase().includes(keyword) ||
+            String(item.no_hp).toLowerCase().includes(keyword) ||
+            String(item.nama_tindakan).toLowerCase().includes(keyword) ||
+            String(item.dokter).toLowerCase().includes(keyword) ||
+            String(item.petugas).toLowerCase().includes(keyword);
 
-        const matchStatus =
-          this.filterStatus === "Semua" || item.status === this.filterStatus;
+          const matchStatus =
+            this.filterStatus === "Semua" || item.status === this.filterStatus;
 
-        const matchPetugas =
-          this.filterPetugas === "Semua" || item.petugas === this.filterPetugas;
+          const matchPetugas =
+            this.filterPetugas === "Semua" ||
+            item.petugas === this.filterPetugas;
 
-        return matchSearch && matchStatus && matchPetugas;
-      });
+          return matchSearch && matchStatus && matchPetugas;
+        })
+        .map((item, index) => ({
+          ...item,
+          no: index + 1,
+        }));
     },
 
     summary() {
       return {
-        total: this.items.length,
-        menunggu: this.items.filter((x) => x.status === "Menunggu").length,
-        diproses: this.items.filter((x) => x.status === "Diproses").length,
-        selesai: this.items.filter((x) => x.status === "Selesai").length,
+        total: this.normalizedItems.length,
+        menunggu: this.normalizedItems.filter((x) => x.status === "Menunggu")
+          .length,
+        diproses: this.normalizedItems.filter((x) => x.status === "Diproses")
+          .length,
+        selesai: this.normalizedItems.filter((x) => x.status === "Selesai")
+          .length,
       };
     },
   },
@@ -397,10 +434,8 @@ export default {
       if (!silent) this.loading = true;
 
       try {
-        // Ganti dengan API asli
         // const response = await this.$axios.get('/pelayanan-medis/antrian-perawat');
         // this.items = response.data?.data || [];
-
         await new Promise((resolve) => setTimeout(resolve, 400));
       } catch (error) {
         console.error("Gagal memuat data antrian perawat:", error);
@@ -424,18 +459,20 @@ export default {
       }
     },
 
-    formatDate(date) {
-      if (!date) return "-";
+    getCalculatedStatus(item) {
+      const hasCppt = Boolean(item.cppt);
+      const hasBeforeAfter = Boolean(item.before_after);
+      const hasBahanTreatment = Boolean(item.bahan_treatment);
 
-      return new Intl.DateTimeFormat("id-ID", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      }).format(new Date(date));
-    },
+      if (hasCppt && hasBeforeAfter && hasBahanTreatment) {
+        return "Selesai";
+      }
 
-    formatRupiah(value) {
-      return new Intl.NumberFormat("id-ID").format(Number(value || 0));
+      if (hasCppt || hasBeforeAfter || hasBahanTreatment) {
+        return "Diproses";
+      }
+
+      return "Menunggu";
     },
 
     getStatusColor(status) {
@@ -448,23 +485,22 @@ export default {
       return colors[status] || "secondary";
     },
 
-    goToFormTindakan(item) {
-      const target = this.items.find((row) => row.id === item.id);
-
-      if (target && target.status === "Menunggu") {
-        target.status = "Diproses";
-      }
-
+    goToInputCppt(item) {
       this.$router.push(
-        `/pelayanan-medis/antrian-perawat/${item.id}/form-tindakan`,
+        `/pelayanan-medis/antrian-perawat/${item.id}/input-cppt`,
       );
     },
 
-    updateStatus(item, status) {
-      const target = this.items.find((row) => row.id === item.id);
-      if (target) {
-        target.status = status;
-      }
+    goToInputBeforeAfter(item) {
+      this.$router.push(
+        `/pelayanan-medis/antrian-perawat/${item.id}/input-before-after`,
+      );
+    },
+
+    goToInputBahanTreatment(item) {
+      this.$router.push(
+        `/pelayanan-medis/antrian-perawat/${item.id}/input-bahan-treatment`,
+      );
     },
 
     confirmDelete(item) {
@@ -479,7 +515,6 @@ export default {
 
       try {
         // await this.$axios.delete(`/pelayanan-medis/antrian-perawat/${this.selectedItem.id}`);
-
         this.items = this.items.filter(
           (row) => row.id !== this.selectedItem.id,
         );
@@ -508,119 +543,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.page-title {
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
-  margin: 0 0 6px;
-}
-
-.page-subtitle {
-  font-size: 14px;
-  color: rgba(0, 0, 0, 0.6);
-  margin: 0;
-}
-
-.gap-2 {
-  gap: 8px;
-}
-
-.main-card {
-  border-radius: 10px !important;
-  border: 1px solid #e5e7eb;
-  box-shadow: none !important;
-  overflow: hidden;
-}
-
-.section-header {
-  font-size: 18px;
-  font-weight: 700;
-  padding: 14px 20px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #fff;
-}
-
-.toolbar-wrap {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.toolbar-filter {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.filter-search {
-  min-width: 320px;
-}
-
-.filter-select {
-  min-width: 180px;
-}
-
-.summary-card {
-  border-radius: 8px !important;
-  border: 1px solid #e5e7eb;
-  box-shadow: none !important;
-}
-
-.summary-label {
-  font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 8px;
-}
-
-.summary-value {
-  font-size: 26px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.table-section {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: none !important;
-}
-
-.dialog-card {
-  border-radius: 10px !important;
-}
-
-.dialog-title {
-  font-size: 18px;
-  font-weight: 700;
-  padding: 16px 20px;
-}
-
-.delete-dialog-info {
-  margin-top: 12px;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #f9fafb;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-:deep(.v-field) {
-  border-radius: 6px !important;
-}
-
-:deep(.v-data-table .v-table__wrapper table thead th) {
-  font-weight: 700;
-  font-size: 13px;
-}
-
-@media (max-width: 960px) {
-  .filter-search,
-  .filter-select {
-    min-width: 100%;
-  }
-}
-</style>

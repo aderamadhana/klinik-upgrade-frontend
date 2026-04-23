@@ -4,10 +4,12 @@ body,
   height: 100%;
 }
 
-body {
-  font-family: "Poppins", sans-serif;
+html,
+body,
+#app,
+.v-application {
+  font-family: Arial, Helvetica, sans-serif !important;
 }
-
 .main-scroll {
   height: 100vh;
   overflow-y: auto;
@@ -196,5 +198,133 @@ body {
 @media (max-width: 600px) {
   .patient-detail-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+.gap-2 {
+  gap: 8px;
+}
+
+.main-card {
+  border-radius: 10px !important;
+  border: 1px solid #e5e7eb;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+
+.section-header {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.toolbar-wrap {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.toolbar-filter {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-search {
+  min-width: 320px;
+}
+
+.filter-select {
+  min-width: 180px;
+}
+
+.summary-card {
+  border-radius: 8px !important;
+  border: 1px solid #e5e7eb;
+  box-shadow: none !important;
+}
+
+.summary-label {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.summary-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.table-section {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: none !important;
+}
+
+.dialog-card {
+  border-radius: 10px !important;
+}
+
+.dialog-title {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 16px 20px;
+}
+
+.delete-dialog-info {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.badge-chip {
+  font-weight: 600;
+}
+
+:deep(.v-field) {
+  border-radius: 6px !important;
+}
+
+:deep(.v-data-table .v-table__wrapper table thead th) {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+@media (max-width: 960px) {
+  .filter-search,
+  .filter-select {
+    min-width: 100%;
+  }
+}
+
+.action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.action-btn {
+  text-transform: none !important;
+  /* font-weight: 600; */
+}
+
+@media (max-width: 960px) {
+  .action-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .action-btn {
+    width: 100%;
+    justify-content: flex-start;
   }
 }

@@ -4,10 +4,16 @@ const kasirRoutes = [
     component: () => import("@/layouts/main-layout.vue"),
     children: [
       {
-        path: "pembayaran",
+        path: "daftar-pembayaran",
         name: "Pembayaran Layanan",
         component: () =>
           import("@/views/kasir-pembayaran/pembayaran/all-pembayaran.vue"),
+      },
+      {
+        path: "daftar-pembayaran/:id/proses-pembayaran",
+        name: "Proses Pembayaran Layanan",
+        component: () =>
+          import("@/views/kasir-pembayaran/pembayaran/proses-pembayaran.vue"),
       },
     ],
   },
