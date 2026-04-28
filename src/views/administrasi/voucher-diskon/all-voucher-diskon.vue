@@ -18,7 +18,7 @@
         <v-btn
           color="success"
           prepend-icon="mdi-plus"
-          :href="baseUrl + 'Administrasi/Diskon/create'"
+          :to="'/administrasi/voucher-diskon/add'"
         >
           Tambah Voucher
         </v-btn>
@@ -69,24 +69,34 @@
             </template>
 
             <template #item.action="{ item }">
-              <div class="d-flex ga-2">
+              <div class="d-flex ga-2 flex-wrap">
                 <v-btn
                   size="small"
-                  color="primary"
-                  prepend-icon="mdi-pencil"
-                  :href="baseUrl + 'Administrasi/Diskon/edit/' + item.id"
-                >
-                  Edit
-                </v-btn>
+                  color="cyan-darken-1"
+                  icon="mdi-pencil"
+                  :to="`/administrasi/voucher-diskon/edit-voucher-diskon/${item.id}`"
+                />
+
+                <v-btn
+                  size="small"
+                  color="amber-darken-1"
+                  icon="mdi-format-list-bulleted"
+                  :to="`/administrasi/voucher-diskon/konfigurasi-voucher-diskon/${item.id}`"
+                />
 
                 <v-btn
                   size="small"
                   color="error"
-                  prepend-icon="mdi-delete"
-                  @click="confirmDelete(item, 'direct')"
-                >
-                  Hapus
-                </v-btn>
+                  icon="mdi-delete"
+                  @click="confirmDelete(item, 'generate')"
+                />
+
+                <v-btn
+                  size="small"
+                  color="primary"
+                  icon="mdi-download"
+                  @click="downloadVoucher(item)"
+                />
               </div>
             </template>
           </v-data-table>
@@ -106,24 +116,34 @@
             </template>
 
             <template #item.action="{ item }">
-              <div class="d-flex ga-2">
+              <div class="d-flex ga-2 flex-wrap">
                 <v-btn
                   size="small"
-                  color="primary"
-                  prepend-icon="mdi-pencil"
-                  :href="baseUrl + 'Administrasi/Diskon/edit/' + item.id"
-                >
-                  Edit
-                </v-btn>
+                  color="cyan-darken-1"
+                  icon="mdi-pencil"
+                  :to="`/administrasi/voucher-diskon/edit-voucher-diskon/${item.id}`"
+                />
+
+                <v-btn
+                  size="small"
+                  color="amber-darken-1"
+                  icon="mdi-format-list-bulleted"
+                  :to="`/administrasi/voucher-diskon/konfigurasi-voucher-diskon/${item.id}`"
+                />
 
                 <v-btn
                   size="small"
                   color="error"
-                  prepend-icon="mdi-delete"
+                  icon="mdi-delete"
                   @click="confirmDelete(item, 'generate')"
-                >
-                  Hapus
-                </v-btn>
+                />
+
+                <v-btn
+                  size="small"
+                  color="primary"
+                  icon="mdi-download"
+                  @click="downloadVoucher(item)"
+                />
               </div>
             </template>
           </v-data-table>
@@ -131,10 +151,9 @@
       </v-card-text>
     </v-card>
 
-    <!-- DIALOG DELETE -->
     <v-dialog v-model="deleteDialog" max-width="420">
       <v-card>
-        <v-card-title class="text-h6"> Konfirmasi Hapus </v-card-title>
+        <v-card-title class="text-h6">Konfirmasi Hapus</v-card-title>
 
         <v-card-text>
           Yakin ingin menghapus voucher
@@ -143,13 +162,12 @@
         </v-card-text>
 
         <v-card-actions class="justify-end">
-          <v-btn variant="text" @click="deleteDialog = false"> Batal </v-btn>
-          <v-btn color="error" @click="deleteVoucher"> Hapus </v-btn>
+          <v-btn variant="text" @click="deleteDialog = false">Batal</v-btn>
+          <v-btn color="error" @click="deleteVoucher">Hapus</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <!-- SNACKBAR -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color">
       {{ snackbar.text }}
     </v-snackbar>
@@ -159,9 +177,9 @@
 <script>
 export default {
   name: "DiskonIndex",
+
   data() {
     return {
-      baseUrl: window.baseUrl || "/",
       activeTab: "direct",
       search: "",
       deleteDialog: false,
@@ -176,7 +194,7 @@ export default {
         {
           title: "Voucher Diskon",
           disabled: false,
-          to: "/administrasi/diskon",
+          to: "/administrasi/voucher-diskon",
         },
       ],
 
@@ -187,7 +205,7 @@ export default {
         { title: "JENIS", key: "opsi" },
         { title: "KODE", key: "kode_voucher" },
         { title: "BERLAKU DI", key: "berlaku", sortable: false },
-        { title: "AKSI", key: "action", sortable: false, width: "15%" },
+        { title: "AKSI", key: "action", sortable: false, width: "20%" },
       ],
 
       directVouchers: [
@@ -262,6 +280,7 @@ export default {
     filteredDirectVouchers() {
       return this.filterItems(this.directVouchers);
     },
+
     filteredGenerateVouchers() {
       return this.filterItems(this.generateVouchers);
     },
@@ -305,6 +324,11 @@ export default {
       this.selectedType = null;
     },
 
+    downloadVoucher(item) {
+      console.log("Download voucher:", item);
+      this.showSnackbar(`Download voucher ${item.nama}`, "info");
+    },
+
     showSnackbar(text, color = "success") {
       this.snackbar.text = text;
       this.snackbar.color = color;
@@ -313,3 +337,26 @@ export default {
   },
 };
 </script>
+<style scoped>
+.action-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.action-btn {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  box-shadow: none !important;
+}
+
+/* Biar semua baris tabel ada napas atas-bawah */
+:deep(.v-data-table .v-table__wrapper > table > tbody > tr > td) {
+  vertical-align: middle;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+}
+</style>

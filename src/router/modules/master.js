@@ -150,6 +150,22 @@ const masterRoutes = [
         component: () =>
           import("@/views/master/treatment-global/edit-treatment-global.vue"),
       },
+
+      {
+        path: "user",
+        name: "Master User",
+        component: () => import("@/views/master/user/all-user.vue"),
+      },
+      {
+        path: "user/add",
+        name: "Tambah User",
+        component: () => import("@/views/master/user/add-user.vue"),
+      },
+      {
+        path: "user/edit/:id",
+        name: "Edit User",
+        component: () => import("@/views/master/user/edit-user.vue"),
+      },
     ],
   },
 ];

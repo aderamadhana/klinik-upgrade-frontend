@@ -266,6 +266,13 @@ export default {
               to: "/master/merchandise",
               roles: ["administrator", "sudo", "it", "management"],
             },
+            {
+              key: "user",
+              title: "Users",
+              icon: "mdi-account-multiple",
+              to: "/master/user",
+              roles: ["administrator", "sudo", "it"],
+            },
           ],
         },
 
@@ -1002,20 +1009,6 @@ export default {
               ],
             },
           ],
-        },
-
-        {
-          header: "MENU USER",
-          key: "header-users",
-          roles: ["administrator", "sudo", "it"],
-        },
-
-        {
-          key: "users",
-          title: "Users",
-          icon: "mdi-account-multiple",
-          to: "/users",
-          roles: ["administrator", "sudo", "it"],
         },
       ],
     };

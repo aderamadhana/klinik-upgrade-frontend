@@ -33,6 +33,24 @@ const administrasiRoutes = [
         component: () =>
           import("@/views/administrasi/voucher-diskon/all-voucher-diskon.vue"),
       },
+      {
+        path: "voucher-diskon/add",
+        name: "Add Voucher Diskon",
+        component: () =>
+          import("@/views/administrasi/voucher-diskon/add-voucher-diskon.vue"),
+      },
+      {
+        path: "voucher-diskon/edit-voucher-diskon/:id",
+        name: "Edit Voucher Diskon",
+        component: () =>
+          import("@/views/administrasi/voucher-diskon/edit-voucher-diskon.vue"),
+      },
+      {
+        path: "voucher-diskon/konfigurasi-voucher-diskon/:id",
+        name: "Konfigurasi Voucher Diskon",
+        component: () =>
+          import("@/views/administrasi/voucher-diskon/konfigurasi-voucher-diskon.vue"),
+      },
     ],
   },
 ];
