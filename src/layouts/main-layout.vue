@@ -6,6 +6,7 @@
       <AppHeader
         @toggle="drawer = !drawer"
         @update:role="selectedRole = $event"
+        @update:cabang="selectedCabang = $event"
       />
 
       <v-main class="content-area">
@@ -27,7 +28,8 @@ export default {
   data() {
     return {
       drawer: true,
-      selectedRole: "administrator",
+      selectedRole: localStorage.getItem("selected_role_id") || null,
+      selectedCabang: localStorage.getItem("selected_toko_id") || null,
     };
   },
 };

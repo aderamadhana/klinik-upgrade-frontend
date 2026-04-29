@@ -1,6 +1,7 @@
 <script>
 import bg from "@/assets/login.png";
 import logo from "@/assets/smart_clinic.webp";
+import authService from "@/services/authService";
 
 export default {
   data() {
@@ -8,22 +9,49 @@ export default {
       bg,
       logo,
       loading: false,
+      errorMessage: "",
+      showPassword: false,
+      form: {
+        username: "",
+        password: "",
+      },
     };
   },
 
   methods: {
     async handleLogin() {
-      if (this.loading) return;
+      this.errorMessage = "";
+
+      if (!this.form.username || !this.form.password) {
+        this.errorMessage = "Username dan password wajib diisi.";
+        return;
+      }
 
       this.loading = true;
 
       try {
-        // simulasi request API
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        this.$router.push("/dashboard");
-        // nanti panggil API login di sini
-      } catch (e) {
-        console.error(e);
+        const result = await authService.login({
+          username: this.form.username,
+          password: this.form.password,
+        });
+
+        localStorage.setItem("access_token", result.data.access_token);
+        if (result.data.user) {
+          localStorage.setItem("user", JSON.stringify(result.data.user));
+        }
+        localStorage.setItem("access", JSON.stringify(result.data.access));
+
+        this.$router.replace("/dashboard");
+      } catch (error) {
+        const status = error.response?.status;
+
+        if (status === 401) {
+          this.errorMessage = "Username atau password salah.";
+        } else if (status === 422) {
+          this.errorMessage = "Validasi gagal. Cek kembali input login.";
+        } else {
+          this.errorMessage = "Gagal terhubung ke server.";
+        }
       } finally {
         this.loading = false;
       }
@@ -41,19 +69,41 @@ export default {
           <h2 class="title text-uppercase fw-bold">Login Account</h2>
         </div>
 
+        <v-alert
+          v-if="errorMessage"
+          type="error"
+          variant="tonal"
+          density="compact"
+          class="mb-5"
+        >
+          {{ errorMessage }}
+        </v-alert>
+
         <v-text-field
+          v-model="form.username"
           label="Email / Username"
           variant="outlined"
+          prepend-inner-icon="mdi-account-outline"
           hide-details
           class="mb-6"
+          :disabled="loading"
+          @keyup.enter="handleLogin"
         />
 
         <v-text-field
+          v-model="form.password"
           label="Password"
-          type="password"
+          :type="showPassword ? 'text' : 'password'"
           variant="outlined"
+          prepend-inner-icon="mdi-lock-outline"
+          :append-inner-icon="
+            showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'
+          "
           hide-details
           class="mb-10"
+          :disabled="loading"
+          @click:append-inner="showPassword = !showPassword"
+          @keyup.enter="handleLogin"
         />
 
         <v-btn
@@ -64,6 +114,7 @@ export default {
         >
           Login
         </v-btn>
+
         <div class="login-footer">
           <div class="divider"></div>
           <p class="version">v1.6.1 - 2024-07-28</p>
@@ -121,6 +172,8 @@ export default {
   font-weight: 600;
   background: linear-gradient(90deg, #b04ca5, #8e3f91);
   color: white;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .login-footer {
@@ -146,9 +199,6 @@ export default {
   color: #777;
 }
 
-/* =========================
-   RESPONSIVE MOBILE / TABLET
-   ========================= */
 @media (max-width: 768px) {
   .hero {
     background-image: none !important;

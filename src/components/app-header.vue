@@ -38,23 +38,22 @@
       <template #activator="{ props }">
         <div v-bind="props" class="user-trigger">
           <v-avatar color="lime" size="30" class="user-avatar">
-            <span class="avatar-text">IJ</span>
+            <span class="avatar-text">{{ avatarInitial }}</span>
           </v-avatar>
-          <span class="user-name">IT JKS</span>
+
+          <span class="user-name">{{ headerUserName }}</span>
+
           <v-icon size="16" class="chevron-icon">mdi-chevron-down</v-icon>
         </div>
       </template>
 
       <v-card class="user-menu" elevation="0">
         <v-list density="compact" class="menu-list">
-          <v-list-item
-            class="menu-item"
-            @click="goChangePassword"
-            min-height="36"
-          >
+          <v-list-item class="menu-item" @click="goChangePassword">
             <template #prepend>
               <v-icon size="15" class="menu-icon">mdi-key-outline</v-icon>
             </template>
+
             <v-list-item-title class="menu-label">
               Change Password
             </v-list-item-title>
@@ -62,14 +61,11 @@
 
           <v-divider class="menu-divider" />
 
-          <v-list-item
-            class="menu-item logout-item"
-            @click="logout"
-            min-height="36"
-          >
+          <v-list-item class="menu-item logout-item" @click="handleLogout">
             <template #prepend>
               <v-icon size="15" class="menu-icon">mdi-logout</v-icon>
             </template>
+
             <v-list-item-title class="menu-label">Logout</v-list-item-title>
           </v-list-item>
         </v-list>
@@ -81,68 +77,248 @@
 <script>
 export default {
   name: "AppHeader",
+
   emits: ["toggle", "update:cabang", "update:role"],
+
   data() {
     return {
-      selectedCabang: "jakarta_selatan",
-      selectedRole: "administrator",
-      cabangOptions: [
-        { title: "All Cabang Klinik", value: "all" },
-        { title: "Malang", value: "malang" },
-        { title: "Surabaya", value: "surabaya" },
-        { title: "Bandung", value: "bandung" },
-        { title: "Sidoarjo", value: "sidoarjo" },
-        { title: "Bekasi", value: "bekasi" },
-        { title: "Medan", value: "medan" },
-        { title: "Depok", value: "depok" },
-        { title: "Yogyakarta", value: "yogyakarta" },
-        { title: "Jakarta Selatan", value: "jakarta_selatan" },
-        { title: "Management", value: "management" },
-        { title: "Glow Central", value: "glow_central" },
-      ],
-      roleOptions: [
-        { title: "All Role", value: "all" },
-        { title: "Administrator", value: "administrator" },
-        { title: "Dokter", value: "dokter" },
-        { title: "Front Office", value: "front office" },
-        { title: "Apoteker", value: "apoteker" },
-        { title: "Branch Accounting", value: "branch accounting" },
-        { title: "Security", value: "security" },
-        { title: "Sudo", value: "sudo" },
-        { title: "SP", value: "sp" },
-        { title: "IT", value: "it" },
-        { title: "Management", value: "management" },
-      ],
+      user: null,
+      access: null,
+
+      selectedCabang: null,
+      selectedRole: null,
+
+      cabangOptions: [],
+      roleOptions: [],
     };
   },
+
   computed: {
     currentClinicName() {
       const cabang = this.cabangOptions.find(
-        (item) => item.value === this.selectedCabang,
+        (item) => String(item.value) === String(this.selectedCabang),
       );
 
       if (!cabang) return "KLINIK";
-      if (this.selectedCabang === "all") return "SEMUA CABANG KLINIK";
 
-      return cabang.title.toUpperCase();
+      return String(cabang.title || "KLINIK").toUpperCase();
+    },
+
+    headerUserName() {
+      const userName =
+        this.user?.display_name ||
+        this.user?.nama ||
+        this.user?.username ||
+        "User";
+
+      const selectedRole = this.roleOptions.find(
+        (item) => String(item.value) === String(this.selectedRole),
+      );
+
+      const roleName = selectedRole?.title || this.user?.role_name || "";
+
+      if (!roleName) return userName;
+
+      return `${userName}`;
+    },
+
+    avatarInitial() {
+      const name =
+        this.user?.display_name ||
+        this.user?.nama ||
+        this.user?.username ||
+        "U";
+
+      const words = String(name).trim().split(/\s+/).filter(Boolean);
+
+      if (!words.length) return "U";
+
+      if (words.length === 1) {
+        return words[0].substring(0, 2).toUpperCase();
+      }
+
+      return `${words[0][0]}${words[1][0]}`.toUpperCase();
     },
   },
+
   mounted() {
-    this.$emit("update:cabang", this.selectedCabang);
-    this.$emit("update:role", this.selectedRole);
+    this.initHeader();
   },
+
   methods: {
+    initHeader() {
+      this.user = this.getLocalJson("user");
+      console.log(localStorage.getItem("access"));
+      this.access = this.getLocalJson("access");
+      this.setRoleOptions();
+      this.setCabangOptions();
+      this.setDefaultSelection();
+
+      this.emitCurrentAccess();
+    },
+
+    getLocalJson(key) {
+      try {
+        const value = localStorage.getItem(key);
+
+        if (!value) return null;
+
+        return JSON.parse(value);
+      } catch (error) {
+        return null;
+      }
+    },
+
+    setRoleOptions() {
+      const roles = Array.isArray(this.access?.roles) ? this.access.roles : [];
+
+      this.roleOptions = roles
+        .map((item) => ({
+          title:
+            item.role_name ||
+            item.nama_role ||
+            item.nama ||
+            item.name ||
+            item.kode_role ||
+            "-",
+          value: item.role_id || item.id,
+          raw: item,
+        }))
+        .filter((item) => item.value && item.title !== "-");
+
+      if (!this.roleOptions.length && this.user?.role_id) {
+        this.roleOptions = [
+          {
+            title: this.user.role_name || "Role",
+            value: this.user.role_id,
+            raw: this.user,
+          },
+        ];
+      }
+    },
+
+    setCabangOptions() {
+      const penempatan = Array.isArray(this.access?.penempatan)
+        ? this.access.penempatan
+        : [];
+      console.log(this.access);
+
+      this.cabangOptions = penempatan
+        .map((item) => ({
+          title:
+            item.nama_toko ||
+            item.toko?.nama_toko ||
+            item.toko?.nama ||
+            item.nama ||
+            "-",
+          value: item.toko_id || item.id,
+          is_primary: Number(item.is_primary || 0) === 1,
+          raw: item,
+        }))
+        .filter((item) => item.value && item.title !== "-");
+
+      if (!this.cabangOptions.length && this.access?.primary_toko) {
+        const toko = this.access.primary_toko;
+
+        this.cabangOptions = [
+          {
+            title: toko.nama_toko || toko.nama || "KLINIK",
+            value: toko.toko_id || toko.id,
+            is_primary: true,
+            raw: toko,
+          },
+        ];
+      }
+    },
+
+    setDefaultSelection() {
+      const savedCabang = localStorage.getItem("selected_toko_id");
+      const savedRole = localStorage.getItem("selected_role_id");
+
+      const primaryCabang =
+        this.cabangOptions.find((item) => item.is_primary) ||
+        this.cabangOptions[0] ||
+        null;
+
+      const defaultRole =
+        this.roleOptions.find(
+          (item) => String(item.value) === String(this.user?.role_id),
+        ) ||
+        this.roleOptions[0] ||
+        null;
+
+      const savedCabangExists = this.cabangOptions.some(
+        (item) => String(item.value) === String(savedCabang),
+      );
+
+      const savedRoleExists = this.roleOptions.some(
+        (item) => String(item.value) === String(savedRole),
+      );
+
+      this.selectedCabang = savedCabangExists
+        ? Number(savedCabang)
+        : primaryCabang?.value || null;
+
+      this.selectedRole = savedRoleExists
+        ? Number(savedRole)
+        : defaultRole?.value || null;
+
+      if (this.selectedCabang) {
+        localStorage.setItem("selected_toko_id", this.selectedCabang);
+      }
+
+      if (this.selectedRole) {
+        localStorage.setItem("selected_role_id", this.selectedRole);
+      }
+    },
+
+    emitCurrentAccess() {
+      this.$emit("update:cabang", this.selectedCabang);
+      this.$emit("update:role", this.selectedRole);
+    },
+
     onCabangChange(value) {
+      const selected = this.cabangOptions.find(
+        (item) => String(item.value) === String(value),
+      );
+
+      localStorage.setItem("selected_toko_id", value);
+
+      if (selected) {
+        localStorage.setItem("selected_toko", JSON.stringify(selected.raw));
+      }
+
       this.$emit("update:cabang", value);
     },
+
     onRoleChange(value) {
+      const selected = this.roleOptions.find(
+        (item) => String(item.value) === String(value),
+      );
+
+      localStorage.setItem("selected_role_id", value);
+
+      if (selected) {
+        localStorage.setItem("selected_role", JSON.stringify(selected.raw));
+      }
+
       this.$emit("update:role", value);
     },
+
     goChangePassword() {
-      this.$router.push("/change-password");
+      this.$router.push("/dashboard/change-password");
     },
-    logout() {
-      // handle logout
+
+    handleLogout() {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("access");
+      localStorage.removeItem("selected_toko_id");
+      localStorage.removeItem("selected_toko");
+      localStorage.removeItem("selected_role_id");
+      localStorage.removeItem("selected_role");
+
+      this.$router.replace("/login");
     },
   },
 };

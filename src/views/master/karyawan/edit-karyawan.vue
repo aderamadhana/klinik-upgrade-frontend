@@ -43,15 +43,16 @@
                 variant="outlined"
                 density="comfortable"
                 :rules="[rules.required]"
-                clearable
+                :loading="loadingKode"
+                readonly
               />
             </v-col>
 
             <v-col cols="12" md="4">
-              <v-select
+              <v-autocomplete
                 v-model="form.jabatan_id"
                 label="Jabatan *"
-                placeholder="Pilih jabatan"
+                placeholder="Cari / pilih jabatan"
                 :items="jabatanOptions"
                 item-title="nama"
                 item-value="id"
@@ -60,6 +61,8 @@
                 :rules="[rules.required]"
                 :loading="loadingMaster"
                 clearable
+                auto-select-first
+                no-data-text="Jabatan tidak ditemukan"
               />
             </v-col>
 
@@ -236,10 +239,10 @@
             <v-card-text>
               <v-row>
                 <v-col cols="12" md="5">
-                  <v-select
+                  <v-autocomplete
                     v-model="item.toko_id"
                     label="Toko *"
-                    placeholder="Pilih toko"
+                    placeholder="Cari / pilih toko"
                     :items="tokoOptions"
                     item-title="nama"
                     item-value="id"
@@ -248,6 +251,8 @@
                     :rules="[rules.required]"
                     :loading="loadingMaster"
                     clearable
+                    auto-select-first
+                    no-data-text="Toko tidak ditemukan"
                   />
                 </v-col>
 
@@ -309,22 +314,35 @@
 </template>
 
 <script>
-import axios from "axios";
+import referenceService from "@/services/referenceService";
+import karyawanService from "@/services/master/karyawanService";
 
 export default {
   name: "EditKaryawan",
+
   data() {
     return {
       isValid: false,
       loadingPage: false,
       loadingMaster: false,
       loadingSave: false,
+      loadingKode: false,
+
+      kodeTimer: null,
+      isInitializing: true,
+
+      originalKode: "",
+      originalKodeSignature: "",
+      lastGeneratedSignature: "",
+
       jabatanOptions: [],
       tokoOptions: [],
+
       genderOptions: [
         { label: "Laki-laki", value: "L" },
         { label: "Perempuan", value: "P" },
       ],
+
       form: {
         kode: "",
         jabatan_id: null,
@@ -348,29 +366,59 @@ export default {
           },
         ],
       },
+
       rules: {
         required: (v) => !!v || "Wajib diisi",
       },
     };
   },
 
+  watch: {
+    "form.jabatan_id"() {
+      this.scheduleGenerateKodeOnEdit();
+    },
+
+    "form.penempatan": {
+      handler() {
+        this.scheduleGenerateKodeOnEdit();
+      },
+      deep: true,
+    },
+  },
+
   mounted() {
     this.initPage();
+  },
+
+  beforeUnmount() {
+    clearTimeout(this.kodeTimer);
   },
 
   methods: {
     async initPage() {
       this.loadingPage = true;
+      this.isInitializing = true;
 
       try {
         await Promise.all([this.fetchMasterData(), this.fetchDetail()]);
+
+        this.originalKode = this.form.kode;
+        this.originalKodeSignature = this.makeKodeSignature(
+          this.form.jabatan_id,
+          this.getPrimaryTokoId(),
+        );
+        this.lastGeneratedSignature = this.originalKodeSignature;
       } catch (error) {
         console.error(error);
 
+        const message =
+          error?.response?.data?.message || "Gagal memuat data karyawan";
+
         if (this.$toast?.error) {
-          this.$toast.error("Gagal memuat data karyawan");
+          this.$toast.error(message);
         }
       } finally {
+        this.isInitializing = false;
         this.loadingPage = false;
       }
     },
@@ -380,21 +428,52 @@ export default {
 
       try {
         const [jabatanRes, tokoRes] = await Promise.all([
-          axios.get("/api/master/jabatan/options"),
-          axios.get("/api/master/toko/options"),
+          referenceService.jabatan(),
+          referenceService.toko(),
         ]);
 
-        this.jabatanOptions = jabatanRes.data?.data || [];
-        this.tokoOptions = tokoRes.data?.data || [];
+        this.jabatanOptions = this.normalizeReference(jabatanRes);
+        this.tokoOptions = this.normalizeReference(tokoRes);
+      } catch (error) {
+        console.error(error);
+
+        const message =
+          error?.response?.data?.message || "Gagal memuat data master";
+
+        if (this.$toast?.error) {
+          this.$toast.error(message);
+        }
       } finally {
         this.loadingMaster = false;
       }
     },
 
+    normalizeReference(response) {
+      const rows = response?.data ?? response?.result ?? response ?? [];
+
+      if (!Array.isArray(rows)) return [];
+
+      return rows.map((item) => ({
+        id: item.id ?? item.new_id ?? item.value,
+        nama:
+          item.nama ??
+          item.name ??
+          item.nama_jabatan ??
+          item.nama_toko ??
+          item.label ??
+          "-",
+      }));
+    },
+
     async fetchDetail() {
       const id = this.$route.params.id;
-      const res = await axios.get(`/api/master/karyawan/${id}`);
-      const data = res.data?.data;
+
+      if (!id) {
+        throw new Error("ID karyawan tidak ditemukan di route.");
+      }
+
+      const res = await karyawanService.getById(id);
+      const data = res?.data ?? res?.result ?? res;
 
       this.form = {
         kode: data?.kode || "",
@@ -406,26 +485,112 @@ export default {
         nik: data?.nik || "",
         no_ihs: data?.no_ihs || "",
         gender: data?.gender || null,
-        birthday_date: data?.birthday_date || "",
+        birthday_date: this.formatDateInput(data?.birthday_date),
         no_sip_dok: data?.no_sip_dok || "",
         is_dokter_spesialis: Number(data?.is_dokter_spesialis || 0) === 1,
         sort_order: Number(data?.sort_order || 0),
-        penempatan: (data?.penempatan || []).length
-          ? data.penempatan.map((item) => ({
-              toko_id: item.toko_id,
-              is_primary: Number(item.is_primary || 0) === 1,
-              tanggal_mulai: item.tanggal_mulai || "",
-              tanggal_selesai: item.tanggal_selesai || "",
-            }))
-          : [
-              {
-                toko_id: null,
-                is_primary: true,
-                tanggal_mulai: "",
-                tanggal_selesai: "",
-              },
-            ],
+        penempatan: this.mapPenempatan(data?.penempatan),
       };
+    },
+
+    mapPenempatan(penempatan) {
+      if (!Array.isArray(penempatan) || !penempatan.length) {
+        return [
+          {
+            toko_id: null,
+            is_primary: true,
+            tanggal_mulai: "",
+            tanggal_selesai: "",
+          },
+        ];
+      }
+
+      return penempatan.map((item) => ({
+        toko_id: item.toko_id ?? item.toko?.id ?? null,
+        is_primary: Number(item.is_primary || 0) === 1,
+        tanggal_mulai: this.formatDateInput(item.tanggal_mulai),
+        tanggal_selesai: this.formatDateInput(item.tanggal_selesai),
+      }));
+    },
+
+    formatDateInput(value) {
+      if (!value) return "";
+
+      return String(value).substring(0, 10);
+    },
+
+    getPrimaryTokoId() {
+      const primary = this.form.penempatan.find((item) => item.is_primary);
+
+      if (primary?.toko_id) {
+        return primary.toko_id;
+      }
+
+      return this.form.penempatan[0]?.toko_id || null;
+    },
+
+    makeKodeSignature(jabatanId, tokoId) {
+      return `${jabatanId || ""}|${tokoId || ""}`;
+    },
+
+    scheduleGenerateKodeOnEdit() {
+      if (this.isInitializing) return;
+
+      clearTimeout(this.kodeTimer);
+
+      this.kodeTimer = setTimeout(() => {
+        this.generateKodeKaryawanOnEdit();
+      }, 300);
+    },
+
+    async generateKodeKaryawanOnEdit() {
+      const jabatanId = this.form.jabatan_id;
+      const tokoId = this.getPrimaryTokoId();
+
+      if (!jabatanId || !tokoId) {
+        return;
+      }
+
+      const currentSignature = this.makeKodeSignature(jabatanId, tokoId);
+
+      if (currentSignature === this.originalKodeSignature) {
+        this.form.kode = this.originalKode;
+        this.lastGeneratedSignature = currentSignature;
+        return;
+      }
+
+      if (currentSignature === this.lastGeneratedSignature) {
+        return;
+      }
+
+      this.loadingKode = true;
+
+      try {
+        const response = await referenceService.karyawanCode({
+          jabatan_id: jabatanId,
+          toko_id: tokoId,
+          exclude_id: this.$route.params.id,
+        });
+
+        const kode =
+          response?.data?.kode ?? response?.kode ?? response?.data ?? "";
+
+        if (kode) {
+          this.form.kode = kode;
+          this.lastGeneratedSignature = currentSignature;
+        }
+      } catch (error) {
+        console.error(error);
+
+        const message =
+          error?.response?.data?.message || "Gagal membuat kode karyawan";
+
+        if (this.$toast?.error) {
+          this.$toast.error(message);
+        }
+      } finally {
+        this.loadingKode = false;
+      }
     },
 
     addPenempatan() {
@@ -446,6 +611,8 @@ export default {
       ) {
         this.form.penempatan[0].is_primary = true;
       }
+
+      this.scheduleGenerateKodeOnEdit();
     },
 
     setPrimary(index) {
@@ -453,6 +620,8 @@ export default {
         ...item,
         is_primary: i === index,
       }));
+
+      this.scheduleGenerateKodeOnEdit();
     },
 
     validatePenempatan() {
@@ -463,6 +632,7 @@ export default {
       const primaryCount = this.form.penempatan.filter(
         (item) => item.is_primary,
       ).length;
+
       if (primaryCount !== 1) {
         return "Harus ada tepat 1 penempatan utama";
       }
@@ -476,6 +646,7 @@ export default {
       }
 
       const uniqueTokoIds = new Set(tokoIds);
+
       if (uniqueTokoIds.size !== tokoIds.length) {
         return "Toko pada penempatan tidak boleh duplikat";
       }
@@ -493,17 +664,17 @@ export default {
 
     buildPayload() {
       return {
-        kode: this.form.kode,
+        kode: this.cleanValue(this.form.kode),
         jabatan_id: this.form.jabatan_id,
-        nama: this.form.nama,
-        alamat: this.form.alamat || null,
-        foto_karyawan: this.form.foto_karyawan || null,
-        no_telp: this.form.no_telp || null,
-        nik: this.form.nik || null,
-        no_ihs: this.form.no_ihs || null,
+        nama: this.cleanValue(this.form.nama),
+        alamat: this.cleanValue(this.form.alamat),
+        foto_karyawan: this.cleanValue(this.form.foto_karyawan),
+        no_telp: this.cleanValue(this.form.no_telp),
+        nik: this.cleanValue(this.form.nik),
+        no_ihs: this.cleanValue(this.form.no_ihs),
         gender: this.form.gender || null,
         birthday_date: this.form.birthday_date || null,
-        no_sip_dok: this.form.no_sip_dok || null,
+        no_sip_dok: this.cleanValue(this.form.no_sip_dok),
         is_dokter_spesialis: this.form.is_dokter_spesialis ? 1 : 0,
         sort_order: Number(this.form.sort_order || 0),
         penempatan: this.form.penempatan.map((item) => ({
@@ -515,11 +686,25 @@ export default {
       };
     },
 
+    cleanValue(value) {
+      if (value === undefined || value === null || value === "") {
+        return null;
+      }
+
+      if (typeof value === "string") {
+        return value.trim() || null;
+      }
+
+      return value;
+    },
+
     async submitForm() {
       const result = await this.$refs.formRef.validate();
+
       if (!result.valid) return;
 
       const penempatanError = this.validatePenempatan();
+
       if (penempatanError) {
         if (this.$toast?.error) {
           this.$toast.error(penempatanError);
@@ -527,24 +712,36 @@ export default {
         return;
       }
 
+      if (!this.form.kode) {
+        await this.generateKodeKaryawanOnEdit();
+      }
+
+      if (!this.form.kode) {
+        if (this.$toast?.error) {
+          this.$toast.error("Kode karyawan belum berhasil dibuat");
+        }
+        return;
+      }
+
       this.loadingSave = true;
 
       try {
-        await axios.put(
-          `/api/master/karyawan/${this.$route.params.id}`,
-          this.buildPayload(),
-        );
+        const id = this.$route.params.id;
+
+        await karyawanService.update(id, this.buildPayload());
 
         if (this.$toast?.success) {
           this.$toast.success("Data karyawan berhasil diupdate");
         }
 
-        this.$router.push("/master/karyawan");
+        this.$router.replace("/master/karyawan");
       } catch (error) {
         console.error(error);
 
-        const message =
-          error?.response?.data?.message || "Gagal mengupdate data karyawan";
+        const message = this.getErrorMessage(
+          error,
+          "Gagal mengupdate data karyawan",
+        );
 
         if (this.$toast?.error) {
           this.$toast.error(message);
@@ -552,6 +749,31 @@ export default {
       } finally {
         this.loadingSave = false;
       }
+    },
+
+    getErrorMessage(error, fallbackMessage) {
+      const response = error?.response?.data;
+
+      if (response?.message) return response.message;
+
+      if (response?.error) return response.error;
+
+      if (response?.errors) {
+        const firstKey = Object.keys(response.errors)[0];
+
+        if (firstKey && Array.isArray(response.errors[firstKey])) {
+          return response.errors[firstKey][0];
+        }
+      }
+
+      return fallbackMessage;
+    },
+
+    filterOption(itemTitle, queryText) {
+      const text = String(itemTitle || "").toLowerCase();
+      const query = String(queryText || "").toLowerCase();
+
+      return text.includes(query);
     },
   },
 };

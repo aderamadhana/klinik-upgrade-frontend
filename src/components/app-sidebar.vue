@@ -154,7 +154,7 @@
           <div class="footer-avatar">{{ currentUserInitialComputed }}</div>
 
           <div class="footer-info">
-            <div class="footer-name">{{ currentUserName }}</div>
+            <div class="footer-name">{{ sidebarUserName }}</div>
             <div class="footer-role">{{ currentRoleLabel }}</div>
           </div>
 
@@ -171,17 +171,20 @@ export default {
 
   props: {
     modelValue: Boolean,
+
     currentRole: {
-      type: String,
-      default: "administrator",
+      type: [String, Number],
+      default: null,
     },
+
     currentUserName: {
       type: String,
-      default: "IT JKS",
+      default: "",
     },
+
     currentUserInitial: {
       type: String,
-      default: "IT",
+      default: "",
     },
   },
 
@@ -189,6 +192,8 @@ export default {
 
   data() {
     return {
+      user: null,
+      access: null,
       logo: new URL("@/assets/logowebsitenew.png", import.meta.url).href,
       manualOpened: [],
       menu: [
@@ -210,68 +215,80 @@ export default {
         {
           header: "MASTER DATA",
           key: "header-master-data",
-          roles: ["administrator", "sudo", "it", "management", "front office"],
+          roles: [
+            "administrator",
+            "superuser",
+            "it",
+            "management",
+            "front office",
+          ],
         },
         {
           key: "master-data",
           title: "Master Data",
           icon: "mdi-database-outline",
-          roles: ["administrator", "sudo", "it", "management", "front office"],
+          roles: [
+            "administrator",
+            "superuser",
+            "it",
+            "management",
+            "front office",
+          ],
           children: [
             {
               key: "master-toko",
               title: "Toko",
               to: "/master/toko",
-              roles: ["administrator", "sudo", "it", "management"],
+              roles: ["administrator", "superuser", "it", "management"],
             },
             {
               key: "master-karyawan",
               title: "Karyawan",
               to: "/master/karyawan",
-              roles: ["administrator", "sudo", "it", "management"],
+              roles: ["administrator", "superuser", "it", "management"],
             },
             {
               key: "master-pasien",
               title: "Pasien",
               to: "/master/pasien",
-              roles: ["administrator", "sudo", "it", "management"],
+              roles: ["administrator", "superuser", "it", "management"],
             },
             {
               key: "master-supplier",
               title: "Supplier",
               to: "/master/supplier",
-              roles: ["administrator", "sudo", "it", "management"],
+              roles: ["administrator", "superuser", "it", "management"],
             },
             {
               key: "master-brand-ambassador",
               title: "Brand Ambassador",
               to: "/master/brand-ambassador",
-              roles: ["administrator", "sudo", "it", "management"],
+              roles: ["administrator", "superuser", "it", "management"],
             },
             {
               key: "master-treatment-global",
               title: "Treatment Global",
               to: "/master/treatment-global",
-              roles: ["sudo"], // superadmin only
+              roles: ["superuser"], // superadmin only
             },
             {
               key: "master-product-global",
               title: "Product Global",
               to: "/master/product-global",
-              roles: ["sudo"], // superadmin only
+              roles: ["superuser"], // superadmin only
             },
             {
               key: "master-merchandise",
               title: "Merchandise",
               to: "/master/merchandise",
-              roles: ["administrator", "sudo", "it", "management"],
+              roles: ["administrator", "superuser", "it", "management"],
             },
             {
               key: "user",
               title: "Users",
               icon: "mdi-account-multiple",
               to: "/master/user",
-              roles: ["administrator", "sudo", "it"],
+              roles: ["administrator", "superuser", "it"],
             },
           ],
         },
@@ -281,7 +298,7 @@ export default {
           key: "header-operasional-klinik",
           roles: [
             "administrator",
-            "sudo",
+            "superuser",
             "it",
             "management",
             "sp",
@@ -294,7 +311,7 @@ export default {
         //   icon: "mdi-hospital-building",
         //   roles: [
         //     "administrator",
-        //     "sudo",
+        //     "superuser",
         //     "it",
         //     "management",
         //     "sp",
@@ -305,25 +322,25 @@ export default {
         //       key: "operasional-jadwal-dokter",
         //       title: "Jadwal Dokter",
         //       to: "/operasional/jadwal-dokter",
-        //       roles: ["administrator", "sudo", "it", "management"],
+        //       roles: ["administrator", "superuser", "it", "management"],
         //     },
         //     {
         //       key: "operasional-jadwal-nurse",
         //       title: "Jadwal Nurse & Beautician",
         //       to: "/operasional/jadwal-nurse",
-        //       roles: ["administrator", "sudo", "it", "management", "sp"],
+        //       roles: ["administrator", "superuser", "it", "management", "sp"],
         //     },
         //     {
         //       key: "operasional-treatment-klinik",
         //       title: "Treatment Klinik",
         //       to: "/operasional/treatment-klinik",
-        //       roles: ["administrator", "sudo", "it", "management"],
+        //       roles: ["administrator", "superuser", "it", "management"],
         //     },
         //     {
         //       key: "operasional-stock-apotek",
         //       title: "Stock Apotek",
         //       to: "/operasional/stock-apotek",
-        //       roles: ["administrator", "sudo", "it", "management", "apoteker"],
+        //       roles: ["administrator", "superuser", "it", "management", "apoteker"],
         //     },
         //   ],
         // },
@@ -331,43 +348,43 @@ export default {
         // {
         //   header: "PROMO & CONTENT",
         //   key: "header-promo-content",
-        //   roles: ["administrator", "sudo", "it", "management"],
+        //   roles: ["administrator", "superuser", "it", "management"],
         // },
         // {
         //   key: "promo-content",
         //   title: "Promo & Content",
         //   icon: "mdi-bullhorn-outline",
-        //   roles: ["administrator", "sudo", "it", "management"],
+        //   roles: ["administrator", "superuser", "it", "management"],
         //   children: [
         //     {
         //       key: "promo-voucher-diskon",
         //       title: "Voucher Diskon",
         //       to: "/promo/voucher",
-        //       roles: ["administrator", "sudo", "it", "management"],
+        //       roles: ["administrator", "superuser", "it", "management"],
         //     },
         //     {
         //       key: "content-banner-upload",
         //       title: "Banner Upload",
         //       to: "/content/banner-upload",
-        //       roles: ["administrator", "sudo", "it", "management"],
+        //       roles: ["administrator", "superuser", "it", "management"],
         //     },
         //     {
         //       key: "content-news-upload",
         //       title: "News Upload",
         //       to: "/content/news-upload",
-        //       roles: ["administrator", "sudo", "it", "management"],
+        //       roles: ["administrator", "superuser", "it", "management"],
         //     },
         //     {
         //       key: "content-promo-upload",
         //       title: "Promo Upload",
         //       to: "/content/promo-upload",
-        //       roles: ["administrator", "sudo", "it", "management"],
+        //       roles: ["administrator", "superuser", "it", "management"],
         //     },
         //     {
         //       key: "content-dashboard-upload",
         //       title: "Upload Content Dashboard",
         //       to: "/content/dashboard-upload",
-        //       roles: ["administrator", "sudo", "it", "management"],
+        //       roles: ["administrator", "superuser", "it", "management"],
         //     },
         //   ],
         // },
@@ -376,7 +393,7 @@ export default {
           key: "header-administrasi",
           roles: [
             "administrator",
-            "sudo",
+            "superuser",
             "it",
             "management",
             "sp",
@@ -389,7 +406,7 @@ export default {
           icon: "mdi-cog-outline",
           roles: [
             "administrator",
-            "sudo",
+            "superuser",
             "it",
             "management",
             "sp",
@@ -400,70 +417,88 @@ export default {
             //   key: "administrasi-supplier",
             //   title: "Supplier",
             //   to: "/administrasi/supplier",
-            //   roles: ["administrator", "sudo", "it", "management"],
+            //   roles: ["administrator", "superuser", "it", "management"],
             // },
             {
               key: "administrasi-jadwal-dokter",
               title: "Jadwal Dokter",
               to: "/administrasi/jadwal-dokter",
-              roles: ["administrator", "sudo", "it", "management"],
+              roles: ["administrator", "superuser", "it", "management"],
             },
             {
               key: "administrasi-jadwal-nurse",
               title: "Jadwal Nurse & Beautician",
               to: "/administrasi/jadwal-nurse",
-              roles: ["administrator", "sudo", "it", "management", "sp"],
+              roles: ["administrator", "superuser", "it", "management", "sp"],
             },
             // {
             //   key: "administrasi-treatment-klinik",
             //   title: "Treatment Klinik",
             //   to: "/administrasi/treatment-klinik",
-            //   roles: ["administrator", "sudo", "it", "management"],
+            //   roles: ["administrator", "superuser", "it", "management"],
             // },
             {
               key: "administrasi-stock-apotek",
               title: "Stock Apotek",
               to: "/administrasi/stock-apotek",
-              roles: ["administrator", "sudo", "it", "management", "apoteker"],
+              roles: [
+                "administrator",
+                "superuser",
+                "it",
+                "management",
+                "apoteker",
+              ],
             },
             {
               key: "administrasi-voucher-diskon",
               title: "Voucher Diskon",
               to: "/administrasi/voucher-diskon",
-              roles: ["administrator", "sudo", "it", "management"],
+              roles: ["administrator", "superuser", "it", "management"],
             },
           ],
         },
         {
           header: "PENGATURAN SISTEM",
           key: "header-pengaturan-sistem",
-          roles: ["administrator", "sudo", "it"],
+          roles: ["administrator", "superuser", "it"],
         },
         {
           key: "pengaturan-sistem",
           title: "Pengaturan Sistem",
           icon: "mdi-cog-outline",
-          roles: ["administrator", "sudo", "it"],
+          roles: ["administrator", "superuser", "it"],
           children: [
             {
               key: "pengaturan-whatsapp",
               title: "Pengaturan WhatsApp",
               to: "/pengaturan/whatsapp",
-              roles: ["administrator", "sudo", "it"],
+              roles: ["administrator", "superuser", "it"],
             },
           ],
         },
         {
           header: "MENU RESEPSIONIS",
           key: "header-resepsionis",
-          roles: ["administrator", "sudo", "it", "management", "front office"],
+          roles: [
+            "administrator",
+            "superuser",
+            "it",
+            "management",
+            "front office",
+          ],
         },
 
         {
           key: "resepsionis",
           title: "Resepsionis",
           icon: "mdi-account-voice",
-          roles: ["administrator", "sudo", "it", "management", "front office"],
+          roles: [
+            "administrator",
+            "superuser",
+            "it",
+            "management",
+            "front office",
+          ],
           children: [
             {
               key: "resepsionis-daftar-baru",
@@ -471,7 +506,7 @@ export default {
               to: "/resepsionis/daftar-baru",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "front office",
@@ -483,7 +518,7 @@ export default {
               to: "/resepsionis/registrasi-layanan",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "front office",
@@ -495,7 +530,7 @@ export default {
             //   to: "/resepsionis/pembayaran-recipe",
             //   roles: [
             //     "administrator",
-            //     "sudo",
+            //     "superuser",
             //     "it",
             //     "management",
             //     "front office",
@@ -507,7 +542,7 @@ export default {
               to: "/resepsionis/booking",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "front office",
@@ -519,7 +554,7 @@ export default {
               to: "/resepsionis/poin",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "front office",
@@ -531,19 +566,39 @@ export default {
         {
           header: "PELAYANAN MEDIS",
           key: "header-pelayanan-medis",
-          roles: ["administrator", "sudo", "it", "management", "dokter", "sp"],
+          roles: [
+            "administrator",
+            "superuser",
+            "it",
+            "management",
+            "dokter",
+            "sp",
+          ],
         },
         {
           key: "pelayanan-medis",
           title: "Pelayanan Medis",
           icon: "mdi-stethoscope",
-          roles: ["administrator", "sudo", "it", "management", "dokter", "sp"],
+          roles: [
+            "administrator",
+            "superuser",
+            "it",
+            "management",
+            "dokter",
+            "sp",
+          ],
           children: [
             {
               key: "medis-antrian-dokter",
               title: "Antrian Dokter",
               to: "/pelayanan-medis/antrian-dokter",
-              roles: ["administrator", "sudo", "it", "management", "dokter"],
+              roles: [
+                "administrator",
+                "superuser",
+                "it",
+                "management",
+                "dokter",
+              ],
             },
             {
               key: "medis-antrian-perawat",
@@ -551,7 +606,7 @@ export default {
               to: "/pelayanan-medis/antrian-perawat",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "dokter",
@@ -564,7 +619,7 @@ export default {
               to: "/pelayanan-medis/riwayat-pelayanan",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "dokter",
@@ -577,25 +632,25 @@ export default {
         {
           header: "NURSE STATION",
           key: "header-nurse-station",
-          roles: ["administrator", "sudo", "it", "management", "sp"],
+          roles: ["administrator", "superuser", "it", "management", "sp"],
         },
         // {
         //   key: "nurse-station",
         //   title: "Nurse Station",
         //   icon: "mdi-medical-bag",
-        //   roles: ["administrator", "sudo", "it", "management", "sp"],
+        //   roles: ["administrator", "superuser", "it", "management", "sp"],
         //   children: [
         //     {
         //       key: "nurse-station-antrian",
         //       title: "Antrian Perawat",
         //       to: "/nurse-station/antrian-perawat",
-        //       roles: ["administrator", "sudo", "it", "management", "sp"],
+        //       roles: ["administrator", "superuser", "it", "management", "sp"],
         //     },
         //     {
         //       key: "nurse-station-riwayat",
         //       title: "Riwayat Tindakan Perawat",
         //       to: "/nurse-station/riwayat",
-        //       roles: ["administrator", "sudo", "it", "management", "sp"],
+        //       roles: ["administrator", "superuser", "it", "management", "sp"],
         //     },
         //   ],
         // },
@@ -603,25 +658,37 @@ export default {
         {
           header: "FARMASI",
           key: "header-farmasi",
-          roles: ["administrator", "sudo", "it", "management", "apoteker"],
+          roles: ["administrator", "superuser", "it", "management", "apoteker"],
         },
         {
           key: "farmasi",
           title: "Farmasi / Depo",
           icon: "mdi-flask-outline",
-          roles: ["administrator", "sudo", "it", "management", "apoteker"],
+          roles: ["administrator", "superuser", "it", "management", "apoteker"],
           children: [
             {
               key: "farmasi-antrian-resep",
               title: "Antrian Resep",
               to: "/farmasi/antrian-resep",
-              roles: ["administrator", "sudo", "it", "management", "apoteker"],
+              roles: [
+                "administrator",
+                "superuser",
+                "it",
+                "management",
+                "apoteker",
+              ],
             },
             {
               key: "farmasi-riwayat-resep",
               title: "Riwayat Resep",
               to: "/farmasi/riwayat-resep",
-              roles: ["administrator", "sudo", "it", "management", "apoteker"],
+              roles: [
+                "administrator",
+                "superuser",
+                "it",
+                "management",
+                "apoteker",
+              ],
             },
           ],
         },
@@ -631,7 +698,7 @@ export default {
           key: "header-kasir",
           roles: [
             "administrator",
-            "sudo",
+            "superuser",
             "it",
             "management",
             "front office",
@@ -644,7 +711,7 @@ export default {
           icon: "mdi-cash-register",
           roles: [
             "administrator",
-            "sudo",
+            "superuser",
             "it",
             "management",
             "front office",
@@ -657,7 +724,7 @@ export default {
               to: "/kasir/daftar-pembayaran",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "front office",
@@ -670,7 +737,7 @@ export default {
               to: "/kasir/pembayaran-resep",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "front office",
@@ -683,7 +750,7 @@ export default {
               to: "/kasir/riwayat-pembayaran",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "front office",
@@ -698,7 +765,7 @@ export default {
         //   key: "header-transaksi",
         //   roles: [
         //     "administrator",
-        //     "sudo",
+        //     "superuser",
         //     "it",
         //     "management",
         //     "branch accounting",
@@ -711,7 +778,7 @@ export default {
         //   icon: "mdi-swap-horizontal",
         //   roles: [
         //     "administrator",
-        //     "sudo",
+        //     "superuser",
         //     "it",
         //     "management",
         //     "branch accounting",
@@ -723,7 +790,7 @@ export default {
         //       to: "/transaksi/semua",
         //       roles: [
         //         "administrator",
-        //         "sudo",
+        //         "superuser",
         //         "it",
         //         "management",
         //         "branch accounting",
@@ -735,7 +802,7 @@ export default {
         //       to: "/transaksi/poin",
         //       roles: [
         //         "administrator",
-        //         "sudo",
+        //         "superuser",
         //         "it",
         //         "management",
         //         "branch accounting",
@@ -747,20 +814,20 @@ export default {
         {
           header: "MENU WHATSAPP",
           key: "header-whatsapp",
-          roles: ["administrator", "sudo", "it", "management"],
+          roles: ["administrator", "superuser", "it", "management"],
         },
 
         {
           key: "whatsapp",
           title: "WhatsApp Logs",
           icon: "mdi-whatsapp",
-          roles: ["administrator", "sudo", "it", "management"],
+          roles: ["administrator", "superuser", "it", "management"],
           children: [
             {
               key: "wa-undian",
               title: "Kirim Undian",
               to: "/wa/undian",
-              roles: ["administrator", "sudo", "it", "management"],
+              roles: ["administrator", "superuser", "it", "management"],
             },
           ],
         },
@@ -770,7 +837,7 @@ export default {
           key: "header-accurate",
           roles: [
             "administrator",
-            "sudo",
+            "superuser",
             "it",
             "management",
             "branch accounting",
@@ -783,7 +850,7 @@ export default {
           icon: "mdi-alpha-a-circle",
           roles: [
             "administrator",
-            "sudo",
+            "superuser",
             "it",
             "management",
             "branch accounting",
@@ -795,7 +862,7 @@ export default {
               to: "/accurate/faktur-umum",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -807,7 +874,7 @@ export default {
               to: "/accurate/faktur-elite",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -819,7 +886,7 @@ export default {
               to: "/accurate/faktur-owner",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -831,7 +898,7 @@ export default {
               to: "/accurate/faktur-deposit",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -843,7 +910,7 @@ export default {
               to: "/accurate/faktur-realisasi",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -855,7 +922,7 @@ export default {
               to: "/accurate/sto",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -869,7 +936,7 @@ export default {
           key: "header-laporan",
           roles: [
             "administrator",
-            "sudo",
+            "superuser",
             "it",
             "management",
             "branch accounting",
@@ -882,7 +949,7 @@ export default {
           icon: "mdi-file-chart-outline",
           roles: [
             "administrator",
-            "sudo",
+            "superuser",
             "it",
             "management",
             "branch accounting",
@@ -894,7 +961,7 @@ export default {
               to: "/laporan/insentif-dokter",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -906,7 +973,7 @@ export default {
               to: "/laporan/insentif-nurse",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -918,7 +985,7 @@ export default {
               to: "/laporan/insentif-apoteker",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -930,7 +997,7 @@ export default {
               to: "/laporan/detail",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -942,7 +1009,7 @@ export default {
               to: "/laporan/pemasukan",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -954,7 +1021,7 @@ export default {
               to: "/laporan/treatment",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -966,7 +1033,7 @@ export default {
               to: "/laporan/obat",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -978,7 +1045,7 @@ export default {
               to: "/laporan/top-treatment",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -990,7 +1057,7 @@ export default {
               to: "/laporan/top-nominal",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -1002,7 +1069,7 @@ export default {
               to: "/laporan/terlaris",
               roles: [
                 "administrator",
-                "sudo",
+                "superuser",
                 "it",
                 "management",
                 "branch accounting",
@@ -1015,41 +1082,71 @@ export default {
   },
 
   computed: {
+    activeRoleObject() {
+      const selectedRole = this.getLocalJson("selected_role");
+
+      if (selectedRole) {
+        return selectedRole;
+      }
+
+      const roles = Array.isArray(this.access?.roles) ? this.access.roles : [];
+
+      const roleByProp = roles.find((item) => {
+        const id = item.role_id ?? item.id;
+        return String(id) === String(this.currentRole);
+      });
+
+      if (roleByProp) {
+        return roleByProp;
+      }
+
+      if (this.user?.role_id) {
+        return {
+          role_id: this.user.role_id,
+          id: this.user.role_id,
+          role_name: this.user.role_name,
+          nama_role: this.user.role_name,
+        };
+      }
+
+      return null;
+    },
+
+    activeRoleName() {
+      return (
+        this.activeRoleObject?.role_name ||
+        this.activeRoleObject?.nama_role ||
+        this.activeRoleObject?.nama ||
+        this.activeRoleObject?.name ||
+        this.user?.role_name ||
+        "all"
+      );
+    },
+
     normalizedCurrentRole() {
-      return this.normalizeRole(this.currentRole);
+      return this.normalizeRole(this.activeRoleName);
+    },
+
+    sidebarUserName() {
+      return (
+        this.currentUserName ||
+        this.user?.display_name ||
+        this.user?.nama ||
+        this.user?.username ||
+        "User"
+      );
     },
 
     currentUserInitialComputed() {
       const value = (this.currentUserInitial || "").trim();
+
       if (value) return value.toUpperCase();
 
-      return (
-        this.currentUserName
-          .split(" ")
-          .filter(Boolean)
-          .slice(0, 2)
-          .map((part) => part[0])
-          .join("")
-          .toUpperCase() || "US"
-      );
+      return this.makeInitial(this.sidebarUserName);
     },
 
     currentRoleLabel() {
-      const map = {
-        all: "All Role",
-        administrator: "Administrator",
-        dokter: "Dokter",
-        front_office: "Front Office",
-        apoteker: "Apoteker",
-        branch_accounting: "Branch Accounting",
-        security: "Security",
-        sudo: "Sudo",
-        sp: "SP",
-        it: "IT",
-        management: "Management",
-      };
-
-      return map[this.normalizedCurrentRole] || this.currentRole;
+      return this.activeRoleName || "Role";
     },
 
     visibleMenu() {
@@ -1086,20 +1183,56 @@ export default {
     "$route.path"() {
       this.cleanManualOpened();
     },
+
     currentRole() {
+      this.reloadSessionAccess();
       this.cleanManualOpened();
     },
   },
 
   mounted() {
+    this.reloadSessionAccess();
     this.cleanManualOpened();
   },
 
   methods: {
+    reloadSessionAccess() {
+      this.user = this.getLocalJson("user");
+      this.access = this.getLocalJson("access");
+    },
+
+    getLocalJson(key) {
+      try {
+        const value = localStorage.getItem(key);
+
+        if (!value) return null;
+
+        return JSON.parse(value);
+      } catch (error) {
+        return null;
+      }
+    },
+
+    makeInitial(name) {
+      const words = String(name || "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+      if (!words.length) return "US";
+
+      if (words.length === 1) {
+        return words[0].substring(0, 2).toUpperCase();
+      }
+
+      return `${words[0][0]}${words[1][0]}`.toUpperCase();
+    },
+
     normalizeRole(role) {
       return String(role || "all")
         .trim()
         .toLowerCase()
+        .replace(/[_-]/g, " ")
         .replace(/\s+/g, "_");
     },
 
@@ -1110,12 +1243,11 @@ export default {
     isAllowed(item) {
       if (!item.roles || item.roles.length === 0) return true;
 
-      const roles = this.normalizeRoles(item.roles);
+      const allowedRoles = this.normalizeRoles(item.roles);
 
-      if (roles.includes("all")) return true;
-      if (this.normalizedCurrentRole === "all") return true;
+      if (allowedRoles.includes("all")) return true;
 
-      return roles.includes(this.normalizedCurrentRole);
+      return allowedRoles.includes(this.normalizedCurrentRole);
     },
 
     filterMenuByRole(items = []) {
@@ -1126,6 +1258,7 @@ export default {
           if (this.isAllowed(item)) {
             result.push({ ...item });
           }
+
           return;
         }
 
@@ -1133,6 +1266,7 @@ export default {
           if (this.isAllowed(item)) {
             result.push({ ...item });
           }
+
           return;
         }
 
@@ -1150,6 +1284,7 @@ export default {
         if (!item.header) return true;
 
         const nextItem = arr[index + 1];
+
         return !!nextItem && !nextItem.header;
       });
     },

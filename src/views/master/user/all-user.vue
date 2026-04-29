@@ -43,6 +43,7 @@
           :headers="headers"
           :items="user"
           :search="search"
+          :loading="loading"
           item-value="id"
           density="compact"
         >
@@ -59,17 +60,19 @@
           <template #item.action="{ item }">
             <div class="d-flex ga-2">
               <v-btn
-                color="primary"
                 size="small"
+                color="primary"
+                variant="tonal"
                 prepend-icon="mdi-pencil"
-                :to="'/master/user/edit/' + item.id"
+                :to="`/master/user/edit/${item.id}`"
               >
                 Edit
               </v-btn>
 
               <v-btn
-                color="error"
                 size="small"
+                color="error"
+                variant="tonal"
                 prepend-icon="mdi-delete"
                 @click="confirmDelete(item)"
               >
@@ -124,12 +127,16 @@
 </template>
 
 <script>
+import userService from "@/services/master/userService";
+
 export default {
   name: "AllUser",
 
   data() {
     return {
       search: "",
+      loading: false,
+      loadingDelete: false,
       deleteDialog: false,
       selectedUser: null,
 
@@ -141,7 +148,7 @@ export default {
 
       breadcrumbs: [
         { title: "Master", disabled: true },
-        { title: "User", disabled: false, to: "/user" },
+        { title: "User", disabled: false, to: "/master/user" },
       ],
 
       headers: [
@@ -152,117 +159,123 @@ export default {
         { title: "Action", key: "action", sortable: false, width: "220px" },
       ],
 
-      user: [
-        {
-          id: 1,
-          nama: "Adli",
-          username: "adlibm",
-          cabang: "KLINIK JAKARTA SELATAN",
-          role: "administrator",
-        },
-        {
-          id: 2,
-          nama: "ADLI ARHANI",
-          username: "dradli",
-          cabang: "KLINIK JAKARTA SELATAN",
-          role: "dokter",
-        },
-        {
-          id: 3,
-          nama: "AJENG PUTRI S",
-          username: "bmajengputri",
-          cabang: "KLINIK JAKARTA SELATAN",
-          role: "administrator",
-        },
-        {
-          id: 4,
-          nama: "ASTRI DWIHARTARI",
-          username: "dpjpastri",
-          cabang: "KLINIK JAKARTA SELATAN",
-          role: "dokter",
-        },
-        {
-          id: 5,
-          nama: "CRMJKS",
-          username: "crmjakarta",
-          cabang: "KLINIK JAKARTA SELATAN",
-          role: "customer service",
-        },
-        {
-          id: 6,
-          nama: "Dinda zahra",
-          username: "drdindajkt",
-          cabang: "KLINIK JAKARTA SELATAN",
-          role: "dokter",
-        },
-        {
-          id: 7,
-          nama: "FOJKT",
-          username: "fojkt",
-          cabang: "KLINIK JAKARTA SELATAN",
-          role: "front office",
-        },
-        {
-          id: 8,
-          nama: "GHEBY INGE NATALIA",
-          username: "fogheby",
-          cabang: "KLINIK JAKARTA SELATAN",
-          role: "front office",
-        },
-        {
-          id: 9,
-          nama: "HR Management",
-          username: "hrkijks",
-          cabang: "KLINIK JAKARTA SELATAN",
-          role: "administrator",
-        },
-        {
-          id: 10,
-          nama: "itcrm",
-          username: "itcrm",
-          cabang: "KLINIK JAKARTA SELATAN",
-          role: "customer service",
-        },
-        {
-          id: 11,
-          nama: "Farah Nabila",
-          username: "farahn",
-          cabang: "KLINIK MALANG",
-          role: "front office",
-        },
-        {
-          id: 12,
-          nama: "Rizki Saputra",
-          username: "rizkis",
-          cabang: "KLINIK SURABAYA",
-          role: "administrator",
-        },
-        {
-          id: 13,
-          nama: "dr. Kevin",
-          username: "drkevin",
-          cabang: "KLINIK SURABAYA",
-          role: "dokter",
-        },
-      ],
+      user: [],
     };
   },
 
+  mounted() {
+    this.fetchUser();
+  },
+
   methods: {
+    async fetchUser() {
+      this.loading = true;
+
+      try {
+        const result = await userService.getAll({
+          search: this.search || "",
+        });
+
+        const rows = result?.data ?? result?.result ?? result ?? [];
+
+        this.user = Array.isArray(rows)
+          ? rows.map((item) => this.mapUser(item))
+          : [];
+      } catch (error) {
+        console.error(error);
+
+        const message = this.getErrorMessage(
+          error,
+          "Gagal mengambil data user",
+        );
+
+        this.showSnackbar(message, "error");
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    mapUser(item) {
+      return {
+        id: item.id ?? item.user_id ?? item.new_id,
+
+        nama:
+          item.nama ??
+          item.display_name ??
+          item.name ??
+          item.nama_karyawan ??
+          item.karyawan?.nama ??
+          "-",
+
+        username: item.username ?? item.email ?? "-",
+
+        cabang: this.mapCabangFromPenempatan(item.penempatan),
+
+        role:
+          item.role ??
+          item.nama_role ??
+          item.role_name ??
+          item.master_role?.nama ??
+          "-",
+
+        is_active: item.is_active ?? 1,
+        raw: item,
+      };
+    },
+
+    mapCabangFromPenempatan(penempatan) {
+      if (!Array.isArray(penempatan) || !penempatan.length) {
+        return "-";
+      }
+
+      const activePenempatan = penempatan.filter(
+        (item) => Number(item.is_delete || 0) === 0,
+      );
+
+      if (!activePenempatan.length) {
+        return "-";
+      }
+
+      const primary =
+        activePenempatan.find((item) => Number(item.is_primary || 0) === 1) ||
+        activePenempatan[0];
+
+      return (
+        primary?.toko?.nama_toko ??
+        primary?.toko?.nama ??
+        primary?.nama_toko ??
+        primary?.nama ??
+        "-"
+      );
+    },
+
     getRoleColor(role) {
+      const normalizedRole = String(role || "").toLowerCase();
+
       const map = {
+        superuser: "red",
+        "super admin": "red",
         administrator: "primary",
+        admin: "primary",
+        it: "indigo",
+        management: "purple",
         dokter: "success",
+        doctor: "success",
+        nurse: "teal",
+        perawat: "teal",
         "customer service": "warning",
         "front office": "info",
+        fo: "info",
+        kasir: "orange",
+        apotik: "cyan",
+        security: "blue-grey",
       };
 
-      return map[role] || "secondary";
+      return map[normalizedRole] || "secondary";
     },
 
     exportFullData() {
-      console.log("export full data user");
-      this.showSnackbar("Export full data diproses", "success");
+      this.showSnackbar("Export full data belum diaktifkan", "warning");
     },
 
     confirmDelete(user) {
@@ -270,14 +283,36 @@ export default {
       this.deleteDialog = true;
     },
 
-    deleteUser() {
+    async deleteUser() {
       if (!this.selectedUser) return;
 
-      this.user = this.user.filter((item) => item.id !== this.selectedUser.id);
+      const id = this.selectedUser.id;
 
-      this.deleteDialog = false;
-      this.showSnackbar("User berhasil dihapus", "success");
-      this.selectedUser = null;
+      if (!id) {
+        this.showSnackbar("ID user tidak ditemukan", "error");
+        return;
+      }
+
+      this.loadingDelete = true;
+
+      try {
+        await userService.delete(id);
+
+        this.deleteDialog = false;
+        this.selectedUser = null;
+
+        this.showSnackbar("User berhasil dihapus", "success");
+
+        await this.fetchUser();
+      } catch (error) {
+        console.error(error);
+
+        const message = this.getErrorMessage(error, "Gagal menghapus user");
+
+        this.showSnackbar(message, "error");
+      } finally {
+        this.loadingDelete = false;
+      }
     },
 
     showSnackbar(text, color = "success") {
@@ -286,6 +321,24 @@ export default {
         text,
         color,
       };
+    },
+
+    getErrorMessage(error, fallbackMessage) {
+      const response = error?.response?.data;
+
+      if (response?.message) return response.message;
+
+      if (response?.error) return response.error;
+
+      if (response?.errors) {
+        const firstKey = Object.keys(response.errors)[0];
+
+        if (firstKey && Array.isArray(response.errors[firstKey])) {
+          return response.errors[firstKey][0];
+        }
+      }
+
+      return fallbackMessage;
     },
   },
 };

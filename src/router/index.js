@@ -19,6 +19,11 @@ const routes = [
     name: "Login",
     component: Login,
   },
+  {
+    path: "/login",
+    name: "Login",
+    component: () => import("@/views/login.vue"),
+  },
 
   {
     path: "/dashboard",
@@ -28,6 +33,12 @@ const routes = [
         path: "",
         name: "Dashboard",
         component: () => import("@/views/dashboard.vue"),
+      },
+
+      {
+        path: "change-password",
+        name: "Change Password",
+        component: () => import("@/views/change-password.vue"),
       },
     ],
   },
@@ -72,13 +83,44 @@ const routes = [
   },
 
   // Optional: fallback 404
-  {
-    path: "/:pathMatch(.*)*",
-    redirect: "/not-found",
-  },
+  // {
+  //   path: "/:pathMatch(.*)*",
+  //   redirect: "/not-found",
+  // },
 ];
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(),
   routes,
 });
+
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem("access_token");
+
+  const publicPages = ["/login", "/not-found"];
+  const isPublicPage = publicPages.includes(to.path);
+
+  if (!token && !isPublicPage) {
+    return next("/login");
+  }
+
+  if (token && to.path === "/login") {
+    return next("/dashboard");
+  }
+
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const mustChangePassword = Number(user?.must_change_password || 0) === 1;
+
+  if (
+    token &&
+    mustChangePassword &&
+    to.path !== "/change-password" &&
+    !isPublicPage
+  ) {
+    return next("/change-password");
+  }
+
+  next();
+});
+
+export default router;
