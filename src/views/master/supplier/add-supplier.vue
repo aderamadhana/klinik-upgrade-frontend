@@ -1,19 +1,17 @@
 <template>
   <div>
-    <div class="d-flex justify-space-between align-center mb-6 flex-wrap ga-3">
+    <div class="page-header">
       <div>
-        <h1 class="text-h5 font-weight-bold mb-1">Tambah Supplier</h1>
-        <div class="text-body-2 text-medium-emphasis">
+        <h1 class="page-title">Tambah Supplier</h1>
+        <p class="page-subtitle">
           Tambahkan data supplier dan cabang yang menggunakan supplier ini
-        </div>
+        </p>
       </div>
 
-      <v-btn variant="outlined" color="secondary" :to="'/master/supplier'">
-        Kembali
-      </v-btn>
+      <v-breadcrumbs :items="breadcrumbs" divider="/" />
     </div>
 
-    <v-card>
+    <v-card elevation="1">
       <v-card-title class="text-h6 font-weight-bold">
         Form Master Supplier
       </v-card-title>
@@ -39,6 +37,7 @@
                 placeholder="Contoh: SUP001"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-barcode"
                 :rules="[rules.required]"
                 clearable
               />
@@ -51,6 +50,7 @@
                 placeholder="Masukkan nama supplier / perusahaan"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-domain"
                 :rules="[rules.required]"
                 clearable
               />
@@ -63,6 +63,7 @@
                 placeholder="Nama PIC / contact person"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-account-tie-outline"
                 clearable
               />
             </v-col>
@@ -74,6 +75,7 @@
                 placeholder="Nomor telepon / WhatsApp"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-phone-outline"
                 clearable
               />
             </v-col>
@@ -85,6 +87,7 @@
                 placeholder="Masukkan email supplier"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-email-outline"
                 :rules="[rules.email]"
                 clearable
               />
@@ -97,6 +100,7 @@
                 placeholder="Masukkan kota supplier"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-city-variant-outline"
                 clearable
               />
             </v-col>
@@ -108,6 +112,7 @@
                 type="number"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-sort-numeric-ascending"
                 hint="Semakin kecil angka, semakin atas urutannya"
                 persistent-hint
               />
@@ -120,6 +125,7 @@
                 placeholder="Masukkan alamat supplier"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-map-marker-outline"
                 rows="3"
                 auto-grow
                 clearable
@@ -132,8 +138,13 @@
           <div
             class="d-flex justify-space-between align-center mb-3 flex-wrap ga-3"
           >
-            <div class="text-subtitle-1 font-weight-bold">
-              Cabang / Toko yang Menggunakan Supplier
+            <div>
+              <div class="text-subtitle-1 font-weight-bold">
+                Cabang / Toko yang Menggunakan Supplier
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                Pilih cabang yang bisa menggunakan supplier ini
+              </div>
             </div>
 
             <v-btn
@@ -146,7 +157,7 @@
             </v-btn>
           </div>
 
-          <v-alert type="info" variant="tonal" class="mb-4">
+          <v-alert type="info" variant="tonal" class="mb-4" rounded="lg">
             Centang <strong>Default</strong> jika supplier ini menjadi supplier
             utama di cabang tersebut.
           </v-alert>
@@ -156,6 +167,7 @@
             :key="index"
             variant="outlined"
             class="mb-4"
+            rounded="lg"
           >
             <v-card-title class="d-flex justify-space-between align-center">
               <span class="text-subtitle-2 font-weight-bold">
@@ -175,7 +187,7 @@
             <v-card-text>
               <v-row>
                 <v-col cols="12" md="10">
-                  <v-select
+                  <v-autocomplete
                     v-model="item.toko_id"
                     label="Toko / Cabang *"
                     placeholder="Pilih toko"
@@ -184,9 +196,13 @@
                     item-value="id"
                     variant="outlined"
                     density="comfortable"
+                    prepend-inner-icon="mdi-store-marker-outline"
                     :rules="[rules.required]"
                     :loading="loadingMaster"
                     clearable
+                    auto-select-first
+                    no-data-text="Toko tidak ditemukan"
+                    :custom-filter="filterOption"
                   />
                 </v-col>
 
@@ -202,41 +218,81 @@
             </v-card-text>
           </v-card>
 
-          <div class="d-flex justify-end ga-3 mt-6">
+          <div class="d-flex flex-column flex-md-row justify-end ga-3 mt-6">
             <v-btn
               variant="outlined"
               color="secondary"
               :to="'/master/supplier'"
+              :disabled="loadingSave"
             >
               Batal
             </v-btn>
 
             <v-btn
               color="success"
+              variant="flat"
               type="submit"
+              prepend-icon="mdi-content-save"
               :loading="loadingSave"
               :disabled="loadingSave"
             >
-              Simpan
+              Simpan Supplier
             </v-btn>
           </div>
         </v-form>
       </v-card-text>
     </v-card>
+
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color">
+      {{ snackbar.text }}
+    </v-snackbar>
+
+    <v-dialog v-model="dialogPreview" max-width="900">
+      <v-card rounded="lg">
+        <v-card-title class="text-h6 font-weight-bold">
+          Preview Payload Supplier
+        </v-card-title>
+
+        <v-divider />
+
+        <v-card-text>
+          <pre>{{ formattedPayload }}</pre>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="justify-end">
+          <v-btn variant="outlined" @click="dialogPreview = false">
+            Tutup
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script>
-import axios from "axios";
+import referenceService from "@/services/referenceService";
+import supplierService from "@/services/master/supplierService";
 
 export default {
   name: "AddSupplier",
+
   data() {
     return {
       isValid: false,
       loadingMaster: false,
       loadingSave: false,
+      dialogPreview: false,
+
+      breadcrumbs: [
+        { title: "Master", disabled: true },
+        { title: "Supplier", disabled: false, to: "/master/supplier" },
+        { title: "Tambah Supplier", disabled: true },
+      ],
+
       tokoOptions: [],
+
       form: {
         kode: "",
         nama: "",
@@ -253,14 +309,37 @@ export default {
           },
         ],
       },
+
+      snackbar: {
+        show: false,
+        text: "",
+        color: "success",
+      },
+
       rules: {
-        required: (v) => !!v || "Wajib diisi",
-        email: (v) =>
-          !v ||
-          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ||
-          "Format email tidak valid",
+        required: (v) => !!String(v ?? "").trim() || "Field ini wajib diisi",
+        email: (v) => {
+          const value = String(v ?? "").trim();
+
+          if (!value) return true;
+
+          return (
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ||
+            "Format email tidak valid"
+          );
+        },
       },
     };
+  },
+
+  computed: {
+    payload() {
+      return this.buildPayload();
+    },
+
+    formattedPayload() {
+      return JSON.stringify(this.payload, null, 2);
+    },
   },
 
   mounted() {
@@ -272,17 +351,60 @@ export default {
       this.loadingMaster = true;
 
       try {
-        const res = await axios.get("/api/master/toko/options");
-        this.tokoOptions = res.data?.data || [];
+        const tokoRes = await referenceService.toko();
+
+        this.tokoOptions = this.normalizeToko(tokoRes);
       } catch (error) {
         console.error(error);
 
-        if (this.$toast?.error) {
-          this.$toast.error("Gagal memuat data toko");
-        }
+        this.showSnackbar(
+          this.getErrorMessage(error, "Gagal memuat data toko"),
+          "error",
+        );
       } finally {
         this.loadingMaster = false;
       }
+    },
+
+    normalizeToko(response) {
+      const rows = this.extractRows(response);
+
+      return rows
+        .map((item) => ({
+          id: item.id ?? item.toko_id ?? item.value,
+          nama: item.nama_toko ?? item.nama ?? item.name ?? item.label ?? "-",
+        }))
+        .filter((item) => item.id && item.nama);
+    },
+
+    extractRows(response) {
+      const source = response?.data ?? response?.result ?? response ?? [];
+
+      if (Array.isArray(source)) {
+        return source;
+      }
+
+      if (Array.isArray(source.data)) {
+        return source.data;
+      }
+
+      if (Array.isArray(source.items)) {
+        return source.items;
+      }
+
+      return [];
+    },
+
+    filterOption(itemTitle, queryText, item) {
+      const title =
+        typeof itemTitle === "string"
+          ? itemTitle
+          : (item?.raw?.nama ?? item?.raw?.label ?? "");
+
+      const text = String(title || "").toLowerCase();
+      const query = String(queryText || "").toLowerCase();
+
+      return text.includes(query);
     },
 
     addTokoMapping() {
@@ -309,7 +431,8 @@ export default {
         return "Semua cabang harus dipilih";
       }
 
-      const uniqueTokoIds = new Set(tokoIds);
+      const uniqueTokoIds = new Set(tokoIds.map((id) => String(id)));
+
       if (uniqueTokoIds.size !== tokoIds.length) {
         return "Cabang tidak boleh duplikat";
       }
@@ -319,55 +442,93 @@ export default {
 
     buildPayload() {
       return {
-        kode: this.form.kode,
-        nama: this.form.nama,
-        kontak_person: this.form.kontak_person || null,
-        no_telp: this.form.no_telp || null,
-        email: this.form.email || null,
-        alamat: this.form.alamat || null,
-        kota: this.form.kota || null,
+        kode: this.cleanValue(this.form.kode),
+        nama: this.cleanValue(this.form.nama),
+        kontak_person: this.cleanValue(this.form.kontak_person),
+        no_telp: this.cleanValue(this.form.no_telp),
+        email: this.cleanValue(this.form.email),
+        alamat: this.cleanValue(this.form.alamat),
+        kota: this.cleanValue(this.form.kota),
         sort_order: Number(this.form.sort_order || 0),
-        toko_mapping: this.form.toko_mapping.map((item) => ({
+
+        toko: this.form.toko_mapping.map((item) => ({
           toko_id: item.toko_id,
           is_default: item.is_default ? 1 : 0,
         })),
       };
     },
 
+    cleanValue(value) {
+      if (value === undefined || value === null || value === "") {
+        return null;
+      }
+
+      if (typeof value === "string") {
+        return value.trim() || null;
+      }
+
+      return value;
+    },
+
     async submitForm() {
       const result = await this.$refs.formRef.validate();
-      if (!result.valid) return;
+
+      if (!result.valid) {
+        this.showSnackbar("Masih ada field yang belum valid", "error");
+        return;
+      }
 
       const mappingError = this.validateTokoMapping();
+
       if (mappingError) {
-        if (this.$toast?.error) {
-          this.$toast.error(mappingError);
-        }
+        this.showSnackbar(mappingError, "error");
         return;
       }
 
       this.loadingSave = true;
 
       try {
-        await axios.post("/api/master/supplier", this.buildPayload());
+        await supplierService.create(this.payload);
 
-        if (this.$toast?.success) {
-          this.$toast.success("Data supplier berhasil disimpan");
-        }
+        this.showSnackbar("Data supplier berhasil disimpan", "success");
 
-        this.$router.push("/master/supplier");
+        this.$router.replace("/master/supplier");
       } catch (error) {
         console.error(error);
 
-        const message =
-          error?.response?.data?.message || "Gagal menyimpan data supplier";
-
-        if (this.$toast?.error) {
-          this.$toast.error(message);
-        }
+        this.showSnackbar(
+          this.getErrorMessage(error, "Gagal menyimpan data supplier"),
+          "error",
+        );
       } finally {
         this.loadingSave = false;
       }
+    },
+
+    showSnackbar(text, color = "success") {
+      this.snackbar = {
+        show: true,
+        text,
+        color,
+      };
+    },
+
+    getErrorMessage(error, fallbackMessage) {
+      const response = error?.response?.data;
+
+      if (response?.message) return response.message;
+
+      if (response?.error) return response.error;
+
+      if (response?.errors) {
+        const firstKey = Object.keys(response.errors)[0];
+
+        if (firstKey && Array.isArray(response.errors[firstKey])) {
+          return response.errors[firstKey][0];
+        }
+      }
+
+      return fallbackMessage;
     },
   },
 };

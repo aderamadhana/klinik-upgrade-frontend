@@ -1,12 +1,17 @@
 <template>
   <v-layout class="admin-layout">
-    <AppSidebar v-model="drawer" :current-role="selectedRole" />
+    <AppSidebar
+      v-model="drawer"
+      :current-role-id="selectedRoleId"
+      :current-role-object="selectedRoleObject"
+      :current-cabang-id="selectedCabangId"
+    />
 
     <div class="main-area">
       <AppHeader
         @toggle="drawer = !drawer"
-        @update:role="selectedRole = $event"
-        @update:cabang="selectedCabang = $event"
+        @role-changed="handleRoleChanged"
+        @cabang-changed="handleCabangChanged"
       />
 
       <v-main class="content-area">
@@ -24,13 +29,52 @@ import AppSidebar from "@/components/app-sidebar.vue";
 
 export default {
   name: "AdminLayout",
-  components: { AppSidebar, AppHeader },
+
+  components: {
+    AppSidebar,
+    AppHeader,
+  },
+
   data() {
     return {
       drawer: true,
-      selectedRole: localStorage.getItem("selected_role_id") || null,
-      selectedCabang: localStorage.getItem("selected_toko_id") || null,
+
+      selectedRoleId: localStorage.getItem("selected_role_id") || null,
+      selectedRoleObject: this.getLocalJson("selected_role"),
+
+      selectedCabangId: localStorage.getItem("selected_toko_id") || null,
+      selectedCabangObject: this.getLocalJson("selected_toko"),
     };
+  },
+
+  methods: {
+    getLocalJson(key) {
+      try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : null;
+      } catch {
+        return null;
+      }
+    },
+
+    handleRoleChanged(payload) {
+      this.selectedRoleId = payload?.role_id || payload?.id || null;
+      this.selectedRoleObject = payload?.role || null;
+
+      /**
+       * Opsional tapi lebih aman:
+       * kalau user sedang di halaman yang tidak tersedia untuk role baru,
+       * kembalikan ke dashboard agar tidak melihat halaman yang seharusnya tersembunyi.
+       */
+      if (this.$route.path !== "/dashboard") {
+        this.$router.replace("/dashboard");
+      }
+    },
+
+    handleCabangChanged(payload) {
+      this.selectedCabangId = payload?.toko_id || payload?.id || null;
+      this.selectedCabangObject = payload?.cabang || null;
+    },
   },
 };
 </script>

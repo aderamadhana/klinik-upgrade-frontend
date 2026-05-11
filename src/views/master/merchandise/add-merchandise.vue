@@ -1,19 +1,17 @@
 <template>
   <div>
-    <div class="d-flex justify-space-between align-center mb-6 flex-wrap ga-3">
+    <div class="page-header">
       <div>
-        <h1 class="text-h5 font-weight-bold mb-1">Tambah Merchandise</h1>
-        <div class="text-body-2 text-medium-emphasis">
-          Input data master reward / merchandise
-        </div>
+        <h1 class="page-title">Tambah Merchandise</h1>
+        <p class="page-subtitle">
+          Input data master reward, voucher, diskon, atau merchandise
+        </p>
       </div>
 
-      <v-btn variant="outlined" color="secondary" :to="'/master/merchandise'">
-        Kembali
-      </v-btn>
+      <v-breadcrumbs :items="breadcrumbs" divider="/" />
     </div>
 
-    <v-card rounded="lg">
+    <v-card elevation="1">
       <v-card-title class="text-h6 font-weight-bold">
         Form Master Merchandise
       </v-card-title>
@@ -21,7 +19,7 @@
       <v-divider />
 
       <v-card-text class="pt-6">
-        <v-alert type="info" variant="tonal" class="mb-6">
+        <v-alert type="info" variant="tonal" class="mb-6" rounded="lg">
           Pilih jenis reward terlebih dahulu. Field diskon akan menyesuaikan
           otomatis.
         </v-alert>
@@ -32,6 +30,10 @@
           validate-on="submit lazy"
           @submit.prevent="submitForm"
         >
+          <div class="text-subtitle-1 font-weight-bold mb-3">
+            Informasi Utama
+          </div>
+
           <v-row>
             <v-col cols="12" md="4">
               <v-text-field
@@ -40,6 +42,7 @@
                 placeholder="Contoh: MRH001"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-barcode"
                 :rules="[rules.required]"
                 clearable
               />
@@ -52,13 +55,14 @@
                 placeholder="Masukkan nama reward / merchandise"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-gift-outline"
                 :rules="[rules.required]"
                 clearable
               />
             </v-col>
 
             <v-col cols="12" md="4">
-              <v-select
+              <v-autocomplete
                 v-model="form.jenis_reward"
                 label="Jenis Reward *"
                 placeholder="Pilih jenis reward"
@@ -67,8 +71,12 @@
                 item-value="value"
                 variant="outlined"
                 density="comfortable"
-                :rules="[rules.required]"
+                prepend-inner-icon="mdi-tag-outline"
+                :rules="[rules.requiredSelect]"
                 clearable
+                auto-select-first
+                no-data-text="Jenis reward tidak ditemukan"
+                :custom-filter="filterOption"
               />
             </v-col>
 
@@ -84,6 +92,8 @@
                 type="number"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-percent-outline"
+                suffix="%"
                 :rules="[rules.required, rules.percent]"
               />
             </v-col>
@@ -100,6 +110,8 @@
                 type="number"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-cash"
+                prefix="Rp"
                 :rules="[rules.required, rules.nonNegative]"
               />
             </v-col>
@@ -112,7 +124,8 @@
                 type="number"
                 variant="outlined"
                 density="comfortable"
-                :rules="[rules.required, rules.nonNegative]"
+                prepend-inner-icon="mdi-star-circle-outline"
+                :rules="[rules.required, rules.nonNegativeInteger]"
               />
             </v-col>
 
@@ -124,6 +137,7 @@
                 type="number"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-package-variant-closed"
                 :rules="[rules.required, rules.nonNegativeInteger]"
               />
             </v-col>
@@ -136,6 +150,7 @@
                 type="number"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-sort-numeric-ascending"
                 hint="Semakin kecil angka, semakin atas urutannya"
                 persistent-hint
               />
@@ -148,6 +163,7 @@
                 placeholder="Masukkan deskripsi reward"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-note-text-outline"
                 rows="3"
                 auto-grow
                 clearable
@@ -155,20 +171,34 @@
             </v-col>
           </v-row>
 
-          <div class="d-flex justify-end ga-3 mt-6">
+          <div class="d-flex flex-column flex-md-row justify-end ga-3 mt-6">
             <v-btn
               variant="outlined"
               color="secondary"
               :to="'/master/merchandise'"
+              :disabled="loadingSave"
             >
               Batal
             </v-btn>
 
-            <v-btn color="success" type="submit"> Simpan </v-btn>
+            <v-btn
+              color="success"
+              variant="flat"
+              type="submit"
+              prepend-icon="mdi-content-save"
+              :loading="loadingSave"
+              :disabled="loadingSave"
+            >
+              Simpan Merchandise
+            </v-btn>
           </div>
         </v-form>
       </v-card-text>
     </v-card>
+
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color">
+      {{ snackbar.text }}
+    </v-snackbar>
 
     <v-dialog v-model="dialogPreview" max-width="900">
       <v-card rounded="lg">
@@ -205,13 +235,22 @@
 </template>
 
 <script>
+import merchandiseService from "@/services/master/merchandiseService";
+
 export default {
-  name: "Addmerchandise",
+  name: "AddMerchandise",
+
   data() {
     return {
       isValid: false,
+      loadingSave: false,
       dialogPreview: false,
-      payloadPreview: null,
+
+      breadcrumbs: [
+        { title: "Master", disabled: true },
+        { title: "Merchandise", disabled: false, to: "/master/merchandise" },
+        { title: "Tambah Merchandise", disabled: true },
+      ],
 
       jenisRewardOptions: [
         { label: "Merchandise", value: "merchandise" },
@@ -231,67 +270,104 @@ export default {
         sort_order: 0,
       },
 
+      snackbar: {
+        show: false,
+        text: "",
+        color: "success",
+      },
+
       rules: {
-        required: (v) =>
-          (v !== null && v !== undefined && v !== "") || "Wajib diisi",
-        nonNegative: (v) =>
-          v === null ||
-          v === "" ||
-          Number(v) >= 0 ||
-          "Nilai tidak boleh kurang dari 0",
+        required: (v) => !!String(v ?? "").trim() || "Field ini wajib diisi",
+        requiredSelect: (v) =>
+          (v !== null && v !== undefined && v !== "") ||
+          "Field ini wajib diisi",
+        nonNegative: (v) => {
+          if (v === null || v === undefined || v === "") return true;
+
+          return Number(v) >= 0 || "Nilai tidak boleh kurang dari 0";
+        },
         nonNegativeInteger: (v) => {
-          if (v === null || v === "") return "Wajib diisi";
-          const val = Number(v);
+          if (v === null || v === undefined || v === "") {
+            return "Field ini wajib diisi";
+          }
+
+          const value = Number(v);
+
           return (
-            (Number.isInteger(val) && val >= 0) || "Harus bilangan bulat >= 0"
+            (Number.isInteger(value) && value >= 0) ||
+            "Harus bilangan bulat >= 0"
           );
         },
         percent: (v) => {
-          if (v === null || v === "") return "Wajib diisi";
-          const val = Number(v);
-          return (val >= 0 && val <= 100) || "Persen harus antara 0 sampai 100";
+          if (v === null || v === undefined || v === "") {
+            return "Field ini wajib diisi";
+          }
+
+          const value = Number(v);
+
+          return (
+            (value >= 0 && value <= 100) || "Persen harus antara 0 sampai 100"
+          );
         },
       },
     };
   },
 
   computed: {
+    payload() {
+      return this.buildPayload();
+    },
+
     formattedPayload() {
-      return JSON.stringify(this.payloadPreview, null, 2);
+      return JSON.stringify(this.payload, null, 2);
     },
   },
 
   watch: {
-    "form.jenis_reward"(val) {
-      if (val !== "diskon_persen") {
+    "form.jenis_reward"(value) {
+      if (value !== "diskon_persen") {
         this.form.nilai_diskon_persen = null;
       }
 
-      if (val !== "diskon_nominal") {
+      if (value !== "diskon_nominal") {
         this.form.nilai_diskon_nominal = null;
       }
     },
   },
 
   methods: {
+    filterOption(itemTitle, queryText, item) {
+      const title =
+        typeof itemTitle === "string"
+          ? itemTitle
+          : (item?.raw?.label ?? item?.raw?.nama ?? "");
+
+      const text = String(title || "").toLowerCase();
+      const query = String(queryText || "").toLowerCase();
+
+      return text.includes(query);
+    },
+
     buildPayload() {
       return {
-        kode: this.form.kode,
-        nama: this.form.nama,
-        jenis_reward: this.form.jenis_reward,
+        kode: this.cleanValue(this.form.kode),
+        nama: this.cleanValue(this.form.nama),
+        jenis_reward: this.cleanValue(this.form.jenis_reward),
+
         nilai_diskon_persen:
           this.form.jenis_reward === "diskon_persen"
             ? Number(this.form.nilai_diskon_persen || 0)
             : null,
+
         nilai_diskon_nominal:
           this.form.jenis_reward === "diskon_nominal"
             ? Number(this.form.nilai_diskon_nominal || 0)
             : null,
+
         harga_poin: Number(this.form.harga_poin || 0),
         stok: Number(this.form.stok || 0),
-        deskripsi: this.form.deskripsi || null,
+        deskripsi: this.cleanValue(this.form.deskripsi),
         sort_order: Number(this.form.sort_order || 0),
-        is_delete: 0,
       };
     },
 
@@ -299,48 +375,107 @@ export default {
       if (this.form.jenis_reward === "diskon_persen") {
         if (
           this.form.nilai_diskon_persen === null ||
+          this.form.nilai_diskon_persen === undefined ||
           this.form.nilai_diskon_persen === ""
         ) {
           return "Nilai diskon persen wajib diisi";
+        }
+
+        const percent = Number(this.form.nilai_diskon_persen);
+
+        if (percent < 0 || percent > 100) {
+          return "Nilai diskon persen harus antara 0 sampai 100";
         }
       }
 
       if (this.form.jenis_reward === "diskon_nominal") {
         if (
           this.form.nilai_diskon_nominal === null ||
+          this.form.nilai_diskon_nominal === undefined ||
           this.form.nilai_diskon_nominal === ""
         ) {
           return "Nilai diskon nominal wajib diisi";
+        }
+
+        if (Number(this.form.nilai_diskon_nominal) < 0) {
+          return "Nilai diskon nominal tidak boleh kurang dari 0";
         }
       }
 
       return null;
     },
 
+    cleanValue(value) {
+      if (value === undefined || value === null || value === "") {
+        return null;
+      }
+
+      if (typeof value === "string") {
+        return value.trim() || null;
+      }
+
+      return value;
+    },
+
     async submitForm() {
       const result = await this.$refs.formRef.validate();
-      if (!result.valid) return;
 
-      const ruleError = this.validateBusinessRule();
-      if (ruleError) {
-        if (this.$toast?.error) {
-          this.$toast.error(ruleError);
-        } else {
-          alert(ruleError);
-        }
+      if (!result.valid) {
+        this.showSnackbar("Masih ada field yang belum valid", "error");
         return;
       }
 
-      const payload = this.buildPayload();
+      const ruleError = this.validateBusinessRule();
 
-      this.payloadPreview = payload;
-      this.dialogPreview = true;
-
-      console.log("Payload add merchandise:", payload);
-
-      if (this.$toast?.success) {
-        this.$toast.success("Validasi form berhasil");
+      if (ruleError) {
+        this.showSnackbar(ruleError, "error");
+        return;
       }
+
+      this.loadingSave = true;
+
+      try {
+        await merchandiseService.create(this.payload);
+
+        this.showSnackbar("Data merchandise berhasil disimpan", "success");
+
+        this.$router.replace("/master/merchandise");
+      } catch (error) {
+        console.error(error);
+
+        this.showSnackbar(
+          this.getErrorMessage(error, "Gagal menyimpan data merchandise"),
+          "error",
+        );
+      } finally {
+        this.loadingSave = false;
+      }
+    },
+
+    showSnackbar(text, color = "success") {
+      this.snackbar = {
+        show: true,
+        text,
+        color,
+      };
+    },
+
+    getErrorMessage(error, fallbackMessage) {
+      const response = error?.response?.data;
+
+      if (response?.message) return response.message;
+
+      if (response?.error) return response.error;
+
+      if (response?.errors) {
+        const firstKey = Object.keys(response.errors)[0];
+
+        if (firstKey && Array.isArray(response.errors[firstKey])) {
+          return response.errors[firstKey][0];
+        }
+      }
+
+      return fallbackMessage;
     },
   },
 };

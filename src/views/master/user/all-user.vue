@@ -32,33 +32,95 @@
           variant="outlined"
           density="compact"
           hide-details
+          clearable
           style="max-width: 320px"
+          @keyup.enter="handleSearch"
+          @click:clear="handleClearSearch"
         />
       </v-card-title>
 
       <v-divider />
 
       <v-card-text>
-        <v-data-table
+        <v-data-table-server
+          :page="page"
+          :items-per-page="itemsPerPage"
           :headers="headers"
-          :items="user"
-          :search="search"
+          :items="users"
+          :items-length="totalItems"
           :loading="loading"
+          :items-per-page-options="itemsPerPageOptions"
           item-value="id"
           density="compact"
+          loading-text="Memuat data user..."
+          no-data-text="Data user tidak ditemukan"
+          @update:page="handlePageChange"
+          @update:items-per-page="handleItemsPerPageChange"
         >
+          <template #loading>
+            <v-skeleton-loader type="table-row@6" />
+          </template>
+
+          <template #item.no="{ index }">
+            {{ rowNumber(index) }}
+          </template>
+
+          <template #item.nama="{ item }">
+            <div>
+              <div class="font-weight-medium">
+                {{ item.nama || "-" }}
+              </div>
+              <div
+                v-if="item.display_name && item.display_name !== item.nama"
+                class="text-caption text-medium-emphasis"
+              >
+                {{ item.display_name }}
+              </div>
+            </div>
+          </template>
+
+          <template #item.username="{ item }">
+            {{ item.username || "-" }}
+          </template>
+
+          <template #item.cabang="{ item }">
+            <div class="d-flex flex-wrap ga-1">
+              <v-chip
+                v-for="cabang in getCabangList(item)"
+                :key="cabang.id"
+                size="small"
+                color="primary"
+                variant="tonal"
+              >
+                {{ cabang.nama }}
+              </v-chip>
+
+              <span v-if="getCabangList(item).length === 0">-</span>
+            </div>
+          </template>
+
           <template #item.role="{ item }">
             <v-chip
               size="small"
               :color="getRoleColor(item.role)"
               variant="tonal"
             >
-              {{ item.role }}
+              {{ item.role || "-" }}
+            </v-chip>
+          </template>
+
+          <template #item.status="{ item }">
+            <v-chip
+              size="small"
+              :color="Number(item.is_active) === 1 ? 'success' : 'error'"
+              variant="tonal"
+            >
+              {{ Number(item.is_active) === 1 ? "Aktif" : "Nonaktif" }}
             </v-chip>
           </template>
 
           <template #item.action="{ item }">
-            <div class="d-flex ga-2">
+            <div class="d-flex ga-2 justify-end">
               <v-btn
                 size="small"
                 color="primary"
@@ -82,11 +144,15 @@
           </template>
 
           <template #no-data>
-            <div class="text-center py-6 text-medium-emphasis">
-              Data user tidak ditemukan
+            <div class="text-center py-6">
+              <div class="text-subtitle-2 mb-1">Data user tidak ditemukan</div>
+
+              <div class="text-body-2 text-medium-emphasis">
+                Klik Entry Data untuk menambahkan user baru.
+              </div>
             </div>
           </template>
-        </v-data-table>
+        </v-data-table-server>
       </v-card-text>
     </v-card>
 
@@ -100,7 +166,7 @@
 
         <v-card-text>
           Yakin ingin menghapus user
-          <strong>{{ selectedUser?.nama }}</strong
+          <strong>{{ selectedUser?.nama || "-" }}</strong
           >?
         </v-card-text>
 
@@ -110,17 +176,26 @@
           <v-btn
             variant="outlined"
             color="secondary"
+            :disabled="loadingDelete"
             @click="deleteDialog = false"
           >
             Batal
           </v-btn>
 
-          <v-btn color="error" @click="deleteUser"> Hapus </v-btn>
+          <v-btn
+            color="error"
+            variant="flat"
+            :loading="loadingDelete"
+            :disabled="loadingDelete"
+            @click="deleteUser"
+          >
+            Hapus
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color">
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">
       {{ snackbar.text }}
     </v-snackbar>
   </div>
@@ -140,6 +215,18 @@ export default {
       deleteDialog: false,
       selectedUser: null,
 
+      page: 1,
+      itemsPerPage: 10,
+      totalItems: 0,
+      fetchTimer: null,
+
+      itemsPerPageOptions: [
+        { value: 10, title: "10" },
+        { value: 25, title: "25" },
+        { value: 50, title: "50" },
+        { value: 100, title: "100" },
+      ],
+
       snackbar: {
         show: false,
         text: "",
@@ -152,14 +239,16 @@ export default {
       ],
 
       headers: [
+        { title: "NO", key: "no", sortable: false, width: "70px" },
         { title: "Nama", key: "nama" },
         { title: "Username", key: "username" },
-        { title: "Cabang", key: "cabang" },
+        { title: "Cabang", key: "cabang", sortable: false },
         { title: "Role", key: "role" },
-        { title: "Action", key: "action", sortable: false, width: "220px" },
+        { title: "Status", key: "status", sortable: false },
+        { title: "Action", key: "action", sortable: false, align: "end" },
       ],
 
-      user: [],
+      users: [],
     };
   },
 
@@ -167,22 +256,41 @@ export default {
     this.fetchUser();
   },
 
+  beforeUnmount() {
+    if (this.fetchTimer) {
+      clearTimeout(this.fetchTimer);
+    }
+  },
+
   methods: {
     async fetchUser() {
       this.loading = true;
 
       try {
-        const result = await userService.getAll({
+        const response = await userService.getAll({
           search: this.search || "",
+          page: this.page,
+          per_page: this.itemsPerPage,
         });
 
-        const rows = result?.data ?? result?.result ?? result ?? [];
+        const rows = this.extractRows(response);
+        const meta = this.extractMeta(response);
 
-        this.user = Array.isArray(rows)
-          ? rows.map((item) => this.mapUser(item))
-          : [];
+        this.users = rows.map((item) => this.mapUser(item));
+        this.totalItems = Number(meta.total || rows.length || 0);
+
+        if (meta.current_page) {
+          this.page = Number(meta.current_page);
+        }
+
+        if (meta.per_page) {
+          this.itemsPerPage = Number(meta.per_page);
+        }
       } catch (error) {
         console.error(error);
+
+        this.users = [];
+        this.totalItems = 0;
 
         const message = this.getErrorMessage(
           error,
@@ -193,6 +301,103 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+
+    queueFetchUser() {
+      if (this.fetchTimer) {
+        clearTimeout(this.fetchTimer);
+      }
+
+      this.fetchTimer = setTimeout(() => {
+        this.fetchUser();
+      }, 100);
+    },
+
+    handlePageChange(value) {
+      this.page = Number(value || 1);
+      this.queueFetchUser();
+    },
+
+    handleItemsPerPageChange(value) {
+      this.itemsPerPage = Number(value || 10);
+      this.page = 1;
+      this.queueFetchUser();
+    },
+
+    handleSearch() {
+      this.page = 1;
+      this.fetchUser();
+    },
+
+    handleClearSearch() {
+      this.search = "";
+      this.page = 1;
+      this.fetchUser();
+    },
+
+    extractRows(response) {
+      if (Array.isArray(response)) {
+        return response;
+      }
+
+      if (Array.isArray(response?.data)) {
+        return response.data;
+      }
+
+      if (Array.isArray(response?.data?.data)) {
+        return response.data.data;
+      }
+
+      if (Array.isArray(response?.items)) {
+        return response.items;
+      }
+
+      return [];
+    },
+
+    extractMeta(response) {
+      if (response?.meta) {
+        return response.meta;
+      }
+
+      if (response?.data?.meta) {
+        return response.data.meta;
+      }
+
+      if (
+        response?.current_page ||
+        response?.per_page ||
+        response?.total ||
+        response?.last_page
+      ) {
+        return {
+          current_page: response.current_page,
+          per_page: response.per_page,
+          total: response.total,
+          last_page: response.last_page,
+        };
+      }
+
+      if (
+        response?.data?.current_page ||
+        response?.data?.per_page ||
+        response?.data?.total ||
+        response?.data?.last_page
+      ) {
+        return {
+          current_page: response.data.current_page,
+          per_page: response.data.per_page,
+          total: response.data.total,
+          last_page: response.data.last_page,
+        };
+      }
+
+      return {
+        current_page: this.page,
+        per_page: this.itemsPerPage,
+        total: 0,
+        last_page: 1,
+      };
     },
 
     mapUser(item) {
@@ -207,6 +412,8 @@ export default {
           item.karyawan?.nama ??
           "-",
 
+        display_name: item.display_name ?? null,
+
         username: item.username ?? item.email ?? "-",
 
         cabang: this.mapCabangFromPenempatan(item.penempatan),
@@ -219,6 +426,7 @@ export default {
           "-",
 
         is_active: item.is_active ?? 1,
+        penempatan: item.penempatan ?? [],
         raw: item,
       };
     },
@@ -249,6 +457,31 @@ export default {
       );
     },
 
+    getCabangList(item) {
+      const penempatan = item.raw?.penempatan || item.penempatan || [];
+
+      if (!Array.isArray(penempatan)) {
+        return [];
+      }
+
+      return penempatan
+        .filter((row) => Number(row.is_delete || 0) === 0)
+        .map((row) => {
+          const toko = row.toko || {};
+
+          return {
+            id: toko.id || row.toko_id,
+            nama:
+              toko.nama_toko || toko.nama || row.nama_toko || row.nama || "-",
+          };
+        })
+        .filter((row) => row.id);
+    },
+
+    rowNumber(index) {
+      return (Number(this.page) - 1) * Number(this.itemsPerPage) + index + 1;
+    },
+
     getRoleColor(role) {
       const normalizedRole = String(role || "").toLowerCase();
 
@@ -272,10 +505,6 @@ export default {
       };
 
       return map[normalizedRole] || "secondary";
-    },
-
-    exportFullData() {
-      this.showSnackbar("Export full data belum diaktifkan", "warning");
     },
 
     confirmDelete(user) {

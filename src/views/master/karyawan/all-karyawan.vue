@@ -22,8 +22,10 @@
       {{ errorMessage }}
     </v-alert>
 
-    <v-card>
-      <v-card-title class="d-flex justify-space-between align-center">
+    <v-card elevation="1">
+      <v-card-title
+        class="d-flex justify-space-between align-center flex-wrap ga-3"
+      >
         <v-btn
           color="success"
           prepend-icon="mdi-plus"
@@ -41,27 +43,34 @@
           hide-details
           clearable
           style="max-width: 280px"
-          @keyup.enter="fetchKaryawan"
+          @keyup.enter="handleSearch"
           @click:clear="handleClearSearch"
         />
       </v-card-title>
 
       <v-card-text>
-        <v-data-table
+        <v-data-table-server
+          :page="page"
+          :items-per-page="itemsPerPage"
           :headers="headers"
           :items="karyawans"
+          :items-length="totalItems"
           :loading="loading"
-          :search="search"
+          :items-per-page-options="itemsPerPageOptions"
           item-value="id"
           density="compact"
           class="elevation-0"
+          loading-text="Memuat data karyawan..."
+          no-data-text="Data karyawan belum tersedia"
+          @update:page="handlePageChange"
+          @update:items-per-page="handleItemsPerPageChange"
         >
           <template #loading>
             <v-skeleton-loader type="table-row@6" />
           </template>
 
           <template #item.no="{ index }">
-            {{ index + 1 }}
+            {{ rowNumber(index) }}
           </template>
 
           <template #item.nama="{ item }">
@@ -93,7 +102,7 @@
           </template>
 
           <template #item.action="{ item }">
-            <div class="d-flex ga-2">
+            <div class="d-flex ga-2 justify-end">
               <v-btn
                 size="small"
                 color="primary"
@@ -126,19 +135,25 @@
               </div>
             </div>
           </template>
-        </v-data-table>
+        </v-data-table-server>
       </v-card-text>
     </v-card>
 
     <v-dialog v-model="dialogDelete" width="430">
-      <v-card>
-        <v-card-title class="text-h6"> Konfirmasi Hapus </v-card-title>
+      <v-card rounded="lg">
+        <v-card-title class="text-h6 font-weight-bold">
+          Konfirmasi Hapus
+        </v-card-title>
+
+        <v-divider />
 
         <v-card-text>
           Apakah Tuan yakin ingin menghapus karyawan
           <b>{{ selectedKaryawan?.nama || "-" }}</b
           >?
         </v-card-text>
+
+        <v-divider />
 
         <v-card-actions>
           <v-spacer />
@@ -174,6 +189,8 @@
 import karyawanService from "@/services/master/karyawanService";
 
 export default {
+  name: "KaryawanIndex",
+
   data() {
     return {
       breadcrumbs: [
@@ -188,6 +205,18 @@ export default {
       selectedKaryawan: null,
       errorMessage: "",
       search: "",
+
+      page: 1,
+      itemsPerPage: 10,
+      totalItems: 0,
+      fetchTimer: null,
+
+      itemsPerPageOptions: [
+        { value: 10, title: "10" },
+        { value: 25, title: "25" },
+        { value: 50, title: "50" },
+        { value: 100, title: "100" },
+      ],
 
       snackbar: {
         show: false,
@@ -214,30 +243,146 @@ export default {
     this.fetchKaryawan();
   },
 
+  beforeUnmount() {
+    if (this.fetchTimer) {
+      clearTimeout(this.fetchTimer);
+    }
+  },
+
   methods: {
     async fetchKaryawan() {
       this.loading = true;
       this.errorMessage = "";
 
       try {
-        const result = await karyawanService.getAll({
+        const response = await karyawanService.getAll({
           search: this.search || "",
+          page: this.page,
+          per_page: this.itemsPerPage,
         });
 
-        console.log(result);
-        const rows = result.data ?? result.result ?? result;
+        const rows = this.extractRows(response);
+        const meta = this.extractMeta(response);
 
-        this.karyawans = Array.isArray(rows)
-          ? rows.map((item) => this.mapKaryawan(item))
-          : [];
+        this.karyawans = rows.map((item) => this.mapKaryawan(item));
+
+        this.totalItems = Number(meta.total || rows.length || 0);
+
+        if (meta.current_page) {
+          this.page = Number(meta.current_page);
+        }
+
+        if (meta.per_page) {
+          this.itemsPerPage = Number(meta.per_page);
+        }
       } catch (error) {
         this.errorMessage = this.getErrorMessage(
           error,
           "Gagal mengambil data karyawan.",
         );
+
+        this.karyawans = [];
+        this.totalItems = 0;
       } finally {
         this.loading = false;
       }
+    },
+
+    queueFetchKaryawan() {
+      if (this.fetchTimer) {
+        clearTimeout(this.fetchTimer);
+      }
+
+      this.fetchTimer = setTimeout(() => {
+        this.fetchKaryawan();
+      }, 100);
+    },
+
+    handlePageChange(value) {
+      this.page = Number(value || 1);
+      this.queueFetchKaryawan();
+    },
+
+    handleItemsPerPageChange(value) {
+      this.itemsPerPage = Number(value || 10);
+      this.page = 1;
+      this.queueFetchKaryawan();
+    },
+
+    handleSearch() {
+      this.page = 1;
+      this.fetchKaryawan();
+    },
+
+    handleClearSearch() {
+      this.search = "";
+      this.page = 1;
+      this.fetchKaryawan();
+    },
+
+    extractRows(response) {
+      if (Array.isArray(response)) {
+        return response;
+      }
+
+      if (Array.isArray(response?.data)) {
+        return response.data;
+      }
+
+      if (Array.isArray(response?.data?.data)) {
+        return response.data.data;
+      }
+
+      if (Array.isArray(response?.items)) {
+        return response.items;
+      }
+
+      return [];
+    },
+
+    extractMeta(response) {
+      if (response?.meta) {
+        return response.meta;
+      }
+
+      if (response?.data?.meta) {
+        return response.data.meta;
+      }
+
+      if (
+        response?.current_page ||
+        response?.per_page ||
+        response?.total ||
+        response?.last_page
+      ) {
+        return {
+          current_page: response.current_page,
+          per_page: response.per_page,
+          total: response.total,
+          last_page: response.last_page,
+        };
+      }
+
+      if (
+        response?.data?.current_page ||
+        response?.data?.per_page ||
+        response?.data?.total ||
+        response?.data?.last_page
+      ) {
+        return {
+          current_page: response.data.current_page,
+          per_page: response.data.per_page,
+          total: response.data.total,
+          last_page: response.data.last_page,
+        };
+      }
+
+      return {
+        current_page: this.page,
+        per_page: this.itemsPerPage,
+        total: 0,
+        last_page: 1,
+      };
     },
 
     mapKaryawan(item) {
@@ -247,10 +392,18 @@ export default {
         nama: item.nama ?? item.nama_lengkap ?? item.name ?? "-",
         alamat: item.alamat ?? item.address ?? "-",
         no_telp: item.no_telp ?? item.no_hp ?? item.phone ?? "-",
-        jabatan: item.jabatan?.nama_jabatan ?? "-",
+        jabatan:
+          item.jabatan?.nama_jabatan ??
+          item.jabatan?.nama ??
+          item.master_jabatan?.nama ??
+          "-",
         is_delete: item.is_delete ?? 0,
         raw: item,
       };
+    },
+
+    rowNumber(index) {
+      return (Number(this.page) - 1) * Number(this.itemsPerPage) + index + 1;
     },
 
     getItemId(item) {
@@ -293,11 +446,6 @@ export default {
       }
     },
 
-    handleClearSearch() {
-      this.search = "";
-      this.fetchKaryawan();
-    },
-
     showSnackbar(message, color = "success") {
       this.snackbar.message = message;
       this.snackbar.color = color;
@@ -306,8 +454,8 @@ export default {
 
     getErrorMessage(error, fallbackMessage) {
       return (
-        error.response?.data?.message ||
-        error.response?.data?.error ||
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
         fallbackMessage
       );
     },

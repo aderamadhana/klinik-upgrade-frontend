@@ -13,138 +13,144 @@
       <div class="logo-divider"></div>
     </div>
 
-    <v-list
-      density="comfortable"
-      nav
-      class="sidebar-nav"
-      :opened="openedValues"
-      @update:opened="onUpdateOpened"
-    >
-      <template v-for="(item, i) in visibleMenu" :key="item.key || `menu-${i}`">
-        <div v-if="item.header" class="menu-section-header">
-          <span class="header-line"></span>
-          <span class="header-text">{{ item.header }}</span>
-          <span class="header-line"></span>
-        </div>
-
-        <v-list-item
-          v-else-if="!item.children"
-          :to="item.to"
-          class="nav-item"
-          :class="{
-            'nav-item--active': isRouteActive(item.to),
-            'nav-item--active-l1': isRouteActive(item.to),
-          }"
-          rounded="xl"
+    <v-fade-transition mode="out-in">
+      <v-list
+        :key="sidebarRenderKey"
+        density="comfortable"
+        nav
+        class="sidebar-nav"
+        :opened="openedValues"
+        @update:opened="onUpdateOpened"
+      >
+        <template
+          v-for="(item, i) in visibleMenu"
+          :key="item.key || `menu-${i}`"
         >
-          <template #prepend>
-            <div class="icon-wrap">
-              <v-icon size="18">{{ item.icon }}</v-icon>
-            </div>
-          </template>
+          <div v-if="item.header" class="menu-section-header">
+            <span class="header-line"></span>
+            <span class="header-text">{{ item.header }}</span>
+            <span class="header-line"></span>
+          </div>
 
-          <v-list-item-title class="nav-label">
-            {{ item.title }}
-          </v-list-item-title>
-        </v-list-item>
-
-        <v-list-group v-else :value="item.key" class="nav-group">
-          <template #activator="{ props }">
-            <v-list-item
-              v-bind="props"
-              class="nav-item"
-              :class="{
-                'nav-item--active': hasActiveChild(item.children),
-                'nav-item--open-l1': hasActiveChild(item.children),
-              }"
-              rounded="xl"
-            >
-              <template #prepend>
-                <div class="icon-wrap">
-                  <v-icon size="18">{{ item.icon }}</v-icon>
-                </div>
-              </template>
-
-              <v-list-item-title class="nav-label">
-                {{ item.title }}
-              </v-list-item-title>
-            </v-list-item>
-          </template>
-
-          <template
-            v-for="(child, j) in item.children"
-            :key="child.key || `${item.key}-child-${j}`"
+          <v-list-item
+            v-else-if="!item.children"
+            :to="item.to"
+            class="nav-item"
+            :class="{
+              'nav-item--active': isRouteActive(item.to),
+              'nav-item--active-l1': isRouteActive(item.to),
+            }"
+            rounded="xl"
           >
-            <v-list-item
-              v-if="!child.children"
-              :to="child.to"
-              class="nav-item nav-item--l2"
-              :class="{
-                'nav-item--active': isRouteActive(child.to),
-                'nav-item--active-l2': isRouteActive(child.to),
-              }"
-              rounded="xl"
-            >
-              <template #prepend>
-                <div class="l2-bullet">
-                  <span class="bullet-dot"></span>
-                </div>
-              </template>
+            <template #prepend>
+              <div class="icon-wrap">
+                <v-icon size="18">{{ item.icon }}</v-icon>
+              </div>
+            </template>
 
-              <v-list-item-title class="nav-label">
-                {{ child.title }}
-              </v-list-item-title>
-            </v-list-item>
+            <v-list-item-title class="nav-label">
+              {{ item.title }}
+            </v-list-item-title>
+          </v-list-item>
 
-            <v-list-group v-else :value="child.key" class="nav-group-l2">
-              <template #activator="{ props }">
-                <v-list-item
-                  v-bind="props"
-                  class="nav-item nav-item--l2"
-                  :class="{
-                    'nav-item--active': hasActiveChild(child.children),
-                    'nav-item--open-l2': hasActiveChild(child.children),
-                  }"
-                  rounded="xl"
-                >
-                  <template #prepend>
-                    <div class="l2-bullet">
-                      <span class="bullet-dot"></span>
-                    </div>
-                  </template>
-
-                  <v-list-item-title class="nav-label">
-                    {{ child.title }}
-                  </v-list-item-title>
-                </v-list-item>
-              </template>
-
+          <v-list-group v-else :value="item.key" class="nav-group">
+            <template #activator="{ props }">
               <v-list-item
-                v-for="(sub, k) in child.children"
-                :key="sub.key || `${child.key}-sub-${k}`"
-                :to="sub.to"
-                class="nav-item nav-item--l3"
+                v-bind="props"
+                class="nav-item"
                 :class="{
-                  'nav-item--active': isRouteActive(sub.to),
-                  'nav-item--active-l3': isRouteActive(sub.to),
+                  'nav-item--active': hasActiveChild(item.children),
+                  'nav-item--open-l1': hasActiveChild(item.children),
                 }"
                 rounded="xl"
               >
                 <template #prepend>
-                  <div class="l3-bullet">
-                    <span class="bullet-dash"></span>
+                  <div class="icon-wrap">
+                    <v-icon size="18">{{ item.icon }}</v-icon>
                   </div>
                 </template>
 
                 <v-list-item-title class="nav-label">
-                  {{ sub.title }}
+                  {{ item.title }}
                 </v-list-item-title>
               </v-list-item>
-            </v-list-group>
-          </template>
-        </v-list-group>
-      </template>
-    </v-list>
+            </template>
+
+            <template
+              v-for="(child, j) in item.children"
+              :key="child.key || `${item.key}-child-${j}`"
+            >
+              <v-list-item
+                v-if="!child.children"
+                :to="child.to"
+                class="nav-item nav-item--l2"
+                :class="{
+                  'nav-item--active': isRouteActive(child.to),
+                  'nav-item--active-l2': isRouteActive(child.to),
+                }"
+                rounded="xl"
+              >
+                <template #prepend>
+                  <div class="l2-bullet">
+                    <span class="bullet-dot"></span>
+                  </div>
+                </template>
+
+                <v-list-item-title class="nav-label">
+                  {{ child.title }}
+                </v-list-item-title>
+              </v-list-item>
+
+              <v-list-group v-else :value="child.key" class="nav-group-l2">
+                <template #activator="{ props }">
+                  <v-list-item
+                    v-bind="props"
+                    class="nav-item nav-item--l2"
+                    :class="{
+                      'nav-item--active': hasActiveChild(child.children),
+                      'nav-item--open-l2': hasActiveChild(child.children),
+                    }"
+                    rounded="xl"
+                  >
+                    <template #prepend>
+                      <div class="l2-bullet">
+                        <span class="bullet-dot"></span>
+                      </div>
+                    </template>
+
+                    <v-list-item-title class="nav-label">
+                      {{ child.title }}
+                    </v-list-item-title>
+                  </v-list-item>
+                </template>
+
+                <v-list-item
+                  v-for="(sub, k) in child.children"
+                  :key="sub.key || `${child.key}-sub-${k}`"
+                  :to="sub.to"
+                  class="nav-item nav-item--l3"
+                  :class="{
+                    'nav-item--active': isRouteActive(sub.to),
+                    'nav-item--active-l3': isRouteActive(sub.to),
+                  }"
+                  rounded="xl"
+                >
+                  <template #prepend>
+                    <div class="l3-bullet">
+                      <span class="bullet-dash"></span>
+                    </div>
+                  </template>
+
+                  <v-list-item-title class="nav-label">
+                    {{ sub.title }}
+                  </v-list-item-title>
+                </v-list-item>
+              </v-list-group>
+            </template>
+          </v-list-group>
+        </template>
+      </v-list>
+    </v-fade-transition>
 
     <template #append>
       <div class="sidebar-footer">
@@ -177,6 +183,21 @@ export default {
       default: null,
     },
 
+    currentRoleId: {
+      type: [String, Number],
+      default: null,
+    },
+
+    currentRoleObject: {
+      type: Object,
+      default: null,
+    },
+
+    currentCabangId: {
+      type: [String, Number],
+      default: null,
+    },
+
     currentUserName: {
       type: String,
       default: "",
@@ -196,6 +217,7 @@ export default {
       access: null,
       logo: new URL("@/assets/logowebsitenew.png", import.meta.url).href,
       manualOpened: [],
+
       menu: [
         {
           key: "dashboard",
@@ -269,13 +291,13 @@ export default {
               key: "master-treatment-global",
               title: "Treatment Global",
               to: "/master/treatment-global",
-              roles: ["superuser"], // superadmin only
+              roles: ["superuser"],
             },
             {
               key: "master-product-global",
               title: "Product Global",
               to: "/master/product-global",
-              roles: ["superuser"], // superadmin only
+              roles: ["superuser"],
             },
             {
               key: "master-merchandise",
@@ -293,101 +315,6 @@ export default {
           ],
         },
 
-        {
-          header: "OPERASIONAL KLINIK",
-          key: "header-operasional-klinik",
-          roles: [
-            "administrator",
-            "superuser",
-            "it",
-            "management",
-            "sp",
-            "apoteker",
-          ],
-        },
-        // {
-        //   key: "operasional-klinik",
-        //   title: "Operasional Klinik",
-        //   icon: "mdi-hospital-building",
-        //   roles: [
-        //     "administrator",
-        //     "superuser",
-        //     "it",
-        //     "management",
-        //     "sp",
-        //     "apoteker",
-        //   ],
-        //   children: [
-        //     {
-        //       key: "operasional-jadwal-dokter",
-        //       title: "Jadwal Dokter",
-        //       to: "/operasional/jadwal-dokter",
-        //       roles: ["administrator", "superuser", "it", "management"],
-        //     },
-        //     {
-        //       key: "operasional-jadwal-nurse",
-        //       title: "Jadwal Nurse & Beautician",
-        //       to: "/operasional/jadwal-nurse",
-        //       roles: ["administrator", "superuser", "it", "management", "sp"],
-        //     },
-        //     {
-        //       key: "operasional-treatment-klinik",
-        //       title: "Treatment Klinik",
-        //       to: "/operasional/treatment-klinik",
-        //       roles: ["administrator", "superuser", "it", "management"],
-        //     },
-        //     {
-        //       key: "operasional-stock-apotek",
-        //       title: "Stock Apotek",
-        //       to: "/operasional/stock-apotek",
-        //       roles: ["administrator", "superuser", "it", "management", "apoteker"],
-        //     },
-        //   ],
-        // },
-
-        // {
-        //   header: "PROMO & CONTENT",
-        //   key: "header-promo-content",
-        //   roles: ["administrator", "superuser", "it", "management"],
-        // },
-        // {
-        //   key: "promo-content",
-        //   title: "Promo & Content",
-        //   icon: "mdi-bullhorn-outline",
-        //   roles: ["administrator", "superuser", "it", "management"],
-        //   children: [
-        //     {
-        //       key: "promo-voucher-diskon",
-        //       title: "Voucher Diskon",
-        //       to: "/promo/voucher",
-        //       roles: ["administrator", "superuser", "it", "management"],
-        //     },
-        //     {
-        //       key: "content-banner-upload",
-        //       title: "Banner Upload",
-        //       to: "/content/banner-upload",
-        //       roles: ["administrator", "superuser", "it", "management"],
-        //     },
-        //     {
-        //       key: "content-news-upload",
-        //       title: "News Upload",
-        //       to: "/content/news-upload",
-        //       roles: ["administrator", "superuser", "it", "management"],
-        //     },
-        //     {
-        //       key: "content-promo-upload",
-        //       title: "Promo Upload",
-        //       to: "/content/promo-upload",
-        //       roles: ["administrator", "superuser", "it", "management"],
-        //     },
-        //     {
-        //       key: "content-dashboard-upload",
-        //       title: "Upload Content Dashboard",
-        //       to: "/content/dashboard-upload",
-        //       roles: ["administrator", "superuser", "it", "management"],
-        //     },
-        //   ],
-        // },
         {
           header: "ADMINISTRASI",
           key: "header-administrasi",
@@ -413,12 +340,6 @@ export default {
             "apoteker",
           ],
           children: [
-            // {
-            //   key: "administrasi-supplier",
-            //   title: "Supplier",
-            //   to: "/administrasi/supplier",
-            //   roles: ["administrator", "superuser", "it", "management"],
-            // },
             {
               key: "administrasi-jadwal-dokter",
               title: "Jadwal Dokter",
@@ -431,12 +352,6 @@ export default {
               to: "/administrasi/jadwal-nurse",
               roles: ["administrator", "superuser", "it", "management", "sp"],
             },
-            // {
-            //   key: "administrasi-treatment-klinik",
-            //   title: "Treatment Klinik",
-            //   to: "/administrasi/treatment-klinik",
-            //   roles: ["administrator", "superuser", "it", "management"],
-            // },
             {
               key: "administrasi-stock-apotek",
               title: "Stock Apotek",
@@ -457,6 +372,7 @@ export default {
             },
           ],
         },
+
         {
           header: "PENGATURAN SISTEM",
           key: "header-pengaturan-sistem",
@@ -476,6 +392,7 @@ export default {
             },
           ],
         },
+
         {
           header: "MENU RESEPSIONIS",
           key: "header-resepsionis",
@@ -487,7 +404,6 @@ export default {
             "front office",
           ],
         },
-
         {
           key: "resepsionis",
           title: "Resepsionis",
@@ -524,18 +440,6 @@ export default {
                 "front office",
               ],
             },
-            // {
-            //   key: "resepsionis-pembayaran-recipe",
-            //   title: "Pembayaran Recipe",
-            //   to: "/resepsionis/pembayaran-recipe",
-            //   roles: [
-            //     "administrator",
-            //     "superuser",
-            //     "it",
-            //     "management",
-            //     "front office",
-            //   ],
-            // },
             {
               key: "resepsionis-booking",
               title: "Daftar Booking",
@@ -634,26 +538,6 @@ export default {
           key: "header-nurse-station",
           roles: ["administrator", "superuser", "it", "management", "sp"],
         },
-        // {
-        //   key: "nurse-station",
-        //   title: "Nurse Station",
-        //   icon: "mdi-medical-bag",
-        //   roles: ["administrator", "superuser", "it", "management", "sp"],
-        //   children: [
-        //     {
-        //       key: "nurse-station-antrian",
-        //       title: "Antrian Perawat",
-        //       to: "/nurse-station/antrian-perawat",
-        //       roles: ["administrator", "superuser", "it", "management", "sp"],
-        //     },
-        //     {
-        //       key: "nurse-station-riwayat",
-        //       title: "Riwayat Tindakan Perawat",
-        //       to: "/nurse-station/riwayat",
-        //       roles: ["administrator", "superuser", "it", "management", "sp"],
-        //     },
-        //   ],
-        // },
 
         {
           header: "FARMASI",
@@ -760,63 +644,11 @@ export default {
           ],
         },
 
-        // {
-        //   header: "MENU TRANSAKSI",
-        //   key: "header-transaksi",
-        //   roles: [
-        //     "administrator",
-        //     "superuser",
-        //     "it",
-        //     "management",
-        //     "branch accounting",
-        //   ],
-        // },
-
-        // {
-        //   key: "transaksi",
-        //   title: "Data Transaksi",
-        //   icon: "mdi-swap-horizontal",
-        //   roles: [
-        //     "administrator",
-        //     "superuser",
-        //     "it",
-        //     "management",
-        //     "branch accounting",
-        //   ],
-        //   children: [
-        //     {
-        //       key: "transaksi-semua",
-        //       title: "Data Tr Semua",
-        //       to: "/transaksi/semua",
-        //       roles: [
-        //         "administrator",
-        //         "superuser",
-        //         "it",
-        //         "management",
-        //         "branch accounting",
-        //       ],
-        //     },
-        //     {
-        //       key: "transaksi-poin",
-        //       title: "Data Tr Poin",
-        //       to: "/transaksi/poin",
-        //       roles: [
-        //         "administrator",
-        //         "superuser",
-        //         "it",
-        //         "management",
-        //         "branch accounting",
-        //       ],
-        //     },
-        //   ],
-        // },
-
         {
           header: "MENU WHATSAPP",
           key: "header-whatsapp",
           roles: ["administrator", "superuser", "it", "management"],
         },
-
         {
           key: "whatsapp",
           title: "WhatsApp Logs",
@@ -843,7 +675,6 @@ export default {
             "branch accounting",
           ],
         },
-
         {
           key: "accurate",
           title: "Report Accurate",
@@ -942,7 +773,6 @@ export default {
             "branch accounting",
           ],
         },
-
         {
           key: "laporan",
           title: "Pelaporan",
@@ -1082,22 +912,30 @@ export default {
   },
 
   computed: {
-    activeRoleObject() {
-      const selectedRole = this.getLocalJson("selected_role");
+    effectiveCurrentRoleId() {
+      return this.currentRoleId || this.currentRole || null;
+    },
 
-      if (selectedRole) {
-        return selectedRole;
+    activeRoleObject() {
+      if (this.currentRoleObject) {
+        return this.currentRoleObject;
       }
 
       const roles = Array.isArray(this.access?.roles) ? this.access.roles : [];
 
       const roleByProp = roles.find((item) => {
         const id = item.role_id ?? item.id;
-        return String(id) === String(this.currentRole);
+        return String(id) === String(this.effectiveCurrentRoleId);
       });
 
       if (roleByProp) {
         return roleByProp;
+      }
+
+      const selectedRole = this.getLocalJson("selected_role");
+
+      if (selectedRole) {
+        return selectedRole;
       }
 
       if (this.user?.role_id) {
@@ -1125,6 +963,10 @@ export default {
 
     normalizedCurrentRole() {
       return this.normalizeRole(this.activeRoleName);
+    },
+
+    sidebarRenderKey() {
+      return `sidebar-${this.normalizedCurrentRole}`;
     },
 
     sidebarUserName() {
@@ -1186,7 +1028,23 @@ export default {
 
     currentRole() {
       this.reloadSessionAccess();
+      this.manualOpened = [];
       this.cleanManualOpened();
+    },
+
+    currentRoleId() {
+      this.reloadSessionAccess();
+      this.manualOpened = [];
+      this.cleanManualOpened();
+    },
+
+    currentRoleObject: {
+      deep: true,
+      handler() {
+        this.reloadSessionAccess();
+        this.manualOpened = [];
+        this.cleanManualOpened();
+      },
     },
   },
 
@@ -1204,11 +1062,8 @@ export default {
     getLocalJson(key) {
       try {
         const value = localStorage.getItem(key);
-
-        if (!value) return null;
-
-        return JSON.parse(value);
-      } catch (error) {
+        return value ? JSON.parse(value) : null;
+      } catch {
         return null;
       }
     },
@@ -1229,11 +1084,24 @@ export default {
     },
 
     normalizeRole(role) {
-      return String(role || "all")
+      const normalized = String(role || "all")
         .trim()
         .toLowerCase()
         .replace(/[_-]/g, " ")
-        .replace(/\s+/g, "_");
+        .replace(/\s+/g, " ");
+
+      const aliases = {
+        superadmin: "superuser",
+        "super admin": "superuser",
+        sudo: "superuser",
+        admin: "administrator",
+        fo: "front office",
+        frontoffice: "front office",
+        accounting: "branch accounting",
+        ba: "branch accounting",
+      };
+
+      return aliases[normalized] || normalized;
     },
 
     normalizeRoles(roles = []) {
@@ -1396,6 +1264,19 @@ export default {
 
 .sidebar-nav {
   padding: 8px 10px !important;
+}
+
+.v-fade-transition-enter-active,
+.v-fade-transition-leave-active {
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.v-fade-transition-enter-from,
+.v-fade-transition-leave-to {
+  opacity: 0;
+  transform: translateX(-6px);
 }
 
 .nav-item {

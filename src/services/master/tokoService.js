@@ -1,11 +1,16 @@
 import api from "@/plugins/axios";
 
-const endpoint = "/master/karyawan";
+const endpoint = "/master/toko";
 
-const karyawanService = {
+const tokoService = {
   async getAll(params = {}) {
     const response = await api.get(endpoint, { params });
     return response.data;
+  },
+
+  async getOptions(params = {}) {
+    const response = await api.get(`${endpoint}/options`, { params });
+    return response.data.data;
   },
 
   async getById(id) {
@@ -29,4 +34,4 @@ const karyawanService = {
   },
 };
 
-export default karyawanService;
+export default tokoService;

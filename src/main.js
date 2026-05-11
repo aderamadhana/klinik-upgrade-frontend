@@ -4,4 +4,12 @@ import vuetify from "./plugins/vuetify";
 import router from "./router";
 import "@/styles/custom.css";
 
-createApp(App).use(vuetify).use(router).mount("#app");
+import { initSessionManager } from "@/services/session-manager";
+
+const app = createApp(App);
+app.use(router);
+app.use(vuetify);
+
+initSessionManager();
+
+app.mount("#app");

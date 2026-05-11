@@ -2,6 +2,7 @@
 import bg from "@/assets/login.png";
 import logo from "@/assets/smart_clinic.webp";
 import authService from "@/services/authService";
+import { setAuthData } from "@/services/token.service";
 
 export default {
   data() {
@@ -35,11 +36,32 @@ export default {
           password: this.form.password,
         });
 
-        localStorage.setItem("access_token", result.data.access_token);
-        if (result.data.user) {
-          localStorage.setItem("user", JSON.stringify(result.data.user));
+        const responseBody = result?.data || result;
+        const authData = responseBody?.data || responseBody;
+
+        if (!authData?.access_token) {
+          throw new Error("Token tidak ditemukan dari response login.");
         }
-        localStorage.setItem("access", JSON.stringify(result.data.access));
+
+        setAuthData(responseBody);
+
+        if (authData.user) {
+          localStorage.setItem("user", JSON.stringify(authData.user));
+        }
+
+        if (authData.access) {
+          localStorage.setItem("access", JSON.stringify(authData.access));
+        }
+
+        localStorage.setItem(
+          "must_change_password",
+          String(authData.must_change_password || 0),
+        );
+
+        if (Number(authData.must_change_password || 0) === 1) {
+          this.$router.replace("/change-password");
+          return;
+        }
 
         this.$router.replace("/dashboard");
       } catch (error) {
@@ -50,7 +72,10 @@ export default {
         } else if (status === 422) {
           this.errorMessage = "Validasi gagal. Cek kembali input login.";
         } else {
-          this.errorMessage = "Gagal terhubung ke server.";
+          this.errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "Gagal terhubung ke server.";
         }
       } finally {
         this.loading = false;

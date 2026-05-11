@@ -34,24 +34,28 @@
 
             <v-row>
               <v-col cols="12">
-                <v-select
-                  v-model="form.role"
+                <v-autocomplete
+                  v-model="form.role_id"
                   label="Role *"
                   :items="roleOptions"
-                  item-title="label"
-                  item-value="value"
+                  item-title="nama"
+                  item-value="id"
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-shield-account-outline"
                   :rules="[rules.required]"
+                  :loading="loadingMaster"
                   clearable
+                  auto-select-first
+                  no-data-text="Role tidak ditemukan"
+                  :custom-filter="filterOption"
                   @update:model-value="handleRoleChange"
                 />
               </v-col>
             </v-row>
 
             <v-alert
-              v-if="form.role && isJabatanBasedRole"
+              v-if="form.role_id && isJabatanBasedRole"
               type="info"
               variant="tonal"
               class="mb-4"
@@ -63,7 +67,7 @@
             </v-alert>
 
             <v-alert
-              v-if="form.role && !isJabatanBasedRole"
+              v-if="form.role_id && !isJabatanBasedRole"
               type="warning"
               variant="tonal"
               class="mb-4"
@@ -81,7 +85,7 @@
 
             <v-row v-if="isJabatanBasedRole">
               <v-col cols="12" md="6">
-                <v-select
+                <v-autocomplete
                   v-model="form.karyawan_id"
                   label="Nama Karyawan *"
                   :items="filteredKaryawanOptions"
@@ -91,7 +95,11 @@
                   density="comfortable"
                   prepend-inner-icon="mdi-account-search-outline"
                   :rules="[rules.required]"
+                  :loading="loadingMaster"
                   clearable
+                  auto-select-first
+                  no-data-text="Karyawan tidak ditemukan"
+                  :custom-filter="filterOption"
                   @update:model-value="handleKaryawanChange"
                 />
               </v-col>
@@ -108,7 +116,7 @@
               </v-col>
 
               <v-col cols="12">
-                <v-select
+                <v-autocomplete
                   v-model="form.penempatan_ids"
                   label="Penempatan Cabang *"
                   :items="selectedPenempatanOptions"
@@ -125,6 +133,8 @@
                   :disabled="!form.karyawan_id"
                   hint="Bisa memilih lebih dari satu penempatan"
                   persistent-hint
+                  no-data-text="Penempatan tidak ditemukan"
+                  :custom-filter="filterOption"
                 />
               </v-col>
 
@@ -141,7 +151,7 @@
 
               <v-col
                 cols="12"
-                v-if="form.role && filteredKaryawanOptions.length === 0"
+                v-if="form.role_id && filteredKaryawanOptions.length === 0"
               >
                 <v-alert type="warning" variant="tonal" rounded="lg">
                   Tidak ada data karyawan untuk role / jabatan ini.
@@ -169,6 +179,10 @@
               Kredensial Login
             </div>
 
+            <v-alert type="info" variant="tonal" class="mb-4" rounded="lg">
+              Kosongkan password jika tidak ingin mengubah password user.
+            </v-alert>
+
             <v-row>
               <v-col cols="12" md="6">
                 <v-text-field
@@ -185,14 +199,16 @@
               <v-col cols="12" md="6">
                 <v-text-field
                   v-model="form.password"
-                  label="Password *"
+                  label="Password Baru"
                   :type="showPassword ? 'text' : 'password'"
                   variant="outlined"
                   density="comfortable"
                   prepend-inner-icon="mdi-lock-outline"
                   :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                  :rules="[rules.required, rules.passwordMin]"
-                  placeholder="Masukkan password"
+                  :rules="[rules.optionalPassword]"
+                  placeholder="Kosongkan jika tidak diubah"
+                  hint="Minimal 6 karakter jika diisi"
+                  persistent-hint
                   @click:append-inner="showPassword = !showPassword"
                 />
               </v-col>
@@ -207,6 +223,7 @@
           variant="outlined"
           size="large"
           :to="'/master/user'"
+          :disabled="loading"
         >
           Batal
         </v-btn>
@@ -218,6 +235,7 @@
           prepend-icon="mdi-content-save"
           @click="submitForm"
           :loading="loading"
+          :disabled="loading"
         >
           Update User
         </v-btn>
@@ -253,6 +271,10 @@
 </template>
 
 <script>
+import referenceService from "@/services/referenceService";
+import karyawanService from "@/services/master/karyawanService";
+import masterUserService from "@/services/master/userService";
+
 export default {
   name: "EditUserPage",
 
@@ -261,6 +283,7 @@ export default {
       isFormValid: false,
       loading: false,
       loadingPage: false,
+      loadingMaster: false,
       showPassword: false,
       dialogPreview: false,
 
@@ -271,7 +294,7 @@ export default {
       ],
 
       form: {
-        role: null,
+        role_id: null,
         nama: "",
         karyawan_id: null,
         penempatan_ids: [],
@@ -279,154 +302,10 @@ export default {
         password: "",
       },
 
-      roleOptions: [
-        { label: "Administrator", value: "administrator" },
-        { label: "Dokter", value: "dokter" },
-        { label: "Front Office", value: "front office" },
-        { label: "Customer Service", value: "customer service" },
-        { label: "Beautician", value: "beautician" },
-        { label: "Apoteker", value: "apoteker" },
-        { label: "Asisten Apoteker", value: "asisten apoteker" },
-        { label: "Karyawan", value: "karyawan" },
-        { label: "IT", value: "it" },
-        { label: "Management", value: "management" },
-      ],
-
-      masterJabatan: [
-        { id: 1, nama: "Apoteker" },
-        { id: 2, nama: "Asisten Apoteker" },
-        { id: 3, nama: "Beautician" },
-        { id: 4, nama: "Dokter" },
-        { id: 5, nama: "Front Office" },
-        { id: 6, nama: "Karyawan" },
-        { id: 7, nama: "Customer Service" },
-      ],
-
-      masterKaryawan: [
-        {
-          id: 101,
-          jabatan_id: 4,
-          kode: "DR001",
-          nama: "dr. Kevin Aditya",
-          is_delete: 0,
-        },
-        {
-          id: 102,
-          jabatan_id: 4,
-          kode: "DR002",
-          nama: "dr. Dinda Zahra",
-          is_delete: 0,
-        },
-        {
-          id: 103,
-          jabatan_id: 5,
-          kode: "FO001",
-          nama: "Gheby Inge Natalia",
-          is_delete: 0,
-        },
-        {
-          id: 104,
-          jabatan_id: 5,
-          kode: "FO002",
-          nama: "Ajeng Putri S",
-          is_delete: 0,
-        },
-        { id: 105, jabatan_id: 7, kode: "CS001", nama: "CRMJKS", is_delete: 0 },
-        {
-          id: 106,
-          jabatan_id: 3,
-          kode: "BT001",
-          nama: "Nabila Ayu",
-          is_delete: 0,
-        },
-        {
-          id: 107,
-          jabatan_id: 1,
-          kode: "AP001",
-          nama: "Farah Nabila",
-          is_delete: 0,
-        },
-        {
-          id: 108,
-          jabatan_id: 2,
-          kode: "AA001",
-          nama: "Rizky Saputra",
-          is_delete: 0,
-        },
-        {
-          id: 109,
-          jabatan_id: 6,
-          kode: "KR001",
-          nama: "Budi Santoso",
-          is_delete: 0,
-        },
-      ],
-
-      masterKaryawanPenempatan: [
-        { id: 1, karyawan_id: 101, toko_id: 1, is_primary: 1, is_delete: 0 },
-        { id: 2, karyawan_id: 101, toko_id: 2, is_primary: 0, is_delete: 0 },
-        { id: 3, karyawan_id: 102, toko_id: 5, is_primary: 1, is_delete: 0 },
-        { id: 4, karyawan_id: 103, toko_id: 1, is_primary: 1, is_delete: 0 },
-        { id: 5, karyawan_id: 103, toko_id: 3, is_primary: 0, is_delete: 0 },
-        { id: 6, karyawan_id: 104, toko_id: 5, is_primary: 1, is_delete: 0 },
-        { id: 7, karyawan_id: 105, toko_id: 1, is_primary: 1, is_delete: 0 },
-        { id: 8, karyawan_id: 106, toko_id: 2, is_primary: 1, is_delete: 0 },
-        { id: 9, karyawan_id: 106, toko_id: 4, is_primary: 0, is_delete: 0 },
-        { id: 10, karyawan_id: 107, toko_id: 8, is_primary: 1, is_delete: 0 },
-        { id: 11, karyawan_id: 108, toko_id: 2, is_primary: 1, is_delete: 0 },
-        { id: 12, karyawan_id: 109, toko_id: 1, is_primary: 1, is_delete: 0 },
-        { id: 13, karyawan_id: 109, toko_id: 7, is_primary: 0, is_delete: 0 },
-      ],
-
-      tokoOptions: [
-        { id: 1, nama: "KLINIK JAKARTA SELATAN" },
-        { id: 2, nama: "KLINIK SURABAYA" },
-        { id: 3, nama: "KLINIK BANDUNG" },
-        { id: 4, nama: "KLINIK SIDOARJO" },
-        { id: 5, nama: "KLINIK BEKASI" },
-        { id: 6, nama: "KLINIK MEDAN" },
-        { id: 7, nama: "KLINIK DEPOK" },
-        { id: 8, nama: "KLINIK MALANG" },
-      ],
-
-      dummyUsers: [
-        {
-          id: 1,
-          role: "dokter",
-          nama: "dr. Kevin Aditya",
-          karyawan_id: 101,
-          penempatan_ids: [1, 2],
-          username: "drkevin",
-          password: "secret123",
-        },
-        {
-          id: 2,
-          role: "front office",
-          nama: "Gheby Inge Natalia",
-          karyawan_id: 103,
-          penempatan_ids: [1, 3],
-          username: "fogheby",
-          password: "secret123",
-        },
-        {
-          id: 3,
-          role: "administrator",
-          nama: "HR Management",
-          karyawan_id: null,
-          penempatan_ids: [],
-          username: "hrkijks",
-          password: "secret123",
-        },
-        {
-          id: 4,
-          role: "beautician",
-          nama: "Nabila Ayu",
-          karyawan_id: 106,
-          penempatan_ids: [2, 4],
-          username: "nabilab",
-          password: "secret123",
-        },
-      ],
+      roleOptions: [],
+      masterJabatan: [],
+      masterKaryawan: [],
+      tokoOptions: [],
 
       snackbar: {
         show: false,
@@ -438,8 +317,13 @@ export default {
         required: (v) => !!String(v ?? "").trim() || "Field ini wajib diisi",
         usernameMin: (v) =>
           String(v ?? "").trim().length >= 4 || "Username minimal 4 karakter",
-        passwordMin: (v) =>
-          String(v ?? "").trim().length >= 6 || "Password minimal 6 karakter",
+        optionalPassword: (v) => {
+          const value = String(v ?? "").trim();
+
+          if (!value) return true;
+
+          return value.length >= 6 || "Password minimal 6 karakter";
+        },
         minOnePlacement: (v) =>
           (Array.isArray(v) && v.length > 0) || "Minimal pilih 1 penempatan",
       },
@@ -447,10 +331,28 @@ export default {
   },
 
   computed: {
-    matchedJabatan() {
-      if (!this.form.role) return null;
+    userId() {
+      return this.$route.params.id;
+    },
 
-      const normalizedRole = this.normalizeText(this.form.role);
+    selectedRole() {
+      if (!this.form.role_id) return null;
+
+      return (
+        this.roleOptions.find(
+          (item) => String(item.id) === String(this.form.role_id),
+        ) || null
+      );
+    },
+
+    selectedRoleName() {
+      return this.selectedRole?.nama || "";
+    },
+
+    matchedJabatan() {
+      if (!this.selectedRoleName) return null;
+
+      const normalizedRole = this.normalizeText(this.selectedRoleName);
 
       return (
         this.masterJabatan.find(
@@ -469,7 +371,7 @@ export default {
       return this.masterKaryawan.filter(
         (item) =>
           Number(item.jabatan_id) === Number(this.matchedJabatan.id) &&
-          Number(item.is_delete) === 0,
+          Number(item.is_delete || 0) === 0,
       );
     },
 
@@ -486,29 +388,66 @@ export default {
     },
 
     selectedPenempatanOptions() {
-      if (!this.form.karyawan_id) return [];
+      if (!this.selectedKaryawan) return [];
 
-      const penempatanIds = this.masterKaryawanPenempatan
-        .filter(
-          (item) =>
-            Number(item.karyawan_id) === Number(this.form.karyawan_id) &&
-            Number(item.is_delete) === 0,
-        )
-        .map((item) => item.toko_id);
+      const penempatan = Array.isArray(this.selectedKaryawan.penempatan)
+        ? this.selectedKaryawan.penempatan
+        : [];
 
-      return this.tokoOptions.filter((item) => penempatanIds.includes(item.id));
+      const activePenempatan = penempatan.filter(
+        (item) => Number(item.is_delete || 0) === 0,
+      );
+
+      return activePenempatan
+        .map((item) => {
+          const tokoId = item.toko_id ?? item.toko?.id ?? null;
+
+          const toko = this.tokoOptions.find(
+            (t) => String(t.id) === String(tokoId),
+          );
+
+          const nama =
+            item.toko?.nama_toko ??
+            item.toko?.nama ??
+            item.nama_toko ??
+            toko?.nama ??
+            "-";
+
+          return {
+            id: tokoId,
+            nama: Number(item.is_primary || 0) === 1 ? `${nama} (Utama)` : nama,
+            is_primary: Number(item.is_primary || 0) === 1,
+          };
+        })
+        .filter((item) => item.id);
     },
 
     payload() {
-      return {
-        id: Number(this.$route.params.id),
-        role: this.form.role,
-        nama: this.form.nama,
-        username: this.form.username,
-        password: this.form.password,
+      const payload = {
         karyawan_id: this.isJabatanBasedRole ? this.form.karyawan_id : null,
-        penempatan_ids: this.isJabatanBasedRole ? this.form.penempatan_ids : [],
+
+        role_id: this.form.role_id,
+        role_name: this.selectedRoleName,
+
+        username: this.cleanValue(this.form.username),
+        email: null,
+
+        nama: this.cleanValue(this.form.nama),
+        display_name: this.cleanValue(this.form.nama),
+
+        is_active: 1,
+        must_change_password: 0,
+
+        penempatan: this.buildPenempatanPayload(),
       };
+
+      const password = this.cleanValue(this.form.password);
+
+      if (password) {
+        payload.password = password;
+      }
+
+      return payload;
     },
 
     formattedPayload() {
@@ -516,11 +455,245 @@ export default {
     },
   },
 
-  mounted() {
-    this.initPage();
+  async mounted() {
+    await this.initPage();
   },
 
   methods: {
+    async initPage() {
+      this.loadingPage = true;
+
+      try {
+        await this.fetchMasterData();
+        await this.fetchDetailUser();
+      } catch (error) {
+        console.error(error);
+
+        const message = this.getErrorMessage(
+          error,
+          "Gagal memuat data edit user",
+        );
+
+        this.showSnackbar(message, "error");
+      } finally {
+        this.loadingPage = false;
+      }
+    },
+
+    async fetchMasterData() {
+      this.loadingMaster = true;
+
+      try {
+        const [rolesRes, jabatanRes, tokoRes, karyawanRes] = await Promise.all([
+          referenceService.roles(),
+          referenceService.jabatan(),
+          referenceService.toko(),
+          karyawanService.getAll({ per_page: 1000 }),
+        ]);
+
+        this.roleOptions = this.normalizeRoles(rolesRes);
+        this.masterJabatan = this.normalizeJabatan(jabatanRes);
+        this.tokoOptions = this.normalizeToko(tokoRes);
+        this.masterKaryawan = this.normalizeKaryawanList(karyawanRes);
+      } catch (error) {
+        console.error(error);
+
+        const message = this.getErrorMessage(
+          error,
+          "Gagal memuat data referensi",
+        );
+
+        this.showSnackbar(message, "error");
+
+        throw error;
+      } finally {
+        this.loadingMaster = false;
+      }
+    },
+
+    async fetchDetailUser() {
+      try {
+        const detail = await masterUserService.getById(this.userId);
+
+        if (!detail) {
+          this.showSnackbar("Data user tidak ditemukan", "error");
+          this.$router.replace("/master/user");
+          return;
+        }
+
+        this.form.role_id =
+          detail.role_id ??
+          detail.master_role_id ??
+          detail.role?.id ??
+          detail.role?.role_id ??
+          null;
+
+        this.form.nama =
+          detail.nama ??
+          detail.display_name ??
+          detail.name ??
+          detail.karyawan?.nama ??
+          detail.karyawan?.nama_karyawan ??
+          "";
+
+        this.form.karyawan_id =
+          detail.karyawan_id ??
+          detail.master_karyawan_id ??
+          detail.karyawan?.id ??
+          null;
+
+        this.form.penempatan_ids = this.extractUserPenempatanIds(detail);
+
+        this.form.username = detail.username ?? "";
+
+        this.form.password = "";
+      } catch (error) {
+        console.error(error);
+
+        const message = this.getErrorMessage(error, "Gagal memuat detail user");
+
+        this.showSnackbar(message, "error");
+
+        throw error;
+      }
+    },
+
+    normalizeRoles(response) {
+      const rows = this.extractRows(response);
+
+      return rows
+        .map((item) => ({
+          id: item.id ?? item.role_id ?? item.value,
+          nama:
+            item.nama_role ??
+            item.role_name ??
+            item.nama ??
+            item.name ??
+            item.label ??
+            "-",
+        }))
+        .filter((item) => item.id && item.nama);
+    },
+
+    normalizeJabatan(response) {
+      const rows = this.extractRows(response);
+
+      return rows
+        .map((item) => ({
+          id: item.id ?? item.jabatan_id ?? item.value,
+          nama:
+            item.nama ?? item.nama_jabatan ?? item.name ?? item.label ?? "-",
+        }))
+        .filter((item) => item.id && item.nama);
+    },
+
+    normalizeToko(response) {
+      const rows = this.extractRows(response);
+
+      return rows
+        .map((item) => ({
+          id: item.id ?? item.toko_id ?? item.value,
+          nama: item.nama_toko ?? item.nama ?? item.name ?? item.label ?? "-",
+        }))
+        .filter((item) => item.id && item.nama);
+    },
+
+    normalizeKaryawanList(response) {
+      const rows = this.extractRows(response);
+
+      return rows
+        .map((item) => ({
+          id: item.id ?? item.karyawan_id ?? item.new_id,
+          jabatan_id:
+            item.jabatan_id ??
+            item.jabatan?.id ??
+            item.master_jabatan?.id ??
+            null,
+          kode: item.kode ?? item.kode_karyawan ?? "-",
+          nama: item.nama ?? item.nama_karyawan ?? item.name ?? "-",
+          is_delete: item.is_delete ?? 0,
+          penempatan: this.normalizeKaryawanPenempatan(item.penempatan),
+          raw: item,
+        }))
+        .filter((item) => item.id);
+    },
+
+    normalizeKaryawanPenempatan(penempatan) {
+      if (!Array.isArray(penempatan)) return [];
+
+      return penempatan.map((item) => ({
+        id: item.id,
+        toko_id: item.toko_id ?? item.toko?.id ?? null,
+        is_primary: Number(item.is_primary || 0) === 1 ? 1 : 0,
+        is_delete: Number(item.is_delete || 0),
+        toko: item.toko ?? null,
+        nama_toko:
+          item.toko?.nama_toko ?? item.toko?.nama ?? item.nama_toko ?? null,
+      }));
+    },
+
+    extractRows(response) {
+      const source = response?.data ?? response?.result ?? response ?? [];
+
+      if (Array.isArray(source)) {
+        return source;
+      }
+
+      if (Array.isArray(source.data)) {
+        return source.data;
+      }
+
+      if (Array.isArray(source.items)) {
+        return source.items;
+      }
+
+      return [];
+    },
+
+    extractUserPenempatanIds(detail) {
+      if (Array.isArray(detail.penempatan_ids)) {
+        return detail.penempatan_ids.map((id) => Number(id)).filter((id) => id);
+      }
+
+      if (Array.isArray(detail.toko_ids)) {
+        return detail.toko_ids.map((id) => Number(id)).filter((id) => id);
+      }
+
+      if (Array.isArray(detail.penempatan)) {
+        return detail.penempatan
+          .map((item) => item.toko_id ?? item.toko?.id ?? item.id)
+          .filter((id) => id)
+          .map((id) => Number(id));
+      }
+
+      if (Array.isArray(detail.user_penempatan)) {
+        return detail.user_penempatan
+          .map((item) => item.toko_id ?? item.toko?.id ?? item.id)
+          .filter((id) => id)
+          .map((id) => Number(id));
+      }
+
+      if (Array.isArray(detail.toko)) {
+        return detail.toko
+          .map((item) => item.id ?? item.toko_id)
+          .filter((id) => id)
+          .map((id) => Number(id));
+      }
+
+      if (Array.isArray(detail.tokos)) {
+        return detail.tokos
+          .map((item) => item.id ?? item.toko_id)
+          .filter((id) => id)
+          .map((id) => Number(id));
+      }
+
+      if (detail.toko_id) {
+        return [Number(detail.toko_id)];
+      }
+
+      return [];
+    },
+
     normalizeText(value) {
       return String(value || "")
         .toLowerCase()
@@ -529,32 +702,16 @@ export default {
         .trim();
     },
 
-    initPage() {
-      this.loadingPage = true;
+    filterOption(itemTitle, queryText, item) {
+      const title =
+        typeof itemTitle === "string"
+          ? itemTitle
+          : (item?.raw?.nama ?? item?.raw?.label ?? "");
 
-      try {
-        const id = Number(this.$route.params.id);
-        const detail = this.dummyUsers.find((item) => Number(item.id) === id);
+      const text = String(title || "").toLowerCase();
+      const query = String(queryText || "").toLowerCase();
 
-        if (!detail) {
-          this.showSnackbar("Data user tidak ditemukan", "error");
-          this.$router.push("/master/user");
-          return;
-        }
-
-        this.form = {
-          role: detail.role,
-          nama: detail.nama,
-          karyawan_id: detail.karyawan_id,
-          penempatan_ids: Array.isArray(detail.penempatan_ids)
-            ? [...detail.penempatan_ids]
-            : [],
-          username: detail.username,
-          password: detail.password,
-        };
-      } finally {
-        this.loadingPage = false;
-      }
+      return text.includes(query);
     },
 
     handleRoleChange() {
@@ -572,15 +729,69 @@ export default {
 
       this.form.nama = this.selectedKaryawan.nama;
 
-      const penempatanIds = this.masterKaryawanPenempatan
-        .filter(
-          (item) =>
-            Number(item.karyawan_id) === Number(this.selectedKaryawan.id) &&
-            Number(item.is_delete) === 0,
-        )
-        .map((item) => item.toko_id);
+      const penempatan = Array.isArray(this.selectedKaryawan.penempatan)
+        ? this.selectedKaryawan.penempatan
+        : [];
 
-      this.form.penempatan_ids = [...new Set(penempatanIds)];
+      const activePenempatan = penempatan.filter(
+        (item) => Number(item.is_delete || 0) === 0 && item.toko_id,
+      );
+
+      const tokoIds = activePenempatan.map((item) => item.toko_id);
+
+      this.form.penempatan_ids = [...new Set(tokoIds)];
+    },
+
+    buildPenempatanPayload() {
+      if (!this.isJabatanBasedRole) {
+        return [];
+      }
+
+      const selectedTokoIds = this.form.penempatan_ids || [];
+
+      if (!selectedTokoIds.length) {
+        return [];
+      }
+
+      const primaryTokoId = this.getPrimaryTokoIdForSelectedKaryawan();
+
+      return selectedTokoIds.map((tokoId, index) => ({
+        toko_id: tokoId,
+        is_primary:
+          String(tokoId) === String(primaryTokoId) ||
+          (!primaryTokoId && index === 0)
+            ? 1
+            : 0,
+        is_active: 1,
+      }));
+    },
+
+    getPrimaryTokoIdForSelectedKaryawan() {
+      if (!this.selectedKaryawan) return null;
+
+      const penempatan = Array.isArray(this.selectedKaryawan.penempatan)
+        ? this.selectedKaryawan.penempatan
+        : [];
+
+      const primary = penempatan.find(
+        (item) =>
+          Number(item.is_delete || 0) === 0 &&
+          Number(item.is_primary || 0) === 1,
+      );
+
+      return primary?.toko_id ?? null;
+    },
+
+    cleanValue(value) {
+      if (value === undefined || value === null || value === "") {
+        return null;
+      }
+
+      if (typeof value === "string") {
+        return value.trim() || null;
+      }
+
+      return value;
     },
 
     async submitForm() {
@@ -588,6 +799,11 @@ export default {
 
       if (!validForm.valid) {
         this.showSnackbar("Masih ada field yang belum valid", "error");
+        return;
+      }
+
+      if (!this.form.role_id || !this.selectedRole) {
+        this.showSnackbar("Role wajib dipilih", "error");
         return;
       }
 
@@ -609,11 +825,17 @@ export default {
       this.loading = true;
 
       try {
-        console.log("Payload edit user:", this.payload);
-        this.dialogPreview = true;
+        await masterUserService.update(this.userId, this.payload);
+
         this.showSnackbar("User berhasil diperbarui", "success");
+
+        this.$router.replace("/master/user");
       } catch (error) {
-        this.showSnackbar("Gagal memperbarui user", "error");
+        console.error(error);
+
+        const message = this.getErrorMessage(error, "Gagal memperbarui user");
+
+        this.showSnackbar(message, "error");
       } finally {
         this.loading = false;
       }
@@ -625,6 +847,24 @@ export default {
         text,
         color,
       };
+    },
+
+    getErrorMessage(error, fallbackMessage) {
+      const response = error?.response?.data;
+
+      if (response?.message) return response.message;
+
+      if (response?.error) return response.error;
+
+      if (response?.errors) {
+        const firstKey = Object.keys(response.errors)[0];
+
+        if (firstKey && Array.isArray(response.errors[firstKey])) {
+          return response.errors[firstKey][0];
+        }
+      }
+
+      return fallbackMessage;
     },
   },
 };

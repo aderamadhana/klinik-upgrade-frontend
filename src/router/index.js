@@ -16,8 +16,7 @@ const routes = [
   ...pelayananMedisRoutes,
   {
     path: "/",
-    name: "Login",
-    component: Login,
+    redirect: "/login",
   },
   {
     path: "/login",
@@ -94,22 +93,68 @@ const router = createRouter({
   routes,
 });
 
+function safeParseJson(value, fallback = null) {
+  try {
+    return value ? JSON.parse(value) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function clearAuthStorage() {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("token_type");
+  localStorage.removeItem("token_expires_at");
+  localStorage.removeItem("last_activity_at");
+  localStorage.removeItem("must_change_password");
+
+  localStorage.removeItem("user");
+  localStorage.removeItem("access");
+
+  localStorage.removeItem("selected_toko_id");
+  localStorage.removeItem("selected_toko");
+  localStorage.removeItem("selected_role_id");
+  localStorage.removeItem("selected_role");
+}
+
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem("access_token");
 
-  const publicPages = ["/login", "/not-found"];
+  const publicPages = ["/", "/login", "/not-found"];
   const isPublicPage = publicPages.includes(to.path);
 
   if (!token && !isPublicPage) {
     return next("/login");
   }
 
-  if (token && to.path === "/login") {
-    return next("/dashboard");
+  if (!token && isPublicPage) {
+    return next();
   }
 
-  const user = JSON.parse(localStorage.getItem("user") || "null");
-  const mustChangePassword = Number(user?.must_change_password || 0) === 1;
+  const user = safeParseJson(localStorage.getItem("user"), null);
+  const mustChangePasswordStorage = Number(
+    localStorage.getItem("must_change_password") || 0,
+  );
+
+  const mustChangePassword =
+    mustChangePasswordStorage === 1 ||
+    Number(user?.must_change_password || 0) === 1;
+
+  const lastActivityAt = Number(localStorage.getItem("last_activity_at") || 0);
+  const idleLimitMs = 4 * 60 * 60 * 1000; // 4 jam
+
+  if (token && lastActivityAt && Date.now() - lastActivityAt > idleLimitMs) {
+    clearAuthStorage();
+    return next("/login");
+  }
+
+  if (token && to.path === "/login") {
+    if (mustChangePassword) {
+      return next("/change-password");
+    }
+
+    return next("/dashboard");
+  }
 
   if (
     token &&
@@ -120,7 +165,15 @@ router.beforeEach((to, from, next) => {
     return next("/change-password");
   }
 
-  next();
+  if (token && to.path === "/") {
+    if (mustChangePassword) {
+      return next("/change-password");
+    }
+
+    return next("/dashboard");
+  }
+
+  return next();
 });
 
 export default router;

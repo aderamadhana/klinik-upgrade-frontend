@@ -1,23 +1,17 @@
 <template>
   <div>
-    <div class="d-flex justify-space-between align-center mb-6 flex-wrap ga-3">
+    <div class="page-header">
       <div>
-        <h1 class="text-h5 font-weight-bold mb-1">Tambah Brand Ambassador</h1>
-        <div class="text-body-2 text-medium-emphasis">
-          Input data brand ambassador baru
-        </div>
+        <h1 class="page-title">Tambah Brand Ambassador</h1>
+        <p class="page-subtitle">
+          Input data brand ambassador baru berdasarkan cabang klinik
+        </p>
       </div>
 
-      <v-btn
-        variant="outlined"
-        color="secondary"
-        :to="'/master/brand-ambassador'"
-      >
-        Kembali
-      </v-btn>
+      <v-breadcrumbs :items="breadcrumbs" divider="/" />
     </div>
 
-    <v-card rounded="lg">
+    <v-card elevation="1">
       <v-card-title class="text-h6 font-weight-bold">
         Form Brand Ambassador
       </v-card-title>
@@ -25,20 +19,19 @@
       <v-divider />
 
       <v-card-text class="pt-6">
-        <v-alert type="info" variant="tonal" class="mb-6">
-          Tahap ini masih frontend only. Submit hanya menampilkan preview
-          payload.
-        </v-alert>
-
         <v-form
           ref="formRef"
           v-model="isValid"
           validate-on="submit lazy"
           @submit.prevent="submitForm"
         >
+          <div class="text-subtitle-1 font-weight-bold mb-3">
+            Informasi Utama
+          </div>
+
           <v-row>
             <v-col cols="12" md="4">
-              <v-select
+              <v-autocomplete
                 v-model="form.toko_id"
                 label="Cabang / Toko *"
                 placeholder="Pilih cabang"
@@ -47,8 +40,13 @@
                 item-value="id"
                 variant="outlined"
                 density="comfortable"
-                :rules="[rules.required]"
+                prepend-inner-icon="mdi-store-marker-outline"
+                :rules="[rules.requiredSelect]"
+                :loading="loadingMaster"
                 clearable
+                auto-select-first
+                no-data-text="Cabang tidak ditemukan"
+                :custom-filter="filterOption"
               />
             </v-col>
 
@@ -59,6 +57,7 @@
                 placeholder="Contoh: BA001"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-barcode"
                 :rules="[rules.required]"
                 clearable
               />
@@ -71,6 +70,7 @@
                 placeholder="Masukkan nama brand ambassador"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-account-star-outline"
                 :rules="[rules.required]"
                 clearable
               />
@@ -83,6 +83,7 @@
                 placeholder="Nomor telepon / WhatsApp"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-phone-outline"
                 clearable
               />
             </v-col>
@@ -94,6 +95,7 @@
                 placeholder="Masukkan email"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-email-outline"
                 :rules="[rules.email]"
                 clearable
               />
@@ -106,6 +108,7 @@
                 placeholder="Contoh: @namaakun"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-instagram"
                 clearable
               />
             </v-col>
@@ -117,6 +120,7 @@
                 placeholder="Masukkan alamat"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-map-marker-outline"
                 rows="3"
                 auto-grow
                 clearable
@@ -130,6 +134,7 @@
                 placeholder="Masukkan catatan tambahan"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-note-text-outline"
                 rows="3"
                 auto-grow
                 clearable
@@ -137,20 +142,34 @@
             </v-col>
           </v-row>
 
-          <div class="d-flex justify-end ga-3 mt-6">
+          <div class="d-flex flex-column flex-md-row justify-end ga-3 mt-6">
             <v-btn
               variant="outlined"
               color="secondary"
               :to="'/master/brand-ambassador'"
+              :disabled="loadingSave"
             >
               Batal
             </v-btn>
 
-            <v-btn color="success" type="submit"> Simpan </v-btn>
+            <v-btn
+              color="success"
+              variant="flat"
+              type="submit"
+              prepend-icon="mdi-content-save"
+              :loading="loadingSave"
+              :disabled="loadingSave"
+            >
+              Simpan Brand Ambassador
+            </v-btn>
           </div>
         </v-form>
       </v-card-text>
     </v-card>
+
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color">
+      {{ snackbar.text }}
+    </v-snackbar>
 
     <v-dialog v-model="dialogPreview" max-width="900">
       <v-card rounded="lg">
@@ -187,24 +206,30 @@
 </template>
 
 <script>
+import referenceService from "@/services/referenceService";
+import brandAmbassadorService from "@/services/master/brandAmbassadorService";
+
 export default {
   name: "AddBrandAmbassador",
+
   data() {
     return {
       isValid: false,
+      loadingMaster: false,
+      loadingSave: false,
       dialogPreview: false,
-      payloadPreview: null,
 
-      tokoOptions: [
-        { id: 1, nama: "Malang" },
-        { id: 2, nama: "Surabaya" },
-        { id: 3, nama: "Bandung" },
-        { id: 4, nama: "Sidoarjo" },
-        { id: 5, nama: "Bekasi" },
-        { id: 6, nama: "Medan" },
-        { id: 7, nama: "Depok" },
-        { id: 8, nama: "Yogyakarta" },
+      breadcrumbs: [
+        { title: "Master", disabled: true },
+        {
+          title: "Brand Ambassador",
+          disabled: false,
+          to: "/master/brand-ambassador",
+        },
+        { title: "Tambah Brand Ambassador", disabled: true },
       ],
+
+      tokoOptions: [],
 
       form: {
         toko_id: null,
@@ -217,48 +242,183 @@ export default {
         catatan: "",
       },
 
+      snackbar: {
+        show: false,
+        text: "",
+        color: "success",
+      },
+
       rules: {
-        required: (v) =>
-          (v !== null && v !== undefined && v !== "") || "Wajib diisi",
-        email: (v) =>
-          !v ||
-          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ||
-          "Format email tidak valid",
+        required: (v) => !!String(v ?? "").trim() || "Field ini wajib diisi",
+        requiredSelect: (v) =>
+          (v !== null && v !== undefined && v !== "") ||
+          "Field ini wajib diisi",
+        email: (v) => {
+          const value = String(v ?? "").trim();
+
+          if (!value) return true;
+
+          return (
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ||
+            "Format email tidak valid"
+          );
+        },
       },
     };
   },
 
   computed: {
+    payload() {
+      return this.buildPayload();
+    },
+
     formattedPayload() {
-      return JSON.stringify(this.payloadPreview, null, 2);
+      return JSON.stringify(this.payload, null, 2);
     },
   },
 
+  mounted() {
+    this.fetchMasterData();
+  },
+
   methods: {
+    async fetchMasterData() {
+      this.loadingMaster = true;
+
+      try {
+        const tokoRes = await referenceService.toko();
+
+        this.tokoOptions = this.normalizeToko(tokoRes);
+      } catch (error) {
+        console.error(error);
+
+        this.showSnackbar(
+          this.getErrorMessage(error, "Gagal memuat data cabang"),
+          "error",
+        );
+      } finally {
+        this.loadingMaster = false;
+      }
+    },
+
+    normalizeToko(response) {
+      const rows = this.extractRows(response);
+
+      return rows
+        .map((item) => ({
+          id: item.id ?? item.toko_id ?? item.value,
+          nama: item.nama_toko ?? item.nama ?? item.name ?? item.label ?? "-",
+        }))
+        .filter((item) => item.id && item.nama);
+    },
+
+    extractRows(response) {
+      const source = response?.data ?? response?.result ?? response ?? [];
+
+      if (Array.isArray(source)) {
+        return source;
+      }
+
+      if (Array.isArray(source.data)) {
+        return source.data;
+      }
+
+      if (Array.isArray(source.items)) {
+        return source.items;
+      }
+
+      return [];
+    },
+
+    filterOption(itemTitle, queryText, item) {
+      const title =
+        typeof itemTitle === "string"
+          ? itemTitle
+          : (item?.raw?.nama ?? item?.raw?.label ?? "");
+
+      const text = String(title || "").toLowerCase();
+      const query = String(queryText || "").toLowerCase();
+
+      return text.includes(query);
+    },
+
     buildPayload() {
       return {
         toko_id: this.form.toko_id,
-        kode: this.form.kode,
-        nama: this.form.nama,
-        no_telp: this.form.no_telp || null,
-        email: this.form.email || null,
-        instagram: this.form.instagram || null,
-        alamat: this.form.alamat || null,
-        catatan: this.form.catatan || null,
-        is_delete: 0,
+        kode: this.cleanValue(this.form.kode),
+        nama: this.cleanValue(this.form.nama),
+        no_telp: this.cleanValue(this.form.no_telp),
+        email: this.cleanValue(this.form.email),
+        instagram: this.cleanValue(this.form.instagram),
+        alamat: this.cleanValue(this.form.alamat),
+        catatan: this.cleanValue(this.form.catatan),
       };
+    },
+
+    cleanValue(value) {
+      if (value === undefined || value === null || value === "") {
+        return null;
+      }
+
+      if (typeof value === "string") {
+        return value.trim() || null;
+      }
+
+      return value;
     },
 
     async submitForm() {
       const result = await this.$refs.formRef.validate();
-      if (!result.valid) return;
 
-      const payload = this.buildPayload();
+      if (!result.valid) {
+        this.showSnackbar("Masih ada field yang belum valid", "error");
+        return;
+      }
 
-      this.payloadPreview = payload;
-      this.dialogPreview = true;
+      this.loadingSave = true;
 
-      console.log("Payload add brand ambassador:", payload);
+      try {
+        await brandAmbassadorService.create(this.payload);
+
+        this.showSnackbar("Data brand ambassador berhasil disimpan", "success");
+
+        this.$router.replace("/master/brand-ambassador");
+      } catch (error) {
+        console.error(error);
+
+        this.showSnackbar(
+          this.getErrorMessage(error, "Gagal menyimpan data brand ambassador"),
+          "error",
+        );
+      } finally {
+        this.loadingSave = false;
+      }
+    },
+
+    showSnackbar(text, color = "success") {
+      this.snackbar = {
+        show: true,
+        text,
+        color,
+      };
+    },
+
+    getErrorMessage(error, fallbackMessage) {
+      const response = error?.response?.data;
+
+      if (response?.message) return response.message;
+
+      if (response?.error) return response.error;
+
+      if (response?.errors) {
+        const firstKey = Object.keys(response.errors)[0];
+
+        if (firstKey && Array.isArray(response.errors[firstKey])) {
+          return response.errors[firstKey][0];
+        }
+      }
+
+      return fallbackMessage;
     },
   },
 };

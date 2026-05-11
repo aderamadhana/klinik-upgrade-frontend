@@ -1,8 +1,8 @@
 import api from "@/plugins/axios";
 
-const endpoint = "/master/karyawan";
+const endpoint = "/master/produk";
 
-const karyawanService = {
+const produkService = {
   async getAll(params = {}) {
     const response = await api.get(endpoint, { params });
     return response.data;
@@ -29,4 +29,4 @@ const karyawanService = {
   },
 };
 
-export default karyawanService;
+export default produkService;

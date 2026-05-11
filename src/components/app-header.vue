@@ -12,11 +12,14 @@
         :items="cabangOptions"
         item-title="title"
         item-value="value"
+        :value-comparator="selectValueComparator"
         variant="outlined"
         density="compact"
         hide-details
         menu-icon="mdi-chevron-down"
         class="filter-select"
+        :loading="switchingCabang"
+        :disabled="switchingCabang"
         @update:model-value="onCabangChange"
       />
 
@@ -25,11 +28,14 @@
         :items="roleOptions"
         item-title="title"
         item-value="value"
+        :value-comparator="selectValueComparator"
         variant="outlined"
         density="compact"
         hide-details
         menu-icon="mdi-chevron-down"
         class="filter-select"
+        :loading="switchingRole"
+        :disabled="switchingRole"
         @update:model-value="onRoleChange"
       />
     </div>
@@ -75,10 +81,18 @@
 </template>
 
 <script>
+import authService from "@/services/authService";
+
 export default {
   name: "AppHeader",
 
-  emits: ["toggle", "update:cabang", "update:role"],
+  emits: [
+    "toggle",
+    "update:cabang",
+    "update:role",
+    "cabang-changed",
+    "role-changed",
+  ],
 
   data() {
     return {
@@ -90,6 +104,9 @@ export default {
 
       cabangOptions: [],
       roleOptions: [],
+
+      switchingRole: false,
+      switchingCabang: false,
     };
   },
 
@@ -105,21 +122,12 @@ export default {
     },
 
     headerUserName() {
-      const userName =
+      return (
         this.user?.display_name ||
         this.user?.nama ||
         this.user?.username ||
-        "User";
-
-      const selectedRole = this.roleOptions.find(
-        (item) => String(item.value) === String(this.selectedRole),
+        "User"
       );
-
-      const roleName = selectedRole?.title || this.user?.role_name || "";
-
-      if (!roleName) return userName;
-
-      return `${userName}`;
     },
 
     avatarInitial() {
@@ -146,25 +154,24 @@ export default {
   },
 
   methods: {
+    selectValueComparator(a, b) {
+      return String(a) === String(b);
+    },
     initHeader() {
       this.user = this.getLocalJson("user");
-      console.log(localStorage.getItem("access"));
       this.access = this.getLocalJson("access");
+
       this.setRoleOptions();
       this.setCabangOptions();
       this.setDefaultSelection();
-
       this.emitCurrentAccess();
     },
 
     getLocalJson(key) {
       try {
         const value = localStorage.getItem(key);
-
-        if (!value) return null;
-
-        return JSON.parse(value);
-      } catch (error) {
+        return value ? JSON.parse(value) : null;
+      } catch {
         return null;
       }
     },
@@ -173,25 +180,34 @@ export default {
       const roles = Array.isArray(this.access?.roles) ? this.access.roles : [];
 
       this.roleOptions = roles
-        .map((item) => ({
-          title:
-            item.role_name ||
-            item.nama_role ||
-            item.nama ||
-            item.name ||
-            item.kode_role ||
-            "-",
-          value: item.role_id || item.id,
-          raw: item,
-        }))
+        .map((item) => {
+          const value = item.role_id || item.id;
+
+          return {
+            title:
+              item.role_name ||
+              item.nama_role ||
+              item.nama ||
+              item.name ||
+              item.kode_role ||
+              "-",
+            value: value ? String(value) : null,
+            raw: item,
+          };
+        })
         .filter((item) => item.value && item.title !== "-");
 
       if (!this.roleOptions.length && this.user?.role_id) {
         this.roleOptions = [
           {
             title: this.user.role_name || "Role",
-            value: this.user.role_id,
-            raw: this.user,
+            value: String(this.user.role_id),
+            raw: {
+              role_id: this.user.role_id,
+              id: this.user.role_id,
+              role_name: this.user.role_name,
+              nama_role: this.user.role_name,
+            },
           },
         ];
       }
@@ -201,33 +217,37 @@ export default {
       const penempatan = Array.isArray(this.access?.penempatan)
         ? this.access.penempatan
         : [];
-      console.log(this.access);
 
       this.cabangOptions = penempatan
-        .map((item) => ({
-          title:
-            item.nama_toko ||
-            item.toko?.nama_toko ||
-            item.toko?.nama ||
-            item.nama ||
-            "-",
-          value: item.toko_id || item.id,
-          is_primary: Number(item.is_primary || 0) === 1,
-          raw: item,
-        }))
+        .map((item) => {
+          const value = item.toko_id || item.id;
+
+          return {
+            title:
+              item.nama_toko ||
+              item.toko?.nama_toko ||
+              item.toko?.nama ||
+              item.nama ||
+              "-",
+            value: value ? String(value) : null,
+            is_primary: Number(item.is_primary || 0) === 1,
+            raw: item,
+          };
+        })
         .filter((item) => item.value && item.title !== "-");
 
       if (!this.cabangOptions.length && this.access?.primary_toko) {
         const toko = this.access.primary_toko;
+        const value = toko.toko_id || toko.id;
 
         this.cabangOptions = [
           {
             title: toko.nama_toko || toko.nama || "KLINIK",
-            value: toko.toko_id || toko.id,
+            value: value ? String(value) : null,
             is_primary: true,
             raw: toko,
           },
-        ];
+        ].filter((item) => item.value);
       }
     },
 
@@ -256,69 +276,155 @@ export default {
       );
 
       this.selectedCabang = savedCabangExists
-        ? Number(savedCabang)
+        ? String(savedCabang)
         : primaryCabang?.value || null;
 
       this.selectedRole = savedRoleExists
-        ? Number(savedRole)
+        ? String(savedRole)
         : defaultRole?.value || null;
 
       if (this.selectedCabang) {
+        const selectedCabang = this.cabangOptions.find(
+          (item) => String(item.value) === String(this.selectedCabang),
+        );
+
         localStorage.setItem("selected_toko_id", this.selectedCabang);
+
+        if (selectedCabang) {
+          localStorage.setItem(
+            "selected_toko",
+            JSON.stringify(selectedCabang.raw),
+          );
+        }
       }
 
       if (this.selectedRole) {
+        const selectedRole = this.roleOptions.find(
+          (item) => String(item.value) === String(this.selectedRole),
+        );
+
         localStorage.setItem("selected_role_id", this.selectedRole);
+
+        if (selectedRole) {
+          localStorage.setItem(
+            "selected_role",
+            JSON.stringify(selectedRole.raw),
+          );
+        }
       }
     },
 
     emitCurrentAccess() {
+      const selectedRole = this.roleOptions.find(
+        (item) => String(item.value) === String(this.selectedRole),
+      );
+
+      const selectedCabang = this.cabangOptions.find(
+        (item) => String(item.value) === String(this.selectedCabang),
+      );
+
       this.$emit("update:cabang", this.selectedCabang);
       this.$emit("update:role", this.selectedRole);
+
+      this.$emit("cabang-changed", {
+        toko_id: this.selectedCabang,
+        cabang: selectedCabang?.raw || null,
+      });
+
+      this.$emit("role-changed", {
+        role_id: this.selectedRole,
+        role: selectedRole?.raw || null,
+      });
     },
 
-    onCabangChange(value) {
+    async onCabangChange(value) {
+      if (String(value) === String(localStorage.getItem("selected_toko_id"))) {
+        return;
+      }
+
+      this.switchingCabang = true;
+
       const selected = this.cabangOptions.find(
         (item) => String(item.value) === String(value),
       );
 
-      localStorage.setItem("selected_toko_id", value);
+      localStorage.setItem("selected_toko_id", String(value));
 
       if (selected) {
         localStorage.setItem("selected_toko", JSON.stringify(selected.raw));
+      } else {
+        localStorage.removeItem("selected_toko");
       }
 
-      this.$emit("update:cabang", value);
+      this.$emit("update:cabang", String(value));
+
+      this.$emit("cabang-changed", {
+        toko_id: String(value),
+        cabang: selected?.raw || null,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 180));
+
+      this.switchingCabang = false;
     },
 
-    onRoleChange(value) {
+    async onRoleChange(value) {
+      if (String(value) === String(localStorage.getItem("selected_role_id"))) {
+        return;
+      }
+
+      this.switchingRole = true;
+
       const selected = this.roleOptions.find(
         (item) => String(item.value) === String(value),
       );
 
-      localStorage.setItem("selected_role_id", value);
+      localStorage.setItem("selected_role_id", String(value));
 
       if (selected) {
         localStorage.setItem("selected_role", JSON.stringify(selected.raw));
+      } else {
+        localStorage.removeItem("selected_role");
       }
 
-      this.$emit("update:role", value);
+      this.$emit("update:role", String(value));
+
+      this.$emit("role-changed", {
+        role_id: String(value),
+        role: selected?.raw || null,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 180));
+
+      this.switchingRole = false;
     },
 
     goChangePassword() {
       this.$router.push("/dashboard/change-password");
     },
 
-    handleLogout() {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("access");
-      localStorage.removeItem("selected_toko_id");
-      localStorage.removeItem("selected_toko");
-      localStorage.removeItem("selected_role_id");
-      localStorage.removeItem("selected_role");
+    async handleLogout() {
+      try {
+        await authService.logout();
+      } catch (error) {
+        console.error("Logout API gagal atau token sudah invalid:", error);
+      } finally {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("token_type");
+        localStorage.removeItem("token_expires_at");
+        localStorage.removeItem("last_activity_at");
+        localStorage.removeItem("must_change_password");
 
-      this.$router.replace("/login");
+        localStorage.removeItem("user");
+        localStorage.removeItem("access");
+
+        localStorage.removeItem("selected_toko_id");
+        localStorage.removeItem("selected_toko");
+        localStorage.removeItem("selected_role_id");
+        localStorage.removeItem("selected_role");
+
+        this.$router.replace("/login");
+      }
     },
   },
 };
