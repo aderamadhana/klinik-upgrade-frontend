@@ -45,6 +45,50 @@ const referenceService = {
     const response = await api.get("/reference/satuan");
     return response.data.data;
   },
+
+  async unitTreatment() {
+    const response = await api.get("/reference/unit-treatment");
+    return response.data.data;
+  },
+
+  async tipeTreatment() {
+    const response = await api.get("/reference/tipe-treatment");
+    return response.data.data;
+  },
+
+  async produkByToko(params = {}) {
+    const response = await api.get("/reference/produk-by-toko", { params });
+    return response.data.data;
+  },
+
+  async treatmentByToko(params = {}) {
+    const response = await api.get("/reference/treatment-by-toko", { params });
+    return response.data.data;
+  },
+
+  async voucherDiskonJenis(params = {}) {
+    const response = await api.get("/reference/voucher-diskon-jenis", {
+      params,
+    });
+
+    return response.data;
+  },
+
+  async voucherDiskonKategori(params = {}) {
+    const response = await api.get("/reference/voucher-diskon-kategori", {
+      params,
+    });
+
+    return response.data;
+  },
+
+  async voucherDiskonTemplate(params = {}) {
+    const response = await api.get("/reference/voucher-diskon-template", {
+      params,
+    });
+
+    return response.data;
+  },
 };
 
 export default referenceService;

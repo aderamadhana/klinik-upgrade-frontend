@@ -164,7 +164,7 @@ export default {
       this.setRoleOptions();
       this.setCabangOptions();
       this.setDefaultSelection();
-      this.emitCurrentAccess();
+      this.emitCurrentAccess(true);
     },
 
     getLocalJson(key) {
@@ -314,7 +314,7 @@ export default {
       }
     },
 
-    emitCurrentAccess() {
+    emitCurrentAccess(isInitial = false) {
       const selectedRole = this.roleOptions.find(
         (item) => String(item.value) === String(this.selectedRole),
       );
@@ -329,11 +329,13 @@ export default {
       this.$emit("cabang-changed", {
         toko_id: this.selectedCabang,
         cabang: selectedCabang?.raw || null,
+        is_initial: isInitial,
       });
 
       this.$emit("role-changed", {
         role_id: this.selectedRole,
         role: selectedRole?.raw || null,
+        is_initial: isInitial,
       });
     },
 
@@ -361,6 +363,7 @@ export default {
       this.$emit("cabang-changed", {
         toko_id: String(value),
         cabang: selected?.raw || null,
+        is_initial: false,
       });
 
       await new Promise((resolve) => setTimeout(resolve, 180));
@@ -392,6 +395,7 @@ export default {
       this.$emit("role-changed", {
         role_id: String(value),
         role: selected?.raw || null,
+        is_initial: false,
       });
 
       await new Promise((resolve) => setTimeout(resolve, 180));

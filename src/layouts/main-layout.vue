@@ -61,11 +61,10 @@ export default {
       this.selectedRoleId = payload?.role_id || payload?.id || null;
       this.selectedRoleObject = payload?.role || null;
 
-      /**
-       * Opsional tapi lebih aman:
-       * kalau user sedang di halaman yang tidak tersedia untuk role baru,
-       * kembalikan ke dashboard agar tidak melihat halaman yang seharusnya tersembunyi.
-       */
+      if (payload?.is_initial) {
+        return;
+      }
+
       if (this.$route.path !== "/dashboard") {
         this.$router.replace("/dashboard");
       }
