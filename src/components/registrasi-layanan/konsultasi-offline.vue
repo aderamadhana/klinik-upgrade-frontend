@@ -25,10 +25,10 @@
         </div>
       </div>
 
-      <v-row dense>
+      <v-row density="comfortable">
         <v-col cols="12">
           <v-textarea
-            :model-value="form.konsultasi_offline.keluhan_awal"
+            :model-value="konsultasiOffline.keluhan_awal"
             label="Keluhan Awal"
             rows="4"
             auto-grow
@@ -48,7 +48,7 @@
 
         <v-col cols="12">
           <v-textarea
-            :model-value="form.konsultasi_offline.catatan"
+            :model-value="konsultasiOffline.catatan"
             label="Catatan Awal Konsultasi"
             rows="4"
             auto-grow
@@ -66,46 +66,13 @@
         </v-col>
       </v-row>
     </div>
-
-    <div class="group-wrap mt-5">
-      <div class="group-head mb-4">
-        <div class="group-title">
-          <v-icon class="mr-2" color="success">
-            mdi-clipboard-check-outline
-          </v-icon>
-          Ringkasan Input
-        </div>
-        <div class="group-subtitle">
-          Preview singkat data konsultasi offline yang telah diisi
-        </div>
-      </div>
-
-      <v-row dense>
-        <v-col cols="12" md="6">
-          <div class="summary-box">
-            <div class="summary-label">Keluhan Awal</div>
-            <div class="summary-value summary-value--multiline">
-              {{ form.konsultasi_offline.keluhan_awal || "-" }}
-            </div>
-          </div>
-        </v-col>
-
-        <v-col cols="12" md="6">
-          <div class="summary-box">
-            <div class="summary-label">Catatan Awal</div>
-            <div class="summary-value summary-value--multiline">
-              {{ form.konsultasi_offline.catatan || "-" }}
-            </div>
-          </div>
-        </v-col>
-      </v-row>
-    </div>
   </div>
 </template>
 
 <script>
 export default {
   name: "KonsultasiOffline",
+
   props: {
     form: {
       type: Object,
@@ -116,7 +83,19 @@ export default {
       required: true,
     },
   },
+
   emits: ["update-konsultasi-offline"],
+
+  computed: {
+    konsultasiOffline() {
+      return {
+        keluhan_awal: "",
+        catatan: "",
+        ...(this.form?.konsultasi_offline || {}),
+      };
+    },
+  },
+
   methods: {
     updateField(field, value) {
       this.$emit("update-konsultasi-offline", { field, value });
@@ -126,31 +105,6 @@ export default {
 </script>
 
 <style scoped>
-.konsultasi-card {
-  border: 1px solid rgba(15, 23, 42, 0.08);
-}
-
-.section-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.section-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.2;
-}
-
-.section-subtitle {
-  margin-top: 6px;
-  font-size: 13px;
-  color: #64748b;
-}
-
 .group-wrap {
   border: 1px solid #e5e7eb;
   border-radius: 18px;
@@ -177,42 +131,7 @@ export default {
   color: #6b7280;
 }
 
-.summary-box {
-  height: 100%;
-  border-radius: 16px;
-  padding: 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-
-.summary-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.summary-value {
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
-  word-break: break-word;
-}
-
-.summary-value--multiline {
-  white-space: pre-line;
-  line-height: 1.6;
-  font-weight: 500;
-}
-
 @media (max-width: 768px) {
-  .section-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .group-wrap {
     padding: 16px;
   }

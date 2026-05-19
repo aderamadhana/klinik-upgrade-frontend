@@ -41,11 +41,6 @@ const referenceService = {
     return response.data.data;
   },
 
-  async satuan() {
-    const response = await api.get("/reference/satuan");
-    return response.data.data;
-  },
-
   async unitTreatment() {
     const response = await api.get("/reference/unit-treatment");
     return response.data.data;
@@ -88,6 +83,41 @@ const referenceService = {
     });
 
     return response.data;
+  },
+
+  async agama() {
+    const response = await api.get("/reference/agama");
+    return response.data.data;
+  },
+
+  async pekerjaan() {
+    const response = await api.get("/reference/pekerjaan");
+    return response.data.data;
+  },
+
+  async provinces() {
+    const response = await api.get("/reference/provinces");
+    return response.data.data;
+  },
+
+  async regencies(provinceCode) {
+    const response = await api.get(`/reference/regencies/${provinceCode}`);
+    return response.data.data;
+  },
+
+  async districts(regencyCode) {
+    const response = await api.get(`/reference/districts/${regencyCode}`);
+    return response.data.data;
+  },
+
+  async villages(districtCode) {
+    const response = await api.get(`/reference/villages/${districtCode}`);
+    return response.data.data;
+  },
+
+  async pasien(params = {}) {
+    const response = await api.get("/reference/pasien", { params });
+    return response.data.data;
   },
 };
 

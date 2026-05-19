@@ -441,6 +441,18 @@ export default {
               ],
             },
             {
+              key: "antrian-layanan",
+              title: "Daftar Antrian Layanan",
+              to: "/resepsionis/antrian",
+              roles: [
+                "administrator",
+                "superuser",
+                "it",
+                "management",
+                "front office",
+              ],
+            },
+            {
               key: "resepsionis-booking",
               title: "Daftar Booking",
               to: "/resepsionis/booking",

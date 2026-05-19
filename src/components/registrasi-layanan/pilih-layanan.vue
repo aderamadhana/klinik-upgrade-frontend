@@ -7,8 +7,7 @@
       border="start"
       class="mb-5"
     >
-      Pilih layanan yang dibutuhkan pada kunjungan ini. Jika konsultasi dipilih,
-      tentukan juga channel konsultasinya.
+      Pilih satu atau lebih layanan yang dibutuhkan pada kunjungan ini.
     </v-alert>
 
     <div class="group-wrap mb-5">
@@ -19,29 +18,35 @@
           </v-icon>
           Jenis Layanan
         </div>
+
         <div class="group-subtitle">
-          Aktifkan layanan yang dibutuhkan pada kunjungan ini
+          Konsultasi, treatment, dan penjualan produk bisa dipilih bersamaan
         </div>
       </div>
 
-      <v-row dense>
+      <v-row density="comfortable">
         <v-col cols="12" md="4">
           <div
             class="service-box"
-            :class="{ 'service-box--active': layananState.ada_konsultasi }"
+            :class="{ 'service-box--active': localLayanan.ada_konsultasi }"
+            role="button"
+            tabindex="0"
             @click="toggleService('ada_konsultasi')"
+            @keyup.enter="toggleService('ada_konsultasi')"
           >
             <div class="service-box__top">
               <v-icon color="primary">mdi-stethoscope</v-icon>
-              <v-checkbox
-                :model-value="layananState.ada_konsultasi"
-                color="primary"
-                hide-details
-                @click.stop
-                @update:modelValue="
-                  handleServiceChange('ada_konsultasi', $event)
-                "
-              />
+
+              <v-icon
+                :color="localLayanan.ada_konsultasi ? 'success' : 'grey'"
+                size="26"
+              >
+                {{
+                  localLayanan.ada_konsultasi
+                    ? "mdi-check-circle"
+                    : "mdi-checkbox-blank-circle-outline"
+                }}
+              </v-icon>
             </div>
 
             <div class="service-box__title">Konsultasi</div>
@@ -54,20 +59,25 @@
         <v-col cols="12" md="4">
           <div
             class="service-box"
-            :class="{ 'service-box--active': layananState.ada_treatment }"
+            :class="{ 'service-box--active': localLayanan.ada_treatment }"
+            role="button"
+            tabindex="0"
             @click="toggleService('ada_treatment')"
+            @keyup.enter="toggleService('ada_treatment')"
           >
             <div class="service-box__top">
               <v-icon color="primary">mdi-spa</v-icon>
-              <v-checkbox
-                :model-value="layananState.ada_treatment"
-                color="primary"
-                hide-details
-                @click.stop
-                @update:modelValue="
-                  handleServiceChange('ada_treatment', $event)
-                "
-              />
+
+              <v-icon
+                :color="localLayanan.ada_treatment ? 'success' : 'grey'"
+                size="26"
+              >
+                {{
+                  localLayanan.ada_treatment
+                    ? "mdi-check-circle"
+                    : "mdi-checkbox-blank-circle-outline"
+                }}
+              </v-icon>
             </div>
 
             <div class="service-box__title">Treatment</div>
@@ -80,20 +90,25 @@
         <v-col cols="12" md="4">
           <div
             class="service-box"
-            :class="{ 'service-box--active': layananState.ada_penjualan }"
+            :class="{ 'service-box--active': localLayanan.ada_penjualan }"
+            role="button"
+            tabindex="0"
             @click="toggleService('ada_penjualan')"
+            @keyup.enter="toggleService('ada_penjualan')"
           >
             <div class="service-box__top">
               <v-icon color="primary">mdi-pill</v-icon>
-              <v-checkbox
-                :model-value="layananState.ada_penjualan"
-                color="primary"
-                hide-details
-                @click.stop
-                @update:modelValue="
-                  handleServiceChange('ada_penjualan', $event)
-                "
-              />
+
+              <v-icon
+                :color="localLayanan.ada_penjualan ? 'success' : 'grey'"
+                size="26"
+              >
+                {{
+                  localLayanan.ada_penjualan
+                    ? "mdi-check-circle"
+                    : "mdi-checkbox-blank-circle-outline"
+                }}
+              </v-icon>
             </div>
 
             <div class="service-box__title">Penjualan Produk</div>
@@ -106,37 +121,56 @@
     </div>
 
     <v-expand-transition>
-      <div v-if="layananState.ada_konsultasi" class="group-wrap mb-5">
+      <div v-if="localLayanan.ada_konsultasi" class="group-wrap mb-5">
         <div class="group-head mb-4">
           <div class="group-title">
-            <v-icon class="mr-2" color="primary">mdi-access-point</v-icon>
+            <v-icon class="mr-2" color="primary"> mdi-access-point </v-icon>
             Channel Konsultasi
           </div>
+
           <div class="group-subtitle">
             Tentukan metode konsultasi yang dipakai pasien
           </div>
         </div>
 
-        <v-row dense>
+        <v-row density="comfortable">
           <v-col cols="12" md="6">
             <div
               class="channel-box"
               :class="{
                 'channel-box--active':
-                  layananState.channel_konsultasi === 'offline',
+                  localLayanan.channel_konsultasi === 'offline',
               }"
-              @click="updateLayananField('channel_konsultasi', 'offline')"
+              role="button"
+              tabindex="0"
+              @click="setChannel('offline')"
+              @keyup.enter="setChannel('offline')"
             >
               <div class="channel-box__icon">
                 <v-icon color="primary">mdi-hospital-building</v-icon>
               </div>
 
-              <div>
+              <div class="channel-box__body">
                 <div class="channel-box__title">Offline</div>
                 <div class="channel-box__desc">
                   Pasien datang langsung dan konsultasi di klinik
                 </div>
               </div>
+
+              <v-icon
+                :color="
+                  localLayanan.channel_konsultasi === 'offline'
+                    ? 'success'
+                    : 'grey'
+                "
+                size="24"
+              >
+                {{
+                  localLayanan.channel_konsultasi === "offline"
+                    ? "mdi-check-circle"
+                    : "mdi-checkbox-blank-circle-outline"
+                }}
+              </v-icon>
             </div>
           </v-col>
 
@@ -145,20 +179,38 @@
               class="channel-box"
               :class="{
                 'channel-box--active':
-                  layananState.channel_konsultasi === 'online',
+                  localLayanan.channel_konsultasi === 'online',
               }"
-              @click="updateLayananField('channel_konsultasi', 'online')"
+              role="button"
+              tabindex="0"
+              @click="setChannel('online')"
+              @keyup.enter="setChannel('online')"
             >
               <div class="channel-box__icon">
                 <v-icon color="primary">mdi-video-outline</v-icon>
               </div>
 
-              <div>
+              <div class="channel-box__body">
                 <div class="channel-box__title">Online</div>
                 <div class="channel-box__desc">
                   Pasien konsultasi jarak jauh melalui media online
                 </div>
               </div>
+
+              <v-icon
+                :color="
+                  localLayanan.channel_konsultasi === 'online'
+                    ? 'success'
+                    : 'grey'
+                "
+                size="24"
+              >
+                {{
+                  localLayanan.channel_konsultasi === "online"
+                    ? "mdi-check-circle"
+                    : "mdi-checkbox-blank-circle-outline"
+                }}
+              </v-icon>
             </div>
           </v-col>
         </v-row>
@@ -166,94 +218,12 @@
     </v-expand-transition>
 
     <v-expand-transition>
-      <div v-if="warningOnlineTreatment" class="mb-5">
-        <v-alert type="warning" variant="tonal" rounded="lg" border="start">
-          Konsultasi online dipilih bersamaan dengan treatment. Pastikan alurnya
-          memang sesuai operasional klinik.
-        </v-alert>
-      </div>
-    </v-expand-transition>
-
-    <div class="group-wrap mb-5">
-      <div class="group-head mb-4">
-        <div class="group-title">
-          <v-icon class="mr-2" color="success">
-            mdi-clipboard-text-outline
-          </v-icon>
-          Ringkasan Pilihan
-        </div>
-        <div class="group-subtitle">
-          Preview layanan yang dipilih pada registrasi ini
-        </div>
-      </div>
-
-      <v-row dense>
-        <v-col cols="12" md="6">
-          <div class="summary-box">
-            <div class="summary-label">Layanan Aktif</div>
-
-            <div class="summary-row">
-              <span>Konsultasi</span>
-              <strong>{{
-                layananState.ada_konsultasi ? "Ya" : "Tidak"
-              }}</strong>
-            </div>
-
-            <div class="summary-row">
-              <span>Channel Konsultasi</span>
-              <strong>{{
-                formatChannel(layananState.channel_konsultasi)
-              }}</strong>
-            </div>
-
-            <div class="summary-row">
-              <span>Treatment</span>
-              <strong>{{ layananState.ada_treatment ? "Ya" : "Tidak" }}</strong>
-            </div>
-
-            <div class="summary-row">
-              <span>Penjualan Produk</span>
-              <strong>{{ layananState.ada_penjualan ? "Ya" : "Tidak" }}</strong>
-            </div>
-          </div>
-        </v-col>
-
-        <v-col cols="12" md="6">
-          <div class="summary-box">
-            <div class="summary-label">Preview Alur Awal</div>
-
-            <div class="summary-row">
-              <span>Tahap Berikutnya</span>
-              <strong>{{ nextFlowLabel }}</strong>
-            </div>
-
-            <div class="summary-row">
-              <span>Treatment Routing</span>
-              <strong>Ditentukan di form treatment</strong>
-            </div>
-
-            <div class="summary-row">
-              <span>Status Pilihan</span>
-              <strong
-                :class="
-                  validationMessages.length ? 'text-error' : 'text-success'
-                "
-              >
-                {{
-                  validationMessages.length ? "Belum lengkap" : "Siap lanjut"
-                }}
-              </strong>
-            </div>
-          </div>
-        </v-col>
-      </v-row>
-    </div>
-
-    <v-expand-transition>
       <div v-if="validationMessages.length" class="group-wrap validation-wrap">
         <div class="group-head mb-3">
           <div class="group-title text-error">
-            <v-icon class="mr-2" color="error">mdi-alert-circle-outline</v-icon>
+            <v-icon class="mr-2" color="error">
+              mdi-alert-circle-outline
+            </v-icon>
             Yang masih harus dilengkapi
           </div>
         </div>
@@ -275,92 +245,125 @@
 <script>
 export default {
   name: "PilihLayanan",
+
   props: {
     form: {
       type: Object,
       required: true,
     },
   },
-  emits: ["update-layanan-field"],
-  computed: {
-    layananState() {
-      return {
+
+  emits: ["update-field"],
+
+  data() {
+    return {
+      localLayanan: {
         ada_konsultasi: false,
         channel_konsultasi: "",
         ada_treatment: false,
         ada_penjualan: false,
-        ...(this.form?.layanan || {}),
-      };
-    },
-    hasAnyService() {
-      return (
-        this.layananState.ada_konsultasi ||
-        this.layananState.ada_treatment ||
-        this.layananState.ada_penjualan
-      );
-    },
+        route_treatment: "",
+      },
+    };
+  },
+
+  computed: {
     validationMessages() {
       const messages = [];
 
-      if (!this.hasAnyService) {
-        messages.push("Pilih minimal satu layanan.");
+      if (
+        !this.localLayanan.ada_konsultasi &&
+        !this.localLayanan.ada_treatment &&
+        !this.localLayanan.ada_penjualan
+      ) {
+        messages.push("Minimal pilih satu layanan.");
       }
 
       if (
-        this.layananState.ada_konsultasi &&
-        !this.layananState.channel_konsultasi
+        this.localLayanan.ada_konsultasi &&
+        !this.localLayanan.channel_konsultasi
       ) {
         messages.push("Channel konsultasi wajib dipilih.");
       }
 
       return messages;
     },
-    warningOnlineTreatment() {
-      return (
-        this.layananState.ada_konsultasi &&
-        this.layananState.channel_konsultasi === "online" &&
-        this.layananState.ada_treatment
-      );
-    },
-    nextFlowLabel() {
-      if (this.layananState.ada_konsultasi) {
-        return "Masuk ke form konsultasi";
-      }
+  },
 
-      if (this.layananState.ada_treatment) {
-        return "Masuk ke form treatment";
-      }
+  watch: {
+    "form.layanan": {
+      immediate: true,
+      deep: true,
+      handler(value) {
+        const next = this.normalizeLayanan(value);
 
-      if (this.layananState.ada_penjualan) {
-        return "Masuk ke form penjualan";
-      }
-
-      return "-";
+        if (!this.isSameLayanan(next, this.localLayanan)) {
+          this.localLayanan = next;
+        }
+      },
     },
   },
+
   methods: {
-    updateLayananField(field, value) {
-      this.$emit("update-layanan-field", { field, value });
+    normalizeLayanan(value = {}) {
+      return {
+        ada_konsultasi: Boolean(value?.ada_konsultasi),
+        channel_konsultasi: value?.channel_konsultasi || "",
+        ada_treatment: Boolean(value?.ada_treatment),
+        ada_penjualan: Boolean(value?.ada_penjualan),
+        route_treatment: value?.route_treatment || "",
+      };
     },
 
-    handleServiceChange(field, value) {
-      this.updateLayananField(field, value);
-
-      if (field === "ada_konsultasi" && !value) {
-        this.updateLayananField("channel_konsultasi", "");
-      }
+    isSameLayanan(a, b) {
+      return (
+        Boolean(a?.ada_konsultasi) === Boolean(b?.ada_konsultasi) &&
+        String(a?.channel_konsultasi || "") ===
+          String(b?.channel_konsultasi || "") &&
+        Boolean(a?.ada_treatment) === Boolean(b?.ada_treatment) &&
+        Boolean(a?.ada_penjualan) === Boolean(b?.ada_penjualan) &&
+        String(a?.route_treatment || "") === String(b?.route_treatment || "")
+      );
     },
 
     toggleService(field) {
-      const currentValue = Boolean(this.layananState[field]);
-      this.handleServiceChange(field, !currentValue);
+      const next = {
+        ...this.localLayanan,
+        [field]: !this.localLayanan[field],
+      };
+
+      if (field === "ada_konsultasi" && !next.ada_konsultasi) {
+        next.channel_konsultasi = "";
+      }
+
+      if (field === "ada_treatment" && !next.ada_treatment) {
+        next.route_treatment = "";
+      }
+
+      this.localLayanan = next;
+      this.emitLayanan();
     },
 
-    formatChannel(value) {
-      if (!value) return "-";
-      if (value === "offline") return "Offline";
-      if (value === "online") return "Online";
-      return value;
+    setChannel(channel) {
+      this.localLayanan = {
+        ...this.localLayanan,
+        channel_konsultasi: channel,
+      };
+
+      this.emitLayanan();
+    },
+
+    emitLayanan() {
+      this.$emit("update-field", {
+        field: "layanan",
+        value: {
+          ada_konsultasi: Boolean(this.localLayanan.ada_konsultasi),
+          channel_konsultasi: this.localLayanan.channel_konsultasi || "",
+          ada_treatment: Boolean(this.localLayanan.ada_treatment),
+          ada_penjualan: Boolean(this.localLayanan.ada_penjualan),
+          route_treatment: this.localLayanan.route_treatment || "",
+        },
+      });
     },
   },
 };
@@ -390,33 +393,35 @@ export default {
 
 .group-subtitle {
   font-size: 13px;
-  color: #6b7280;
+  color: #475569;
 }
 
 .service-box {
   height: 100%;
-  border: 1px solid #e5e7eb;
+  min-height: 128px;
+  border: 1px solid #dbe4f0;
   border-radius: 18px;
-  padding: 18px;
-  background: #ffffff;
+  padding: 16px;
+  background: #fff;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: 0.18s ease;
+  user-select: none;
 }
 
 .service-box:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
+  border-color: #93c5fd;
+  background: #f8fbff;
 }
 
 .service-box--active {
-  border-color: rgba(var(--v-theme-primary), 0.45);
-  background: rgba(var(--v-theme-primary), 0.05);
+  border-color: #60a5fa;
+  background: #eff6ff;
 }
 
 .service-box__top {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 12px;
 }
 
@@ -429,82 +434,60 @@ export default {
 
 .service-box__desc {
   font-size: 13px;
-  color: #64748b;
-  line-height: 1.5;
+  color: #475569;
+  line-height: 1.4;
 }
 
 .channel-box {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  border: 1px solid #e5e7eb;
+  height: 100%;
+  min-height: 78px;
+  border: 1px solid #dbe4f0;
   border-radius: 16px;
   padding: 16px;
+  background: #fff;
   cursor: pointer;
-  transition: all 0.2s ease;
-  background: #ffffff;
-  min-height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: 0.18s ease;
+  user-select: none;
 }
 
 .channel-box:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
+  border-color: #93c5fd;
+  background: #f8fbff;
 }
 
 .channel-box--active {
-  border-color: rgba(var(--v-theme-primary), 0.45);
-  background: rgba(var(--v-theme-primary), 0.05);
+  border-color: #60a5fa;
+  background: #eff6ff;
 }
 
 .channel-box__icon {
-  flex: 0 0 auto;
+  width: 34px;
+  display: flex;
+  justify-content: center;
+}
+
+.channel-box__body {
+  flex: 1;
 }
 
 .channel-box__title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: #0f172a;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
 
 .channel-box__desc {
   font-size: 13px;
-  color: #64748b;
-  line-height: 1.5;
-}
-
-.summary-box {
-  height: 100%;
-  border-radius: 16px;
-  padding: 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-
-.summary-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-  margin-bottom: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 10px 0;
-  border-bottom: 1px dashed #dbe3ef;
-}
-
-.summary-row:last-child {
-  border-bottom: none;
+  color: #475569;
 }
 
 .validation-wrap {
-  border-color: rgba(var(--v-theme-error), 0.25);
-  background: rgba(var(--v-theme-error), 0.03);
+  border-color: #fecaca;
+  background: #fff7f7;
 }
 
 .validation-list {
@@ -518,22 +501,9 @@ export default {
   color: #b91c1c;
 }
 
-.text-success {
-  color: #16a34a;
-}
-
-.text-error {
-  color: #dc2626;
-}
-
 @media (max-width: 768px) {
   .group-wrap {
     padding: 16px;
-  }
-
-  .summary-row {
-    flex-direction: column;
-    gap: 6px;
   }
 }
 </style>

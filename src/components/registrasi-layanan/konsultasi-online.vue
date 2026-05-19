@@ -20,6 +20,7 @@
           </v-icon>
           Form Konsultasi
         </div>
+
         <div class="group-subtitle">
           Informasi utama yang dibutuhkan dokter sebelum meninjau pasien secara
           online
@@ -29,7 +30,7 @@
       <v-row dense>
         <v-col cols="12" md="6">
           <v-text-field
-            :model-value="form.konsultasi_online.request_dokter"
+            :model-value="ko.request_dokter"
             label="Request Dokter Khusus"
             placeholder="Opsional"
             variant="outlined"
@@ -46,7 +47,7 @@
 
         <v-col cols="12">
           <v-textarea
-            :model-value="form.konsultasi_online.alergi"
+            :model-value="ko.alergi"
             label="Alergi"
             rows="3"
             auto-grow
@@ -65,7 +66,7 @@
 
         <v-col cols="12">
           <v-textarea
-            :model-value="form.konsultasi_online.keluhan"
+            :model-value="ko.keluhan"
             label="Keluhan Utama"
             rows="4"
             auto-grow
@@ -85,7 +86,7 @@
 
         <v-col cols="12">
           <v-textarea
-            :model-value="form.konsultasi_online.produk_sebelumnya"
+            :model-value="ko.produk_sebelumnya"
             label="Produk / Obat Sebelumnya"
             rows="3"
             auto-grow
@@ -109,7 +110,7 @@
             </div>
 
             <v-radio-group
-              :model-value="form.konsultasi_online.sedang_hamil"
+              :model-value="ko.sedang_hamil"
               inline
               hide-details="auto"
               @update:modelValue="updateField('sedang_hamil', $event)"
@@ -128,7 +129,7 @@
             </div>
 
             <v-radio-group
-              :model-value="form.konsultasi_online.sedang_menyusui"
+              :model-value="ko.sedang_menyusui"
               inline
               hide-details="auto"
               @update:modelValue="updateField('sedang_menyusui', $event)"
@@ -150,6 +151,7 @@
           </v-icon>
           Dokumentasi Foto
         </div>
+
         <div class="group-subtitle">
           Upload foto pasien untuk membantu peninjauan visual sebelum konsultasi
         </div>
@@ -237,12 +239,13 @@
     </div>
 
     <!-- RIWAYAT -->
-    <div class="group-wrap mb-5">
+    <div class="group-wrap">
       <div class="group-head mb-4">
         <div class="group-title">
-          <v-icon class="mr-2" color="success"> mdi-history </v-icon>
+          <v-icon class="mr-2" color="success">mdi-history</v-icon>
           Riwayat Konsultasi
         </div>
+
         <div class="group-subtitle">
           Riwayat konsultasi sebelumnya untuk referensi dokter
         </div>
@@ -282,66 +285,6 @@
         </div>
       </template>
     </div>
-
-    <!-- RINGKASAN -->
-    <div class="group-wrap">
-      <div class="group-head mb-4">
-        <div class="group-title">
-          <v-icon class="mr-2" color="success">
-            mdi-clipboard-check-outline
-          </v-icon>
-          Ringkasan Konsultasi Online
-        </div>
-        <div class="group-subtitle">Preview singkat data yang telah diisi</div>
-      </div>
-
-      <v-row dense>
-        <v-col cols="12" md="6">
-          <div class="summary-box">
-            <div class="summary-label">Keluhan Utama</div>
-            <div class="summary-value summary-value--multiline">
-              {{ form.konsultasi_online.keluhan || "-" }}
-            </div>
-          </div>
-        </v-col>
-
-        <v-col cols="12" md="6">
-          <div class="summary-box">
-            <div class="summary-label">Alergi</div>
-            <div class="summary-value summary-value--multiline">
-              {{ form.konsultasi_online.alergi || "-" }}
-            </div>
-          </div>
-        </v-col>
-
-        <v-col cols="12" md="4">
-          <div class="summary-box">
-            <div class="summary-label">Request Dokter</div>
-            <div class="summary-value">
-              {{ form.konsultasi_online.request_dokter || "-" }}
-            </div>
-          </div>
-        </v-col>
-
-        <v-col cols="12" md="4">
-          <div class="summary-box">
-            <div class="summary-label">Sedang Hamil</div>
-            <div class="summary-value">
-              {{ form.konsultasi_online.sedang_hamil || "-" }}
-            </div>
-          </div>
-        </v-col>
-
-        <v-col cols="12" md="4">
-          <div class="summary-box">
-            <div class="summary-label">Sedang Menyusui</div>
-            <div class="summary-value">
-              {{ form.konsultasi_online.sedang_menyusui || "-" }}
-            </div>
-          </div>
-        </v-col>
-      </v-row>
-    </div>
   </div>
 </template>
 
@@ -352,6 +295,7 @@ import sisiKiri from "@/assets/sisi-kiri2.jpg";
 
 export default {
   name: "KonsultasiOnline",
+
   props: {
     form: {
       type: Object,
@@ -378,6 +322,7 @@ export default {
       default: () => [],
     },
   },
+
   emits: [
     "update-konsultasi-online",
     "drag-over",
@@ -386,6 +331,7 @@ export default {
     "file-change",
     "remove-image",
   ],
+
   computed: {
     ko() {
       return (
@@ -399,9 +345,9 @@ export default {
           bukti_foto_kiri: "",
           bukti_foto_depan: "",
           bukti_foto_kanan: "",
-          preview_before_1: sisiKanan,
-          preview_before_2: sisiTengah,
-          preview_before_3: sisiKiri,
+          preview_before_1: "",
+          preview_before_2: "",
+          preview_before_3: "",
           file_name_1: "",
           file_name_2: "",
           file_name_3: "",
@@ -409,6 +355,7 @@ export default {
       );
     },
   },
+
   methods: {
     updateField(field, value) {
       this.$emit("update-konsultasi-online", { field, value });
@@ -417,11 +364,13 @@ export default {
     triggerFileInput(key) {
       const refName = `fileInput_${key}`;
       const input = this.$refs[refName];
+
       if (Array.isArray(input)) {
         input[0]?.click();
-      } else {
-        input?.click();
+        return;
       }
+
+      input?.click();
     },
 
     getPreviewSrc(previewKey) {
@@ -438,31 +387,6 @@ export default {
 </script>
 
 <style scoped>
-.konsultasi-card {
-  border: 1px solid rgba(15, 23, 42, 0.08);
-}
-
-.section-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.section-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.2;
-}
-
-.section-subtitle {
-  margin-top: 6px;
-  font-size: 13px;
-  color: #64748b;
-}
-
 .group-wrap {
   border: 1px solid #e5e7eb;
   border-radius: 18px;
@@ -538,50 +462,10 @@ export default {
   height: 100%;
 }
 
-.summary-box {
-  height: 100%;
-  border-radius: 16px;
-  padding: 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-
-.summary-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.summary-value {
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
-  word-break: break-word;
-}
-
-.summary-value--multiline {
-  white-space: pre-line;
-  line-height: 1.6;
-  font-weight: 500;
-}
-
 .h-100 {
   height: 100%;
 }
 
-@media (max-width: 768px) {
-  .section-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .group-wrap {
-    padding: 16px;
-  }
-}
 .empty-state {
   min-height: 180px;
   border: 1px dashed #cbd5e1;
@@ -608,5 +492,11 @@ export default {
   line-height: 1.6;
   color: #64748b;
   max-width: 520px;
+}
+
+@media (max-width: 768px) {
+  .group-wrap {
+    padding: 16px;
+  }
 }
 </style>

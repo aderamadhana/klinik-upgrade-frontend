@@ -38,6 +38,12 @@ const masterRoutes = [
         component: () => import("@/views/master/pasien/all-pasien.vue"),
       },
       {
+        path: "pasien/edit/:id",
+        name: "Edit Pasien",
+        component: () => import("@/views/master/pasien/edit-pasien.vue"),
+      },
+
+      {
         path: "pasien/riwayat/:id",
         name: "Riwayat Pasien",
         component: () => import("@/views/master/pasien/riwayat-pasien.vue"),

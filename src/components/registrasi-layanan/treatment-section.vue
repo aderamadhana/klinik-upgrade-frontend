@@ -7,15 +7,15 @@
       border="start"
       class="mb-5"
     >
-      FO menentukan detail treatment pada tahap ini. Keputusan masuk nurse
-      station diambil setelah item treatment sudah dipilih.
+      FO menentukan detail treatment pada tahap ini. Routing ke dokter atau
+      nurse station ditentukan otomatis berdasarkan item treatment yang dipilih.
     </v-alert>
 
     <v-expand-transition>
       <div v-if="!layananState.ada_treatment" class="group-wrap mb-5">
         <div class="group-head mb-3">
           <div class="group-title">
-            <v-icon class="mr-2" color="warning"> mdi-alert-outline </v-icon>
+            <v-icon class="mr-2" color="warning">mdi-alert-outline</v-icon>
             Treatment Belum Diaktifkan
           </div>
           <div class="group-subtitle">
@@ -28,84 +28,49 @@
 
     <template v-if="layananState.ada_treatment">
       <div class="group-wrap mb-5">
-        <div class="group-head mb-4">
-          <div class="group-title">
-            <v-icon class="mr-2" color="primary"> mdi-spa-outline </v-icon>
-            Routing Treatment
-          </div>
-          <div class="group-subtitle">
-            Tentukan apakah treatment ini perlu diteruskan ke perawat /
-            beautician setelah item treatment dipilih
-          </div>
-        </div>
-
-        <v-row dense>
-          <v-col cols="12" md="6">
-            <v-select
-              :model-value="localTreatment.perlu_tindakan_perawat"
-              label="Perlu Tindakan Perawat"
-              placeholder="Pilih keputusan"
-              :items="perawatDecisionOptions"
-              item-title="title"
-              item-value="value"
-              variant="outlined"
-              density="comfortable"
-              prepend-inner-icon="mdi-account-heart-outline"
-              hide-details="auto"
-              @update:modelValue="updatePerawatFlag"
-            />
-          </v-col>
-
-          <v-col cols="12" md="6">
-            <div class="summary-box h-100">
-              <div class="summary-label">Preview Routing</div>
-              <div class="summary-value">
-                {{ routingLabel }}
-              </div>
-              <div class="summary-helper mt-2">
-                {{ routingDescription }}
-              </div>
+        <div class="section-head mb-4">
+          <div>
+            <div class="section-title">Daftar Treatment</div>
+            <div class="section-subtitle">
+              Tambahkan treatment yang akan dikerjakan pada kunjungan ini
             </div>
-          </v-col>
-        </v-row>
+          </div>
 
-        <v-expand-transition>
-          <div
-            v-if="localTreatment.perlu_tindakan_perawat === true"
-            class="mt-4"
+          <v-btn
+            color="success"
+            variant="tonal"
+            prepend-icon="mdi-plus"
+            :disabled="!activeTokoId"
+            @click="addItem"
           >
-            <v-alert type="warning" variant="tonal" rounded="lg" border="start">
-              Setelah tahap sebelumnya selesai, visit ini akan membentuk task ke
-              <strong>Antrian Tindakan</strong>.
-            </v-alert>
-          </div>
-        </v-expand-transition>
-
-        <v-expand-transition>
-          <div
-            v-if="localTreatment.perlu_tindakan_perawat === false"
-            class="mt-4"
-          >
-            <v-alert type="success" variant="tonal" rounded="lg" border="start">
-              Treatment tetap berada di jalur dokter / pelayanan medis dan tidak
-              diteruskan ke nurse station.
-            </v-alert>
-          </div>
-        </v-expand-transition>
-      </div>
-
-      <div class="group-wrap mb-5">
-        <div class="group-head mb-4">
-          <div class="group-title">
-            <v-icon class="mr-2" color="primary">
-              mdi-format-list-bulleted
-            </v-icon>
-            Daftar Treatment
-          </div>
-          <div class="group-subtitle">
-            Tambahkan treatment yang akan dikerjakan pada kunjungan ini
-          </div>
+            Tambah Treatment
+          </v-btn>
         </div>
+
+        <v-alert
+          v-if="!activeTokoId"
+          type="warning"
+          variant="tonal"
+          rounded="lg"
+          border="start"
+          class="mb-4"
+        >
+          Cabang belum terpilih. Data treatment akan muncul setelah cabang aktif
+          tersedia.
+        </v-alert>
+
+        <v-alert
+          v-if="errorMessage"
+          type="error"
+          variant="tonal"
+          rounded="lg"
+          border="start"
+          class="mb-4"
+          closable
+          @click:close="errorMessage = ''"
+        >
+          {{ errorMessage }}
+        </v-alert>
 
         <div class="table-head d-none d-md-grid mb-3">
           <div>Nama Tindakan</div>
@@ -118,38 +83,55 @@
         <div
           v-for="(item, index) in localTreatment.items"
           :key="item.__key"
-          class="item-row mb-3"
+          class="item-row mb-4"
         >
-          <v-row dense>
+          <v-row density="comfortable">
             <v-col cols="12" md="4">
               <v-autocomplete
-                :model-value="item.tindakan_id"
+                :model-value="item.treatment_toko_id || item.tindakan_id"
                 label="Nama Tindakan"
-                placeholder="Pilih treatment"
+                :placeholder="
+                  activeTokoId
+                    ? 'Cari / pilih treatment'
+                    : 'Pilih cabang terlebih dahulu'
+                "
                 :items="tindakanOptions"
                 item-title="title"
                 item-value="value"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-format-list-bulleted"
+                :loading="loadingTreatment"
+                :disabled="!activeTokoId"
+                clearable
                 hide-details="auto"
+                menu-icon="mdi-chevron-down"
                 @update:modelValue="onTindakanChange(index, $event)"
-              />
+              >
+                <template #message>
+                  Data treatment difilter berdasarkan cabang aktif.
+                </template>
+
+                <template #no-data>
+                  <div class="pa-4 text-body-2 text-medium-emphasis">
+                    Tidak ada treatment pada cabang aktif.
+                  </div>
+                </template>
+              </v-autocomplete>
             </v-col>
 
-            <v-col cols="12" md="2">
+            <v-col cols="6" md="2">
               <v-text-field
-                :model-value="item.harga"
+                :model-value="formatRupiah(item.harga)"
                 label="Harga"
-                type="number"
-                min="0"
                 variant="outlined"
                 density="comfortable"
+                readonly
                 hide-details="auto"
-                @update:modelValue="updateItemField(index, 'harga', $event)"
               />
             </v-col>
 
-            <v-col cols="12" md="2">
+            <v-col cols="6" md="2">
               <v-text-field
                 :model-value="item.jumlah"
                 label="Jumlah"
@@ -162,9 +144,9 @@
               />
             </v-col>
 
-            <v-col cols="12" md="2">
+            <v-col cols="12" md="3">
               <v-text-field
-                :model-value="item.total"
+                :model-value="formatRupiah(item.total)"
                 label="Total"
                 variant="outlined"
                 density="comfortable"
@@ -173,80 +155,26 @@
               />
             </v-col>
 
-            <v-col cols="12" md="2">
-              <div class="action-wrap">
-                <v-btn
-                  color="warning"
-                  variant="flat"
-                  icon="mdi-plus"
-                  @click="addItem"
-                />
-                <v-btn
-                  color="error"
-                  variant="flat"
-                  icon="mdi-minus"
-                  :disabled="localTreatment.items.length === 1"
-                  @click="removeItem(index)"
-                />
-              </div>
-            </v-col>
-
-            <v-col cols="12">
-              <v-textarea
-                :model-value="item.catatan"
-                label="Catatan Tindakan"
-                placeholder="Opsional"
-                variant="outlined"
-                density="comfortable"
-                rows="2"
-                auto-grow
-                hide-details="auto"
-                @update:modelValue="updateItemField(index, 'catatan', $event)"
-              />
+            <v-col cols="12" md="1" class="d-flex justify-end align-center">
+              <v-btn
+                color="error"
+                variant="text"
+                prepend-icon="mdi-delete"
+                :disabled="localTreatment.items.length === 1"
+                @click="removeItem(index)"
+              >
+                Hapus
+              </v-btn>
             </v-col>
           </v-row>
         </div>
-      </div>
 
-      <div class="group-wrap mb-5">
-        <div class="group-head mb-4">
-          <div class="group-title">
-            <v-icon class="mr-2" color="success">
-              mdi-clipboard-text-outline
-            </v-icon>
-            Ringkasan Treatment
-          </div>
-          <div class="group-subtitle">
-            Preview hasil input treatment sebelum masuk ringkasan akhir
+        <div class="total-box">
+          <div class="total-box__label">Total Treatment</div>
+          <div class="total-box__value">
+            Rp {{ formatCurrency(totalTreatment) }}
           </div>
         </div>
-
-        <v-row dense>
-          <v-col cols="12" md="4">
-            <div class="summary-box">
-              <div class="summary-label">Jumlah Item</div>
-              <div class="summary-value">{{ treatmentCount }} item</div>
-            </div>
-          </v-col>
-
-          <v-col cols="12" md="4">
-            <div class="summary-box">
-              <div class="summary-label">Routing</div>
-              <div class="summary-value">
-                {{ routingLabel }}
-              </div>
-            </div>
-          </v-col>
-
-          <v-col cols="12" md="4">
-            <div class="summary-box">
-              <div class="summary-label">Total Treatment</div>
-              <div class="summary-value text-success">
-                Rp {{ formatCurrency(totalTreatment) }}
-              </div>
-            </div>
-          </v-col>
-        </v-row>
       </div>
 
       <v-expand-transition>
@@ -279,8 +207,11 @@
 </template>
 
 <script>
+import referenceService from "@/services/referenceService";
+
 export default {
   name: "TreatmentSection",
+
   props: {
     form: {
       type: Object,
@@ -296,67 +227,79 @@ export default {
       default: null,
     },
   },
+
   emits: ["update-treatment"],
+
   data() {
     return {
+      loadingTreatment: false,
+      errorMessage: "",
+      apiTreatmentList: [],
       localTreatment: this.normalizeTreatmentState(this.form?.treatment),
+      fetchTimer: null,
+      isHydrating: false,
     };
   },
+
   computed: {
+    activeTokoId() {
+      return (
+        this.form?.toko_id ||
+        this.form?.tokoId ||
+        localStorage.getItem("selected_toko_id") ||
+        null
+      );
+    },
+
     layananState() {
       return {
         ada_konsultasi: false,
         channel_konsultasi: "",
         ada_treatment: false,
         ada_penjualan: false,
+        route_treatment: "",
         ...(this.form?.layanan || {}),
       };
     },
-    perawatDecisionOptions() {
-      return [
-        { title: "Tidak", value: false },
-        { title: "Ya", value: true },
-      ];
+
+    rawTreatmentList() {
+      return this.apiTreatmentList.length
+        ? this.apiTreatmentList
+        : this.tindakanList;
     },
+
     tindakanOptions() {
-      return this.tindakanList.map((item) => ({
-        title: this.resolveTindakanTitle(item),
-        value: this.resolveTindakanValue(item),
-        raw: item,
-      }));
+      return this.rawTreatmentList.map((item) => this.mapTreatmentOption(item));
     },
+
+    selectedItems() {
+      return (this.localTreatment.items || []).filter(
+        (item) => item.tindakan_id,
+      );
+    },
+
     totalTreatment() {
       return (this.localTreatment.items || []).reduce((sum, item) => {
         return sum + Number(item.total || 0);
       }, 0);
     },
+
     treatmentCount() {
-      return (this.localTreatment.items || []).filter(
-        (item) => item.tindakan_id,
-      ).length;
+      return this.selectedItems.length;
     },
-    routingLabel() {
-      if (this.localTreatment.perlu_tindakan_perawat === true) {
-        return "Masuk Nurse Station";
-      }
 
-      if (this.localTreatment.perlu_tindakan_perawat === false) {
-        return "Tetap di Jalur Dokter";
-      }
-
-      return "Belum ditentukan";
+    needNurseStation() {
+      return this.selectedItems.some((item) => item.perlu_tindakan_perawat);
     },
-    routingDescription() {
-      if (this.localTreatment.perlu_tindakan_perawat === true) {
-        return "Task treatment akan diteruskan ke perawat / beautician.";
+
+    routeTreatment() {
+      if (!this.treatmentCount) {
+        return "";
       }
 
-      if (this.localTreatment.perlu_tindakan_perawat === false) {
-        return "Treatment tidak membentuk task ke nurse station.";
-      }
-
-      return "Pilih setelah item treatment sudah jelas.";
+      return this.needNurseStation ? "nurse_station" : "dokter";
     },
+
     validationMessages() {
       const messages = [];
 
@@ -364,23 +307,19 @@ export default {
         return messages;
       }
 
-      const activeItems = (this.localTreatment.items || []).filter(
-        (item) => item.tindakan_id,
-      );
+      const activeItems = this.selectedItems;
 
       if (activeItems.length === 0) {
         messages.push("Minimal satu treatment harus dipilih.");
       }
 
-      if (this.localTreatment.perlu_tindakan_perawat === null) {
-        messages.push("Field 'Perlu Tindakan Perawat' belum dipilih.");
-      }
-
       (this.localTreatment.items || []).forEach((item, index) => {
         if (!item.tindakan_id) return;
 
-        if (Number(item.harga || 0) <= 0) {
-          messages.push(`Harga pada baris ${index + 1} harus lebih dari 0.`);
+        if (Number(item.harga || 0) < 0) {
+          messages.push(
+            `Harga pada baris ${index + 1} tidak boleh kurang dari 0.`,
+          );
         }
 
         if (Number(item.jumlah || 0) <= 0) {
@@ -391,37 +330,72 @@ export default {
       return messages;
     },
   },
+
   watch: {
     "form.treatment": {
       immediate: true,
       deep: true,
       handler(value) {
+        if (this.isHydrating) return;
+
         this.localTreatment = this.normalizeTreatmentState(value);
       },
     },
+
+    activeTokoId: {
+      immediate: true,
+      handler(value, oldValue) {
+        if (
+          String(value || "") === String(oldValue || "") &&
+          oldValue !== undefined
+        ) {
+          return;
+        }
+
+        if (!value) {
+          this.apiTreatmentList = [];
+          this.clearSelectedTreatment();
+          return;
+        }
+
+        this.queueFetchTreatment();
+      },
+    },
   },
+
+  beforeUnmount() {
+    if (this.fetchTimer) {
+      clearTimeout(this.fetchTimer);
+    }
+  },
+
   methods: {
     getDefaultItem() {
       return {
         __key: this.generateKey(),
+        treatment_toko_id: null,
         tindakan_id: null,
+        treatment_id: null,
         nama_tindakan: "",
+        treatment_nama: "",
         harga: 0,
         jumlah: 1,
         total: 0,
-        catatan: "",
+        perlu_tindakan_perawat: false,
+        route_treatment: "",
       };
     },
 
     getDefaultTreatment() {
       return {
-        perlu_tindakan_perawat: null,
+        perlu_tindakan_perawat: false,
+        route_treatment: "",
+        total: 0,
         items: [this.getDefaultItem()],
       };
     },
 
     normalizeTreatmentState(value) {
-      const base = this.getDefaultTreatment();
       const source = value || {};
 
       const items =
@@ -430,10 +404,9 @@ export default {
           : [this.getDefaultItem()];
 
       return {
-        perlu_tindakan_perawat:
-          typeof source.perlu_tindakan_perawat === "boolean"
-            ? source.perlu_tindakan_perawat
-            : null,
+        perlu_tindakan_perawat: Boolean(source.perlu_tindakan_perawat),
+        route_treatment: source.route_treatment || "",
+        total: Number(source.total || 0),
         items,
       };
     },
@@ -441,15 +414,58 @@ export default {
     normalizeItem(item = {}) {
       const normalized = {
         __key: item.__key || this.generateKey(),
-        tindakan_id: item.tindakan_id ?? null,
-        nama_tindakan: item.nama_tindakan || "",
-        harga: this.toNumber(item.harga),
+
+        treatment_toko_id:
+          item.treatment_toko_id ??
+          item.master_treatment_toko_id ??
+          item.tindakan_toko_id ??
+          item.toko_treatment_id ??
+          null,
+
+        tindakan_id:
+          item.tindakan_id ??
+          item.treatment_id ??
+          item.master_treatment_id ??
+          null,
+
+        treatment_id:
+          item.treatment_id ??
+          item.tindakan_id ??
+          item.master_treatment_id ??
+          null,
+
+        nama_tindakan:
+          item.nama_tindakan ||
+          item.tindakan_nama ||
+          item.treatment_nama ||
+          item.nama_treatment ||
+          item.nama ||
+          "",
+
+        treatment_nama:
+          item.treatment_nama ||
+          item.nama_tindakan ||
+          item.tindakan_nama ||
+          item.nama_treatment ||
+          item.nama ||
+          "",
+
+        harga: this.toNumber(item.harga || item.harga_treatment || 0),
         jumlah: this.toNumber(item.jumlah || 1),
         total: 0,
-        catatan: item.catatan || "",
+
+        perlu_tindakan_perawat: Boolean(
+          item.perlu_tindakan_perawat ||
+          item.is_tindakan_perawat ||
+          item.perlu_perawat ||
+          item.route_treatment === "nurse_station",
+        ),
+
+        route_treatment: item.route_treatment || "",
       };
 
       normalized.total = normalized.harga * normalized.jumlah;
+
       return normalized;
     },
 
@@ -457,67 +473,160 @@ export default {
       return `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     },
 
-    emitTreatment() {
-      const payload = JSON.parse(JSON.stringify(this.localTreatment));
-      this.$emit("update-treatment", payload);
+    queueFetchTreatment() {
+      if (this.fetchTimer) {
+        clearTimeout(this.fetchTimer);
+      }
+
+      this.fetchTimer = setTimeout(() => {
+        this.fetchTreatmentByToko();
+      }, 150);
     },
 
-    updatePerawatFlag(value) {
-      this.localTreatment.perlu_tindakan_perawat = value;
-      this.emitTreatment();
-    },
-
-    addItem() {
-      this.localTreatment.items.push(this.getDefaultItem());
-      this.emitTreatment();
-    },
-
-    removeItem(index) {
-      if (this.localTreatment.items.length === 1) {
-        this.localTreatment.items = [this.getDefaultItem()];
-        this.emitTreatment();
+    async fetchTreatmentByToko() {
+      if (!this.activeTokoId) {
+        this.apiTreatmentList = [];
         return;
       }
 
-      this.localTreatment.items.splice(index, 1);
-      this.emitTreatment();
+      this.loadingTreatment = true;
+      this.errorMessage = "";
+
+      try {
+        const rows = await referenceService.treatmentByToko({
+          toko_id: this.activeTokoId,
+        });
+
+        this.apiTreatmentList = Array.isArray(rows) ? rows : [];
+        this.clearUnavailableTreatment();
+      } catch (error) {
+        this.apiTreatmentList = [];
+        this.errorMessage =
+          error.response?.data?.message ||
+          "Gagal mengambil data treatment berdasarkan cabang.";
+      } finally {
+        this.loadingTreatment = false;
+      }
     },
 
-    onTindakanChange(index, tindakanId) {
-      const selected = this.tindakanOptions.find(
-        (item) => item.value === tindakanId,
+    mapTreatmentOption(item) {
+      const treatmentTokoId =
+        item.treatment_toko_id ??
+        item.master_treatment_toko_id ??
+        item.tindakan_toko_id ??
+        item.toko_treatment_id ??
+        item.id ??
+        null;
+
+      const treatmentId =
+        item.treatment_id ??
+        item.master_treatment_id ??
+        item.treatment?.id ??
+        item.master_treatment?.id ??
+        item.new_id ??
+        item.id ??
+        null;
+
+      const nama =
+        item.title ||
+        item.label ||
+        item.nama_treatment ||
+        item.nama ||
+        item.treatment_nama ||
+        item.nama_tindakan ||
+        item.text ||
+        "-";
+
+      const harga = this.toNumber(
+        item.harga ??
+          item.harga_jual ??
+          item.harga_treatment ??
+          item.tarif ??
+          item.price ??
+          item.harga_toko ??
+          0,
       );
 
-      const currentItem = this.localTreatment.items[index];
+      const perluPerawat = Boolean(
+        item.perlu_tindakan_perawat ||
+        item.is_tindakan_perawat ||
+        item.perlu_perawat ||
+        item.route_treatment === "nurse_station",
+      );
+
+      return {
+        ...item,
+        value: treatmentTokoId,
+        title: nama,
+
+        treatment_toko_id: treatmentTokoId,
+        treatment_id: treatmentId,
+
+        harga,
+        perlu_tindakan_perawat: perluPerawat,
+        route_treatment: perluPerawat ? "nurse_station" : "dokter",
+      };
+    },
+
+    findTreatmentOption(id) {
+      return this.tindakanOptions.find(
+        (item) => String(item.value) === String(id),
+      );
+    },
+
+    onTindakanChange(index, tindakanValue) {
+      const selected = tindakanValue
+        ? this.findTreatmentOption(tindakanValue)
+        : null;
+
+      const currentItem =
+        this.localTreatment.items[index] || this.getDefaultItem();
 
       if (!selected) {
-        currentItem.tindakan_id = null;
-        currentItem.nama_tindakan = "";
-        currentItem.harga = 0;
-        currentItem.jumlah = 1;
-        currentItem.total = 0;
+        this.localTreatment.items.splice(index, 1, this.getDefaultItem());
         this.emitTreatment();
         return;
       }
 
-      const raw = selected.raw || {};
-      currentItem.tindakan_id = tindakanId;
-      currentItem.nama_tindakan = selected.title;
-      currentItem.harga = this.resolveHargaTindakan(raw);
-      currentItem.jumlah = Number(currentItem.jumlah || 1);
-      currentItem.total = currentItem.harga * currentItem.jumlah;
+      const updated = {
+        ...currentItem,
 
+        treatment_toko_id: selected.treatment_toko_id || selected.value || null,
+        tindakan_id: selected.treatment_id || null,
+        treatment_id: selected.treatment_id || null,
+
+        nama_tindakan: selected.title,
+        treatment_nama: selected.title,
+
+        harga: this.toNumber(selected.harga),
+        jumlah: Number(currentItem.jumlah || 1),
+
+        perlu_tindakan_perawat: Boolean(selected.perlu_tindakan_perawat),
+        route_treatment: selected.route_treatment || "",
+      };
+
+      updated.total = updated.harga * updated.jumlah;
+
+      this.localTreatment.items.splice(index, 1, updated);
       this.emitTreatment();
     },
 
     updateItemField(index, field, value) {
       const currentItem = this.localTreatment.items[index];
 
-      if (field === "harga" || field === "jumlah") {
-        currentItem[field] = this.toNumber(value);
-        if (field === "jumlah" && currentItem[field] <= 0) {
-          currentItem[field] = 1;
+      if (!currentItem) return;
+
+      if (field === "harga") {
+        return;
+      }
+
+      if (field === "jumlah") {
+        currentItem.jumlah = this.toNumber(value);
+
+        if (currentItem.jumlah <= 0) {
+          currentItem.jumlah = 1;
         }
+
         currentItem.total =
           this.toNumber(currentItem.harga) * this.toNumber(currentItem.jumlah);
       } else {
@@ -527,23 +636,82 @@ export default {
       this.emitTreatment();
     },
 
-    resolveTindakanTitle(item) {
-      return item.nama_tindakan || item.nama || item.text || item.label || "-";
+    addItem() {
+      this.localTreatment.items.push(this.getDefaultItem());
+      this.emitTreatment();
     },
 
-    resolveTindakanValue(item) {
-      return item.id ?? item.new_id ?? item.value ?? null;
+    removeItem(index) {
+      if (this.localTreatment.items.length <= 1) {
+        this.localTreatment.items = [this.getDefaultItem()];
+        this.emitTreatment();
+        return;
+      }
+
+      this.localTreatment.items.splice(index, 1);
+      this.emitTreatment();
     },
 
-    resolveHargaTindakan(item) {
-      return this.toNumber(
-        item.harga ??
-          item.harga_jual ??
-          item.harga_treatment ??
-          item.tarif ??
-          item.price ??
-          0,
-      );
+    clearSelectedTreatment() {
+      this.localTreatment.items = [this.getDefaultItem()];
+      this.emitTreatment();
+    },
+
+    clearUnavailableTreatment() {
+      if (!this.apiTreatmentList.length) return;
+
+      let changed = false;
+
+      this.localTreatment.items = this.localTreatment.items.map((item) => {
+        if (!item.tindakan_id) return item;
+
+        const exists = this.tindakanOptions.some(
+          (treatment) => String(treatment.value) === String(item.tindakan_id),
+        );
+
+        if (!exists) {
+          changed = true;
+          return this.getDefaultItem();
+        }
+
+        return item;
+      });
+
+      if (changed) {
+        this.emitTreatment();
+      }
+    },
+
+    emitTreatment() {
+      const payload = {
+        perlu_tindakan_perawat: this.needNurseStation,
+        route_treatment: this.routeTreatment,
+        total: this.totalTreatment,
+        items: this.localTreatment.items.map((item) => ({
+          treatment_toko_id: item.treatment_toko_id || null,
+
+          tindakan_id: item.tindakan_id,
+          treatment_id: item.treatment_id || item.tindakan_id,
+
+          nama_tindakan: item.nama_tindakan,
+          tindakan_nama: item.nama_tindakan,
+          treatment_nama: item.treatment_nama || item.nama_tindakan,
+
+          harga: Number(item.harga || 0),
+          jumlah: Number(item.jumlah || 1),
+          total: Number(item.total || 0),
+
+          perlu_tindakan_perawat: Boolean(item.perlu_tindakan_perawat),
+          route_treatment: item.route_treatment || "",
+        })),
+      };
+
+      this.isHydrating = true;
+      this.$emit("update-treatment", payload);
+
+      this.$nextTick(() => {
+        this.isHydrating = false;
+      });
     },
 
     toNumber(value) {
@@ -559,6 +727,10 @@ export default {
       }
 
       return new Intl.NumberFormat("id-ID").format(Number(value || 0));
+    },
+
+    formatRupiah(value) {
+      return `Rp ${this.formatCurrency(value || 0)}`;
     },
   },
 };
@@ -591,6 +763,35 @@ export default {
   color: #6b7280;
 }
 
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.section-title::before {
+  content: "☰";
+  font-size: 18px;
+  color: #2563eb;
+  margin-right: 10px;
+}
+
+.section-subtitle {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #64748b;
+}
+
 .table-head {
   display: grid;
   grid-template-columns: 4fr 2fr 2fr 2fr 1fr;
@@ -598,56 +799,42 @@ export default {
   padding: 0 4px;
   font-size: 13px;
   font-weight: 700;
-  color: #111827;
+  color: #64748b;
+  text-transform: uppercase;
 }
 
 .item-row {
   border: 1px solid #e5e7eb;
   border-radius: 16px;
-  padding: 16px;
+  padding: 14px;
   background: #f8fafc;
 }
 
-.action-wrap {
-  height: 100%;
+.total-box {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
-}
-
-.summary-box {
-  height: 100%;
+  padding: 18px 20px;
   border-radius: 16px;
-  padding: 16px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
 }
 
-.summary-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.summary-value {
+.total-box__label {
   font-size: 15px;
   font-weight: 700;
-  color: #0f172a;
-  word-break: break-word;
+  color: #334155;
 }
 
-.summary-helper {
-  font-size: 13px;
-  color: #64748b;
-  line-height: 1.5;
+.total-box__value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0284c7;
 }
 
 .validation-wrap {
-  border-color: rgba(var(--v-theme-error), 0.25);
-  background: rgba(var(--v-theme-error), 0.03);
+  border-color: #fecaca;
+  background: #fff7f7;
 }
 
 .validation-list {
@@ -657,20 +844,8 @@ export default {
 }
 
 .validation-item {
-  font-size: 13px;
   color: #b91c1c;
-}
-
-.text-success {
-  color: #16a34a;
-}
-
-.text-error {
-  color: #dc2626;
-}
-
-.h-100 {
-  height: 100%;
+  font-size: 13px;
 }
 
 @media (max-width: 768px) {
@@ -678,13 +853,8 @@ export default {
     padding: 16px;
   }
 
-  .item-row {
-    padding: 14px;
-  }
-
-  .action-wrap {
-    justify-content: flex-start;
-    padding-top: 4px;
+  .section-head {
+    flex-direction: column;
   }
 }
 </style>

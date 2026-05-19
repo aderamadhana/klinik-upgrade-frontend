@@ -24,7 +24,7 @@
         </div>
       </div>
 
-      <v-row dense>
+      <v-row density="comfortable">
         <v-col cols="12" md="3">
           <v-text-field
             :model-value="form.tanggal"
@@ -43,96 +43,37 @@
           <v-autocomplete
             :model-value="form.pasien_new_id"
             label="Pasien"
-            placeholder="Cari nama pasien atau identitas"
-            :items="pasienList"
+            placeholder="Cari nama pasien, No. RM, No. HP, atau identitas"
+            :items="pasienOptions"
             item-title="text"
             item-value="id"
             variant="outlined"
             density="comfortable"
             prepend-inner-icon="mdi-account-search"
             :rules="[rules.required]"
+            :loading="loadingPasien"
             clearable
+            no-filter
             hide-details="auto"
+            menu-icon="mdi-chevron-down"
+            @update:search="handlePasienSearch"
             @update:modelValue="onPatientSelected"
+            @click:clear="clearPatient"
           >
             <template #message>
-              Cari berdasarkan nama pasien, no. RM, atau identitas lain
+              Data pasien diambil dari semua cabang.
+            </template>
+
+            <template #no-data>
+              <div class="pa-4 text-body-2 text-medium-emphasis">
+                Data pasien tidak ditemukan. Ketik minimal 2 karakter untuk
+                mencari.
+              </div>
             </template>
           </v-autocomplete>
         </v-col>
-
-        <v-col cols="12">
-          <v-textarea
-            :model-value="form.catatan_registrasi"
-            label="Catatan Registrasi"
-            placeholder="Catatan awal dari FO, booking, keluhan singkat, atau instruksi operasional"
-            variant="outlined"
-            density="comfortable"
-            rows="2"
-            auto-grow
-            prepend-inner-icon="mdi-text-box-outline"
-            hide-details="auto"
-            @update:modelValue="updateField('catatan_registrasi', $event)"
-          />
-        </v-col>
       </v-row>
     </div>
-
-    <v-expand-transition>
-      <div v-if="selectedPatient" class="group-wrap mb-5">
-        <div class="group-head mb-4">
-          <div class="group-title">
-            <v-icon class="mr-2" color="success">
-              mdi-account-box-outline
-            </v-icon>
-            Ringkasan Pasien
-          </div>
-          <div class="group-subtitle">Preview singkat pasien yang dipilih</div>
-        </div>
-
-        <v-row dense>
-          <v-col cols="12" md="4">
-            <div class="summary-box">
-              <div class="summary-label">Nama Pasien</div>
-              <div class="summary-value">{{ selectedPatient.nama || "-" }}</div>
-            </div>
-          </v-col>
-
-          <v-col cols="12" md="3">
-            <div class="summary-box">
-              <div class="summary-label">No. RM</div>
-              <div class="summary-value">
-                {{ selectedPatient.no_rm || "-" }}
-              </div>
-            </div>
-          </v-col>
-
-          <v-col cols="12" md="3">
-            <div class="summary-box">
-              <div class="summary-label">No. HP</div>
-              <div class="summary-value">
-                {{ selectedPatient.no_hp || "-" }}
-              </div>
-            </div>
-          </v-col>
-
-          <v-col cols="12" md="2">
-            <div class="summary-box">
-              <div class="summary-label">Status</div>
-              <div class="summary-value">
-                <v-chip
-                  size="small"
-                  :color="selectedPatient.is_member ? 'success' : 'grey'"
-                  variant="tonal"
-                >
-                  {{ selectedPatient.is_member ? "Member" : "Non Member" }}
-                </v-chip>
-              </div>
-            </div>
-          </v-col>
-        </v-row>
-      </div>
-    </v-expand-transition>
 
     <div class="group-wrap">
       <div class="group-head mb-4">
@@ -143,82 +84,102 @@
           Penanggung Jawab Awal
         </div>
         <div class="group-subtitle">
-          Tampilkan hanya petugas yang relevan dengan routing yang dipilih FO
+          Pilih dokter dan perawat / beautician yang bertugas pada kunjungan ini
         </div>
       </div>
 
       <v-alert
-        v-if="!showDokterField && !showPerawatField"
+        v-if="!activeTokoId"
         type="warning"
         variant="tonal"
         rounded="lg"
         border="start"
         class="mb-4"
       >
-        Pilih layanan dan route treatment dulu supaya penanggung jawab awal yang
-        relevan muncul di sini.
+        Cabang belum terpilih. Data dokter dan perawat akan muncul setelah
+        cabang aktif tersedia.
       </v-alert>
 
-      <v-row dense v-else>
-        <v-col v-if="showDokterField" cols="12" :md="showPerawatField ? 6 : 12">
-          <v-select
+      <v-row density="comfortable">
+        <v-col cols="12" md="6">
+          <v-autocomplete
             :model-value="form.dokter_id"
             label="Dokter Tujuan / Penanggung Jawab Awal"
-            placeholder="Pilih dokter"
-            :items="dokterList"
-            item-title="nama"
+            :placeholder="
+              activeTokoId
+                ? 'Cari / pilih dokter'
+                : 'Pilih cabang terlebih dahulu'
+            "
+            :items="dokterOptions"
+            item-title="text"
             item-value="id"
             variant="outlined"
             density="comfortable"
             prepend-inner-icon="mdi-stethoscope"
+            :loading="loadingKaryawan"
+            :disabled="!activeTokoId"
             clearable
             hide-details="auto"
-            @update:modelValue="updateField('dokter_id', $event)"
+            menu-icon="mdi-chevron-down"
+            @update:modelValue="onDokterSelected"
           >
             <template #message>
-              Disarankan jika ada konsultasi atau treatment ditangani dokter
+              Data dokter difilter berdasarkan cabang aktif.
             </template>
-          </v-select>
+
+            <template #no-data>
+              <div class="pa-4 text-body-2 text-medium-emphasis">
+                Tidak ada dokter pada cabang aktif.
+              </div>
+            </template>
+          </v-autocomplete>
         </v-col>
 
-        <v-col v-if="showPerawatField" cols="12" :md="showDokterField ? 6 : 12">
-          <v-select
+        <v-col cols="12" md="6">
+          <v-autocomplete
             :model-value="form.perawat_id"
             label="Perawat / Beautician Tujuan"
-            placeholder="Pilih perawat atau beautician"
-            :items="perawatList"
-            item-title="nama"
+            :placeholder="
+              activeTokoId
+                ? 'Cari / pilih perawat atau beautician'
+                : 'Pilih cabang terlebih dahulu'
+            "
+            :items="perawatOptions"
+            item-title="text"
             item-value="id"
             variant="outlined"
             density="comfortable"
             prepend-inner-icon="mdi-account-heart-outline"
+            :loading="loadingKaryawan"
+            :disabled="!activeTokoId"
             clearable
             hide-details="auto"
-            @update:modelValue="updateField('perawat_id', $event)"
+            menu-icon="mdi-chevron-down"
+            @update:modelValue="onPerawatSelected"
           >
             <template #message>
-              Disarankan jika treatment diarahkan ke nurse station
+              Data perawat difilter berdasarkan cabang aktif.
             </template>
-          </v-select>
+
+            <template #no-data>
+              <div class="pa-4 text-body-2 text-medium-emphasis">
+                Tidak ada perawat / beautician pada cabang aktif.
+              </div>
+            </template>
+          </v-autocomplete>
         </v-col>
       </v-row>
-
-      <div v-if="routingHints.length" class="routing-hints mt-4">
-        <div
-          v-for="(hint, index) in routingHints"
-          :key="index"
-          class="routing-hint"
-        >
-          {{ hint }}
-        </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script>
+import referenceService from "@/services/referenceService";
+import karyawanService from "@/services/master/karyawanService";
+
 export default {
   name: "InformasiRegistrasi",
+
   props: {
     form: {
       type: Object,
@@ -241,102 +202,397 @@ export default {
       default: () => [],
     },
   },
+
   emits: ["update-field", "patient-change"],
+
+  data() {
+    return {
+      apiPasienList: [],
+      apiKaryawanList: [],
+
+      loadingPasien: false,
+      loadingKaryawan: false,
+
+      pasienSearchTimer: null,
+      karyawanFetchTimer: null,
+    };
+  },
+
   computed: {
-    layananState() {
-      return {
-        ada_konsultasi: false,
-        channel_konsultasi: "",
-        ada_treatment: false,
-        route_treatment: "",
-        ada_penjualan: false,
-        ...(this.form?.layanan || {}),
-      };
-    },
-    selectedPatient() {
-      if (!this.form.pasien_new_id) return null;
-
-      const patient = this.pasienList.find(
-        (item) => item.id === this.form.pasien_new_id,
-      );
-
-      if (!patient) return null;
-
-      return {
-        ...patient,
-        nama: patient.nama || patient.text || "-",
-        no_rm: patient.no_rm || "-",
-        no_hp: patient.no_hp || "-",
-        is_member: Boolean(patient.is_member),
-      };
-    },
-    showDokterField() {
+    activeTokoId() {
       return (
-        this.layananState.ada_konsultasi ||
-        (this.layananState.ada_treatment &&
-          this.layananState.route_treatment === "dokter") ||
-        Boolean(this.form.dokter_id)
+        this.form?.toko_id ||
+        this.form?.tokoId ||
+        localStorage.getItem("selected_toko_id") ||
+        null
       );
     },
-    showPerawatField() {
-      return (
-        (this.layananState.ada_treatment &&
-          this.layananState.route_treatment === "nurse_station") ||
-        Boolean(this.form.perawat_id)
-      );
+
+    rawPasienList() {
+      return this.apiPasienList.length ? this.apiPasienList : this.pasienList;
     },
-    routingHints() {
-      const hints = [];
 
-      if (this.layananState.ada_konsultasi) {
-        hints.push(
-          `Konsultasi ${this.formatChannel(
-            this.layananState.channel_konsultasi,
-          )} akan diarahkan ke dokter.`,
-        );
+    rawDokterList() {
+      if (this.apiKaryawanList.length) {
+        return this.apiKaryawanList.filter((item) => this.isDokter(item));
       }
 
-      if (
-        this.layananState.ada_treatment &&
-        this.layananState.route_treatment === "dokter"
-      ) {
-        hints.push("Treatment berada di jalur dokter / pelayanan medis.");
+      return this.dokterList;
+    },
+
+    rawPerawatList() {
+      if (this.apiKaryawanList.length) {
+        return this.apiKaryawanList.filter((item) => this.isPerawat(item));
       }
 
-      if (
-        this.layananState.ada_treatment &&
-        this.layananState.route_treatment === "nurse_station"
-      ) {
-        hints.push("Treatment diarahkan ke nurse station / beautician.");
-      }
+      return this.perawatList;
+    },
 
-      if (
-        this.layananState.ada_penjualan &&
-        (this.layananState.ada_konsultasi || this.layananState.ada_treatment)
-      ) {
-        hints.push(
-          "Penjualan produk akan ikut pada transaksi kunjungan pasien.",
-        );
-      } else if (this.layananState.ada_penjualan) {
-        hints.push("Penjualan produk dapat langsung diteruskan ke pembayaran.");
-      }
+    pasienOptions() {
+      return this.rawPasienList.map((item) => this.mapPasien(item));
+    },
 
-      return hints;
+    dokterOptions() {
+      return this.rawDokterList.map((item) => this.mapPetugas(item));
+    },
+
+    perawatOptions() {
+      return this.rawPerawatList.map((item) => this.mapPetugas(item));
     },
   },
+
+  watch: {
+    activeTokoId: {
+      immediate: true,
+      handler(value, oldValue) {
+        if (
+          String(value || "") === String(oldValue || "") &&
+          oldValue !== undefined
+        ) {
+          return;
+        }
+
+        if (!value) {
+          this.apiKaryawanList = [];
+          this.clearPetugasValue();
+          return;
+        }
+
+        this.queueFetchKaryawan();
+      },
+    },
+  },
+
+  mounted() {
+    this.clearInvalidInitialValue();
+    this.fetchPasien("", true);
+  },
+
+  beforeUnmount() {
+    if (this.pasienSearchTimer) {
+      clearTimeout(this.pasienSearchTimer);
+    }
+
+    if (this.karyawanFetchTimer) {
+      clearTimeout(this.karyawanFetchTimer);
+    }
+  },
+
   methods: {
     updateField(field, value) {
       this.$emit("update-field", { field, value });
     },
+
     onPatientSelected(value) {
-      this.$emit("update-field", { field: "pasien_new_id", value });
+      const selected = this.pasienOptions.find(
+        (item) => String(item.id) === String(value),
+      );
+
+      this.updateField("pasien_new_id", value);
+      this.updateField("pasien", selected || null);
+      this.updateField("pasien_nama", selected?.nama || selected?.text || "");
       this.$emit("patient-change", value);
     },
-    formatChannel(value) {
-      if (!value) return "belum dipilih";
-      if (value === "offline") return "offline";
-      if (value === "online") return "online";
-      return value;
+
+    clearPatient() {
+      this.updateField("pasien_new_id", null);
+      this.updateField("pasien", null);
+      this.updateField("pasien_nama", "");
+      this.$emit("patient-change", null);
+      this.fetchPasien("", true);
+    },
+
+    onDokterSelected(value) {
+      const selected = this.dokterOptions.find(
+        (item) => String(item.id) === String(value),
+      );
+
+      this.updateField("dokter_id", value);
+      this.updateField("dokter", selected || null);
+      this.updateField("dokter_nama", selected?.nama || selected?.text || "");
+    },
+
+    onPerawatSelected(value) {
+      const selected = this.perawatOptions.find(
+        (item) => String(item.id) === String(value),
+      );
+
+      this.updateField("perawat_id", value);
+      this.updateField("perawat", selected || null);
+      this.updateField("perawat_nama", selected?.nama || selected?.text || "");
+    },
+
+    clearPetugasValue() {
+      if (this.form.dokter_id) {
+        this.updateField("dokter_id", null);
+      }
+
+      if (this.form.perawat_id) {
+        this.updateField("perawat_id", null);
+      }
+    },
+
+    clearInvalidInitialValue() {
+      const isInvalidDropdownValue = (value) => {
+        if (value === null || value === undefined || value === "") return false;
+        return !/^\d+$/.test(String(value));
+      };
+
+      if (isInvalidDropdownValue(this.form.pasien_new_id)) {
+        this.updateField("pasien_new_id", null);
+        this.$emit("patient-change", null);
+      }
+
+      if (isInvalidDropdownValue(this.form.dokter_id)) {
+        this.updateField("dokter_id", null);
+      }
+
+      if (isInvalidDropdownValue(this.form.perawat_id)) {
+        this.updateField("perawat_id", null);
+      }
+    },
+
+    handlePasienSearch(keyword) {
+      if (this.pasienSearchTimer) {
+        clearTimeout(this.pasienSearchTimer);
+      }
+
+      const search = String(keyword || "").trim();
+
+      this.pasienSearchTimer = setTimeout(() => {
+        if (search.length === 0) {
+          this.fetchPasien("", true);
+          return;
+        }
+
+        if (search.length >= 2) {
+          this.fetchPasien(search, true);
+        }
+      }, 350);
+    },
+
+    async fetchPasien(search = "", force = false) {
+      if (!force && search.length < 2) return;
+
+      this.loadingPasien = true;
+
+      try {
+        const rows = await referenceService.pasien({
+          search,
+          limit: 30,
+        });
+
+        this.apiPasienList = Array.isArray(rows) ? rows : [];
+      } catch (error) {
+        this.apiPasienList = [];
+      } finally {
+        this.loadingPasien = false;
+      }
+    },
+
+    queueFetchKaryawan() {
+      if (this.karyawanFetchTimer) {
+        clearTimeout(this.karyawanFetchTimer);
+      }
+
+      this.karyawanFetchTimer = setTimeout(() => {
+        this.fetchKaryawanByToko();
+      }, 150);
+    },
+
+    async fetchKaryawanByToko() {
+      if (!this.activeTokoId) {
+        this.apiKaryawanList = [];
+        return;
+      }
+
+      this.loadingKaryawan = true;
+
+      try {
+        const response = await karyawanService.getAll({
+          toko_id: this.activeTokoId,
+          per_page: 100,
+        });
+
+        this.apiKaryawanList = this.extractRows(response);
+        this.clearUnavailablePetugas();
+      } catch (error) {
+        this.apiKaryawanList = [];
+      } finally {
+        this.loadingKaryawan = false;
+      }
+    },
+
+    clearUnavailablePetugas() {
+      if (
+        this.form.dokter_id &&
+        !this.dokterOptions.some(
+          (item) => String(item.id) === String(this.form.dokter_id),
+        )
+      ) {
+        this.updateField("dokter_id", null);
+      }
+
+      if (
+        this.form.perawat_id &&
+        !this.perawatOptions.some(
+          (item) => String(item.id) === String(this.form.perawat_id),
+        )
+      ) {
+        this.updateField("perawat_id", null);
+      }
+    },
+
+    extractRows(response) {
+      if (Array.isArray(response)) {
+        return response;
+      }
+
+      if (Array.isArray(response?.data)) {
+        return response.data;
+      }
+
+      if (Array.isArray(response?.data?.data)) {
+        return response.data.data;
+      }
+
+      if (Array.isArray(response?.items)) {
+        return response.items;
+      }
+
+      return [];
+    },
+
+    mapPasien(item) {
+      const id = item.id || item.value || item.pasien_new_id;
+      const nama = item.nama || item.nama_pasien || "-";
+      const noRm = item.no_rm || "";
+      const noHp = item.no_hp || "";
+      const noIdentitas = item.no_identitas || "";
+
+      return {
+        ...item,
+        id,
+        nama,
+        no_rm: noRm,
+        no_hp: noHp,
+        no_identitas: noIdentitas,
+        text:
+          item.text ||
+          item.label ||
+          [noRm, nama, noHp || noIdentitas].filter(Boolean).join(" - "),
+      };
+    },
+
+    mapPetugas(item) {
+      const penempatanAktif = this.getPenempatanAktif(item);
+      const jabatanText = this.getJabatanText(item);
+
+      const id = item.id || item.value || item.karyawan_id;
+      const nama =
+        item.nama || item.nama_karyawan || item.label || item.text || "-";
+
+      const kode = item.kode || item.kode_karyawan || "";
+      const namaToko =
+        penempatanAktif?.toko?.nama_toko ||
+        item.nama_toko ||
+        item.toko?.nama_toko ||
+        "";
+
+      const jabatanTitle = this.toTitleCase(jabatanText);
+
+      return {
+        ...item,
+        id,
+        nama,
+        kode,
+        jabatan_text: jabatanTitle,
+        toko_id: penempatanAktif?.toko_id || item.toko_id || null,
+        nama_toko: namaToko,
+        text: [nama, jabatanTitle, namaToko || kode]
+          .filter(Boolean)
+          .join(" - "),
+      };
+    },
+
+    getPenempatanAktif(item) {
+      if (!Array.isArray(item?.penempatan)) return null;
+
+      const tokoId = String(this.activeTokoId || "");
+
+      return (
+        item.penempatan.find((row) => {
+          const isDeleted = Number(row.is_delete || 0) === 1;
+
+          if (isDeleted) return false;
+
+          return (
+            String(row.toko_id) === tokoId || String(row.toko?.id) === tokoId
+          );
+        }) || null
+      );
+    },
+
+    getJabatanText(item) {
+      return String(
+        item?.jabatan?.nama_jabatan ||
+          item?.jabatan?.nama ||
+          item?.master_jabatan?.nama_jabatan ||
+          item?.master_jabatan?.nama ||
+          item?.jabatan_text ||
+          item?.jabatan ||
+          "",
+      ).toLowerCase();
+    },
+
+    isDokter(item) {
+      const jabatan = this.getJabatanText(item);
+
+      return (
+        jabatan.includes("dokter") ||
+        jabatan.includes("doctor") ||
+        jabatan.includes("dr")
+      );
+    },
+
+    isPerawat(item) {
+      const jabatan = this.getJabatanText(item);
+
+      return (
+        jabatan.includes("perawat") ||
+        jabatan.includes("nurse") ||
+        jabatan.includes("beautician") ||
+        jabatan.includes("terapis") ||
+        jabatan.includes("therapist")
+      );
+    },
+
+    toTitleCase(value) {
+      return String(value || "")
+        .split(" ")
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
     },
   },
 };
@@ -367,45 +623,6 @@ export default {
 .group-subtitle {
   font-size: 13px;
   color: #6b7280;
-}
-
-.summary-box {
-  height: 100%;
-  border-radius: 16px;
-  padding: 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-
-.summary-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.summary-value {
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
-  word-break: break-word;
-}
-
-.routing-hints {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.routing-hint {
-  font-size: 13px;
-  color: #475569;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
 }
 
 @media (max-width: 768px) {

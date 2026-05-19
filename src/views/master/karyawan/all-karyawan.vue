@@ -91,6 +91,28 @@
             {{ item.jabatan || "-" }}
           </template>
 
+          <template #item.penempatan="{ item }">
+            <div
+              v-if="item.penempatan && item.penempatan.length"
+              class="d-flex flex-wrap ga-1"
+            >
+              <v-chip
+                v-for="place in item.penempatan"
+                :key="place.id || place.toko_id"
+                size="small"
+                variant="tonal"
+                :color="Number(place.is_primary) === 1 ? 'primary' : 'default'"
+              >
+                {{ place.nama_toko }}
+                <span v-if="Number(place.is_primary) === 1" class="ml-1">
+                  • Utama
+                </span>
+              </v-chip>
+            </div>
+
+            <span v-else>-</span>
+          </template>
+
           <template #item.status="{ item }">
             <v-chip
               size="small"
@@ -231,6 +253,7 @@ export default {
         { title: "Alamat", key: "alamat" },
         { title: "Telp", key: "no_telp" },
         { title: "Jabatan", key: "jabatan" },
+        { title: "Penempatan", key: "penempatan", sortable: false },
         { title: "Status", key: "status", sortable: false },
         { title: "Action", key: "action", sortable: false, align: "end" },
       ],
@@ -397,9 +420,30 @@ export default {
           item.jabatan?.nama ??
           item.master_jabatan?.nama ??
           "-",
+        penempatan: this.mapPenempatan(item.penempatan),
         is_delete: item.is_delete ?? 0,
         raw: item,
       };
+    },
+
+    mapPenempatan(penempatan) {
+      if (!Array.isArray(penempatan)) {
+        return [];
+      }
+
+      return penempatan
+        .filter((item) => Number(item.is_delete ?? 0) === 0)
+        .map((item) => ({
+          id: item.id,
+          toko_id: item.toko_id,
+          is_primary: item.is_primary,
+          tanggal_mulai: item.tanggal_mulai,
+          tanggal_selesai: item.tanggal_selesai,
+          nama_toko:
+            item.toko?.nama_toko || item.nama_toko || item.toko_name || "-",
+          kode_toko: item.toko?.kode_toko || item.kode_toko || "",
+        }))
+        .sort((a, b) => Number(b.is_primary) - Number(a.is_primary));
     },
 
     rowNumber(index) {

@@ -12,7 +12,6 @@
     </div>
 
     <v-stepper v-model="currentStepKey" flat class="registrasi-stepper">
-      <!-- SIMPLE HEADER -->
       <div class="simple-stepper">
         <div class="simple-stepper__track"></div>
         <div
@@ -37,6 +36,7 @@
                 {{ index < currentStepIndex ? "mdi-check" : step.icon }}
               </v-icon>
             </div>
+
             <div class="simple-stepper__label">
               {{ step.shortTitle || step.title }}
             </div>
@@ -44,7 +44,6 @@
         </div>
       </div>
 
-      <!-- ACTIVE BODY -->
       <div class="step-body">
         <InformasiRegistrasi
           v-if="currentStepKey === 'registrasi'"
@@ -60,6 +59,7 @@
         <PilihLayanan
           v-else-if="currentStepKey === 'layanan'"
           :form="form"
+          @update-field="updateLayananField"
           @update-layanan-field="updateLayananField"
         />
 
@@ -132,7 +132,6 @@
           :get-penjualan-subtotal="getPenjualanSubtotal"
         />
 
-        <!-- INLINE FOOTER -->
         <div class="step-inline-footer">
           <div class="step-inline-footer__info">
             <div class="step-inline-footer__title">
@@ -200,6 +199,8 @@
 </template>
 
 <script>
+import registrasiLayananService from "@/services/registrasi/registrasiLayananService";
+
 import InformasiRegistrasi from "@/components/registrasi-layanan/informasi-registrasi.vue";
 import PilihLayanan from "@/components/registrasi-layanan/pilih-layanan.vue";
 import KonsultasiOffline from "@/components/registrasi-layanan/konsultasi-offline.vue";
@@ -210,6 +211,7 @@ import RingkasanSection from "@/components/registrasi-layanan/ringkasan-section.
 
 export default {
   name: "RegistrasiLayanan",
+
   components: {
     InformasiRegistrasi,
     PilihLayanan,
@@ -230,6 +232,7 @@ export default {
           to: "/resepsionis/registrasi-layanan",
         },
       ],
+
       currentStepKey: "registrasi",
       loading: false,
       dragActive: null,
@@ -245,58 +248,11 @@ export default {
         required: (v) => !!v || "Field ini wajib diisi",
       },
 
-      pasienList: [
-        {
-          id: "PS001",
-          text: "Budi Santoso - RM0001 - 081234567890",
-          nama: "Budi Santoso",
-          no_rm: "RM0001",
-          no_hp: "081234567890",
-          is_member: true,
-        },
-        {
-          id: "PS002",
-          text: "Siti Aminah - RM0002 - 081234567891",
-          nama: "Siti Aminah",
-          no_rm: "RM0002",
-          no_hp: "081234567891",
-          is_member: false,
-        },
-        {
-          id: "PS003",
-          text: "Rina Lestari - RM0003 - 081234567892",
-          nama: "Rina Lestari",
-          no_rm: "RM0003",
-          no_hp: "081234567892",
-          is_member: true,
-        },
-      ],
-
-      dokterList: [
-        { id: "D001", nama: "dr. Andi Saputra" },
-        { id: "D002", nama: "dr. Bunga Lestari" },
-        { id: "D003", nama: "dr. Candra Wijaya" },
-      ],
-
-      perawatList: [
-        { id: "P001", nama: "Ns. Rina" },
-        { id: "P002", nama: "Ns. Tika" },
-        { id: "P003", nama: "Ns. Dita" },
-      ],
-
-      tindakanList: [
-        { id: "TR001", nama: "Facial Glow", harga: 150000 },
-        { id: "TR002", nama: "Peeling Acne", harga: 250000 },
-        { id: "TR003", nama: "Laser Brightening", harga: 500000 },
-        { id: "TR004", nama: "Microdermabrasion", harga: 300000 },
-      ],
-
-      obatList: [
-        { id: "OB001", nama: "Cream Siang", harga: 120000, unit: "PCS" },
-        { id: "OB002", nama: "Cream Malam", harga: 135000, unit: "PCS" },
-        { id: "OB003", nama: "Facial Wash", harga: 75000, unit: "PCS" },
-        { id: "OB004", nama: "Serum Acne", harga: 180000, unit: "PCS" },
-      ],
+      pasienList: [],
+      dokterList: [],
+      perawatList: [],
+      tindakanList: [],
+      obatList: [],
 
       historyHeaders: [
         { title: "TGL", key: "tgl" },
@@ -333,7 +289,19 @@ export default {
   },
 
   computed: {
+    hasSelectedLayanan() {
+      const layanan = this.form?.layanan || {};
+
+      return (
+        Boolean(layanan.ada_konsultasi) ||
+        Boolean(layanan.ada_treatment) ||
+        Boolean(layanan.ada_penjualan)
+      );
+    },
+
     availableSteps() {
+      const layanan = this.form?.layanan || {};
+
       const steps = [
         {
           key: "registrasi",
@@ -351,54 +319,60 @@ export default {
         },
       ];
 
-      if (this.form?.layanan?.ada_konsultasi) {
+      if (layanan.ada_konsultasi) {
         steps.push({
           key: "konsultasi",
           title:
-            this.form.layanan.channel_konsultasi === "online"
+            layanan.channel_konsultasi === "online"
               ? "Konsultasi Online"
               : "Konsultasi Offline",
           shortTitle: "Konsultasi",
           subtitle:
-            this.form.layanan.channel_konsultasi === "online"
+            layanan.channel_konsultasi === "online"
               ? "Lengkapi data konsultasi online"
               : "Lengkapi keluhan awal pasien",
           icon:
-            this.form.layanan.channel_konsultasi === "online"
+            layanan.channel_konsultasi === "online"
               ? "mdi-video-outline"
               : "mdi-stethoscope",
         });
       }
 
-      if (this.form?.layanan?.ada_treatment) {
+      if (layanan.ada_treatment) {
         steps.push({
           key: "treatment",
           title: "Treatment",
           shortTitle: "Treatment",
-          subtitle: `${this.form.treatment.items.length} item treatment`,
+          subtitle: `${this.form?.treatment?.items?.length || 0} item treatment`,
           icon: "mdi-spa",
         });
       }
 
-      if (this.form?.layanan?.ada_penjualan) {
+      if (layanan.ada_penjualan) {
         steps.push({
           key: "penjualan",
           title: "Penjualan",
           shortTitle: "Penjualan",
-          subtitle: `${this.form.penjualan.items.length} item produk`,
+          subtitle: `${this.form?.penjualan?.items?.length || 0} item produk`,
           icon: "mdi-pill",
         });
       }
 
-      steps.push({
-        key: "ringkasan",
-        title: "Ringkasan Registrasi",
-        shortTitle: "Ringkasan",
-        subtitle: "Periksa kembali seluruh data",
-        icon: "mdi-clipboard-check-outline",
-      });
+      if (this.hasSelectedLayanan) {
+        steps.push({
+          key: "ringkasan",
+          title: "Ringkasan Registrasi",
+          shortTitle: "Ringkasan",
+          subtitle: "Periksa kembali seluruh data",
+          icon: "mdi-clipboard-check-outline",
+        });
+      }
 
       return steps;
+    },
+
+    availableStepKeys() {
+      return this.availableSteps.map((step) => step.key).join("|");
     },
 
     currentStepIndex() {
@@ -422,15 +396,15 @@ export default {
     },
 
     isLastStep() {
-      return this.currentStepIndex === this.availableSteps.length - 1;
+      return this.currentStepKey === "ringkasan";
     },
 
     progressWidth() {
       if (!this.availableSteps.length) return "0%";
       if (this.availableSteps.length === 1) return "100%";
 
-      const percent =
-        (this.currentStepIndex / (this.availableSteps.length - 1)) * 100;
+      const index = Math.max(this.currentStepIndex, 0);
+      const percent = (index / (this.availableSteps.length - 1)) * 100;
 
       return `${percent}%`;
     },
@@ -438,7 +412,7 @@ export default {
     totalTreatment() {
       if (!this.form?.layanan?.ada_treatment) return 0;
 
-      return this.form.treatment.items.reduce((sum, item) => {
+      return (this.form?.treatment?.items || []).reduce((sum, item) => {
         return sum + this.getTreatmentSubtotal(item);
       }, 0);
     },
@@ -446,23 +420,15 @@ export default {
     totalPenjualan() {
       if (!this.form?.layanan?.ada_penjualan) return 0;
 
-      return this.form.penjualan.items.reduce((sum, item) => {
+      return (this.form?.penjualan?.items || []).reduce((sum, item) => {
         return sum + this.getPenjualanSubtotal(item);
       }, 0);
     },
   },
 
   watch: {
-    availableSteps: {
-      deep: true,
-      handler(newSteps) {
-        const exists = newSteps.some(
-          (step) => step.key === this.currentStepKey,
-        );
-        if (!exists) {
-          this.currentStepKey = newSteps[0]?.key || "registrasi";
-        }
-      },
+    availableStepKeys() {
+      this.ensureCurrentStepAvailable();
     },
   },
 
@@ -470,30 +436,34 @@ export default {
     this.form = this.getInitialForm();
   },
 
-  mounted() {
-    this.consultationHistory = [
-      {
-        id: 1,
-        tgl: "2026-04-01",
-        dokter: "dr. Andi Saputra",
-        tindakan_html: "Facial Acne<br><small>Perawat: Ns. Rina</small>",
-        obat_html: "Cream Malam<br>Facial Wash",
-        catatan_html: "Kulit sensitif, hindari scrub berlebihan",
-        lokasi: "Klinik Malang",
-      },
-      {
-        id: 2,
-        tgl: "2026-03-15",
-        dokter: "dr. Bunga Lestari",
-        tindakan_html: "Peeling Acne<br><small>Perawat: Ns. Tika</small>",
-        obat_html: "Serum Acne",
-        catatan_html: "Respon kulit cukup baik, lanjut kontrol 2 minggu",
-        lokasi: "Klinik Surabaya",
-      },
-    ];
-  },
-
   methods: {
+    getSelectedTokoId() {
+      return (
+        this.form?.toko_id ||
+        this.form?.tokoId ||
+        localStorage.getItem("selected_toko_id") ||
+        null
+      );
+    },
+
+    getErrorMessage(error) {
+      const response = error?.response?.data;
+
+      if (response?.errors) {
+        const firstKey = Object.keys(response.errors)[0];
+
+        if (firstKey && Array.isArray(response.errors[firstKey])) {
+          return response.errors[firstKey][0];
+        }
+      }
+
+      return (
+        response?.message ||
+        response?.error ||
+        error?.message ||
+        "Gagal menyimpan registrasi"
+      );
+    },
     showSnackbar(text, color = "success") {
       this.snackbar.show = true;
       this.snackbar.text = text;
@@ -505,104 +475,171 @@ export default {
       const month = String(d.getMonth() + 1).padStart(2, "0");
       const day = String(d.getDate()).padStart(2, "0");
       const year = d.getFullYear();
+
       return `${year}-${month}-${day}`;
+    },
+
+    createEmptyTreatmentItem() {
+      return {
+        tindakan_id: null,
+        harga: 0,
+        jumlah: 1,
+        diskon_type: "%",
+        diskon_value: 0,
+        diskon_referral: 0,
+      };
+    },
+
+    createEmptyPenjualanItem() {
+      return {
+        produk_id: null,
+        harga: 0,
+        jumlah: 1,
+        unit: "",
+        diskon_type: "%",
+        diskon_value: 0,
+        diskon_referral: 0,
+        frekuensi: "",
+        waktu_pakai: "",
+        penggunaan: "",
+      };
     },
 
     getInitialForm() {
       return {
+        toko_id: localStorage.getItem("selected_toko_id") || null,
+
         tanggal: this.getToday(),
-        pasien_new_id: "PS001",
-        dokter_id: "D001",
-        perawat_id: "P001",
+        pasien_new_id: null,
+        pasien_id: null,
+        dokter_id: null,
+        perawat_id: null,
 
         layanan: {
-          ada_konsultasi: true,
-          channel_konsultasi: "offline",
-          ada_treatment: true,
-          ada_penjualan: true,
+          ada_konsultasi: false,
+          channel_konsultasi: "",
+          ada_treatment: false,
+          ada_penjualan: false,
+          route_treatment: "",
         },
 
         konsultasi_offline: {
-          keluhan_awal:
-            "Jerawat meradang di area pipi dan dagu sejak 2 minggu terakhir",
-          catatan: "Pasien ingin konsultasi sebelum lanjut treatment",
+          keluhan_awal: "",
+          catatan: "",
         },
 
         konsultasi_online: {
-          request_dokter: "dr. Andi Saputra",
-          alergi: "Tidak ada",
-          keluhan: "Kulit berjerawat, berminyak, dan bekas kemerahan",
-          produk_sebelumnya: "Pernah memakai facial wash acne dan krim malam",
-          sedang_hamil: "tidak",
-          sedang_menyusui: "tidak",
-
+          request_dokter: "",
+          alergi: "",
+          keluhan: "",
+          produk_sebelumnya: "",
+          sedang_hamil: "",
+          sedang_menyusui: "",
           bukti_foto_kiri: "",
           bukti_foto_depan: "",
           bukti_foto_kanan: "",
-
-          preview_before_1:
-            "https://via.placeholder.com/400x300?text=Foto+Kiri",
-          preview_before_2:
-            "https://via.placeholder.com/400x300?text=Foto+Depan",
-          preview_before_3:
-            "https://via.placeholder.com/400x300?text=Foto+Kanan",
-
+          preview_before_1: "",
+          preview_before_2: "",
+          preview_before_3: "",
           file_name_1: "",
           file_name_2: "",
           file_name_3: "",
         },
 
         treatment: {
-          items: [
-            {
-              tindakan_id: "TR001",
-              harga: 150000,
-              jumlah: 1,
-              diskon_type: "%",
-              diskon_value: 10,
-              diskon_referral: 0,
-            },
-            {
-              tindakan_id: "TR002",
-              harga: 250000,
-              jumlah: 1,
-              diskon_type: "Rp",
-              diskon_value: 25000,
-              diskon_referral: 0,
-            },
-          ],
+          items: [this.createEmptyTreatmentItem()],
         },
 
         penjualan: {
           poin: 0,
-          items: [
-            {
-              produk_id: "OB001",
-              harga: 120000,
-              jumlah: 1,
-              unit: "PCS",
-              diskon_type: "%",
-              diskon_value: 5,
-              diskon_referral: 0,
-              frekuensi: "2x sehari",
-              waktu_pakai: "Pagi",
-              penggunaan: "Oles tipis pada area wajah",
-            },
-            {
-              produk_id: "OB002",
-              harga: 135000,
-              jumlah: 1,
-              unit: "PCS",
-              diskon_type: "Rp",
-              diskon_value: 10000,
-              diskon_referral: 0,
-              frekuensi: "1x sehari",
-              waktu_pakai: "Malam",
-              penggunaan: "Gunakan sebelum tidur",
-            },
-          ],
+          items: [this.createEmptyPenjualanItem()],
         },
       };
+    },
+
+    normalizeLayanan(value = {}) {
+      const adaKonsultasi = Boolean(value.ada_konsultasi);
+      const adaTreatment = Boolean(value.ada_treatment);
+      const adaPenjualan = Boolean(value.ada_penjualan);
+
+      let channelKonsultasi = value.channel_konsultasi || "";
+
+      if (!adaKonsultasi) {
+        channelKonsultasi = "";
+      }
+
+      if (adaKonsultasi && !channelKonsultasi) {
+        channelKonsultasi = "offline";
+      }
+
+      return {
+        ada_konsultasi: adaKonsultasi,
+        channel_konsultasi: channelKonsultasi,
+        ada_treatment: adaTreatment,
+        ada_penjualan: adaPenjualan,
+        route_treatment: value.route_treatment || "",
+      };
+    },
+
+    ensureCurrentStepAvailable() {
+      const exists = this.availableSteps.some(
+        (step) => step.key === this.currentStepKey,
+      );
+
+      if (exists) return;
+
+      const layananStepExists = this.availableSteps.some(
+        (step) => step.key === "layanan",
+      );
+
+      this.currentStepKey = layananStepExists ? "layanan" : "registrasi";
+    },
+
+    syncDetailItemsByLayanan() {
+      if (!this.form) return;
+
+      if (!this.form.treatment) {
+        this.form.treatment = {
+          items: [this.createEmptyTreatmentItem()],
+        };
+      }
+
+      if (!this.form.penjualan) {
+        this.form.penjualan = {
+          poin: 0,
+          items: [this.createEmptyPenjualanItem()],
+        };
+      }
+
+      if (
+        this.form.layanan.ada_treatment &&
+        (!Array.isArray(this.form.treatment.items) ||
+          this.form.treatment.items.length === 0)
+      ) {
+        this.form.treatment.items = [this.createEmptyTreatmentItem()];
+      }
+
+      if (
+        this.form.layanan.ada_penjualan &&
+        (!Array.isArray(this.form.penjualan.items) ||
+          this.form.penjualan.items.length === 0)
+      ) {
+        this.form.penjualan.items = [this.createEmptyPenjualanItem()];
+      }
+
+      if (!this.form.layanan.ada_treatment) {
+        this.form.treatment.items = [this.createEmptyTreatmentItem()];
+      }
+
+      if (!this.form.layanan.ada_penjualan) {
+        this.form.penjualan.items = [this.createEmptyPenjualanItem()];
+      }
+    },
+
+    applyLayananSelection(value = {}) {
+      this.form.layanan = this.normalizeLayanan(value);
+      this.syncDetailItemsByLayanan();
+      this.ensureCurrentStepAvailable();
     },
 
     formatNumber(value) {
@@ -619,26 +656,28 @@ export default {
       this.form[field] = value;
     },
 
-    updateLayananField({ field, value }) {
-      this.form.layanan[field] = value;
+    updateLayananField(payload) {
+      if (!payload || !this.form) return;
 
-      if (field === "ada_konsultasi" && !value) {
-        this.form.layanan.channel_konsultasi = "";
-      }
-
-      if (field === "ada_treatment" && value === false) {
-        this.form.treatment = {
-          perlu_tindakan_perawat: null,
-          items: [],
-        };
+      if (payload.field === "layanan") {
+        this.applyLayananSelection(payload.value || {});
+        return;
       }
 
       if (
-        field === "ada_konsultasi" &&
-        value &&
-        !this.form.layanan.channel_konsultasi
+        Object.prototype.hasOwnProperty.call(payload, "ada_konsultasi") ||
+        Object.prototype.hasOwnProperty.call(payload, "ada_treatment") ||
+        Object.prototype.hasOwnProperty.call(payload, "ada_penjualan")
       ) {
-        this.form.layanan.channel_konsultasi = "offline";
+        this.applyLayananSelection(payload);
+        return;
+      }
+
+      if (payload.field) {
+        this.applyLayananSelection({
+          ...this.form.layanan,
+          [payload.field]: payload.value,
+        });
       }
     },
 
@@ -653,16 +692,16 @@ export default {
     fillTreatmentPrice(index) {
       const item = this.form.treatment.items[index];
       const found = this.tindakanList.find((x) => x.id === item.tindakan_id);
-      if (!found) return;
-      item.harga = found.harga || 0;
+
+      item.harga = found ? found.harga || 0 : 0;
     },
 
     fillProdukPrice(index) {
       const item = this.form.penjualan.items[index];
       const found = this.obatList.find((x) => x.id === item.produk_id);
-      if (!found) return;
-      item.harga = found.harga || 0;
-      item.unit = found.unit || "PCS";
+
+      item.harga = found ? found.harga || 0 : 0;
+      item.unit = found ? found.unit || "" : "";
     },
 
     updateTreatmentItem({ index, field, value }) {
@@ -674,19 +713,12 @@ export default {
     },
 
     addTreatmentItem() {
-      this.form.treatment.items.push({
-        tindakan_id: null,
-        harga: 0,
-        jumlah: 1,
-        diskon_type: "%",
-        diskon_value: 0,
-        diskon_referral: 0,
-      });
+      this.form.treatment.items.push(this.createEmptyTreatmentItem());
     },
 
     removeTreatmentItem(index) {
       if (this.form.treatment.items.length === 1) {
-        this.showSnackbar("Minimal harus ada satu item treatment", "warning");
+        this.form.treatment.items = [this.createEmptyTreatmentItem()];
         return;
       }
 
@@ -702,23 +734,12 @@ export default {
     },
 
     addPenjualanItem() {
-      this.form.penjualan.items.push({
-        produk_id: null,
-        harga: 0,
-        jumlah: 1,
-        unit: "PCS",
-        diskon_type: "%",
-        diskon_value: 0,
-        diskon_referral: 0,
-        frekuensi: "",
-        waktu_pakai: "",
-        penggunaan: "",
-      });
+      this.form.penjualan.items.push(this.createEmptyPenjualanItem());
     },
 
     removePenjualanItem(index) {
       if (this.form.penjualan.items.length === 1) {
-        this.showSnackbar("Minimal harus ada satu item penjualan", "warning");
+        this.form.penjualan.items = [this.createEmptyPenjualanItem()];
         return;
       }
 
@@ -745,86 +766,66 @@ export default {
       return Math.max(base - diskon - Number(item.diskon_referral || 0), 0);
     },
 
-    validateCurrentStep() {
-      const stepKey = this.currentStepKey;
+    validateRegistrasiStep() {
+      if (!this.getSelectedTokoId()) {
+        this.showSnackbar("Cabang aktif belum dipilih", "error");
+        return false;
+      }
 
-      if (stepKey === "registrasi") {
-        if (!this.form.tanggal || !this.form.pasien_new_id) {
+      if (!this.form.tanggal || !this.form.pasien_new_id) {
+        this.showSnackbar(
+          "Lengkapi tanggal registrasi dan pasien terlebih dahulu",
+          "error",
+        );
+        return false;
+      }
+
+      return true;
+    },
+
+    validateLayananStep() {
+      if (!this.hasSelectedLayanan) {
+        this.showSnackbar("Pilih minimal satu layanan", "error");
+        return false;
+      }
+
+      if (
+        this.form.layanan.ada_konsultasi &&
+        !this.form.layanan.channel_konsultasi
+      ) {
+        this.showSnackbar("Pilih channel konsultasi", "error");
+        return false;
+      }
+
+      return true;
+    },
+
+    validateKonsultasiStep() {
+      if (!this.form.layanan.ada_konsultasi) return true;
+
+      if (this.form.layanan.channel_konsultasi === "offline") {
+        if (!this.form.konsultasi_offline.keluhan_awal) {
           this.showSnackbar(
-            "Lengkapi tanggal registrasi dan pasien terlebih dahulu",
+            "Keluhan awal konsultasi offline wajib diisi",
             "error",
           );
           return false;
         }
       }
 
-      if (stepKey === "layanan") {
-        const layananDipilih =
-          this.form.layanan.ada_konsultasi ||
-          this.form.layanan.ada_treatment ||
-          this.form.layanan.ada_penjualan;
-
-        if (!layananDipilih) {
-          this.showSnackbar("Pilih minimal satu layanan", "error");
-          return false;
-        }
+      if (this.form.layanan.channel_konsultasi === "online") {
+        const ko = this.form.konsultasi_online;
 
         if (
-          this.form.layanan.ada_konsultasi &&
-          !this.form.layanan.channel_konsultasi
+          !ko.alergi ||
+          !ko.keluhan ||
+          !ko.sedang_hamil ||
+          !ko.sedang_menyusui
         ) {
-          this.showSnackbar("Pilih channel konsultasi", "error");
-          return false;
-        }
-      }
-
-      if (stepKey === "konsultasi") {
-        if (this.form.layanan.channel_konsultasi === "offline") {
-          if (!this.form.konsultasi_offline.keluhan_awal) {
-            this.showSnackbar(
-              "Keluhan awal konsultasi offline wajib diisi",
-              "error",
-            );
-            return false;
-          }
-        }
-
-        if (this.form.layanan.channel_konsultasi === "online") {
-          const ko = this.form.konsultasi_online;
-
-          if (
-            !ko.alergi ||
-            !ko.keluhan ||
-            !ko.sedang_hamil ||
-            !ko.sedang_menyusui
-          ) {
-            this.showSnackbar(
-              "Lengkapi field wajib pada konsultasi online",
-              "error",
-            );
-            return false;
-          }
-        }
-      }
-
-      if (stepKey === "treatment") {
-        const invalid = this.form.treatment.items.some(
-          (item) => !item.tindakan_id || Number(item.jumlah || 0) <= 0,
-        );
-
-        if (invalid) {
-          this.showSnackbar("Lengkapi item treatment terlebih dahulu", "error");
-          return false;
-        }
-      }
-
-      if (stepKey === "penjualan") {
-        const invalid = this.form.penjualan.items.some(
-          (item) => !item.produk_id || Number(item.jumlah || 0) <= 0,
-        );
-
-        if (invalid) {
-          this.showSnackbar("Lengkapi item penjualan terlebih dahulu", "error");
+          this.showSnackbar(
+            "Lengkapi field wajib pada konsultasi online",
+            "error",
+          );
           return false;
         }
       }
@@ -832,10 +833,77 @@ export default {
       return true;
     },
 
+    validateTreatmentStep() {
+      if (!this.form.layanan.ada_treatment) return true;
+
+      const items = this.form.treatment.items || [];
+      const invalid = items.some(
+        (item) => !item.tindakan_id || Number(item.jumlah || 0) <= 0,
+      );
+
+      if (!items.length || invalid) {
+        this.showSnackbar("Lengkapi item treatment terlebih dahulu", "error");
+        return false;
+      }
+
+      return true;
+    },
+
+    validatePenjualanStep() {
+      if (!this.form.layanan.ada_penjualan) return true;
+
+      const items = this.form.penjualan.items || [];
+      const invalid = items.some(
+        (item) => !item.produk_id || Number(item.jumlah || 0) <= 0,
+      );
+
+      if (!items.length || invalid) {
+        this.showSnackbar("Lengkapi item penjualan terlebih dahulu", "error");
+        return false;
+      }
+
+      return true;
+    },
+
+    validateCurrentStep() {
+      if (this.currentStepKey === "registrasi") {
+        return this.validateRegistrasiStep();
+      }
+
+      if (this.currentStepKey === "layanan") {
+        return this.validateLayananStep();
+      }
+
+      if (this.currentStepKey === "konsultasi") {
+        return this.validateKonsultasiStep();
+      }
+
+      if (this.currentStepKey === "treatment") {
+        return this.validateTreatmentStep();
+      }
+
+      if (this.currentStepKey === "penjualan") {
+        return this.validatePenjualanStep();
+      }
+
+      return true;
+    },
+
+    validateAllBeforeSubmit() {
+      return (
+        this.validateRegistrasiStep() &&
+        this.validateLayananStep() &&
+        this.validateKonsultasiStep() &&
+        this.validateTreatmentStep() &&
+        this.validatePenjualanStep()
+      );
+    },
+
     nextStep() {
       if (!this.validateCurrentStep()) return;
 
       const nextIndex = this.currentStepIndex + 1;
+
       if (nextIndex < this.availableSteps.length) {
         this.currentStepKey = this.availableSteps[nextIndex].key;
       }
@@ -843,26 +911,52 @@ export default {
 
     prevStep() {
       const prevIndex = this.currentStepIndex - 1;
+
       if (prevIndex >= 0) {
         this.currentStepKey = this.availableSteps[prevIndex].key;
       }
     },
 
     async handleSubmit() {
-      if (!this.validateCurrentStep()) return;
+      if (!this.validateAllBeforeSubmit()) return;
 
       this.loading = true;
 
       try {
-        const payload = JSON.parse(JSON.stringify(this.form));
-        console.log("submit payload:", payload);
+        this.form.toko_id = this.getSelectedTokoId();
 
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        const response = await registrasiLayananService.create(this.form);
 
-        this.showSnackbar("Registrasi berhasil disimpan", "success");
+        if (response?.status === false) {
+          this.showSnackbar(
+            response?.message || "Gagal menyimpan registrasi",
+            "error",
+          );
+          return;
+        }
+
+        this.showSnackbar(
+          response?.message || "Registrasi berhasil disimpan",
+          "success",
+        );
+
+        const registrasiId = response?.data?.id;
+
+        if (registrasiId) {
+          setTimeout(() => {
+            this.$router.push({
+              path: "/resepsionis/registrasi-layanan",
+            });
+          }, 500);
+
+          return;
+        }
+
+        this.resetForm();
       } catch (error) {
         console.error(error);
-        this.showSnackbar("Gagal menyimpan registrasi", "error");
+
+        this.showSnackbar(this.getErrorMessage(error), "error");
       } finally {
         this.loading = false;
       }
@@ -872,6 +966,7 @@ export default {
       this.currentStepKey = "registrasi";
       this.form = this.getInitialForm();
       this.dragActive = null;
+      this.consultationHistory = [];
       this.showSnackbar("Form berhasil direset", "success");
     },
 
@@ -881,26 +976,7 @@ export default {
         return;
       }
 
-      this.consultationHistory = [
-        {
-          id: 1,
-          tgl: "2026-04-01",
-          dokter: "dr. Andi Saputra",
-          tindakan_html: "Facial Acne<br><small>Perawat: Ns. Rina</small>",
-          obat_html: "Cream Malam<br>Facial Wash",
-          catatan_html: "Kulit sensitif, hindari scrub berlebihan",
-          lokasi: "Klinik Malang",
-        },
-        {
-          id: 2,
-          tgl: "2026-03-15",
-          dokter: "dr. Bunga Lestari",
-          tindakan_html: "Peeling Acne<br><small>Perawat: Ns. Tika</small>",
-          obat_html: "Serum Acne",
-          catatan_html: "Respon kulit cukup baik, lanjut kontrol 2 minggu",
-          lokasi: "Klinik Surabaya",
-        },
-      ];
+      this.consultationHistory = [];
     },
 
     onDragOver(key) {
@@ -954,14 +1030,19 @@ export default {
 
     onDrop(event, key) {
       this.dragActive = null;
+
       const file = event?.dataTransfer?.files?.[0];
+
       if (!file) return;
+
       this.processImageFile(file, key);
     },
 
     onFileChange(event, key) {
       const file = event?.target?.files?.[0];
+
       if (!file) return;
+
       this.processImageFile(file, key);
       event.target.value = "";
     },
@@ -985,13 +1066,7 @@ export default {
         before_3: "file_name_3",
       };
 
-      const defaultPreviewMap = {
-        before_1: "https://via.placeholder.com/400x300?text=Foto+Kiri",
-        before_2: "https://via.placeholder.com/400x300?text=Foto+Depan",
-        before_3: "https://via.placeholder.com/400x300?text=Foto+Kanan",
-      };
-
-      this.form.konsultasi_online[previewMap[key]] = defaultPreviewMap[key];
+      this.form.konsultasi_online[previewMap[key]] = "";
       this.form.konsultasi_online[hiddenMap[key]] = "";
       this.form.konsultasi_online[fileNameMap[key]] = "";
     },

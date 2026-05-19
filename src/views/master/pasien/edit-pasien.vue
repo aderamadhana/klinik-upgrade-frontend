@@ -2,21 +2,21 @@
   <div>
     <div class="page-header mb-6">
       <div>
-        <h1 class="page-title">Registrasi Pasien Klinik</h1>
-        <p class="page-subtitle">Tambahkan data pasien baru ke sistem</p>
+        <h1 class="page-title">Edit Pasien Klinik</h1>
+        <p class="page-subtitle">Perbarui data pasien yang sudah terdaftar</p>
       </div>
     </div>
 
     <v-card rounded="lg" elevation="1">
       <v-card-title class="text-h6 font-weight-bold px-6 py-4">
-        Form Registrasi Pasien Klinik
+        Form Edit Pasien Klinik
       </v-card-title>
 
       <v-divider />
 
       <v-card-text class="pa-6">
         <v-alert type="info" variant="tonal" density="comfortable" class="mb-6">
-          Isi data pasien terlebih dahulu. Kolom bertanda * wajib diisi.
+          Perbarui data pasien. No. RM dan cabang asal tidak dapat diubah.
         </v-alert>
 
         <v-alert
@@ -43,12 +43,34 @@
           {{ errorMessage }}
         </v-alert>
 
-        <v-form ref="formRef">
+        <v-skeleton-loader v-if="loadingDetail" type="article, actions" />
+
+        <v-form v-else ref="formRef">
           <div class="text-subtitle-2 font-weight-bold mb-4">
             Informasi Utama
           </div>
 
           <v-row dense>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="form.no_rm"
+                label="No. RM"
+                variant="outlined"
+                density="comfortable"
+                readonly
+              />
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="form.nama_toko"
+                label="Cabang"
+                variant="outlined"
+                density="comfortable"
+                readonly
+              />
+            </v-col>
+
             <v-col cols="12" md="9">
               <v-text-field
                 v-model="form.nama_pasien"
@@ -378,13 +400,12 @@
 
       <v-card-actions class="px-6 py-4 justify-end">
         <v-btn
-          color="success"
           variant="tonal"
-          prepend-icon="mdi-account-key"
+          prepend-icon="mdi-arrow-left"
           :disabled="loadingSubmit"
-          @click="buatTokenRegistrasi"
+          to="/master/pasien"
         >
-          Buat Token Registrasi Pasien Mandiri
+          Kembali
         </v-btn>
 
         <v-btn
@@ -392,9 +413,10 @@
           variant="flat"
           prepend-icon="mdi-content-save"
           :loading="loadingSubmit"
+          :disabled="loadingDetail"
           @click="submitForm"
         >
-          Tambahkan
+          Simpan Perubahan
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -406,10 +428,11 @@ import pasienService from "@/services/pasienService";
 import referenceService from "@/services/referenceService";
 
 export default {
-  name: "AddPasien",
+  name: "EditPasien",
 
   data() {
     return {
+      loadingDetail: false,
       loadingSubmit: false,
       loadingAgama: false,
       loadingPekerjaan: false,
@@ -418,40 +441,13 @@ export default {
       loadingKecamatan: false,
       loadingKelurahan: false,
 
+      isHydrating: false,
+
       successMessage: "",
       errorMessage: "",
       validationErrors: {},
 
-      form: {
-        nama_pasien: "",
-        tipe_pasien: 1,
-        toko_id: localStorage.getItem("selected_toko_id") || null,
-
-        no_identitas: "",
-
-        provinsi_kode: null,
-        kota_kode: null,
-        kecamatan_kode: null,
-        kelurahan_kode: null,
-        alamat_detail: "",
-
-        jenis_kelamin: null,
-        pekerjaan_id: null,
-        status_pernikahan: null,
-        agama_id: null,
-
-        tempat_lahir: "",
-        tanggal_lahir: "",
-        no_telp: "",
-        no_hp: "",
-        email: "",
-        no_wa: "",
-        sumber_info: "",
-
-        alergi_obat: "",
-        masalah_kulit: "",
-        catatan: "",
-      },
+      form: this.getDefaultForm(),
 
       tipePasienOptions: [
         { title: "Pasien", value: 1 },
@@ -479,8 +475,16 @@ export default {
     };
   },
 
+  computed: {
+    pasienId() {
+      return this.$route.params.id;
+    },
+  },
+
   watch: {
     "form.provinsi_kode"(value) {
+      if (this.isHydrating) return;
+
       this.form.kota_kode = null;
       this.form.kecamatan_kode = null;
       this.form.kelurahan_kode = null;
@@ -495,6 +499,8 @@ export default {
     },
 
     "form.kota_kode"(value) {
+      if (this.isHydrating) return;
+
       this.form.kecamatan_kode = null;
       this.form.kelurahan_kode = null;
 
@@ -507,6 +513,8 @@ export default {
     },
 
     "form.kecamatan_kode"(value) {
+      if (this.isHydrating) return;
+
       this.form.kelurahan_kode = null;
       this.kelurahanOptions = [];
 
@@ -523,10 +531,13 @@ export default {
   methods: {
     getDefaultForm() {
       return {
+        id: null,
+        no_rm: "",
+        toko_id: null,
+        nama_toko: "",
+
         nama_pasien: "",
         tipe_pasien: 1,
-        toko_id: localStorage.getItem("selected_toko_id") || null,
-
         no_identitas: "",
 
         provinsi_kode: null,
@@ -555,21 +566,91 @@ export default {
     },
 
     async initPage() {
-      this.refreshTokoFromLocalStorage();
+      this.loadingDetail = true;
+      this.errorMessage = "";
+      this.validationErrors = {};
 
-      await Promise.all([
-        this.fetchAgama(),
-        this.fetchPekerjaan(),
-        this.fetchProvinsi(),
-      ]);
-    },
+      try {
+        await Promise.all([
+          this.fetchAgama(),
+          this.fetchPekerjaan(),
+          this.fetchProvinsi(),
+        ]);
 
-    refreshTokoFromLocalStorage() {
-      this.form.toko_id = localStorage.getItem("selected_toko_id") || null;
+        await this.fetchPasienDetail();
+      } catch (error) {
+        this.errorMessage =
+          error.response?.data?.message || "Gagal memuat data pasien";
+      } finally {
+        this.loadingDetail = false;
+      }
     },
 
     required(value) {
       return !!value || "Field wajib diisi";
+    },
+
+    async fetchPasienDetail() {
+      const response = await pasienService.getById(this.pasienId);
+      const pasien = response.data || {};
+
+      this.isHydrating = true;
+
+      this.form = {
+        id: pasien.id,
+        no_rm: pasien.no_rm || "",
+        toko_id: pasien.toko_id || null,
+        nama_toko: pasien.toko?.nama_toko || "",
+
+        nama_pasien: pasien.nama_pasien || pasien.nama || "",
+        tipe_pasien: pasien.tipe_pasien || 1,
+        no_identitas: pasien.no_identitas || "",
+
+        provinsi_kode: pasien.provinsi_kode || null,
+        kota_kode: pasien.kota_kode || null,
+        kecamatan_kode: pasien.kecamatan_kode || null,
+        kelurahan_kode: pasien.kelurahan_kode || null,
+        alamat_detail: pasien.alamat_detail || pasien.alamat || "",
+
+        jenis_kelamin: pasien.jenis_kelamin || null,
+        pekerjaan_id: pasien.pekerjaan_id || pasien.pekerjaan?.id || null,
+        status_pernikahan: pasien.status_pernikahan || null,
+        agama_id: pasien.agama_id || pasien.agama?.id || null,
+
+        tempat_lahir: pasien.tempat_lahir || "",
+        tanggal_lahir: pasien.tanggal_lahir || "",
+        no_telp: pasien.no_telp || "",
+        no_hp: pasien.no_hp || "",
+        email: pasien.email || "",
+        no_wa: pasien.no_wa || "",
+        sumber_info: pasien.sumber_info || "",
+
+        alergi_obat: pasien.alergi_obat || "",
+        masalah_kulit: pasien.masalah_kulit || "",
+        catatan: pasien.catatan || "",
+      };
+
+      await this.loadWilayahFromExistingData();
+
+      this.isHydrating = false;
+
+      this.$nextTick(() => {
+        this.$refs.formRef?.resetValidation();
+      });
+    },
+
+    async loadWilayahFromExistingData() {
+      if (this.form.provinsi_kode) {
+        await this.fetchKota(this.form.provinsi_kode);
+      }
+
+      if (this.form.kota_kode) {
+        await this.fetchKecamatan(this.form.kota_kode);
+      }
+
+      if (this.form.kecamatan_kode) {
+        await this.fetchKelurahan(this.form.kecamatan_kode);
+      }
     },
 
     async fetchAgama() {
@@ -669,7 +750,6 @@ export default {
       return {
         nama_pasien: this.form.nama_pasien,
         tipe_pasien: this.form.tipe_pasien,
-        toko_id: this.form.toko_id,
 
         no_identitas: this.form.no_identitas,
 
@@ -704,14 +784,6 @@ export default {
       this.errorMessage = "";
       this.validationErrors = {};
 
-      this.refreshTokoFromLocalStorage();
-
-      if (!this.form.toko_id) {
-        this.errorMessage =
-          "Cabang belum terpilih. Pilih cabang terlebih dahulu di header.";
-        return;
-      }
-
       const result = await this.$refs.formRef.validate();
 
       if (!result.valid) {
@@ -723,15 +795,12 @@ export default {
 
       try {
         const payload = this.buildPayload();
-        const response = await pasienService.create(payload);
+        const response = await pasienService.update(this.pasienId, payload);
 
-        const noRm = response.data?.no_rm;
+        this.successMessage =
+          response.message || "Data pasien berhasil diperbarui";
 
-        this.successMessage = noRm
-          ? `Data pasien berhasil ditambahkan. No. RM: ${noRm}`
-          : response.message || "Data pasien berhasil ditambahkan";
-
-        this.resetForm();
+        await this.fetchPasienDetail();
       } catch (error) {
         if (error.response?.status === 422) {
           this.validationErrors = error.response.data?.errors || {};
@@ -740,35 +809,11 @@ export default {
         } else {
           this.errorMessage =
             error.response?.data?.message ||
-            "Terjadi kesalahan saat menyimpan data pasien";
+            "Terjadi kesalahan saat memperbarui data pasien";
         }
       } finally {
         this.loadingSubmit = false;
       }
-    },
-
-    resetForm() {
-      this.form = this.getDefaultForm();
-
-      this.kotaOptions = [];
-      this.kecamatanOptions = [];
-      this.kelurahanOptions = [];
-
-      this.$nextTick(() => {
-        this.$refs.formRef?.resetValidation();
-      });
-    },
-
-    buatTokenRegistrasi() {
-      this.refreshTokoFromLocalStorage();
-
-      if (!this.form.toko_id) {
-        this.errorMessage =
-          "Cabang belum terpilih. Pilih cabang terlebih dahulu di header.";
-        return;
-      }
-
-      console.log("buat token registrasi mandiri", this.form);
     },
   },
 };
