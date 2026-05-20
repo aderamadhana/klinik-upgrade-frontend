@@ -15,6 +15,13 @@ const resepsionisRoutes = [
         component: () =>
           import("@/views/resepsionis/all-registrasi-layanan.vue"),
       },
+      {
+        path: "registrasi-layanan/:id",
+        name: "DetailRegistrasiLayanan",
+        component: () =>
+          import("@/views/resepsionis/detail-registrasi-layanan.vue"),
+        props: true,
+      },
       // {
       //   path: "detail-registrasi-layanan",
       //   name: "Detail Registrasi Layanan",

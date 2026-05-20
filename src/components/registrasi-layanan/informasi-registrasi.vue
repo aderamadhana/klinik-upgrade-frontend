@@ -42,6 +42,7 @@
         <v-col cols="12" md="9">
           <v-autocomplete
             :model-value="form.pasien_new_id"
+            :search="pasienSearch"
             label="Pasien"
             placeholder="Cari nama pasien, No. RM, No. HP, atau identitas"
             :items="pasienOptions"
@@ -213,8 +214,12 @@ export default {
       loadingPasien: false,
       loadingKaryawan: false,
 
+      pasienSearch: "",
       pasienSearchTimer: null,
       karyawanFetchTimer: null,
+
+      selectedPasienOption: null,
+      suppressPasienSearch: false,
     };
   },
 
@@ -249,7 +254,18 @@ export default {
     },
 
     pasienOptions() {
-      return this.rawPasienList.map((item) => this.mapPasien(item));
+      const rows = this.rawPasienList.map((item) => this.mapPasien(item));
+      const selected = this.getSelectedPasienForOptions();
+
+      if (
+        selected &&
+        selected.id &&
+        !rows.some((item) => String(item.id) === String(selected.id))
+      ) {
+        rows.unshift(selected);
+      }
+
+      return rows;
     },
 
     dokterOptions() {
@@ -285,6 +301,7 @@ export default {
 
   mounted() {
     this.clearInvalidInitialValue();
+    this.syncSelectedPasienFromForm();
     this.fetchPasien("", true);
   },
 
@@ -304,22 +321,175 @@ export default {
     },
 
     onPatientSelected(value) {
-      const selected = this.pasienOptions.find(
-        (item) => String(item.id) === String(value),
-      );
+      if (!value) {
+        this.clearPatient(false);
+        return;
+      }
+
+      const selected =
+        this.pasienOptions.find((item) => String(item.id) === String(value)) ||
+        this.selectedPasienOption;
+
+      const mappedSelected = selected ? this.mapPasien(selected) : null;
+
+      this.selectedPasienOption = mappedSelected;
+
+      this.suppressPasienSearch = true;
+
+      if (mappedSelected?.text) {
+        this.pasienSearch = mappedSelected.text;
+      }
+
+      if (this.pasienSearchTimer) {
+        clearTimeout(this.pasienSearchTimer);
+      }
 
       this.updateField("pasien_new_id", value);
-      this.updateField("pasien", selected || null);
-      this.updateField("pasien_nama", selected?.nama || selected?.text || "");
+      this.updateField("pasien", mappedSelected);
+      this.updateField(
+        "pasien_nama",
+        mappedSelected?.nama || mappedSelected?.text || "",
+      );
+
       this.$emit("patient-change", value);
+
+      this.$nextTick(() => {
+        this.suppressPasienSearch = false;
+      });
     },
 
-    clearPatient() {
+    clearPatient(fetchDefault = true) {
+      if (this.pasienSearchTimer) {
+        clearTimeout(this.pasienSearchTimer);
+      }
+
+      this.suppressPasienSearch = true;
+      this.pasienSearch = "";
+      this.selectedPasienOption = null;
+
       this.updateField("pasien_new_id", null);
       this.updateField("pasien", null);
       this.updateField("pasien_nama", "");
+
       this.$emit("patient-change", null);
-      this.fetchPasien("", true);
+
+      this.$nextTick(() => {
+        this.suppressPasienSearch = false;
+      });
+
+      if (fetchDefault) {
+        this.fetchPasien("", true);
+      }
+    },
+
+    handlePasienSearch(keyword) {
+      const search = String(keyword || "").trim();
+      this.pasienSearch = keyword || "";
+
+      if (this.suppressPasienSearch) {
+        return;
+      }
+
+      const selected = this.getSelectedPasienForOptions();
+
+      if (this.isSameAsSelectedPasienSearch(search, selected)) {
+        return;
+      }
+
+      if (this.pasienSearchTimer) {
+        clearTimeout(this.pasienSearchTimer);
+      }
+
+      this.pasienSearchTimer = setTimeout(() => {
+        if (this.suppressPasienSearch) {
+          return;
+        }
+
+        if (search.length === 0) {
+          if (this.form.pasien_new_id) {
+            return;
+          }
+
+          this.fetchPasien("", true);
+          return;
+        }
+
+        if (search.length >= 2) {
+          this.fetchPasien(search, true);
+        }
+      }, 350);
+    },
+
+    isSameAsSelectedPasienSearch(search, selected) {
+      if (!search || !selected) {
+        return false;
+      }
+
+      const normalizedSearch = this.normalizeText(search);
+
+      const selectedValues = [
+        selected.id,
+        selected.text,
+        selected.nama,
+        selected.no_rm,
+        selected.no_hp,
+        selected.no_identitas,
+      ]
+        .filter(Boolean)
+        .map((value) => this.normalizeText(value));
+
+      return selectedValues.includes(normalizedSearch);
+    },
+
+    getSelectedPasienForOptions() {
+      if (this.selectedPasienOption) {
+        return this.mapPasien(this.selectedPasienOption);
+      }
+
+      if (this.form?.pasien && this.form?.pasien_new_id) {
+        return this.mapPasien(this.form.pasien);
+      }
+
+      if (this.form?.pasien_new_id && this.form?.pasien_nama) {
+        return this.mapPasien({
+          id: this.form.pasien_new_id,
+          pasien_new_id: this.form.pasien_new_id,
+          nama: this.form.pasien_nama,
+          text: this.form.pasien_nama,
+        });
+      }
+
+      return null;
+    },
+
+    syncSelectedPasienFromForm() {
+      const selected = this.getSelectedPasienForOptions();
+
+      if (!selected) {
+        return;
+      }
+
+      this.selectedPasienOption = selected;
+      this.pasienSearch = selected.text || selected.nama || "";
+    },
+
+    async fetchPasien(search = "", force = false) {
+      if (!force && search.length < 2) return;
+
+      this.loadingPasien = true;
+
+      try {
+        const rows = await referenceService.pasien({
+          search,
+          limit: 30,
+        });
+
+        this.apiPasienList = Array.isArray(rows) ? rows : [];
+      } catch (error) {
+        this.apiPasienList = [];
+      } finally {
+        this.loadingPasien = false;
+      }
     },
 
     onDokterSelected(value) {
@@ -369,44 +539,6 @@ export default {
 
       if (isInvalidDropdownValue(this.form.perawat_id)) {
         this.updateField("perawat_id", null);
-      }
-    },
-
-    handlePasienSearch(keyword) {
-      if (this.pasienSearchTimer) {
-        clearTimeout(this.pasienSearchTimer);
-      }
-
-      const search = String(keyword || "").trim();
-
-      this.pasienSearchTimer = setTimeout(() => {
-        if (search.length === 0) {
-          this.fetchPasien("", true);
-          return;
-        }
-
-        if (search.length >= 2) {
-          this.fetchPasien(search, true);
-        }
-      }, 350);
-    },
-
-    async fetchPasien(search = "", force = false) {
-      if (!force && search.length < 2) return;
-
-      this.loadingPasien = true;
-
-      try {
-        const rows = await referenceService.pasien({
-          search,
-          limit: 30,
-        });
-
-        this.apiPasienList = Array.isArray(rows) ? rows : [];
-      } catch (error) {
-        this.apiPasienList = [];
-      } finally {
-        this.loadingPasien = false;
       }
     },
 
@@ -485,10 +617,10 @@ export default {
 
     mapPasien(item) {
       const id = item.id || item.value || item.pasien_new_id;
-      const nama = item.nama || item.nama_pasien || "-";
-      const noRm = item.no_rm || "";
-      const noHp = item.no_hp || "";
-      const noIdentitas = item.no_identitas || "";
+      const nama = item.nama || item.nama_pasien || item.name || "-";
+      const noRm = item.no_rm || item.no_rekam_medis || "";
+      const noHp = item.no_hp || item.hp || "";
+      const noIdentitas = item.no_identitas || item.nik || "";
 
       return {
         ...item,
@@ -587,6 +719,13 @@ export default {
       );
     },
 
+    normalizeText(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ");
+    },
+
     toTitleCase(value) {
       return String(value || "")
         .split(" ")
@@ -597,37 +736,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.group-wrap {
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  padding: 20px;
-  background: #fff;
-}
-
-.group-head {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.group-title {
-  display: flex;
-  align-items: center;
-  font-size: 16px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.group-subtitle {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-@media (max-width: 768px) {
-  .group-wrap {
-    padding: 16px;
-  }
-}
-</style>

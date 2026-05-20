@@ -52,10 +52,10 @@
       <v-row density="comfortable">
         <v-col cols="12" md="4">
           <v-autocomplete
-            :model-value="item.produk_id"
+            :model-value="item.produk_toko_id"
             :items="produkOptions"
             item-title="text"
-            item-value="id"
+            item-value="value"
             label="Produk"
             :placeholder="
               activeTokoId
@@ -179,6 +179,7 @@ export default {
       errorMessage: "",
       apiProdukList: [],
       fetchTimer: null,
+      selectedProdukOptions: {},
     };
   },
 
@@ -201,7 +202,25 @@ export default {
     },
 
     produkOptions() {
-      return this.rawProdukList.map((item) => this.mapProdukOption(item));
+      const rows = this.rawProdukList.map((item) => this.mapProdukOption(item));
+
+      this.penjualanItems.forEach((item) => {
+        const selected = this.getSelectedProdukForOptions(item);
+
+        if (!selected?.value) {
+          return;
+        }
+
+        const exists = rows.some((row) => {
+          return String(row.value) === String(selected.value);
+        });
+
+        if (!exists) {
+          rows.unshift(selected);
+        }
+      });
+
+      return rows;
     },
 
     displayTotalPenjualan() {
@@ -225,6 +244,7 @@ export default {
         if (!value) {
           this.apiProdukList = [];
           this.errorMessage = "";
+          this.selectedProdukOptions = {};
           this.clearSelectedProduk();
           return;
         }
@@ -236,6 +256,7 @@ export default {
 
   mounted() {
     this.ensureSingleDefaultItem();
+    this.cacheSelectedProdukFromItems();
   },
 
   beforeUnmount() {
@@ -294,18 +315,38 @@ export default {
           item?.master_produk_toko_id ||
           item?.obat_toko_id ||
           item?.toko_produk_id ||
+          item?.value ||
           null,
 
         produk_id:
-          item?.produk_id || item?.obat_id || item?.master_produk_id || null,
+          item?.produk_id ||
+          item?.obat_id ||
+          item?.master_produk_id ||
+          item?.produk?.id ||
+          item?.master_produk?.id ||
+          null,
 
         obat_id:
-          item?.obat_id || item?.produk_id || item?.master_produk_id || null,
+          item?.obat_id ||
+          item?.produk_id ||
+          item?.master_produk_id ||
+          item?.produk?.id ||
+          item?.master_produk?.id ||
+          null,
 
         produk_nama:
-          item?.produk_nama || item?.nama_produk || item?.nama_obat || "",
+          item?.produk_nama ||
+          item?.nama_produk ||
+          item?.nama_obat ||
+          item?.nama ||
+          "",
+
         nama_produk:
-          item?.nama_produk || item?.produk_nama || item?.nama_obat || "",
+          item?.nama_produk ||
+          item?.produk_nama ||
+          item?.nama_obat ||
+          item?.nama ||
+          "",
 
         harga: Number(item?.harga || item?.harga_jual || 0),
         jumlah: Number(item?.jumlah || 1),
@@ -314,6 +355,7 @@ export default {
 
     isEmptyItem(item) {
       return (
+        !item.produk_toko_id &&
         !item.produk_id &&
         !item.obat_id &&
         !item.produk_nama &&
@@ -364,6 +406,7 @@ export default {
         item.master_produk_toko_id ||
         item.obat_toko_id ||
         item.toko_produk_id ||
+        item.value ||
         item.id ||
         null;
 
@@ -436,22 +479,71 @@ export default {
       };
     },
 
-    findProdukOption(id) {
+    getSelectedProdukForOptions(item) {
+      const selectedValue = item?.produk_toko_id || item?.value || null;
+
+      if (!selectedValue) {
+        return null;
+      }
+
+      const cached = this.selectedProdukOptions[String(selectedValue)];
+
+      if (cached) {
+        return this.mapProdukOption(cached);
+      }
+
+      if (item?.produk_nama || item?.nama_produk) {
+        return this.mapProdukOption({
+          produk_toko_id: item.produk_toko_id,
+          produk_id: item.produk_id,
+          obat_id: item.obat_id,
+          nama: item.produk_nama || item.nama_produk,
+          harga: item.harga,
+        });
+      }
+
+      return null;
+    },
+
+    cacheSelectedProdukFromItems() {
+      this.penjualanItems.forEach((item) => {
+        const selected = this.getSelectedProdukForOptions(item);
+
+        if (selected?.value) {
+          this.selectedProdukOptions[String(selected.value)] = selected;
+        }
+      });
+    },
+
+    findProdukOption(value) {
       return this.produkOptions.find((item) => {
-        return String(item.value) === String(id);
+        return (
+          String(item.value) === String(value) ||
+          String(item.produk_toko_id) === String(value)
+        );
       });
     },
 
     onProdukChange(index, value) {
-      const selected = value ? this.findProdukOption(value) : null;
+      const current = this.penjualanItems[index] || this.makeEmptyItem();
 
-      if (!selected) {
+      if (!value) {
+        if (current.produk_toko_id) {
+          delete this.selectedProdukOptions[String(current.produk_toko_id)];
+        }
+
         this.replaceItem(index, this.makeEmptyItem());
         this.syncPenjualan();
         return;
       }
 
-      const current = this.penjualanItems[index] || this.makeEmptyItem();
+      const selected = this.findProdukOption(value);
+
+      if (!selected) {
+        return;
+      }
+
+      this.selectedProdukOptions[String(selected.value)] = selected;
 
       this.replaceItem(index, {
         ...current,
@@ -516,6 +608,12 @@ export default {
         return;
       }
 
+      const current = this.form.penjualan.items[index];
+
+      if (current?.produk_toko_id) {
+        delete this.selectedProdukOptions[String(current.produk_toko_id)];
+      }
+
       this.form.penjualan.items.splice(index, 1);
       this.syncPenjualan();
     },
@@ -528,22 +626,24 @@ export default {
     clearUnavailableProduk() {
       if (!this.apiProdukList.length) return;
 
+      const validProdukOptions = this.apiProdukList.map((item) =>
+        this.mapProdukOption(item),
+      );
+
       let changed = false;
 
       this.form.penjualan.items = this.form.penjualan.items.map((item) => {
-        const selectedValue = item.produk_toko_id || item.produk_id;
+        const selectedValue = item.produk_toko_id;
 
         if (!selectedValue) return item;
 
-        const exists = this.produkOptions.some((produk) => {
-          return (
-            String(produk.produk_toko_id) === String(item.produk_toko_id) ||
-            String(produk.produk_id) === String(item.produk_id)
-          );
+        const exists = validProdukOptions.some((produk) => {
+          return String(produk.value) === String(selectedValue);
         });
 
         if (!exists) {
           changed = true;
+          delete this.selectedProdukOptions[String(selectedValue)];
           return this.makeEmptyItem();
         }
 
@@ -559,6 +659,11 @@ export default {
         changed = true;
       }
 
+      if (!this.form.penjualan.items.length) {
+        this.form.penjualan.items = [this.makeEmptyItem()];
+        changed = true;
+      }
+
       if (changed) {
         this.syncPenjualan();
       }
@@ -568,6 +673,8 @@ export default {
       const payload = {
         total: this.displayTotalPenjualan,
         items: this.form.penjualan.items.map((item) => ({
+          __key: item.__key,
+
           produk_toko_id: item.produk_toko_id || null,
 
           produk_id: item.produk_id || null,

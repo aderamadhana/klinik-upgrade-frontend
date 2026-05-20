@@ -1304,25 +1304,6 @@ export default {
   flex-wrap: wrap;
   margin-bottom: 20px;
 }
-
-.page-title {
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
-  margin: 0 0 6px;
-  color: #111827;
-}
-
-.page-subtitle {
-  font-size: 14px;
-  color: #6b7280;
-  margin: 0;
-}
-
-.gap-2 {
-  gap: 8px;
-}
-
 .section-card {
   border-radius: 10px !important;
   border: 1px solid #e5e7eb;

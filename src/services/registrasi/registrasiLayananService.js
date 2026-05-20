@@ -348,6 +348,17 @@ const registrasiLayananService = {
       .post(`${BASE_URL}/${id}/cancel`)
       .then((response) => response.data);
   },
+  startCurrentTask(id) {
+    return api
+      .post(`${BASE_URL}/${id}/start-current-task`)
+      .then((response) => response.data);
+  },
+
+  finishCurrentTask(id) {
+    return api
+      .post(`${BASE_URL}/${id}/finish-current-task`)
+      .then((response) => response.data);
+  },
 
   startTask(taskId) {
     return api

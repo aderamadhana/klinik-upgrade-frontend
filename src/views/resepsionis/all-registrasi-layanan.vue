@@ -61,12 +61,18 @@
             color="grey-darken-1"
             prepend-icon="mdi-refresh"
             :loading="loading"
+            class="toolbar-btn"
             @click="fetchData"
           >
             Refresh
           </v-btn>
 
-          <v-btn color="success" prepend-icon="mdi-plus" @click="goToAdd">
+          <v-btn
+            color="success"
+            prepend-icon="mdi-plus"
+            class="toolbar-btn"
+            @click="goToAdd"
+          >
             Entry Data
           </v-btn>
         </div>
@@ -103,7 +109,7 @@
           :items="rows"
           :loading="loading"
           item-value="id"
-          density="comfortable"
+          density="compact"
           class="registrasi-table"
           :items-per-page="pagination.perPage"
           hide-default-footer
@@ -112,52 +118,60 @@
             <v-skeleton-loader type="table-row@8" />
           </template>
 
-          <template #item.registrasi_info="{ item }">
-            <div class="registrasi-info">
-              <div class="kode-cell">
-                {{ item.kode_registrasi || "-" }}
-              </div>
+          <template #item.registrasi_pasien="{ item }">
+            <div class="identity-cell">
+              <div class="reg-block">
+                <button
+                  type="button"
+                  class="reg-code-link"
+                  @click="goToDetail(item)"
+                >
+                  {{ item.kode_registrasi || "-" }}
+                </button>
 
-              <div class="date-line">
-                <v-icon size="15" class="mr-1">mdi-calendar</v-icon>
-                {{ formatDate(item.tanggal_kunjungan || item.tanggal) }}
-              </div>
-
-              <div class="date-line">
-                <v-icon size="15" class="mr-1">mdi-clock-outline</v-icon>
-                Jam {{ formatTime(item.registered_at || item.created_at) }}
-              </div>
-            </div>
-          </template>
-
-          <template #item.pasien_info="{ item }">
-            <div class="pasien-info">
-              <div class="patient-name">
-                {{ getPasienName(item) }}
-              </div>
-
-              <div class="patient-meta">
-                {{ getPasienMeta(item) }}
-              </div>
-
-              <div class="petugas-inline">
-                <div>
-                  <span>Dokter</span>
-                  <strong>{{ getDokterName(item) }}</strong>
+                <div class="reg-meta">
+                  <v-icon size="14">mdi-calendar</v-icon>
+                  <span>
+                    {{ formatDate(item.tanggal_kunjungan || item.tanggal) }}
+                  </span>
                 </div>
 
-                <div>
-                  <span>Perawat</span>
-                  <strong>{{ getPerawatName(item) }}</strong>
+                <div class="reg-meta">
+                  <v-icon size="14">mdi-clock-outline</v-icon>
+                  <span>
+                    Jam {{ formatTime(item.registered_at || item.created_at) }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="patient-block">
+                <div class="patient-name">
+                  {{ getPasienName(item) }}
+                </div>
+
+                <div class="patient-meta">
+                  {{ getPasienMeta(item) }}
+                </div>
+
+                <div class="staff-line">
+                  <span>
+                    Dokter
+                    <strong>{{ getDokterName(item) }}</strong>
+                  </span>
+
+                  <span>
+                    Perawat
+                    <strong>{{ getPerawatName(item) }}</strong>
+                  </span>
                 </div>
               </div>
             </div>
           </template>
 
           <template #item.layanan="{ item }">
-            <div class="chip-list">
+            <div class="service-cell">
               <v-chip
-                v-if="Number(item.channel_konsultasi || 0) > 0"
+                v-if="hasConsultation(item)"
                 size="small"
                 color="primary"
                 variant="tonal"
@@ -167,7 +181,7 @@
               </v-chip>
 
               <v-chip
-                v-if="isTrue(item.is_treatment)"
+                v-if="hasTreatment(item)"
                 size="small"
                 color="success"
                 variant="tonal"
@@ -177,7 +191,7 @@
               </v-chip>
 
               <v-chip
-                v-if="isTrue(item.is_penjualan)"
+                v-if="hasSales(item)"
                 size="small"
                 color="info"
                 variant="tonal"
@@ -186,98 +200,62 @@
                 Penjualan
               </v-chip>
 
-              <v-chip
+              <span
                 v-if="
-                  Number(item.channel_konsultasi || 0) === 0 &&
-                  !isTrue(item.is_treatment) &&
-                  !isTrue(item.is_penjualan)
+                  !hasConsultation(item) &&
+                  !hasTreatment(item) &&
+                  !hasSales(item)
                 "
-                size="small"
-                color="grey"
-                variant="tonal"
-                class="service-chip"
+                class="empty-text"
               >
                 -
-              </v-chip>
+              </span>
             </div>
           </template>
 
           <template #item.total_status="{ item }">
-            <div class="total-status-cell">
-              <div class="total-cell">
+            <div class="amount-cell">
+              <div class="amount-text">
                 Rp {{ formatNumber(item.grand_total || 0) }}
               </div>
 
-              <div
-                class="status-indicator"
-                :class="getStatusClass(item.status)"
+              <v-chip
+                size="x-small"
+                :color="getFlowStatus(item).color"
+                variant="tonal"
+                :prepend-icon="getFlowStatus(item).icon"
+                class="mt-1"
               >
-                <span class="status-dot"></span>
-                <span>{{ getStatusLabel(item.status) }}</span>
-              </div>
+                {{ getFlowStatus(item).label }}
+              </v-chip>
             </div>
           </template>
 
           <template #item.actions="{ item }">
             <div class="action-cell">
               <v-btn
-                v-if="canProcess(item)"
+                v-if="getPrimaryAction(item)"
                 size="small"
-                color="success"
-                variant="flat"
-                prepend-icon="mdi-play-circle-outline"
-                class="process-btn"
-                @click="goToProcess(item)"
+                :color="getPrimaryAction(item).color"
+                variant="tonal"
+                :prepend-icon="getPrimaryAction(item).icon"
+                class="text-action-btn"
+                @click="handlePrimaryAction(item)"
               >
-                Proses
+                {{ getPrimaryAction(item).label }}
               </v-btn>
 
               <v-btn
-                v-else
+                v-if="canCancel(item)"
                 size="small"
-                color="primary"
+                color="error"
                 variant="tonal"
-                prepend-icon="mdi-eye-outline"
-                class="process-btn"
-                @click="goToDetail(item)"
+                prepend-icon="mdi-close-circle-outline"
+                class="text-action-btn"
+                @click="confirmCancel(item)"
               >
-                Detail
+                Cancel
               </v-btn>
-
-              <v-menu location="bottom end">
-                <template #activator="{ props }">
-                  <v-btn
-                    v-bind="props"
-                    size="small"
-                    variant="text"
-                    color="grey-darken-1"
-                    icon="mdi-dots-vertical"
-                    class="more-btn"
-                  />
-                </template>
-
-                <v-list density="compact" min-width="160">
-                  <v-list-item @click="goToDetail(item)">
-                    <template #prepend>
-                      <v-icon size="18" color="primary">mdi-eye-outline</v-icon>
-                    </template>
-                    <v-list-item-title>Detail</v-list-item-title>
-                  </v-list-item>
-
-                  <v-list-item
-                    v-if="canCancel(item)"
-                    class="text-error"
-                    @click="confirmCancel(item)"
-                  >
-                    <template #prepend>
-                      <v-icon size="18" color="error"
-                        >mdi-close-circle-outline</v-icon
-                      >
-                    </template>
-                    <v-list-item-title>Batalkan</v-list-item-title>
-                  </v-list-item>
-                </v-list>
-              </v-menu>
             </div>
           </template>
 
@@ -289,7 +267,7 @@
 
               <div class="empty-title">Belum ada data registrasi</div>
 
-              <div class="empty-text">
+              <div class="empty-description">
                 Data akan muncul setelah FO menyimpan registrasi layanan.
               </div>
 
@@ -307,7 +285,7 @@
       </div>
 
       <div class="table-footer">
-        <div class="text-body-2 text-medium-emphasis">
+        <div class="footer-count">
           Total data: <strong>{{ pagination.total }}</strong>
         </div>
 
@@ -421,36 +399,30 @@ export default {
 
       headers: [
         {
-          title: "Registrasi",
-          key: "registrasi_info",
+          title: "Registrasi & Pasien",
+          key: "registrasi_pasien",
           sortable: false,
-          width: 210,
-        },
-        {
-          title: "Pasien & Petugas",
-          key: "pasien_info",
-          sortable: false,
-          minWidth: 360,
+          minWidth: 520,
         },
         {
           title: "Layanan",
           key: "layanan",
           sortable: false,
-          minWidth: 260,
+          minWidth: 230,
         },
         {
-          title: "Total & Status",
+          title: "Total / Status",
           key: "total_status",
           sortable: false,
           align: "end",
-          width: 190,
+          width: 220,
         },
         {
           title: "Aksi",
           key: "actions",
           sortable: false,
           align: "end",
-          width: 300,
+          width: 260,
         },
       ],
 
@@ -485,18 +457,6 @@ export default {
   },
 
   methods: {
-    getStatusClass(value) {
-      const numberValue = Number(value || 0);
-
-      const map = {
-        0: "status-draft",
-        1: "status-active",
-        2: "status-done",
-        9: "status-cancel",
-      };
-
-      return map[numberValue] || "status-draft";
-    },
     getToday() {
       const d = new Date();
       const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -504,27 +464,6 @@ export default {
       const year = d.getFullYear();
 
       return `${year}-${month}-${day}`;
-    },
-
-    formatTime(value) {
-      if (!value) return "-";
-
-      const date = new Date(value);
-
-      if (Number.isNaN(date.getTime())) {
-        return "-";
-      }
-
-      return date.toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    },
-
-    showSnackbar(text, color = "success") {
-      this.snackbar.show = true;
-      this.snackbar.text = text;
-      this.snackbar.color = color;
     },
 
     async fetchData() {
@@ -542,7 +481,6 @@ export default {
         };
 
         const response = await registrasiLayananService.getAll(params);
-
         const payload = response?.data || response;
 
         this.rows = this.extractRows(payload);
@@ -658,42 +596,17 @@ export default {
 
     getChannelLabel(value) {
       const numberValue = Number(value || 0);
+      const stringValue = String(value || "").toLowerCase();
 
-      if (numberValue === 1) return "Konsultasi Offline";
-      if (numberValue === 2) return "Konsultasi Online";
+      if (numberValue === 1 || stringValue === "offline") {
+        return "Konsultasi Offline";
+      }
 
-      if (value === "offline") return "Konsultasi Offline";
-      if (value === "online") return "Konsultasi Online";
+      if (numberValue === 2 || stringValue === "online") {
+        return "Konsultasi Online";
+      }
 
       return "Konsultasi";
-    },
-
-    getTaskLabel(value) {
-      const numberValue = Number(value || 0);
-
-      const map = {
-        0: "Tidak Ada Task",
-        1: "Konsultasi",
-        2: "Treatment",
-        3: "Nurse Station",
-        4: "Pembayaran",
-      };
-
-      return map[numberValue] || "-";
-    },
-
-    getTaskColor(value) {
-      const numberValue = Number(value || 0);
-
-      const map = {
-        0: "grey",
-        1: "primary",
-        2: "success",
-        3: "warning",
-        4: "info",
-      };
-
-      return map[numberValue] || "grey";
     },
 
     getStatusLabel(value) {
@@ -709,26 +622,238 @@ export default {
       return map[numberValue] || "-";
     },
 
-    getStatusColor(value) {
-      const numberValue = Number(value || 0);
+    getFlowStatus(item) {
+      const status = Number(item?.status || 0);
 
-      const map = {
-        0: "grey",
-        1: "primary",
-        2: "success",
-        9: "error",
+      if (status === 9) {
+        return {
+          label: "Batal",
+          color: "error",
+          icon: "mdi-close-circle-outline",
+        };
+      }
+
+      if (status === 2) {
+        return {
+          label: "Selesai",
+          color: "success",
+          icon: "mdi-check-circle-outline",
+        };
+      }
+
+      if (this.isDoctorFlow(item)) {
+        return {
+          label: "Menunggu Dokter",
+          color: "primary",
+          icon: "mdi-stethoscope",
+        };
+      }
+
+      if (this.isNurseFlow(item)) {
+        return {
+          label: "Menunggu Perawat",
+          color: "success",
+          icon: "mdi-account-heart-outline",
+        };
+      }
+
+      if (this.isPaymentFlow(item)) {
+        return {
+          label: "Menunggu Pembayaran",
+          color: "warning",
+          icon: "mdi-cash-clock",
+        };
+      }
+
+      if (Number(item?.current_task || 0) > 0) {
+        return {
+          label: "Dalam Proses",
+          color: "info",
+          icon: "mdi-progress-clock",
+        };
+      }
+
+      if (status === 1) {
+        return {
+          label: "Aktif",
+          color: "primary",
+          icon: "mdi-check-circle-outline",
+        };
+      }
+
+      return {
+        label: this.getStatusLabel(status),
+        color: "grey",
+        icon: "mdi-information-outline",
       };
+    },
 
-      return map[numberValue] || "grey";
+    getPrimaryAction(item) {
+      const status = Number(item?.status || 0);
+
+      if (status === 9 || status === 2 || status === 0) {
+        return {
+          label: "Detail",
+          icon: "mdi-eye-outline",
+          color: "grey-darken-1",
+          type: "detail",
+        };
+      }
+
+      if (status !== 1) {
+        return {
+          label: "Detail",
+          icon: "mdi-eye-outline",
+          color: "grey-darken-1",
+          type: "detail",
+        };
+      }
+
+      if (this.isDoctorFlow(item)) {
+        return {
+          label: "Ke Dokter",
+          icon: "mdi-stethoscope",
+          color: "primary",
+          type: "doctor",
+        };
+      }
+
+      if (this.isNurseFlow(item)) {
+        return {
+          label: "Ke Perawat",
+          icon: "mdi-account-heart-outline",
+          color: "success",
+          type: "nurse",
+        };
+      }
+
+      if (this.isPaymentFlow(item)) {
+        return {
+          label: "Ke Pembayaran",
+          icon: "mdi-cash-register",
+          color: "warning",
+          type: "payment",
+        };
+      }
+
+      if (Number(item?.current_task || 0) > 0) {
+        return {
+          label: "Lanjutkan",
+          icon: "mdi-play-circle-outline",
+          color: "primary",
+          type: "task",
+        };
+      }
+
+      return {
+        label: "Detail",
+        icon: "mdi-eye-outline",
+        color: "grey-darken-1",
+        type: "detail",
+      };
+    },
+
+    handlePrimaryAction(item) {
+      const action = this.getPrimaryAction(item);
+
+      if (!action) return;
+
+      if (action.type === "doctor") {
+        this.goToDoctorQueue(item);
+        return;
+      }
+
+      if (action.type === "payment") {
+        this.goToPayment(item);
+        return;
+      }
+
+      if (action.type === "nurse") {
+        this.goToNurseQueue(item);
+        return;
+      }
+
+      if (action.type === "task") {
+        this.goToProcess(item);
+        return;
+      }
+
+      this.goToDetail(item);
     },
 
     isTrue(value) {
       return value === true || value === 1 || value === "1";
     },
 
-    canProcess(item) {
+    hasConsultation(item) {
+      const value = item?.channel_konsultasi;
+      const numberValue = Number(value || 0);
+      const stringValue = String(value || "").toLowerCase();
+
       return (
-        Number(item?.status || 0) === 1 && Number(item?.current_task || 0) > 0
+        numberValue > 0 || stringValue === "offline" || stringValue === "online"
+      );
+    },
+
+    hasTreatment(item) {
+      return this.isTrue(item?.is_treatment);
+    },
+
+    hasSales(item) {
+      return this.isTrue(item?.is_penjualan);
+    },
+
+    isPaymentPaid(item) {
+      const candidates = [
+        item?.status_pembayaran,
+        item?.pembayaran_status,
+        item?.payment_status,
+        item?.invoice_status,
+        item?.pembayaran?.status,
+        item?.invoice?.status,
+      ];
+
+      return candidates.some((value) => {
+        const stringValue = String(value ?? "").toLowerCase();
+        const numberValue = Number(value);
+
+        return (
+          numberValue === 2 ||
+          numberValue === 3 ||
+          stringValue === "paid" ||
+          stringValue === "lunas" ||
+          stringValue === "selesai" ||
+          stringValue === "success" ||
+          stringValue === "settled"
+        );
+      });
+    },
+
+    isDoctorFlow(item) {
+      return this.hasConsultation(item);
+    },
+
+    isPaymentFlow(item) {
+      const needPayment =
+        (this.hasSales(item) || this.hasTreatment(item)) &&
+        !this.hasConsultation(item);
+
+      return needPayment && !this.isPaymentPaid(item);
+    },
+
+    isNurseFlow(item) {
+      return (
+        this.hasTreatment(item) &&
+        !this.hasConsultation(item) &&
+        this.isPaymentPaid(item)
+      );
+    },
+
+    isSalesOnly(item) {
+      return (
+        this.hasSales(item) &&
+        !this.hasConsultation(item) &&
+        !this.hasTreatment(item)
       );
     },
 
@@ -744,26 +869,62 @@ export default {
       this.$router.push(`/resepsionis/registrasi-layanan/${item.id}`);
     },
 
+    getRegistrasiId(item) {
+      return item?.registrasi_id || item?.registrasi?.id || item?.id;
+    },
+
+    getPembayaranId(item) {
+      return (
+        item?.pembayaran_id ||
+        item?.payment_id ||
+        item?.invoice_id ||
+        item?.pembayaran?.id ||
+        item?.invoice?.id ||
+        this.getRegistrasiId(item)
+      );
+    },
+
+    goToDoctorQueue(item) {
+      const id = this.getRegistrasiId(item);
+
+      if (!id) {
+        this.showSnackbar("ID registrasi tidak ditemukan", "error");
+        return;
+      }
+
+      this.$router.push(
+        `/pelayanan-medis/antrian-dokter/${id}/proses-antrian-dokter`,
+      );
+    },
+
+    goToPayment(item) {
+      const id = this.getPembayaranId(item);
+
+      if (!id) {
+        this.showSnackbar("ID pembayaran tidak ditemukan", "error");
+        return;
+      }
+
+      this.$router.push(`/kasir/daftar-pembayaran/${id}/proses-pembayaran`);
+    },
+
+    goToNurseQueue() {
+      this.$router.push("/pelayanan-medis/antrian-perawat");
+    },
+
     goToProcess(item) {
-      const task = Number(item?.current_task || 0);
-
-      if (task === 1) {
-        this.$router.push(`/pelayanan-medis/antrian-dokter/proses/${item.id}`);
+      if (this.isDoctorFlow(item)) {
+        this.goToDoctorQueue(item);
         return;
       }
 
-      if (task === 2) {
-        this.$router.push(`/pelayanan-medis/treatment/proses/${item.id}`);
+      if (this.isPaymentFlow(item)) {
+        this.goToPayment(item);
         return;
       }
 
-      if (task === 3) {
-        this.$router.push(`/pelayanan-medis/nurse-station/proses/${item.id}`);
-        return;
-      }
-
-      if (task === 4) {
-        this.$router.push(`/kasir/pembayaran/proses/${item.id}`);
+      if (this.isNurseFlow(item)) {
+        this.goToNurseQueue(item);
         return;
       }
 
@@ -801,8 +962,29 @@ export default {
       }
     },
 
+    showSnackbar(text, color = "success") {
+      this.snackbar.show = true;
+      this.snackbar.text = text;
+      this.snackbar.color = color;
+    },
+
     formatNumber(value) {
       return Number(value || 0).toLocaleString("id-ID");
+    },
+
+    formatTime(value) {
+      if (!value) return "-";
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return "-";
+      }
+
+      return date.toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     },
 
     formatDate(value) {
@@ -831,538 +1013,6 @@ export default {
         year: "numeric",
       });
     },
-
-    formatDateTime(value) {
-      if (!value) return "-";
-
-      const date = new Date(value);
-
-      if (Number.isNaN(date.getTime())) {
-        return value;
-      }
-
-      return date.toLocaleString("id-ID", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    },
   },
 };
 </script>
-
-<style scoped>
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.page-title {
-  font-size: 26px;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0;
-}
-
-.page-subtitle {
-  margin: 6px 0 0;
-  font-size: 14px;
-  color: #64748b;
-}
-
-.main-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  background: #fff;
-  overflow: hidden;
-}
-
-.toolbar-wrap {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 16px;
-  flex-wrap: wrap;
-}
-
-.filter-wrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.action-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.search-field {
-  width: 320px;
-  max-width: 100%;
-}
-
-.date-field {
-  width: 180px;
-}
-
-.status-field {
-  width: 160px;
-}
-
-.table-wrap {
-  border-top: 1px solid #eef2f7;
-  overflow-x: auto;
-}
-
-.registrasi-table {
-  background: #fff;
-  min-width: 1210px;
-}
-
-.registrasi-table :deep(thead th) {
-  height: 52px !important;
-  background: #f8fafc !important;
-  color: #334155 !important;
-  font-size: 13px !important;
-  font-weight: 800 !important;
-  text-transform: none;
-  letter-spacing: 0;
-  white-space: nowrap;
-  border-bottom: 1px solid #e5e7eb !important;
-}
-
-.registrasi-table :deep(tbody tr) {
-  min-height: 74px;
-  transition: background 0.15s ease;
-}
-
-.registrasi-table :deep(tbody tr:hover) {
-  background: #f8fbff !important;
-}
-
-.registrasi-table :deep(td) {
-  padding: 14px 16px !important;
-  vertical-align: middle;
-  border-bottom: 1px solid #eef2f7 !important;
-}
-
-.kode-cell {
-  max-width: 150px;
-  color: #0f172a;
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1.45;
-  white-space: normal;
-  word-break: break-word;
-}
-
-.date-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.date-main {
-  font-size: 14px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.3;
-}
-
-.date-sub {
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  color: #64748b;
-  line-height: 1.3;
-}
-
-.patient-cell {
-  line-height: 1.4;
-}
-
-.patient-name {
-  font-size: 15px;
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 4px;
-}
-
-.patient-meta {
-  font-size: 13px;
-  color: #64748b;
-}
-
-.petugas-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  font-size: 13px;
-}
-
-.petugas-row {
-  display: grid;
-  grid-template-columns: 68px 1fr;
-  gap: 8px;
-  align-items: center;
-  line-height: 1.35;
-}
-
-.petugas-row span {
-  color: #64748b;
-}
-
-.petugas-row strong {
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.chip-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  max-width: 270px;
-}
-
-.service-chip {
-  min-height: 26px;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  padding-inline: 10px !important;
-}
-
-.total-cell {
-  font-size: 15px;
-  font-weight: 900;
-  color: #0f172a;
-  white-space: nowrap;
-  line-height: 1.3;
-}
-
-.status-cell {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.action-cell {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: nowrap;
-}
-
-.table-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border-top: 1px solid #eef2f7;
-  flex-wrap: wrap;
-}
-
-.footer-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.per-page-field {
-  width: 90px;
-}
-
-.empty-state {
-  min-height: 260px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 32px;
-  text-align: center;
-}
-
-.empty-title {
-  margin-top: 10px;
-  font-size: 16px;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.empty-text {
-  font-size: 13px;
-  color: #64748b;
-}
-
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-  }
-
-  .toolbar-wrap {
-    flex-direction: column;
-  }
-
-  .filter-wrap,
-  .action-wrap {
-    width: 100%;
-  }
-
-  .search-field,
-  .date-field,
-  .status-field {
-    width: 100%;
-  }
-
-  .action-wrap .v-btn {
-    flex: 1;
-  }
-
-  .table-footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .footer-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .per-page-field {
-    width: 100%;
-  }
-}
-.table-wrap {
-  border-top: 1px solid #eef2f7;
-  overflow-x: auto;
-}
-
-.registrasi-table {
-  background: #fff;
-  min-width: 980px;
-}
-
-.registrasi-table :deep(thead th) {
-  height: 50px !important;
-  background: #f8fafc !important;
-  color: #334155 !important;
-  font-size: 13px !important;
-  font-weight: 800 !important;
-  text-transform: none;
-  letter-spacing: 0;
-  white-space: nowrap;
-  border-bottom: 1px solid #e5e7eb !important;
-}
-
-.registrasi-table :deep(td) {
-  padding: 16px 18px !important;
-  vertical-align: middle;
-  border-bottom: 1px solid #eef2f7 !important;
-}
-
-.registrasi-table :deep(tbody tr:hover) {
-  background: #f8fbff !important;
-}
-
-.registrasi-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.kode-cell {
-  max-width: 170px;
-  color: #0f172a;
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1.35;
-  word-break: break-word;
-}
-
-.date-line {
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  color: #64748b;
-  line-height: 1.3;
-}
-
-.pasien-info {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.patient-name {
-  font-size: 15px;
-  font-weight: 800;
-  color: #0f172a;
-  line-height: 1.35;
-}
-
-.patient-meta {
-  font-size: 13px;
-  color: #64748b;
-}
-
-.petugas-inline {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-  margin-top: 4px;
-}
-
-.petugas-inline div {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-}
-
-.petugas-inline span {
-  color: #64748b;
-}
-
-.petugas-inline strong {
-  color: #0f172a;
-  font-weight: 800;
-}
-
-.chip-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  max-width: 250px;
-}
-
-.service-chip {
-  min-height: 28px;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  padding-inline: 10px !important;
-}
-
-.total-status-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.total-cell {
-  font-size: 15px;
-  font-weight: 900;
-  color: #0f172a;
-  white-space: nowrap;
-  line-height: 1.3;
-}
-
-.action-cell {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: nowrap;
-}
-.total-status-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.total-cell {
-  font-size: 15px;
-  font-weight: 900;
-  color: #0f172a;
-  white-space: nowrap;
-  line-height: 1.3;
-}
-
-.status-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 1;
-  padding: 0;
-  background: transparent;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-}
-
-.status-draft {
-  color: #64748b;
-}
-
-.status-draft .status-dot {
-  background: #94a3b8;
-}
-
-.status-active {
-  color: #2563eb;
-}
-
-.status-active .status-dot {
-  background: #2563eb;
-}
-
-.status-done {
-  color: #16a34a;
-}
-
-.status-done .status-dot {
-  background: #16a34a;
-}
-
-.status-cancel {
-  color: #dc2626;
-}
-
-.status-cancel .status-dot {
-  background: #dc2626;
-}
-
-.action-cell {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: nowrap;
-}
-
-.process-btn {
-  min-height: 34px;
-  min-width: 92px;
-  padding-inline: 14px !important;
-  text-transform: none;
-  font-size: 13px !important;
-  font-weight: 800 !important;
-  letter-spacing: 0;
-  box-shadow: 0 4px 10px rgba(34, 197, 94, 0.16);
-}
-
-.more-btn {
-  width: 34px !important;
-  height: 34px !important;
-}
-</style>
