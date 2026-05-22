@@ -119,6 +119,19 @@ const referenceService = {
     const response = await api.get("/reference/pasien", { params });
     return response.data.data;
   },
+
+  async metodeBayar() {
+    const response = await api.get("/reference/metode-bayar");
+    return response.data.data;
+  },
+
+  async voucherDiskonEligible(params = {}) {
+    const response = await api.get("/reference/voucher-diskon-eligible", {
+      params,
+    });
+
+    return response.data.data;
+  },
 };
 
 export default referenceService;
