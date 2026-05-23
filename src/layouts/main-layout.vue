@@ -14,9 +14,11 @@
         @cabang-changed="handleCabangChanged"
       />
 
-      <v-main class="content-area">
+      <v-main ref="contentArea" class="content-area">
         <v-container fluid class="pa-6">
-          <router-view />
+          <router-view v-slot="{ Component }">
+            <component :is="Component" :key="contentReloadKey" />
+          </router-view>
         </v-container>
       </v-main>
     </div>
@@ -44,7 +46,20 @@ export default {
 
       selectedCabangId: localStorage.getItem("selected_toko_id") || null,
       selectedCabangObject: this.getLocalJson("selected_toko"),
+
+      contentVersion: 0,
     };
+  },
+
+  computed: {
+    contentReloadKey() {
+      return [
+        this.$route.fullPath,
+        this.selectedRoleId || "no-role",
+        this.selectedCabangId || "no-cabang",
+        this.contentVersion,
+      ].join("-");
+    },
   },
 
   methods: {
@@ -57,9 +72,24 @@ export default {
       }
     },
 
+    reloadCurrentContent() {
+      this.contentVersion += 1;
+
+      this.$nextTick(() => {
+        const contentEl = this.$refs.contentArea?.$el;
+
+        if (contentEl) {
+          contentEl.scrollTop = 0;
+        }
+      });
+    },
+
     handleRoleChanged(payload) {
-      this.selectedRoleId = payload?.role_id || payload?.id || null;
-      this.selectedRoleObject = payload?.role || null;
+      const roleId = payload?.role_id || payload?.id || null;
+      const roleObject = payload?.role || null;
+
+      this.selectedRoleId = roleId ? String(roleId) : null;
+      this.selectedRoleObject = roleObject;
 
       if (payload?.is_initial) {
         return;
@@ -67,12 +97,23 @@ export default {
 
       if (this.$route.path !== "/dashboard") {
         this.$router.replace("/dashboard");
+      } else {
+        this.reloadCurrentContent();
       }
     },
 
     handleCabangChanged(payload) {
-      this.selectedCabangId = payload?.toko_id || payload?.id || null;
-      this.selectedCabangObject = payload?.cabang || null;
+      const cabangId = payload?.toko_id || payload?.id || null;
+      const cabangObject = payload?.cabang || null;
+
+      this.selectedCabangId = cabangId ? String(cabangId) : null;
+      this.selectedCabangObject = cabangObject;
+
+      if (payload?.is_initial) {
+        return;
+      }
+
+      this.reloadCurrentContent();
     },
   },
 };

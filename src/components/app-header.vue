@@ -340,35 +340,40 @@ export default {
     },
 
     async onCabangChange(value) {
-      if (String(value) === String(localStorage.getItem("selected_toko_id"))) {
+      const newValue = String(value || "");
+      const oldValue = String(localStorage.getItem("selected_toko_id") || "");
+
+      if (!newValue || newValue === oldValue) {
         return;
       }
 
       this.switchingCabang = true;
 
-      const selected = this.cabangOptions.find(
-        (item) => String(item.value) === String(value),
-      );
+      try {
+        const selected = this.cabangOptions.find(
+          (item) => String(item.value) === newValue,
+        );
 
-      localStorage.setItem("selected_toko_id", String(value));
+        localStorage.setItem("selected_toko_id", newValue);
 
-      if (selected) {
-        localStorage.setItem("selected_toko", JSON.stringify(selected.raw));
-      } else {
-        localStorage.removeItem("selected_toko");
+        if (selected) {
+          localStorage.setItem("selected_toko", JSON.stringify(selected.raw));
+        } else {
+          localStorage.removeItem("selected_toko");
+        }
+
+        this.$emit("update:cabang", newValue);
+
+        this.$emit("cabang-changed", {
+          toko_id: newValue,
+          cabang: selected?.raw || null,
+          is_initial: false,
+        });
+      } finally {
+        setTimeout(() => {
+          this.switchingCabang = false;
+        }, 180);
       }
-
-      this.$emit("update:cabang", String(value));
-
-      this.$emit("cabang-changed", {
-        toko_id: String(value),
-        cabang: selected?.raw || null,
-        is_initial: false,
-      });
-
-      await new Promise((resolve) => setTimeout(resolve, 180));
-
-      this.switchingCabang = false;
     },
 
     async onRoleChange(value) {

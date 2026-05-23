@@ -63,12 +63,6 @@
             {{ rowNumber(index) }}
           </template>
 
-          <template #item.kode="{ item }">
-            <span class="font-weight-medium">
-              {{ item.kode || "-" }}
-            </span>
-          </template>
-
           <template #item.nama="{ item }">
             <div>
               <div class="font-weight-medium">
@@ -196,10 +190,6 @@
           </div>
 
           <div class="d-flex ga-2 flex-wrap">
-            <v-chip size="small" color="blue" variant="tonal">
-              {{ selectedItem?.kode || "-" }}
-            </v-chip>
-
             <v-chip
               v-if="
                 selectedItem?.kode_accurate &&
@@ -209,19 +199,7 @@
               color="indigo"
               variant="tonal"
             >
-              Accurate: {{ selectedItem.kode_accurate }}
-            </v-chip>
-
-            <v-chip
-              size="small"
-              :color="
-                Number(selectedItem?.is_delete || 0) === 1 ? 'error' : 'success'
-              "
-              variant="tonal"
-            >
-              {{
-                Number(selectedItem?.is_delete || 0) === 1 ? "Deleted" : "Aktif"
-              }}
+              Kode Accurate: {{ selectedItem.kode_accurate }}
             </v-chip>
           </div>
         </div>
@@ -229,65 +207,10 @@
         <v-divider />
 
         <v-card-text class="detail-body">
-          <v-row class="mb-3">
-            <v-col cols="12" md="3">
-              <div class="summary-box summary-blue">
-                <div class="summary-label">Jumlah Cabang</div>
-                <div class="summary-value">
-                  {{ selectedItem?.jumlah_cabang || 0 }}
-                </div>
-              </div>
-            </v-col>
-
-            <v-col cols="12" md="3">
-              <div class="summary-box summary-green">
-                <div class="summary-label">Range Tarif</div>
-                <div class="summary-value">
-                  {{ selectedItem?.range_tarif || "-" }}
-                </div>
-              </div>
-            </v-col>
-
-            <v-col cols="12" md="3">
-              <div class="summary-box summary-blue">
-                <div class="summary-label">PPN</div>
-                <div>
-                  <v-chip
-                    size="x-small"
-                    :color="
-                      Number(selectedItem?.is_ppn || 0) === 1
-                        ? 'success'
-                        : 'grey'
-                    "
-                    variant="flat"
-                  >
-                    {{ selectedItem?.is_ppn_label || "-" }}
-                  </v-chip>
-                </div>
-              </div>
-            </v-col>
-
-            <v-col cols="12" md="3">
-              <div class="summary-box summary-cyan">
-                <div class="summary-label">Durasi</div>
-                <div class="summary-value">
-                  {{ selectedItem?.durasi_label || "-" }}
-                </div>
-              </div>
-            </v-col>
-          </v-row>
-
           <div class="info-card mb-5">
             <div class="section-heading">Informasi Treatment</div>
 
             <v-row>
-              <v-col cols="12" md="4">
-                <div class="info-box">
-                  <div class="info-label">Kode Treatment</div>
-                  <div class="info-value">{{ selectedItem?.kode || "-" }}</div>
-                </div>
-              </v-col>
-
               <v-col cols="12" md="4">
                 <div class="info-box">
                   <div class="info-label">Kode Accurate</div>
@@ -303,7 +226,6 @@
                   <div class="info-value">{{ selectedItem?.nama || "-" }}</div>
                 </div>
               </v-col>
-
               <v-col cols="12" md="3">
                 <div class="info-box">
                   <div class="info-label">Kategori Sales</div>
@@ -512,7 +434,6 @@ export default {
 
       headers: [
         { title: "NO", key: "no", sortable: false, width: "70px" },
-        { title: "KODE", key: "kode" },
         { title: "NAMA TREATMENT", key: "nama" },
         { title: "KATEGORI", key: "kategori_sales" },
         { title: "DURASI", key: "durasi_label" },
@@ -702,6 +623,7 @@ export default {
         kategori_sales: item.kategori_sales ?? "-",
         unit_nama: this.getRelationName(
           item.unit,
+          "nama_unit",
           "nama_unit_treatment",
           "nama",
         ),

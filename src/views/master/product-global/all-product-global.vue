@@ -27,7 +27,7 @@
 
         <v-text-field
           v-model="search"
-          placeholder="Cari kode, nama produk, kategori..."
+          placeholder="Cari nama produk, kategori..."
           prepend-inner-icon="mdi-magnify"
           variant="outlined"
           density="compact"
@@ -62,13 +62,6 @@
           <template #item.no="{ index }">
             {{ rowNumber(index) }}
           </template>
-
-          <template #item.kode="{ item }">
-            <span class="font-weight-medium">
-              {{ item.kode || "-" }}
-            </span>
-          </template>
-
           <template #item.kode_accurate="{ item }">
             {{ item.kode_accurate || "-" }}
           </template>
@@ -337,15 +330,6 @@
               <v-row>
                 <v-col cols="12" md="4">
                   <div class="detail-field">
-                    <div class="detail-label">Kode Produk</div>
-                    <div class="detail-value">
-                      {{ selectedItem?.kode || "-" }}
-                    </div>
-                  </div>
-                </v-col>
-
-                <v-col cols="12" md="4">
-                  <div class="detail-field">
                     <div class="detail-label">Kode Accurate</div>
                     <div class="detail-value">
                       {{ selectedItem?.kode_accurate || "-" }}
@@ -579,7 +563,6 @@ export default {
 
       headers: [
         { title: "NO", key: "no", sortable: false, width: "70px" },
-        { title: "KODE", key: "kode" },
         { title: "KODE ACCURATE", key: "kode_accurate" },
         { title: "NAMA PRODUK", key: "nama" },
         { title: "KATEGORI", key: "kategori_produk_nama" },
@@ -761,8 +744,6 @@ export default {
 
       return {
         id: item.id,
-        legacy_id: item.legacy_id ?? null,
-        kode: item.kode ?? "-",
         kode_accurate: item.kode_accurate ?? "-",
         nama: item.nama ?? "-",
 

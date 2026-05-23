@@ -41,22 +41,12 @@
           <v-row>
             <v-col cols="12" md="4">
               <v-text-field
-                v-model="form.kode"
-                label="Kode Treatment *"
-                variant="outlined"
-                density="comfortable"
-                :rules="[rules.required]"
-                clearable
-              />
-            </v-col>
-
-            <v-col cols="12" md="4">
-              <v-text-field
                 v-model="form.kode_accurate"
                 label="Kode Accurate"
                 placeholder="Kode item Accurate global"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-barcode-scan"
                 clearable
               />
             </v-col>
@@ -67,37 +57,44 @@
                 label="Nama Treatment *"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-stethoscope"
                 :rules="[rules.required]"
                 clearable
               />
             </v-col>
 
             <v-col cols="12" md="4">
-              <v-select
+              <v-autocomplete
                 v-model="form.kategori_sales"
                 label="Kategori Sales"
                 :items="kategoriSalesOptions"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-chart-line"
                 clearable
               />
             </v-col>
 
             <v-col cols="12" md="4">
-              <v-select
+              <v-autocomplete
                 v-model="form.unit_id"
-                label="Unit"
+                label="Unit Treatment"
                 :items="unitOptions"
                 item-title="nama"
                 item-value="id"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-view-grid-outline"
+                :loading="loadingMaster"
                 clearable
+                auto-select-first
+                no-data-text="Unit treatment tidak ditemukan"
+                :custom-filter="filterOption"
               />
             </v-col>
 
             <v-col cols="12" md="4">
-              <v-select
+              <v-autocomplete
                 v-model="form.tipe_id"
                 label="Tipe Treatment"
                 :items="tipeOptions"
@@ -105,7 +102,12 @@
                 item-value="id"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-format-list-bulleted-type"
+                :loading="loadingMaster"
                 clearable
+                auto-select-first
+                no-data-text="Tipe treatment tidak ditemukan"
+                :custom-filter="filterOption"
               />
             </v-col>
 
@@ -117,6 +119,7 @@
                 type="number"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-clock-outline"
                 :rules="[rules.nonNegativeInteger]"
               />
             </v-col>
@@ -128,6 +131,9 @@
                 type="number"
                 variant="outlined"
                 density="comfortable"
+                prepend-inner-icon="mdi-sort-numeric-ascending"
+                hint="Semakin kecil angka, semakin atas urutannya"
+                persistent-hint
               />
             </v-col>
 
@@ -152,19 +158,131 @@
                 Konfigurasi Treatment Per Cabang
               </div>
               <div class="text-body-2 text-medium-emphasis">
-                Atur harga, status, dan insentif per cabang melalui tombol Atur.
+                Tambahkan cabang satu per satu atau samakan konfigurasi dari
+                cabang sumber.
               </div>
             </div>
 
-            <v-btn
-              color="primary"
-              variant="tonal"
-              prepend-icon="mdi-plus"
-              @click="addTokoConfig"
-            >
-              Tambah Cabang
-            </v-btn>
+            <div class="d-flex ga-2 flex-wrap">
+              <v-btn
+                color="primary"
+                variant="tonal"
+                prepend-icon="mdi-store-plus-outline"
+                :disabled="loadingMaster || !tokoOptions.length"
+                @click="addAllTokoConfig"
+              >
+                Tambah Semua Cabang
+              </v-btn>
+
+              <v-btn
+                color="primary"
+                variant="tonal"
+                prepend-icon="mdi-plus"
+                @click="addTokoConfig"
+              >
+                Tambah Cabang
+              </v-btn>
+            </div>
           </div>
+
+          <v-alert
+            type="info"
+            variant="tonal"
+            density="comfortable"
+            class="mb-4"
+          >
+            Untuk mempercepat edit, pilih cabang sumber lalu gunakan
+            <strong>Samakan ke Cabang Lain</strong>. Cabang tertentu tetap bisa
+            diubah manual lewat tombol Atur.
+          </v-alert>
+
+          <v-card variant="outlined" class="mb-4">
+            <v-card-text>
+              <div
+                class="d-flex justify-space-between align-center flex-wrap ga-3 mb-4"
+              >
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold">
+                    Aksi Cepat Konfigurasi
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Gunakan untuk menyamakan harga dan insentif antar cabang.
+                  </div>
+                </div>
+
+                <div class="d-flex ga-2 flex-wrap">
+                  <v-chip color="primary" variant="tonal" size="small">
+                    {{ form.toko_configs.length }} / {{ tokoOptions.length }}
+                    cabang
+                  </v-chip>
+
+                  <v-chip
+                    v-if="missingTokoCount > 0"
+                    color="warning"
+                    variant="tonal"
+                    size="small"
+                  >
+                    {{ missingTokoCount }} belum dikonfigurasi
+                  </v-chip>
+
+                  <v-chip
+                    v-else-if="tokoOptions.length"
+                    color="success"
+                    variant="tonal"
+                    size="small"
+                  >
+                    Semua cabang masuk
+                  </v-chip>
+                </div>
+              </div>
+
+              <v-row>
+                <v-col cols="12" md="4">
+                  <v-autocomplete
+                    v-model="bulkSourceTokoId"
+                    label="Cabang Sumber"
+                    :items="configuredSourceOptions"
+                    item-title="nama"
+                    item-value="id"
+                    variant="outlined"
+                    density="comfortable"
+                    prepend-inner-icon="mdi-source-branch"
+                    clearable
+                    no-data-text="Belum ada cabang yang bisa dijadikan sumber"
+                    :disabled="!configuredSourceOptions.length"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-select
+                    v-model="bulkCloneMode"
+                    label="Data yang Disamakan"
+                    :items="cloneModeOptions"
+                    item-title="title"
+                    item-value="value"
+                    variant="outlined"
+                    density="comfortable"
+                    prepend-inner-icon="mdi-content-copy"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4" class="d-flex align-center">
+                  <v-btn
+                    color="success"
+                    variant="flat"
+                    block
+                    prepend-icon="mdi-content-duplicate"
+                    :disabled="
+                      !bulkSourceTokoId || form.toko_configs.length < 2
+                    "
+                    @click="bulkApplyFromSource"
+                  >
+                    Samakan ke Cabang Lain
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
 
           <v-card variant="outlined">
             <v-data-table
@@ -172,28 +290,34 @@
               :items="form.toko_configs"
               density="compact"
               item-value="toko_id"
+              hide-default-footer
+              no-data-text="Belum ada konfigurasi cabang"
             >
-              <template v-slot:item.no="{ index }">
+              <template #item.no="{ index }">
                 {{ index + 1 }}
               </template>
 
-              <template v-slot:item.toko_id="{ item }">
-                {{ getTokoName(item.toko_id) }}
+              <template #item.toko_id="{ item }">
+                <div class="font-weight-medium">
+                  {{ getTokoName(item.toko_id) }}
+                </div>
               </template>
 
-              <template v-slot:item.tarif="{ item }">
-                {{ formatRupiah(item.tarif) }}
+              <template #item.tarif="{ item }">
+                <span class="font-weight-bold">
+                  {{ formatRupiah(item.tarif) }}
+                </span>
               </template>
 
-              <template v-slot:item.harga_terendah="{ item }">
+              <template #item.harga_terendah="{ item }">
                 {{ formatRupiah(item.harga_terendah) }}
               </template>
 
-              <template v-slot:item.biaya_modal="{ item }">
+              <template #item.biaya_modal="{ item }">
                 {{ formatRupiah(item.biaya_modal) }}
               </template>
 
-              <template v-slot:item.is_active="{ item }">
+              <template #item.is_active="{ item }">
                 <v-chip
                   size="small"
                   :color="item.is_active ? 'success' : 'error'"
@@ -203,11 +327,12 @@
                 </v-chip>
               </template>
 
-              <template v-slot:item.action="{ index }">
-                <div class="d-flex ga-2">
+              <template #item.action="{ index }">
+                <div class="d-flex ga-2 justify-end">
                   <v-btn
                     color="primary"
                     size="small"
+                    variant="tonal"
                     prepend-icon="mdi-cog"
                     @click="openTokoConfigDialog(index)"
                   >
@@ -217,6 +342,7 @@
                   <v-btn
                     color="error"
                     size="small"
+                    variant="tonal"
                     prepend-icon="mdi-delete"
                     @click="removeTokoConfig(index)"
                   >
@@ -224,224 +350,320 @@
                   </v-btn>
                 </div>
               </template>
+
+              <template #no-data>
+                <div class="text-center py-6 text-medium-emphasis">
+                  Belum ada konfigurasi cabang. Klik Tambah Cabang atau Tambah
+                  Semua Cabang untuk mulai mengisi.
+                </div>
+              </template>
             </v-data-table>
           </v-card>
 
-          <div class="d-flex justify-end ga-3 mt-6">
+          <div class="d-flex flex-column flex-md-row justify-end ga-3 mt-6">
             <v-btn
               variant="outlined"
               color="secondary"
               :to="'/master/treatment-global'"
+              :disabled="loadingSave"
             >
               Batal
             </v-btn>
 
-            <v-btn color="success" type="submit"> Update </v-btn>
+            <v-btn
+              color="success"
+              variant="flat"
+              type="submit"
+              prepend-icon="mdi-content-save"
+              :loading="loadingSave"
+              :disabled="loadingSave"
+            >
+              Update Treatment
+            </v-btn>
           </div>
         </v-form>
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="dialogTokoConfig" max-width="1100" persistent>
-      <v-card>
+    <v-dialog v-model="dialogTokoConfig" max-width="1280" persistent>
+      <v-card rounded="lg" class="config-dialog-card">
         <v-card-title class="d-flex justify-space-between align-center">
           <div>
             <div class="text-h6 font-weight-bold">Atur Konfigurasi Cabang</div>
             <div class="text-body-2 text-medium-emphasis">
-              Isi detail treatment untuk cabang terpilih.
+              Isi manual atau salin konfigurasi dari cabang lain.
             </div>
           </div>
 
           <v-btn
             icon="mdi-close"
             variant="text"
+            :disabled="loadingSave"
             @click="closeTokoConfigDialog"
           />
         </v-card-title>
 
         <v-divider />
 
-        <v-card-text>
-          <div class="text-subtitle-2 font-weight-bold mb-3">
-            Cabang & Status
-          </div>
+        <v-card-text class="config-modal-body">
+          <v-card variant="outlined" class="mb-4">
+            <v-card-text class="py-3">
+              <div class="text-subtitle-2 font-weight-bold mb-3">
+                Salin dari Cabang Lain
+              </div>
+
+              <v-row>
+                <v-col cols="12" md="5">
+                  <v-autocomplete
+                    v-model="dialogCopySourceTokoId"
+                    label="Cabang Sumber"
+                    :items="dialogSourceOptions"
+                    item-title="nama"
+                    item-value="id"
+                    variant="outlined"
+                    density="compact"
+                    prepend-inner-icon="mdi-source-branch"
+                    clearable
+                    hide-details
+                    no-data-text="Belum ada cabang sumber"
+                    :disabled="!dialogSourceOptions.length"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-select
+                    v-model="dialogCloneMode"
+                    label="Data yang Disalin"
+                    :items="cloneModeOptions"
+                    item-title="title"
+                    item-value="value"
+                    variant="outlined"
+                    density="compact"
+                    prepend-inner-icon="mdi-content-copy"
+                    hide-details
+                  />
+                </v-col>
+
+                <v-col cols="12" md="3" class="d-flex align-center">
+                  <v-btn
+                    color="success"
+                    variant="flat"
+                    block
+                    prepend-icon="mdi-content-duplicate"
+                    :disabled="!dialogCopySourceTokoId"
+                    @click="copySourceToDraft"
+                  >
+                    Terapkan
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
 
           <v-row>
             <v-col cols="12" md="6">
-              <v-select
-                v-model="configDraft.toko_id"
-                label="Cabang *"
-                :items="tokoOptions"
-                item-title="nama"
-                item-value="id"
-                variant="outlined"
-                density="comfortable"
-                clearable
-              />
+              <v-card variant="outlined" class="h-100">
+                <v-card-text class="py-3">
+                  <div class="text-subtitle-2 font-weight-bold mb-3">
+                    Cabang & Harga
+                  </div>
+
+                  <v-row>
+                    <v-col cols="12" md="8">
+                      <v-autocomplete
+                        v-model="configDraft.toko_id"
+                        label="Cabang *"
+                        :items="selectableTokoOptions"
+                        item-title="nama"
+                        item-value="id"
+                        variant="outlined"
+                        density="compact"
+                        prepend-inner-icon="mdi-store-marker-outline"
+                        :loading="loadingMaster"
+                        clearable
+                        hide-details
+                        auto-select-first
+                        no-data-text="Cabang tidak ditemukan atau sudah dikonfigurasi"
+                        :custom-filter="filterOption"
+                      />
+                    </v-col>
+
+                    <v-col cols="12" md="4" class="d-flex align-center">
+                      <v-switch
+                        v-model="configDraft.is_active"
+                        label="Aktif"
+                        color="success"
+                        inset
+                        hide-details
+                        density="compact"
+                      />
+                    </v-col>
+
+                    <v-col cols="12" md="4">
+                      <v-text-field
+                        v-model="configDraft.tarif"
+                        label="Tarif Jual *"
+                        type="number"
+                        variant="outlined"
+                        density="compact"
+                        prepend-inner-icon="mdi-cash"
+                        prefix="Rp"
+                        hide-details
+                      />
+                    </v-col>
+
+                    <v-col cols="12" md="4">
+                      <v-text-field
+                        v-model="configDraft.harga_terendah"
+                        label="Harga Terendah"
+                        type="number"
+                        variant="outlined"
+                        density="compact"
+                        prepend-inner-icon="mdi-cash-minus"
+                        prefix="Rp"
+                        hide-details
+                      />
+                    </v-col>
+
+                    <v-col cols="12" md="4">
+                      <v-text-field
+                        v-model="configDraft.biaya_modal"
+                        label="Biaya Modal"
+                        type="number"
+                        variant="outlined"
+                        density="compact"
+                        prepend-inner-icon="mdi-cash-multiple"
+                        prefix="Rp"
+                        hide-details
+                      />
+                    </v-col>
+
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="configDraft.tarif_beautician"
+                        label="Tarif Beautician"
+                        type="number"
+                        variant="outlined"
+                        density="compact"
+                        prefix="Rp"
+                        hide-details
+                      />
+                    </v-col>
+
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="configDraft.sort_order"
+                        label="Sort Order Cabang"
+                        type="number"
+                        variant="outlined"
+                        density="compact"
+                        prepend-inner-icon="mdi-sort-numeric-ascending"
+                        hide-details
+                      />
+                    </v-col>
+                  </v-row>
+                </v-card-text>
+              </v-card>
             </v-col>
 
-            <v-col cols="12" md="6" class="d-flex align-center">
-              <v-switch
-                v-model="configDraft.is_active"
-                label="Aktif di Cabang"
-                color="success"
-                inset
-                hide-details
-              />
-            </v-col>
-          </v-row>
+            <v-col cols="12" md="6">
+              <v-card variant="outlined" class="h-100">
+                <v-card-text class="py-3">
+                  <div class="text-subtitle-2 font-weight-bold mb-3">
+                    Insentif
+                  </div>
 
-          <v-divider class="my-5" />
+                  <v-row>
+                    <v-col cols="12" md="6">
+                      <v-select
+                        v-model="configDraft.insentif_use"
+                        label="Metode Dokter"
+                        :items="insentifOptions"
+                        variant="outlined"
+                        density="compact"
+                        prepend-inner-icon="mdi-account-cash-outline"
+                        hide-details
+                      />
+                    </v-col>
 
-          <div class="text-subtitle-2 font-weight-bold mb-3">Harga</div>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="configDraft.tarif_dokter"
+                        label="Tarif Dokter"
+                        type="number"
+                        variant="outlined"
+                        density="compact"
+                        prefix="Rp"
+                        hide-details
+                      />
+                    </v-col>
 
-          <v-row>
-            <v-col cols="12" md="4">
-              <v-text-field
-                v-model="configDraft.tarif"
-                label="Tarif Jual *"
-                type="number"
-                variant="outlined"
-                density="comfortable"
-              />
-            </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="configDraft.presentase_tarif_dokter"
+                        label="% Dokter"
+                        type="number"
+                        variant="outlined"
+                        density="compact"
+                        suffix="%"
+                        hide-details
+                        :disabled="configDraft.insentif_use !== 'Percent'"
+                      />
+                    </v-col>
 
-            <v-col cols="12" md="4">
-              <v-text-field
-                v-model="configDraft.harga_terendah"
-                label="Harga Terendah"
-                type="number"
-                variant="outlined"
-                density="comfortable"
-              />
-            </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="configDraft.flat_tarif_dokter"
+                        label="Flat Dokter"
+                        type="number"
+                        variant="outlined"
+                        density="compact"
+                        prefix="Rp"
+                        hide-details
+                        :disabled="configDraft.insentif_use !== 'Flat'"
+                      />
+                    </v-col>
 
-            <v-col cols="12" md="4">
-              <v-text-field
-                v-model="configDraft.biaya_modal"
-                label="Biaya Modal"
-                type="number"
-                variant="outlined"
-                density="comfortable"
-              />
-            </v-col>
-          </v-row>
+                    <v-col cols="12" md="6">
+                      <v-select
+                        v-model="configDraft.insentif_use_sp"
+                        label="Metode Dokter SP"
+                        :items="insentifOptions"
+                        variant="outlined"
+                        density="compact"
+                        prepend-inner-icon="mdi-account-star-outline"
+                        hide-details
+                      />
+                    </v-col>
 
-          <v-divider class="my-5" />
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="configDraft.presentase_tarif_dokter_sp"
+                        label="% Dokter SP"
+                        type="number"
+                        variant="outlined"
+                        density="compact"
+                        suffix="%"
+                        hide-details
+                        :disabled="configDraft.insentif_use_sp !== 'Percent'"
+                      />
+                    </v-col>
 
-          <div class="text-subtitle-2 font-weight-bold mb-3">
-            Insentif Dokter
-          </div>
-
-          <v-row>
-            <v-col cols="12" md="4">
-              <v-select
-                v-model="configDraft.insentif_use"
-                label="Metode Insentif Dokter"
-                :items="insentifOptions"
-                variant="outlined"
-                density="comfortable"
-              />
-            </v-col>
-
-            <v-col cols="12" md="4">
-              <v-text-field
-                v-model="configDraft.tarif_dokter"
-                label="Tarif Dokter"
-                type="number"
-                variant="outlined"
-                density="comfortable"
-              />
-            </v-col>
-
-            <v-col cols="12" md="4">
-              <v-text-field
-                v-model="configDraft.presentase_tarif_dokter"
-                label="% Dokter"
-                type="number"
-                variant="outlined"
-                density="comfortable"
-                :disabled="configDraft.insentif_use !== 'Percent'"
-              />
-            </v-col>
-
-            <v-col cols="12" md="4">
-              <v-text-field
-                v-model="configDraft.flat_tarif_dokter"
-                label="Flat Dokter"
-                type="number"
-                variant="outlined"
-                density="comfortable"
-                :disabled="configDraft.insentif_use !== 'Flat'"
-              />
-            </v-col>
-          </v-row>
-
-          <v-divider class="my-5" />
-
-          <div class="text-subtitle-2 font-weight-bold mb-3">
-            Insentif Dokter Spesialis
-          </div>
-
-          <v-row>
-            <v-col cols="12" md="4">
-              <v-select
-                v-model="configDraft.insentif_use_sp"
-                label="Metode Insentif Dokter Spesialis"
-                :items="insentifOptions"
-                variant="outlined"
-                density="comfortable"
-              />
-            </v-col>
-
-            <v-col cols="12" md="4">
-              <v-text-field
-                v-model="configDraft.presentase_tarif_dokter_sp"
-                label="% Dokter SP"
-                type="number"
-                variant="outlined"
-                density="comfortable"
-                :disabled="configDraft.insentif_use_sp !== 'Percent'"
-              />
-            </v-col>
-
-            <v-col cols="12" md="4">
-              <v-text-field
-                v-model="configDraft.flat_tarif_dokter_sp"
-                label="Flat Dokter SP"
-                type="number"
-                variant="outlined"
-                density="comfortable"
-                :disabled="configDraft.insentif_use_sp !== 'Flat'"
-              />
-            </v-col>
-          </v-row>
-
-          <v-divider class="my-5" />
-
-          <div class="text-subtitle-2 font-weight-bold mb-3">
-            Insentif Beautician & Pengaturan Lain
-          </div>
-
-          <v-row>
-            <v-col cols="12" md="4">
-              <v-text-field
-                v-model="configDraft.tarif_beautician"
-                label="Tarif Beautician"
-                type="number"
-                variant="outlined"
-                density="comfortable"
-              />
-            </v-col>
-
-            <v-col cols="12" md="4">
-              <v-text-field
-                v-model="configDraft.sort_order"
-                label="Sort Order Cabang"
-                type="number"
-                variant="outlined"
-                density="comfortable"
-              />
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="configDraft.flat_tarif_dokter_sp"
+                        label="Flat Dokter SP"
+                        type="number"
+                        variant="outlined"
+                        density="compact"
+                        prefix="Rp"
+                        hide-details
+                        :disabled="configDraft.insentif_use_sp !== 'Flat'"
+                      />
+                    </v-col>
+                  </v-row>
+                </v-card-text>
+              </v-card>
             </v-col>
           </v-row>
         </v-card-text>
@@ -452,43 +674,34 @@
           <v-btn
             variant="outlined"
             color="secondary"
+            :disabled="loadingSave"
             @click="closeTokoConfigDialog"
           >
             Batal
           </v-btn>
 
-          <v-btn color="success" @click="saveTokoConfigDialog">
+          <v-btn
+            color="success"
+            variant="flat"
+            :disabled="loadingSave"
+            @click="saveTokoConfigDialog"
+          >
             Simpan Konfigurasi
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="dialogPreview" max-width="900">
-      <v-card>
-        <v-card-title class="text-h6 font-weight-bold">
-          Preview Payload Update
-        </v-card-title>
-
-        <v-divider />
-
-        <v-card-text>
-          <pre>{{ formattedPayload }}</pre>
-        </v-card-text>
-
-        <v-divider />
-
-        <v-card-actions class="justify-end">
-          <v-btn variant="outlined" @click="dialogPreview = false">
-            Tutup
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">
+      {{ snackbar.text }}
+    </v-snackbar>
   </div>
 </template>
 
 <script>
+import treatmentService from "@/services/master/treatmentService";
+import referenceService from "@/services/referenceService";
+
 export default {
   name: "EditMasterTreatment",
 
@@ -496,102 +709,44 @@ export default {
     return {
       isValid: false,
       loadingPage: false,
-      dialogPreview: false,
-      payloadPreview: null,
+      loadingMaster: false,
+      loadingSave: false,
 
       dialogTokoConfig: false,
       editingConfigIndex: null,
       configDraft: {},
 
+      bulkSourceTokoId: null,
+      bulkCloneMode: "price",
+
+      dialogCopySourceTokoId: null,
+      dialogCloneMode: "price",
+
       kategoriSalesOptions: ["LOW", "MEDIUM", "HIGH"],
       insentifOptions: ["Flat", "Percent"],
 
-      unitOptions: [
-        { id: 1, nama: "Treatment" },
-        { id: 7, nama: "Perawatan" },
+      cloneModeOptions: [
+        { title: "Hanya harga", value: "price" },
+        { title: "Harga + insentif", value: "price_incentive" },
+        { title: "Harga + insentif + sort order", value: "full_config" },
       ],
 
-      tipeOptions: [
-        { id: 1, nama: "Facial" },
-        { id: 2, nama: "Laser" },
-        { id: 3, nama: "Injection" },
-      ],
-
-      tokoOptions: [
-        { id: 1, nama: "Malang" },
-        { id: 2, nama: "Surabaya" },
-        { id: 3, nama: "Bandung" },
-        { id: 4, nama: "Sidoarjo" },
-        { id: 5, nama: "Bekasi" },
-        { id: 6, nama: "Medan" },
-        { id: 7, nama: "Depok" },
-        { id: 8, nama: "Yogyakarta" },
-        { id: 9, nama: "Jakarta" },
-      ],
+      unitOptions: [],
+      tipeOptions: [],
+      tokoOptions: [],
 
       tokoConfigHeaders: [
-        { title: "NO", key: "no", sortable: false },
+        { title: "NO", key: "no", sortable: false, width: "70px" },
         { title: "CABANG", key: "toko_id" },
         { title: "TARIF", key: "tarif" },
         { title: "HARGA TERENDAH", key: "harga_terendah" },
         { title: "BIAYA MODAL", key: "biaya_modal" },
-        { title: "STATUS", key: "is_active" },
-        { title: "ACTION", key: "action", sortable: false },
-      ],
-
-      dummyTreatments: [
-        {
-          id: 1,
-          legacy_id: 1,
-          kode: "TR-116",
-          kode_accurate: "TR-116",
-          nama: "FACIAL BARBIE LIGHT",
-          kategori_sales: "LOW",
-          unit_id: 7,
-          tipe_id: 1,
-          waktu: 60,
-          is_ppn: 1,
-          sort_order: 1,
-          toko_configs: [
-            {
-              toko_id: 1,
-              harga_terendah: 125000,
-              tarif: 245000,
-              biaya_modal: 0,
-              tarif_dokter: 0,
-              tarif_beautician: 12500,
-              presentase_tarif_dokter: 0,
-              presentase_tarif_dokter_sp: 0,
-              flat_tarif_dokter: 0,
-              flat_tarif_dokter_sp: 0,
-              insentif_use: "Percent",
-              insentif_use_sp: "Flat",
-              is_active: 1,
-              sort_order: 1,
-            },
-            {
-              toko_id: 2,
-              harga_terendah: 135000,
-              tarif: 265000,
-              biaya_modal: 0,
-              tarif_dokter: 0,
-              tarif_beautician: 15000,
-              presentase_tarif_dokter: 0,
-              presentase_tarif_dokter_sp: 0,
-              flat_tarif_dokter: 0,
-              flat_tarif_dokter_sp: 0,
-              insentif_use: "Percent",
-              insentif_use_sp: "Flat",
-              is_active: 1,
-              sort_order: 2,
-            },
-          ],
-        },
+        { title: "STATUS", key: "is_active", sortable: false },
+        { title: "ACTION", key: "action", sortable: false, align: "end" },
       ],
 
       form: {
-        legacy_id: null,
-        kode: "",
+        id: null,
         kode_accurate: "",
         nama: "",
         kategori_sales: null,
@@ -603,11 +758,15 @@ export default {
         toko_configs: [],
       },
 
+      snackbar: {
+        show: false,
+        text: "",
+        color: "success",
+      },
+
       rules: {
         required: (v) =>
           (v !== null && v !== undefined && v !== "") || "Wajib diisi",
-        nonNegative: (v) =>
-          Number(v || 0) >= 0 || "Nilai tidak boleh kurang dari 0",
         nonNegativeInteger: (v) => {
           const val = Number(v || 0);
           return (
@@ -619,8 +778,70 @@ export default {
   },
 
   computed: {
-    formattedPayload() {
-      return JSON.stringify(this.payloadPreview, null, 2);
+    routeId() {
+      return Number(this.$route.params.id);
+    },
+
+    payload() {
+      return this.buildPayload();
+    },
+
+    missingTokoCount() {
+      if (!this.tokoOptions.length) return 0;
+
+      const configuredIds = new Set(
+        this.form.toko_configs
+          .map((item) => Number(item.toko_id))
+          .filter((id) => !!id),
+      );
+
+      return this.tokoOptions.filter(
+        (item) => !configuredIds.has(Number(item.id)),
+      ).length;
+    },
+
+    configuredSourceOptions() {
+      return this.form.toko_configs
+        .filter((item) => item.toko_id)
+        .map((item) => ({
+          id: item.toko_id,
+          nama: `${this.getTokoName(item.toko_id)} - ${this.formatRupiah(
+            item.tarif,
+          )}`,
+        }));
+    },
+
+    dialogSourceOptions() {
+      const currentTokoId = this.configDraft?.toko_id;
+
+      return this.form.toko_configs
+        .filter((item, index) => {
+          if (!item.toko_id) return false;
+          if (index === this.editingConfigIndex) return false;
+
+          if (currentTokoId && Number(item.toko_id) === Number(currentTokoId)) {
+            return false;
+          }
+
+          return true;
+        })
+        .map((item) => ({
+          id: item.toko_id,
+          nama: `${this.getTokoName(item.toko_id)} - ${this.formatRupiah(
+            item.tarif,
+          )}`,
+        }));
+    },
+
+    selectableTokoOptions() {
+      const usedIds = new Set(
+        this.form.toko_configs
+          .filter((item, index) => index !== this.editingConfigIndex)
+          .map((item) => Number(item.toko_id))
+          .filter((id) => !!id),
+      );
+
+      return this.tokoOptions.filter((item) => !usedIds.has(Number(item.id)));
     },
   },
 
@@ -629,44 +850,228 @@ export default {
   },
 
   methods: {
-    initPage() {
+    async initPage() {
       this.loadingPage = true;
 
       try {
-        const id = Number(this.$route.params.id);
-        const detail = this.dummyTreatments.find(
-          (item) => Number(item.id) === id,
+        await Promise.all([this.fetchMasterData(), this.fetchDetail()]);
+      } catch (error) {
+        console.error(error);
+
+        this.showSnackbar(
+          this.getErrorMessage(error, "Gagal memuat data treatment"),
+          "error",
         );
 
-        if (!detail) {
-          this.$router.push("/master/treatment-global");
-          return;
-        }
-
-        this.form = {
-          legacy_id: detail.legacy_id,
-          kode: detail.kode,
-          kode_accurate: detail.kode_accurate || "",
-          nama: detail.nama,
-          kategori_sales: detail.kategori_sales,
-          unit_id: detail.unit_id,
-          tipe_id: detail.tipe_id,
-          waktu: detail.waktu,
-          is_ppn: Number(detail.is_ppn) === 1,
-          sort_order: detail.sort_order,
-          toko_configs: detail.toko_configs.map((item) => ({
-            ...item,
-            is_active: Number(item.is_active) === 1,
-          })),
-        };
+        this.$router.replace("/master/treatment-global");
       } finally {
         this.loadingPage = false;
       }
     },
 
-    createEmptyTokoConfig() {
+    async fetchMasterData() {
+      this.loadingMaster = true;
+
+      try {
+        const [tokoRes, unitRes, tipeRes] = await Promise.all([
+          referenceService.toko(),
+          referenceService.unitTreatment(),
+          referenceService.tipeTreatment(),
+        ]);
+
+        this.tokoOptions = this.normalizeToko(tokoRes);
+        this.unitOptions = this.normalizeUnitTreatment(unitRes);
+        this.tipeOptions = this.normalizeTipeTreatment(tipeRes);
+      } finally {
+        this.loadingMaster = false;
+      }
+    },
+
+    async fetchDetail() {
+      if (!this.routeId) {
+        throw new Error("ID treatment tidak valid");
+      }
+
+      const response = await treatmentService.getById(this.routeId);
+      const detail = this.extractDetail(response);
+
+      if (!detail) {
+        throw new Error("Data treatment tidak ditemukan");
+      }
+
+      this.form = this.normalizeDetail(detail);
+    },
+
+    extractDetail(response) {
+      const source =
+        response?.data?.data ??
+        response?.data?.result ??
+        response?.data ??
+        response?.result ??
+        response;
+
+      if (Array.isArray(source)) {
+        return source[0] ?? null;
+      }
+
+      return source ?? null;
+    },
+
+    normalizeDetail(detail) {
+      const configs =
+        detail.harga_toko ??
+        detail.toko_mapping ??
+        detail.toko_configs ??
+        detail.treatment_toko ??
+        detail.treatment_toko_mapping ??
+        detail.toko_mappings ??
+        detail.mappings ??
+        [];
+
       return {
-        toko_id: null,
+        id: detail.id ?? this.routeId,
+        kode_accurate: detail.kode_accurate ?? detail.kode ?? "",
+        nama: detail.nama ?? detail.nama_treatment ?? "",
+        kategori_sales: detail.kategori_sales ?? null,
+
+        unit_id:
+          detail.unit_id ?? detail.unit?.id ?? detail.unit_treatment_id ?? null,
+
+        tipe_id:
+          detail.tipe_id ?? detail.tipe?.id ?? detail.tipe_treatment_id ?? null,
+
+        waktu: Number(
+          detail.waktu ?? detail.durasi ?? detail.durasi_treatment ?? 0,
+        ),
+
+        is_ppn:
+          detail.is_ppn === true ||
+          Number(detail.is_ppn ?? detail.kena_ppn ?? 0) === 1,
+
+        sort_order: Number(detail.sort_order ?? 0),
+
+        toko_configs: Array.isArray(configs)
+          ? configs.map((item) => this.normalizeConfig(item))
+          : [],
+      };
+    },
+
+    normalizeConfig(item) {
+      return {
+        id: item.id ?? item.mapping_id ?? null,
+
+        treatment_id: item.treatment_id ?? null,
+
+        toko_id:
+          item.toko_id ??
+          item.master_toko_id ??
+          item.cabang_id ??
+          item.toko?.id ??
+          null,
+
+        harga_terendah: Number(item.harga_terendah ?? 0),
+
+        tarif: Number(
+          item.tarif ?? item.harga ?? item.harga_jual ?? item.tarif_jual ?? 0,
+        ),
+
+        biaya_modal: Number(
+          item.biaya_modal ?? item.modal ?? item.harga_modal ?? 0,
+        ),
+
+        tarif_dokter: Number(item.tarif_dokter ?? 0),
+        tarif_beautician: Number(item.tarif_beautician ?? 0),
+
+        presentase_tarif_dokter: Number(item.presentase_tarif_dokter ?? 0),
+        presentase_tarif_dokter_sp: Number(
+          item.presentase_tarif_dokter_sp ?? 0,
+        ),
+
+        flat_tarif_dokter: Number(item.flat_tarif_dokter ?? 0),
+        flat_tarif_dokter_sp: Number(item.flat_tarif_dokter_sp ?? 0),
+
+        insentif_use: item.insentif_use ?? "Flat",
+        insentif_use_sp: item.insentif_use_sp ?? "Flat",
+
+        is_active:
+          item.is_active === true ||
+          Number(item.is_active ?? item.status ?? 1) === 1,
+
+        sort_order: Number(item.sort_order ?? 0),
+      };
+    },
+
+    normalizeToko(response) {
+      const rows = this.extractRows(response);
+
+      return rows
+        .map((item) => ({
+          id: item.id ?? item.toko_id ?? item.value,
+          nama: item.nama_toko ?? item.nama ?? item.name ?? item.label ?? "-",
+        }))
+        .filter((item) => item.id && item.nama);
+    },
+
+    normalizeUnitTreatment(response) {
+      const rows = this.extractRows(response);
+
+      return rows
+        .map((item) => ({
+          id: item.id ?? item.unit_id ?? item.value,
+          nama:
+            item.nama_unit_treatment ??
+            item.nama_unit ??
+            item.nama ??
+            item.name ??
+            item.label ??
+            "-",
+        }))
+        .filter((item) => item.id && item.nama);
+    },
+
+    normalizeTipeTreatment(response) {
+      const rows = this.extractRows(response);
+
+      return rows
+        .map((item) => ({
+          id: item.id ?? item.tipe_id ?? item.value,
+          nama:
+            item.nama_tipe_treatment ??
+            item.nama_tipe ??
+            item.nama ??
+            item.name ??
+            item.label ??
+            "-",
+        }))
+        .filter((item) => item.id && item.nama);
+    },
+
+    extractRows(response) {
+      const source = response?.data ?? response?.result ?? response ?? [];
+
+      if (Array.isArray(source)) return source;
+      if (Array.isArray(source.data)) return source.data;
+      if (Array.isArray(source.items)) return source.items;
+
+      return [];
+    },
+
+    filterOption(itemTitle, queryText, item) {
+      const title =
+        typeof itemTitle === "string"
+          ? itemTitle
+          : (item?.raw?.nama ?? item?.raw?.label ?? "");
+
+      const text = String(title || "").toLowerCase();
+      const query = String(queryText || "").toLowerCase();
+
+      return text.includes(query);
+    },
+
+    createEmptyTokoConfig(tokoId = null) {
+      return {
+        id: null,
+        toko_id: tokoId,
         harga_terendah: 0,
         tarif: 0,
         biaya_modal: 0,
@@ -683,26 +1088,41 @@ export default {
       };
     },
 
-    getTokoName(tokoId) {
-      const toko = this.tokoOptions.find(
-        (item) => Number(item.id) === Number(tokoId),
-      );
-
-      return toko ? toko.nama : "-";
-    },
-
-    formatRupiah(value) {
-      return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        maximumFractionDigits: 0,
-      }).format(Number(value || 0));
-    },
-
     addTokoConfig() {
       this.editingConfigIndex = null;
       this.configDraft = this.createEmptyTokoConfig();
+      this.dialogCopySourceTokoId = null;
+      this.dialogCloneMode = "price";
       this.dialogTokoConfig = true;
+    },
+
+    addAllTokoConfig() {
+      if (!this.tokoOptions.length) {
+        this.showSnackbar("Data cabang belum tersedia", "error");
+        return;
+      }
+
+      const configuredIds = new Set(
+        this.form.toko_configs
+          .map((item) => Number(item.toko_id))
+          .filter((id) => !!id),
+      );
+
+      const newConfigs = this.tokoOptions
+        .filter((toko) => !configuredIds.has(Number(toko.id)))
+        .map((toko) => this.createEmptyTokoConfig(toko.id));
+
+      if (!newConfigs.length) {
+        this.showSnackbar("Semua cabang sudah masuk konfigurasi", "info");
+        return;
+      }
+
+      this.form.toko_configs.push(...newConfigs);
+
+      this.showSnackbar(
+        `${newConfigs.length} cabang berhasil ditambahkan`,
+        "success",
+      );
     },
 
     openTokoConfigDialog(index) {
@@ -710,6 +1130,8 @@ export default {
       this.configDraft = JSON.parse(
         JSON.stringify(this.form.toko_configs[index]),
       );
+      this.dialogCopySourceTokoId = null;
+      this.dialogCloneMode = "price";
       this.dialogTokoConfig = true;
     },
 
@@ -717,32 +1139,159 @@ export default {
       this.dialogTokoConfig = false;
       this.editingConfigIndex = null;
       this.configDraft = {};
+      this.dialogCopySourceTokoId = null;
+      this.dialogCloneMode = "price";
+    },
+
+    copySourceToDraft() {
+      if (!this.dialogCopySourceTokoId) {
+        this.showSnackbar("Pilih cabang sumber terlebih dahulu", "error");
+        return;
+      }
+
+      const source = this.findConfigByTokoId(this.dialogCopySourceTokoId);
+
+      if (!source) {
+        this.showSnackbar("Konfigurasi cabang sumber tidak ditemukan", "error");
+        return;
+      }
+
+      const currentId = this.configDraft.id;
+      const currentTokoId = this.configDraft.toko_id;
+      const currentStatus = this.configDraft.is_active;
+
+      this.configDraft = this.applyCloneFields(
+        this.configDraft,
+        source,
+        this.dialogCloneMode,
+      );
+
+      this.configDraft.id = currentId;
+      this.configDraft.toko_id = currentTokoId;
+      this.configDraft.is_active = currentStatus;
+
+      this.showSnackbar("Konfigurasi berhasil disalin", "success");
+    },
+
+    bulkApplyFromSource() {
+      if (!this.bulkSourceTokoId) {
+        this.showSnackbar("Pilih cabang sumber terlebih dahulu", "error");
+        return;
+      }
+
+      const source = this.findConfigByTokoId(this.bulkSourceTokoId);
+
+      if (!source) {
+        this.showSnackbar("Konfigurasi cabang sumber tidak ditemukan", "error");
+        return;
+      }
+
+      let updatedCount = 0;
+
+      this.form.toko_configs = this.form.toko_configs.map((item) => {
+        if (Number(item.toko_id) === Number(source.toko_id)) {
+          return item;
+        }
+
+        updatedCount += 1;
+
+        const currentId = item.id;
+        const currentTokoId = item.toko_id;
+        const currentStatus = item.is_active;
+
+        const updatedItem = this.applyCloneFields(
+          item,
+          source,
+          this.bulkCloneMode,
+        );
+
+        updatedItem.id = currentId;
+        updatedItem.toko_id = currentTokoId;
+        updatedItem.is_active = currentStatus;
+
+        return updatedItem;
+      });
+
+      if (!updatedCount) {
+        this.showSnackbar("Tidak ada cabang lain untuk disamakan", "info");
+        return;
+      }
+
+      this.showSnackbar(
+        `${updatedCount} cabang berhasil disamakan dari ${this.getTokoName(
+          source.toko_id,
+        )}`,
+        "success",
+      );
+    },
+
+    applyCloneFields(target, source, mode = "price") {
+      const result = {
+        ...target,
+        harga_terendah: Number(source.harga_terendah || 0),
+        tarif: Number(source.tarif || 0),
+        biaya_modal: Number(source.biaya_modal || 0),
+      };
+
+      if (mode === "price_incentive" || mode === "full_config") {
+        result.tarif_dokter = Number(source.tarif_dokter || 0);
+        result.tarif_beautician = Number(source.tarif_beautician || 0);
+        result.presentase_tarif_dokter = Number(
+          source.presentase_tarif_dokter || 0,
+        );
+        result.presentase_tarif_dokter_sp = Number(
+          source.presentase_tarif_dokter_sp || 0,
+        );
+        result.flat_tarif_dokter = Number(source.flat_tarif_dokter || 0);
+        result.flat_tarif_dokter_sp = Number(source.flat_tarif_dokter_sp || 0);
+        result.insentif_use = source.insentif_use || "Flat";
+        result.insentif_use_sp = source.insentif_use_sp || "Flat";
+      }
+
+      if (mode === "full_config") {
+        result.sort_order = Number(source.sort_order || 0);
+      }
+
+      return result;
+    },
+
+    findConfigByTokoId(tokoId) {
+      return this.form.toko_configs.find(
+        (item) => Number(item.toko_id) === Number(tokoId),
+      );
     },
 
     saveTokoConfigDialog() {
-      if (!this.configDraft.toko_id) {
-        alert("Cabang wajib dipilih");
+      const error = this.validateConfigDraft();
+
+      if (error) {
+        this.showSnackbar(error, "error");
         return;
       }
 
-      if (Number(this.configDraft.tarif || 0) < 0) {
-        alert("Tarif tidak boleh kurang dari 0");
-        return;
-      }
-
-      const isDuplicate = this.form.toko_configs.some((item, index) => {
-        return (
-          index !== this.editingConfigIndex &&
-          Number(item.toko_id) === Number(this.configDraft.toko_id)
-        );
-      });
-
-      if (isDuplicate) {
-        alert("Cabang tidak boleh duplikat");
-        return;
-      }
-
-      const savedData = JSON.parse(JSON.stringify(this.configDraft));
+      const savedData = {
+        id: this.configDraft.id ?? null,
+        toko_id: this.configDraft.toko_id,
+        harga_terendah: Number(this.configDraft.harga_terendah || 0),
+        tarif: Number(this.configDraft.tarif || 0),
+        biaya_modal: Number(this.configDraft.biaya_modal || 0),
+        tarif_dokter: Number(this.configDraft.tarif_dokter || 0),
+        tarif_beautician: Number(this.configDraft.tarif_beautician || 0),
+        presentase_tarif_dokter: Number(
+          this.configDraft.presentase_tarif_dokter || 0,
+        ),
+        presentase_tarif_dokter_sp: Number(
+          this.configDraft.presentase_tarif_dokter_sp || 0,
+        ),
+        flat_tarif_dokter: Number(this.configDraft.flat_tarif_dokter || 0),
+        flat_tarif_dokter_sp: Number(
+          this.configDraft.flat_tarif_dokter_sp || 0,
+        ),
+        insentif_use: this.configDraft.insentif_use || "Flat",
+        insentif_use_sp: this.configDraft.insentif_use_sp || "Flat",
+        is_active: !!this.configDraft.is_active,
+        sort_order: Number(this.configDraft.sort_order || 0),
+      };
 
       if (this.editingConfigIndex === null) {
         this.form.toko_configs.push(savedData);
@@ -753,8 +1302,65 @@ export default {
       this.closeTokoConfigDialog();
     },
 
+    validateConfigDraft() {
+      if (!this.configDraft.toko_id) {
+        return "Cabang wajib dipilih";
+      }
+
+      const isDuplicate = this.form.toko_configs.some((item, index) => {
+        return (
+          index !== this.editingConfigIndex &&
+          Number(item.toko_id) === Number(this.configDraft.toko_id)
+        );
+      });
+
+      if (isDuplicate) {
+        return "Cabang tidak boleh duplikat";
+      }
+
+      const numericFields = [
+        { key: "harga_terendah", label: "Harga terendah" },
+        { key: "tarif", label: "Tarif" },
+        { key: "biaya_modal", label: "Biaya modal" },
+        { key: "tarif_dokter", label: "Tarif dokter" },
+        { key: "tarif_beautician", label: "Tarif beautician" },
+        { key: "presentase_tarif_dokter", label: "Persentase dokter" },
+        { key: "presentase_tarif_dokter_sp", label: "Persentase dokter SP" },
+        { key: "flat_tarif_dokter", label: "Flat dokter" },
+        { key: "flat_tarif_dokter_sp", label: "Flat dokter SP" },
+      ];
+
+      for (const field of numericFields) {
+        const value = Number(this.configDraft[field.key] || 0);
+
+        if (value < 0) {
+          return `${field.label} tidak boleh kurang dari 0`;
+        }
+      }
+
+      if (Number(this.configDraft.presentase_tarif_dokter || 0) > 100) {
+        return "Persentase dokter tidak boleh lebih dari 100";
+      }
+
+      if (Number(this.configDraft.presentase_tarif_dokter_sp || 0) > 100) {
+        return "Persentase dokter SP tidak boleh lebih dari 100";
+      }
+
+      return null;
+    },
+
     removeTokoConfig(index) {
+      const removed = this.form.toko_configs[index];
+
       this.form.toko_configs.splice(index, 1);
+
+      if (
+        removed &&
+        this.bulkSourceTokoId &&
+        Number(removed.toko_id) === Number(this.bulkSourceTokoId)
+      ) {
+        this.bulkSourceTokoId = null;
+      }
     },
 
     validateTokoConfig() {
@@ -770,7 +1376,7 @@ export default {
         return "Semua konfigurasi cabang harus memilih cabang";
       }
 
-      if (new Set(tokoIds).size !== tokoIds.length) {
+      if (new Set(tokoIds.map((id) => Number(id))).size !== tokoIds.length) {
         return "Cabang tidak boleh duplikat";
       }
 
@@ -779,18 +1385,19 @@ export default {
 
     buildPayload() {
       return {
-        id: Number(this.$route.params.id),
-        legacy_id: this.form.legacy_id,
-        kode: this.form.kode,
-        kode_accurate: this.form.kode_accurate || null,
-        nama: this.form.nama,
-        kategori_sales: this.form.kategori_sales,
+        id: this.form.id ?? this.routeId,
+        kode_accurate: this.cleanValue(this.form.kode_accurate),
+        nama: this.cleanValue(this.form.nama),
+        kategori_sales: this.cleanValue(this.form.kategori_sales),
         unit_id: this.form.unit_id,
         tipe_id: this.form.tipe_id,
         waktu: Number(this.form.waktu || 0),
         is_ppn: this.form.is_ppn ? 1 : 0,
         sort_order: Number(this.form.sort_order || 0),
-        toko_configs: this.form.toko_configs.map((item) => ({
+
+        toko_mapping: this.form.toko_configs.map((item) => ({
+          id: item.id ?? null,
+          treatment_id: item.treatment_id ?? this.form.id ?? this.routeId,
           toko_id: item.toko_id,
           harga_terendah: Number(item.harga_terendah || 0),
           tarif: Number(item.tarif || 0),
@@ -803,8 +1410,8 @@ export default {
           ),
           flat_tarif_dokter: Number(item.flat_tarif_dokter || 0),
           flat_tarif_dokter_sp: Number(item.flat_tarif_dokter_sp || 0),
-          insentif_use: item.insentif_use,
-          insentif_use_sp: item.insentif_use_sp,
+          insentif_use: item.insentif_use || "Flat",
+          insentif_use_sp: item.insentif_use_sp || "Flat",
           is_active: item.is_active ? 1 : 0,
           is_delete: 0,
           sort_order: Number(item.sort_order || 0),
@@ -812,21 +1419,108 @@ export default {
       };
     },
 
+    cleanValue(value) {
+      if (value === undefined || value === null || value === "") {
+        return null;
+      }
+
+      if (typeof value === "string") {
+        return value.trim() || null;
+      }
+
+      return value;
+    },
+
     async submitForm() {
       const result = await this.$refs.formRef.validate();
-      if (!result.valid) return;
 
-      const configError = this.validateTokoConfig();
-      if (configError) {
-        alert(configError);
+      if (!result.valid) {
+        this.showSnackbar("Masih ada field yang belum valid", "error");
         return;
       }
 
-      this.payloadPreview = this.buildPayload();
-      this.dialogPreview = true;
+      const configError = this.validateTokoConfig();
 
-      console.log("Payload edit treatment:", this.payloadPreview);
+      if (configError) {
+        this.showSnackbar(configError, "error");
+        return;
+      }
+
+      this.loadingSave = true;
+
+      try {
+        await treatmentService.update(this.routeId, this.payload);
+
+        this.showSnackbar("Data treatment berhasil diperbarui", "success");
+
+        this.$router.replace("/master/treatment-global");
+      } catch (error) {
+        console.error(error);
+
+        this.showSnackbar(
+          this.getErrorMessage(error, "Gagal memperbarui data treatment"),
+          "error",
+        );
+      } finally {
+        this.loadingSave = false;
+      }
+    },
+
+    getOptionName(options, id) {
+      const item = options.find((row) => Number(row.id) === Number(id));
+      return item ? item.nama : "-";
+    },
+
+    getTokoName(tokoId) {
+      return this.getOptionName(this.tokoOptions, tokoId);
+    },
+
+    formatRupiah(value) {
+      return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        maximumFractionDigits: 0,
+      }).format(Number(value || 0));
+    },
+
+    showSnackbar(text, color = "success") {
+      this.snackbar = {
+        show: true,
+        text,
+        color,
+      };
+    },
+
+    getErrorMessage(error, fallbackMessage) {
+      const response = error?.response?.data;
+
+      if (response?.message) return response.message;
+      if (response?.error) return response.error;
+
+      if (response?.errors) {
+        const firstKey = Object.keys(response.errors)[0];
+
+        if (firstKey && Array.isArray(response.errors[firstKey])) {
+          return response.errors[firstKey][0];
+        }
+      }
+
+      return fallbackMessage;
     },
   },
 };
 </script>
+
+<style scoped>
+.config-dialog-card {
+  overflow: visible;
+}
+
+.config-modal-body {
+  overflow: visible;
+}
+
+.h-100 {
+  height: 100%;
+}
+</style>
