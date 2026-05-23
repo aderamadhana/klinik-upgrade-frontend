@@ -61,7 +61,25 @@
                   />
                 </v-col>
 
-                <v-col cols="12">
+                <v-col v-if="isDirectMode" cols="12" md="6">
+                  <v-text-field
+                    v-model="form.kode_voucher"
+                    label="Kode Voucher *"
+                    placeholder="Contoh: FACIAL25"
+                    variant="outlined"
+                    density="comfortable"
+                    prepend-inner-icon="mdi-barcode"
+                    :rules="[rules.required]"
+                    clearable
+                    hint="Kode ini dipakai langsung oleh pasien/admin"
+                    persistent-hint
+                    @update:modelValue="
+                      form.kode_voucher = normalizeKodeVoucher($event)
+                    "
+                  />
+                </v-col>
+
+                <v-col cols="12" :md="isDirectMode ? 6 : 12">
                   <v-textarea
                     v-model="form.deskripsi"
                     label="Deskripsi"
@@ -210,7 +228,7 @@
               <v-divider class="my-6" />
 
               <div class="text-subtitle-1 font-weight-bold mb-3">
-                Pengaturan Diskon
+                Pengaturan Diskon dan Jumlah
               </div>
 
               <v-row>
@@ -232,8 +250,8 @@
                   <v-text-field
                     v-model="form.total_diskon"
                     :label="
-                      form.tipe_diskon === 'percent'
-                        ? 'Total Diskon (%) *'
+                      isPercentDiscount
+                        ? 'Diskon Persen (%) *'
                         : 'Total Diskon Nominal *'
                     "
                     type="number"
@@ -241,9 +259,28 @@
                     density="comfortable"
                     prepend-inner-icon="mdi-cash-minus"
                     :rules="diskonRules"
-                    :suffix="form.tipe_diskon === 'percent' ? '%' : ''"
-                    :prefix="form.tipe_diskon === 'nominal' ? 'Rp' : ''"
-                    hint="Untuk persen, isi 0 sampai 100"
+                    :suffix="isPercentDiscount ? '%' : ''"
+                    :prefix="isNominalDiscount ? 'Rp' : ''"
+                    :hint="
+                      isPercentDiscount
+                        ? 'Isi persen diskon, maksimal 100'
+                        : 'Isi nominal diskon dalam rupiah'
+                    "
+                    persistent-hint
+                  />
+                </v-col>
+
+                <v-col v-if="isPercentDiscount" cols="12" md="4">
+                  <v-text-field
+                    v-model="form.total_diskon_maksimal"
+                    label="Maksimal Diskon Nominal *"
+                    type="number"
+                    variant="outlined"
+                    density="comfortable"
+                    prepend-inner-icon="mdi-cash-lock"
+                    prefix="Rp"
+                    :rules="maxDiskonRules"
+                    hint="Batas maksimal potongan rupiah untuk diskon persen"
                     persistent-hint
                   />
                 </v-col>
@@ -251,16 +288,40 @@
                 <v-col cols="12" md="4">
                   <v-text-field
                     v-model="form.qty_generate"
-                    label="Jumlah Voucher *"
+                    :label="
+                      isGenerateMode
+                        ? 'Jumlah Voucher Generate *'
+                        : 'Batas Jumlah Penggunaan *'
+                    "
                     type="number"
                     variant="outlined"
                     density="comfortable"
                     prepend-inner-icon="mdi-ticket-confirmation-outline"
-                    :rules="[rules.required, rules.minOne]"
-                    :disabled="form.mode_voucher === 'direct'"
-                    hint="Mode direct otomatis 1 voucher"
+                    :rules="qtyGenerateRules"
+                    :disabled="isDirectMode && form.is_unlimited_generate"
+                    :hint="qtyGenerateHint"
                     persistent-hint
                   />
+                </v-col>
+
+                <v-col v-if="isDirectMode" cols="12">
+                  <v-checkbox
+                    v-model="form.is_unlimited_generate"
+                    label="Tidak ada batas jumlah penggunaan"
+                    color="primary"
+                    hide-details
+                  />
+
+                  <v-alert
+                    v-if="form.is_unlimited_generate"
+                    type="info"
+                    variant="tonal"
+                    density="compact"
+                    class="mt-2"
+                  >
+                    Kode voucher direct bisa digunakan tanpa batas jumlah
+                    penggunaan. Nilai jumlah akan disimpan sebagai 0.
+                  </v-alert>
                 </v-col>
 
                 <v-col cols="12">
@@ -323,6 +384,15 @@
                   </div>
                 </div>
 
+                <div v-if="isDirectMode">
+                  <div class="text-caption text-medium-emphasis">
+                    Kode Voucher
+                  </div>
+                  <div class="text-subtitle-1 font-weight-bold">
+                    {{ form.kode_voucher || "-" }}
+                  </div>
+                </div>
+
                 <div class="d-flex flex-wrap ga-2">
                   <v-chip size="small" variant="tonal" color="primary">
                     {{ selectedKategoriLabel }}
@@ -352,12 +422,21 @@
                   </div>
                 </div>
 
+                <div v-if="isPercentDiscount">
+                  <div class="text-caption text-medium-emphasis">
+                    Maksimal Diskon
+                  </div>
+                  <div class="text-subtitle-1 font-weight-bold text-primary">
+                    {{ formattedMaxDiskon }}
+                  </div>
+                </div>
+
                 <div>
                   <div class="text-caption text-medium-emphasis">
                     Jumlah Voucher
                   </div>
                   <div class="text-subtitle-1 font-weight-medium">
-                    {{ Number(form.qty_generate || 0) }}
+                    {{ formattedJumlahVoucher }}
                   </div>
                 </div>
 
@@ -426,6 +505,17 @@
                   </v-chip>
                 </div>
 
+                <v-alert
+                  v-if="isDirectMode"
+                  type="success"
+                  variant="tonal"
+                  density="compact"
+                  class="mb-4"
+                >
+                  Kode:
+                  <strong>{{ form.kode_voucher || "-" }}</strong>
+                </v-alert>
+
                 <div class="text-body-2 mb-4">
                   {{
                     form.deskripsi ||
@@ -445,10 +535,21 @@
                   <v-chip size="small" variant="outlined">
                     Jenis: {{ selectedJenisLabel }}
                   </v-chip>
+
+                  <v-chip size="small" variant="outlined">
+                    {{ formattedJumlahVoucher }}
+                  </v-chip>
                 </div>
 
-                <div class="text-h4 font-weight-bold mb-2 text-success">
+                <div class="text-h4 font-weight-bold mb-1 text-success">
                   {{ formattedDiskon }}
+                </div>
+
+                <div
+                  v-if="isPercentDiscount"
+                  class="text-body-2 text-medium-emphasis mb-2"
+                >
+                  Maksimal potongan {{ formattedMaxDiskon }}
                 </div>
 
                 <div class="text-body-2 text-medium-emphasis">
@@ -522,6 +623,7 @@ export default {
 
       form: {
         legacy_id: null,
+        kode_voucher: "",
         nama_voucher: "",
         deskripsi: "",
 
@@ -540,6 +642,9 @@ export default {
 
         tipe_diskon: "percent",
         total_diskon: 0,
+        total_diskon_maksimal: 0,
+
+        is_unlimited_generate: false,
         qty_generate: 1,
 
         is_bisa_digabung_promo: false,
@@ -586,8 +691,24 @@ export default {
   },
 
   computed: {
+    isDirectMode() {
+      return this.form.mode_voucher === "direct";
+    },
+
+    isGenerateMode() {
+      return this.form.mode_voucher === "generate";
+    },
+
+    isPercentDiscount() {
+      return this.form.tipe_diskon === "percent";
+    },
+
+    isNominalDiscount() {
+      return this.form.tipe_diskon === "nominal";
+    },
+
     diskonRules() {
-      if (this.form.tipe_diskon === "percent") {
+      if (this.isPercentDiscount) {
         return [
           this.rules.required,
           this.rules.nonNegative,
@@ -595,7 +716,35 @@ export default {
         ];
       }
 
-      return [this.rules.required, this.rules.nonNegative];
+      return [this.rules.required, this.rules.minOne];
+    },
+
+    maxDiskonRules() {
+      if (!this.isPercentDiscount) {
+        return [];
+      }
+
+      return [this.rules.required, this.rules.minOne];
+    },
+
+    qtyGenerateRules() {
+      if (this.isDirectMode && this.form.is_unlimited_generate) {
+        return [];
+      }
+
+      return [this.rules.required, this.rules.minOne];
+    },
+
+    qtyGenerateHint() {
+      if (this.isGenerateMode) {
+        return "Jumlah kode voucher unik yang akan dibuat otomatis";
+      }
+
+      if (this.form.is_unlimited_generate) {
+        return "Batas penggunaan tidak dipakai karena opsi tanpa batas aktif";
+      }
+
+      return "Jumlah maksimal pemakaian untuk kode voucher direct ini";
     },
 
     selectedTokoLabel() {
@@ -661,11 +810,29 @@ export default {
     formattedDiskon() {
       if (!this.form.tipe_diskon) return "Diskon belum diatur";
 
-      if (this.form.tipe_diskon === "percent") {
+      if (this.isPercentDiscount) {
         return `${Number(this.form.total_diskon || 0)}%`;
       }
 
       return this.formatRupiah(this.form.total_diskon);
+    },
+
+    formattedMaxDiskon() {
+      return this.formatRupiah(this.form.total_diskon_maksimal);
+    },
+
+    formattedJumlahVoucher() {
+      if (this.isGenerateMode) {
+        return `${Number(this.form.qty_generate || 0)} kode dibuat`;
+      }
+
+      if (this.form.is_unlimited_generate) {
+        return "1 kode, tanpa batas penggunaan";
+      }
+
+      return `1 kode, maksimal ${Number(
+        this.form.qty_generate || 0,
+      )} penggunaan`;
     },
 
     formattedPeriode() {
@@ -688,7 +855,26 @@ export default {
 
     "form.mode_voucher"(value) {
       if (value === "direct") {
-        this.form.qty_generate = 1;
+        if (!Number(this.form.qty_generate || 0)) {
+          this.form.qty_generate = 1;
+        }
+
+        return;
+      }
+
+      if (value === "generate") {
+        this.form.kode_voucher = "";
+        this.form.is_unlimited_generate = false;
+
+        if (!Number(this.form.qty_generate || 0)) {
+          this.form.qty_generate = 1;
+        }
+      }
+    },
+
+    "form.tipe_diskon"(value) {
+      if (value === "nominal") {
+        this.form.total_diskon_maksimal = 0;
       }
     },
 
@@ -868,12 +1054,22 @@ export default {
 
       if (kode === "DIRECT" || label.includes("direct")) {
         this.form.mode_voucher = "direct";
-        this.form.qty_generate = 1;
+
+        if (!Number(this.form.qty_generate || 0)) {
+          this.form.qty_generate = 1;
+        }
+
         return;
       }
 
       if (kode === "GENERATE" || label.includes("generate")) {
         this.form.mode_voucher = "generate";
+        this.form.kode_voucher = "";
+        this.form.is_unlimited_generate = false;
+
+        if (!Number(this.form.qty_generate || 0)) {
+          this.form.qty_generate = 1;
+        }
       }
     },
 
@@ -913,6 +1109,13 @@ export default {
       return item ? item.label : fallback;
     },
 
+    normalizeKodeVoucher(value) {
+      return String(value || "")
+        .toUpperCase()
+        .replace(/\s+/g, "")
+        .replace(/[^A-Z0-9-_]/g, "");
+    },
+
     formatRupiah(value) {
       return new Intl.NumberFormat("id-ID", {
         style: "currency",
@@ -924,6 +1127,10 @@ export default {
     validateBusinessRule() {
       if (!this.form.kategori_voucher_id) {
         return "Kategori voucher wajib dipilih";
+      }
+
+      if (this.isDirectMode && !String(this.form.kode_voucher || "").trim()) {
+        return "Kode voucher wajib diisi untuk voucher direct";
       }
 
       if (!this.form.is_all_toko && !this.form.toko_id) {
@@ -940,25 +1147,23 @@ export default {
         }
       }
 
-      if (
-        this.form.tipe_diskon === "percent" &&
-        Number(this.form.total_diskon || 0) > 100
-      ) {
-        return "Total diskon persen tidak boleh lebih dari 100";
+      if (this.isPercentDiscount) {
+        if (Number(this.form.total_diskon || 0) > 100) {
+          return "Diskon persen tidak boleh lebih dari 100";
+        }
+
+        if (Number(this.form.total_diskon_maksimal || 0) < 1) {
+          return "Maksimal diskon nominal wajib diisi untuk tipe persen";
+        }
       }
 
       if (
-        this.form.mode_voucher === "direct" &&
-        Number(this.form.qty_generate || 0) !== 1
-      ) {
-        return "Mode direct hanya boleh memiliki jumlah voucher 1";
-      }
-
-      if (
-        this.form.mode_voucher === "generate" &&
+        !(this.isDirectMode && this.form.is_unlimited_generate) &&
         Number(this.form.qty_generate || 0) < 1
       ) {
-        return "Jumlah voucher minimal 1";
+        return this.isGenerateMode
+          ? "Jumlah voucher generate minimal 1"
+          : "Batas jumlah penggunaan minimal 1";
       }
 
       return null;
@@ -967,6 +1172,10 @@ export default {
     buildPayload() {
       return {
         legacy_id: this.form.legacy_id,
+
+        kode_voucher: this.isGenerateMode
+          ? null
+          : this.cleanValue(this.form.kode_voucher),
 
         nama_voucher: this.cleanValue(this.form.nama_voucher),
         deskripsi: this.cleanValue(this.form.deskripsi),
@@ -982,9 +1191,16 @@ export default {
 
         tipe_diskon: this.form.tipe_diskon,
         total_diskon: Number(this.form.total_diskon || 0),
+        total_diskon_maksimal: this.isPercentDiscount
+          ? Number(this.form.total_diskon_maksimal || 0)
+          : null,
+
+        is_unlimited_generate:
+          this.isDirectMode && this.form.is_unlimited_generate ? 1 : 0,
+
         qty_generate:
-          this.form.mode_voucher === "direct"
-            ? 1
+          this.isDirectMode && this.form.is_unlimited_generate
+            ? 0
             : Number(this.form.qty_generate || 1),
 
         is_bisa_digabung_promo: this.form.is_bisa_digabung_promo ? 1 : 0,

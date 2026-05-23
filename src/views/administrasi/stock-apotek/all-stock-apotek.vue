@@ -446,13 +446,20 @@ export default {
       this.loading.initial = true;
 
       try {
+        this.selectedTokoId = this.getSelectedTokoId();
+
         await this.fetchTempatProduk();
 
         this.filter.tempat_produk_id = this.getApotekTempatId();
-        this.kartuFilter.tempat_produk_id = this.filter.tempat_produk_id;
 
-        await this.fetchSupplierOptions();
-        await this.fetchProdukOptions();
+        this.pagination.stock.page = 1;
+        this.pagination.stock.itemsPerPage = 10;
+
+        await Promise.all([
+          this.fetchSupplierOptions(),
+          this.fetchProdukOptions(),
+        ]);
+
         await this.fetchStockHariIni();
 
         await Promise.all([this.fetchPenerimaan(), this.fetchPenyesuaian()]);
@@ -464,7 +471,23 @@ export default {
         this.loading.initial = false;
       }
     },
+    getStockRequestParams() {
+      const params = {
+        toko_id: this.selectedTokoId,
+        page: this.pagination.stock.page,
+        per_page: this.pagination.stock.itemsPerPage,
+      };
 
+      if (this.filter.tempat_produk_id) {
+        params.tempat_produk_id = this.filter.tempat_produk_id;
+      }
+
+      if (this.filter.search) {
+        params.search = this.filter.search;
+      }
+
+      return params;
+    },
     async fetchTempatProduk() {
       try {
         if (typeof referenceService.tempatProduk !== "function") {
@@ -549,40 +572,27 @@ export default {
         return;
       }
 
+      if (!this.filter.tempat_produk_id) {
+        this.filter.tempat_produk_id = this.getApotekTempatId();
+      }
+
       this.loading.stock = true;
 
       try {
-        const response = await stockService.getStockHariIni({
-          toko_id: this.selectedTokoId,
-          tempat_produk_id: this.filter.tempat_produk_id,
-          search: this.filter.search,
-          page: this.pagination.stock.page,
-          per_page: this.pagination.stock.itemsPerPage,
-        });
+        const response = await stockService.getStockHariIni(
+          this.getStockRequestParams(),
+        );
 
         const payload = this.extractPaginator(response);
-        const rows = this.normalizeStockRows(payload.rows);
 
-        if (rows.length > 0) {
-          this.stockRows = rows;
-          this.allFallbackStockRows = [];
-          this.pagination.stock.total = payload.total;
-          this.pagination.stock.page = payload.page;
-          this.pagination.stock.itemsPerPage = payload.perPage;
-          this.clearCabangAlertIfNeeded();
-          return;
-        }
-
-        await this.useProdukMasterAsStockFallback();
-        this.clearCabangAlertIfNeeded();
+        this.stockRows = this.normalizeStockRows(payload.rows);
+        this.pagination.stock.total = payload.total;
+        this.pagination.stock.page = payload.page;
+        this.pagination.stock.itemsPerPage = payload.perPage;
       } catch (error) {
         this.showError(
           stockService.getErrorMessage(error, "Gagal mengambil stok hari ini"),
         );
-
-        if (!this.stockRows.length && this.produkOptions.length) {
-          await this.useProdukMasterAsStockFallback();
-        }
       } finally {
         this.loading.stock = false;
       }

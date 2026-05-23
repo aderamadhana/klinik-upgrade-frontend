@@ -24,6 +24,13 @@
         Item yang ditampilkan menyesuaikan jenis voucher:
         <strong>Treatment</strong>, <strong>Produk</strong>,
         <strong>Bundling</strong>, atau <strong>Value</strong>.
+        <span v-if="isVoucherBundling">
+          Untuk voucher Bundling, diskon bisa diatur per item.
+        </span>
+        <span v-else>
+          Untuk jenis voucher ini, diskon item tidak perlu diatur karena diskon
+          mengikuti nilai voucher utama.
+        </span>
       </v-alert>
 
       <v-card class="section-card mb-4" elevation="1">
@@ -36,7 +43,7 @@
               <div>
                 <div class="section-title">Ringkasan Voucher</div>
                 <div class="section-subtitle">
-                  Ringkasan nilai voucher dan progres alokasi diskon
+                  Ringkasan nilai voucher dan konfigurasi item
                 </div>
               </div>
             </div>
@@ -87,7 +94,7 @@
                 </div>
               </v-col>
 
-              <v-col cols="12" md="3">
+              <v-col v-if="isVoucherBundling" cols="12" md="3">
                 <div class="summary-box">
                   <div class="summary-label">Teralokasi</div>
                   <div class="summary-value">
@@ -101,7 +108,7 @@
                 </div>
               </v-col>
 
-              <v-col cols="12" md="3">
+              <v-col v-if="isVoucherBundling" cols="12" md="3">
                 <div class="summary-box">
                   <div class="summary-label">Sisa Alokasi</div>
                   <div
@@ -119,12 +126,30 @@
                   </div>
                 </div>
               </v-col>
+
+              <v-col v-if="!isVoucherBundling" cols="12" md="3">
+                <div class="summary-box">
+                  <div class="summary-label">Treatment Terpilih</div>
+                  <div class="summary-value">
+                    {{ configuredTreatments.length }}
+                  </div>
+                </div>
+              </v-col>
+
+              <v-col v-if="!isVoucherBundling" cols="12" md="3">
+                <div class="summary-box">
+                  <div class="summary-label">Produk Terpilih</div>
+                  <div class="summary-value">
+                    {{ configuredProducts.length }}
+                  </div>
+                </div>
+              </v-col>
             </v-row>
 
-            <div class="mt-3">
+            <div v-if="isVoucherBundling" class="mt-3">
               <div class="d-flex justify-space-between align-center mb-2">
                 <span class="text-body-2 text-medium-emphasis">
-                  Progress alokasi voucher
+                  Progress alokasi diskon bundling
                 </span>
                 <span class="text-body-2 font-weight-medium">
                   {{ allocationPercentage }}%
@@ -139,6 +164,17 @@
                 bg-color="grey-lighten-3"
               />
             </div>
+
+            <v-alert
+              v-else
+              type="info"
+              variant="tonal"
+              density="compact"
+              class="mt-3"
+            >
+              Diskon item disembunyikan untuk jenis voucher ini. Item hanya
+              dipakai sebagai batas penerapan voucher.
+            </v-alert>
           </div>
         </v-card-text>
       </v-card>
@@ -442,7 +478,12 @@
               <div>
                 <div class="section-title">Item Voucher Terpilih</div>
                 <div class="section-subtitle">
-                  Edit diskon item atau hapus item yang tidak dipakai
+                  <span v-if="isVoucherBundling">
+                    Atur diskon item bundling atau hapus item yang tidak dipakai
+                  </span>
+                  <span v-else>
+                    Review item yang berlaku untuk voucher ini
+                  </span>
                 </div>
               </div>
             </div>
@@ -471,6 +512,16 @@
           <div class="section-divider" />
 
           <div class="section-body">
+            <v-alert
+              v-if="!isVoucherBundling"
+              type="info"
+              variant="tonal"
+              density="compact"
+              class="mb-4"
+            >
+              Kolom diskon item hanya tersedia untuk voucher Bundling.
+            </v-alert>
+
             <v-tabs
               v-model="activeTab"
               color="primary"
@@ -486,10 +537,10 @@
             <v-window v-model="activeTab">
               <v-window-item v-if="showTreatmentSection" value="treatments">
                 <v-data-table
-                  :headers="treatmentHeaders"
+                  :headers="treatmentTableHeaders"
                   :items="configuredTreatments"
                   item-value="id"
-                  density="compact"
+                  density="comfortable"
                   hide-default-footer
                 >
                   <template #item.no="{ index }">
@@ -501,7 +552,7 @@
                   </template>
 
                   <template #item.diskon_item="{ item, index }">
-                    <div class="d-flex align-center ga-2">
+                    <div class="discount-action-wrap">
                       <v-chip size="small" color="primary" variant="tonal">
                         {{
                           formatDiscountValue(
@@ -512,21 +563,27 @@
                       </v-chip>
 
                       <v-btn
-                        size="x-small"
+                        size="small"
                         color="primary"
-                        icon="mdi-pencil"
+                        variant="tonal"
+                        prepend-icon="mdi-pencil"
                         @click="openDiscountDialog('treatment', item, index)"
-                      />
+                      >
+                        Atur
+                      </v-btn>
                     </div>
                   </template>
 
                   <template #item.action="{ index }">
                     <v-btn
-                      size="x-small"
+                      size="small"
                       color="error"
-                      icon="mdi-delete"
+                      variant="tonal"
+                      prepend-icon="mdi-delete"
                       @click="removeConfiguredItem('treatment', index)"
-                    />
+                    >
+                      Hapus
+                    </v-btn>
                   </template>
 
                   <template #no-data>
@@ -539,10 +596,10 @@
 
               <v-window-item v-if="showProductSection" value="products">
                 <v-data-table
-                  :headers="productHeaders"
+                  :headers="productTableHeaders"
                   :items="configuredProducts"
                   item-value="id"
-                  density="compact"
+                  density="comfortable"
                   hide-default-footer
                 >
                   <template #item.no="{ index }">
@@ -564,7 +621,7 @@
                   </template>
 
                   <template #item.diskon_item="{ item, index }">
-                    <div class="d-flex align-center ga-2">
+                    <div class="discount-action-wrap">
                       <v-chip size="small" color="primary" variant="tonal">
                         {{
                           formatDiscountValue(
@@ -575,21 +632,27 @@
                       </v-chip>
 
                       <v-btn
-                        size="x-small"
+                        size="small"
                         color="primary"
-                        icon="mdi-pencil"
+                        variant="tonal"
+                        prepend-icon="mdi-pencil"
                         @click="openDiscountDialog('product', item, index)"
-                      />
+                      >
+                        Atur
+                      </v-btn>
                     </div>
                   </template>
 
                   <template #item.action="{ index }">
                     <v-btn
-                      size="x-small"
+                      size="small"
                       color="error"
-                      icon="mdi-delete"
+                      variant="tonal"
+                      prepend-icon="mdi-delete"
                       @click="removeConfiguredItem('product', index)"
-                    />
+                    >
+                      Hapus
+                    </v-btn>
                   </template>
 
                   <template #no-data>
@@ -631,7 +694,7 @@
       <v-card rounded="lg">
         <v-card-title class="d-flex justify-space-between align-center">
           <div>
-            <div class="text-h6 font-weight-bold">Diskon Item</div>
+            <div class="text-h6 font-weight-bold">Diskon Item Bundling</div>
             <div class="text-body-2 text-medium-emphasis">
               {{ discountItemName }}
             </div>
@@ -673,7 +736,7 @@
             prepend-inner-icon="mdi-cash-minus"
             :suffix="discountForm.tipe_diskon_item === 'percent' ? '%' : ''"
             :prefix="discountForm.tipe_diskon_item === 'nominal' ? 'Rp' : ''"
-            hint="Masukkan nilai diskon untuk item ini"
+            hint="Masukkan nilai diskon khusus untuk item bundling ini"
             persistent-hint
           />
         </v-card-text>
@@ -769,23 +832,6 @@ export default {
         { label: "Nominal", value: "nominal" },
       ],
 
-      treatmentHeaders: [
-        { title: "NO", key: "no", sortable: false, width: "5%" },
-        { title: "NAMA TREATMENT", key: "nama" },
-        { title: "TARIF UMUM", key: "tarif_umum" },
-        { title: "DISKON ITEM", key: "diskon_item", sortable: false },
-        { title: "AKSI", key: "action", sortable: false, width: "8%" },
-      ],
-
-      productHeaders: [
-        { title: "NO", key: "no", sortable: false, width: "5%" },
-        { title: "NAMA PRODUK", key: "nama" },
-        { title: "HARGA JUAL", key: "harga_jual" },
-        { title: "STOK", key: "status_stok", sortable: false },
-        { title: "DISKON ITEM", key: "diskon_item", sortable: false },
-        { title: "AKSI", key: "action", sortable: false, width: "8%" },
-      ],
-
       discountDialog: false,
       discountForm: {
         type: null,
@@ -855,6 +901,61 @@ export default {
       return this.showTreatmentSection && this.showProductSection ? 6 : 12;
     },
 
+    treatmentTableHeaders() {
+      const headers = [
+        { title: "NO", key: "no", sortable: false, width: "70px" },
+        { title: "NAMA TREATMENT", key: "nama" },
+        { title: "TARIF UMUM", key: "tarif_umum", width: "180px" },
+      ];
+
+      if (this.isVoucherBundling) {
+        headers.push({
+          title: "DISKON ITEM",
+          key: "diskon_item",
+          sortable: false,
+          width: "240px",
+        });
+      }
+
+      headers.push({
+        title: "AKSI",
+        key: "action",
+        sortable: false,
+        width: "120px",
+        align: "center",
+      });
+
+      return headers;
+    },
+
+    productTableHeaders() {
+      const headers = [
+        { title: "NO", key: "no", sortable: false, width: "70px" },
+        { title: "NAMA PRODUK", key: "nama" },
+        { title: "HARGA JUAL", key: "harga_jual", width: "180px" },
+        { title: "STOK", key: "status_stok", sortable: false, width: "140px" },
+      ];
+
+      if (this.isVoucherBundling) {
+        headers.push({
+          title: "DISKON ITEM",
+          key: "diskon_item",
+          sortable: false,
+          width: "240px",
+        });
+      }
+
+      headers.push({
+        title: "AKSI",
+        key: "action",
+        sortable: false,
+        width: "120px",
+        align: "center",
+      });
+
+      return headers;
+    },
+
     filteredTreatmentOptions() {
       const query = String(this.treatmentSearch || "").toLowerCase();
 
@@ -891,6 +992,10 @@ export default {
     },
 
     totalAllocatedDiscount() {
+      if (!this.isVoucherBundling) {
+        return 0;
+      }
+
       const treatmentTotal = this.configuredTreatments.reduce(
         (total, item) => total + Number(item.diskon_item || 0),
         0,
@@ -905,6 +1010,10 @@ export default {
     },
 
     remainingDiscount() {
+      if (!this.isVoucherBundling) {
+        return Number(this.currentVoucher.nilai_voucher || 0);
+      }
+
       return (
         Number(this.currentVoucher.nilai_voucher || 0) -
         this.totalAllocatedDiscount
@@ -912,6 +1021,10 @@ export default {
     },
 
     allocationPercentage() {
+      if (!this.isVoucherBundling) {
+        return 0;
+      }
+
       const total = Number(this.currentVoucher.nilai_voucher || 0);
 
       if (total <= 0) return 0;
@@ -1113,7 +1226,9 @@ export default {
         tipe_diskon_item:
           this.normalizeTipeDiskon(item.tipe_diskon_item) ||
           this.currentVoucher.tipe_diskon,
-        diskon_item: Number(item.nilai_diskon_item || 0),
+        diskon_item: this.isVoucherBundling
+          ? Number(item.nilai_diskon_item || 0)
+          : 0,
       };
     },
 
@@ -1130,7 +1245,9 @@ export default {
         tipe_diskon_item:
           this.normalizeTipeDiskon(item.tipe_diskon_item) ||
           this.currentVoucher.tipe_diskon,
-        diskon_item: Number(item.nilai_diskon_item || 0),
+        diskon_item: this.isVoucherBundling
+          ? Number(item.nilai_diskon_item || 0)
+          : 0,
       };
     },
 
@@ -1485,6 +1602,14 @@ export default {
     },
 
     openDiscountDialog(type, item, index) {
+      if (!this.isVoucherBundling) {
+        this.showSnackbar(
+          "Diskon item hanya bisa diatur untuk voucher Bundling",
+          "warning",
+        );
+        return;
+      }
+
       this.discountForm = {
         type,
         index,
@@ -1509,6 +1634,11 @@ export default {
     },
 
     saveDiscountDialog() {
+      if (!this.isVoucherBundling) {
+        this.closeDiscountDialog();
+        return;
+      }
+
       const value = Number(this.discountForm.diskon_item || 0);
       const tipe = this.normalizeTipeDiskon(this.discountForm.tipe_diskon_item);
 
@@ -1580,8 +1710,12 @@ export default {
           this.configuredTreatments.length + this.configuredProducts.length;
 
         if (!totalItems) {
-          return "Minimal pilih 1 treatment atau produk untuk voucher jenis Bundling / Value";
+          return "Minimal pilih 1 treatment atau produk untuk voucher ini";
         }
+      }
+
+      if (!this.isVoucherBundling) {
+        return null;
       }
 
       const invalidTreatment = this.configuredTreatments.find(
@@ -1621,9 +1755,12 @@ export default {
           item_type: "treatment",
           item_id: item.id,
           harga_snapshot: Number(item.tarif_umum || 0),
-          tipe_diskon_item:
-            item.tipe_diskon_item || this.currentVoucher.tipe_diskon,
-          nilai_diskon_item: Number(item.diskon_item || 0),
+          tipe_diskon_item: this.isVoucherBundling
+            ? item.tipe_diskon_item || this.currentVoucher.tipe_diskon
+            : null,
+          nilai_diskon_item: this.isVoucherBundling
+            ? Number(item.diskon_item || 0)
+            : null,
         }));
 
         items.push(...treatmentItems);
@@ -1634,9 +1771,12 @@ export default {
           item_type: "produk",
           item_id: item.id,
           harga_snapshot: Number(item.harga_jual || 0),
-          tipe_diskon_item:
-            item.tipe_diskon_item || this.currentVoucher.tipe_diskon,
-          nilai_diskon_item: Number(item.diskon_item || 0),
+          tipe_diskon_item: this.isVoucherBundling
+            ? item.tipe_diskon_item || this.currentVoucher.tipe_diskon
+            : null,
+          nilai_diskon_item: this.isVoucherBundling
+            ? Number(item.diskon_item || 0)
+            : null,
         }));
 
         items.push(...productItems);
@@ -1647,33 +1787,39 @@ export default {
 
     buildVoucherUpdatePayload() {
       const detail = this.voucherDetail || {};
+      const isAllToko = Number(detail.is_all_toko || 0) === 1;
+      const isUnlimitedDate = Number(detail.is_unlimited_date || 0) === 1;
+      const isUnlimitedGenerate =
+        Number(detail.is_unlimited_generate || 0) === 1;
+      const modeVoucher = detail.mode_voucher || "direct";
 
       return {
         legacy_id: detail.legacy_id ?? null,
+        kode_voucher: modeVoucher === "generate" ? null : detail.kode_voucher,
         nama_voucher: detail.nama_voucher,
         deskripsi: detail.deskripsi,
-        mode_voucher: detail.mode_voucher || "direct",
-        toko_id: Number(detail.is_all_toko || 0) === 1 ? null : detail.toko_id,
-        is_all_toko: Number(detail.is_all_toko || 0) === 1 ? 1 : 0,
+        mode_voucher: modeVoucher,
+        toko_id: isAllToko ? null : detail.toko_id,
+        is_all_toko: isAllToko ? 1 : 0,
         kategori_voucher_id: detail.kategori_voucher_id,
         jenis_voucher_id: Number(detail.jenis_voucher_id || 3),
         template_voucher_id: detail.template_voucher_id,
         tipe_diskon: this.normalizeTipeDiskon(detail.tipe_diskon),
         total_diskon: Number(detail.total_diskon || 0),
+        is_unlimited_generate:
+          modeVoucher === "direct" && isUnlimitedGenerate ? 1 : 0,
         qty_generate:
-          detail.mode_voucher === "direct"
-            ? 1
+          modeVoucher === "direct" && isUnlimitedGenerate
+            ? 0
             : Number(detail.qty_generate || 1),
         is_bisa_digabung_promo: Number(detail.is_bisa_digabung_promo || 0),
-        is_unlimited_date: Number(detail.is_unlimited_date || 0),
-        tanggal_mulai:
-          Number(detail.is_unlimited_date || 0) === 1
-            ? null
-            : this.formatInputDate(detail.tanggal_mulai),
-        tanggal_akhir:
-          Number(detail.is_unlimited_date || 0) === 1
-            ? null
-            : this.formatInputDate(detail.tanggal_akhir),
+        is_unlimited_date: isUnlimitedDate ? 1 : 0,
+        tanggal_mulai: isUnlimitedDate
+          ? null
+          : this.formatInputDate(detail.tanggal_mulai),
+        tanggal_akhir: isUnlimitedDate
+          ? null
+          : this.formatInputDate(detail.tanggal_akhir),
         status_voucher: Number(detail.status_voucher ?? 0),
         sort_order: Number(detail.sort_order || 0),
         items: this.buildItemsPayload(),
@@ -1744,6 +1890,7 @@ export default {
   },
 };
 </script>
+
 <style scoped>
 .section-card {
   overflow: hidden;
@@ -1866,6 +2013,12 @@ export default {
 .picker-subtitle {
   font-size: 13px;
   color: rgba(0, 0, 0, 0.62);
+}
+.discount-action-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .empty-state,
 .empty-state-table {
