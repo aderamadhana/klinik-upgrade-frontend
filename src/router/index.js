@@ -23,7 +23,17 @@ const routes = [
     name: "Login",
     component: () => import("@/views/login.vue"),
   },
-
+  {
+    path: "/system",
+    component: () => import("@/layouts/main-layout.vue"),
+    children: [
+      {
+        path: "audit-logs",
+        name: "audit-logs",
+        component: () => import("@/views/system/audit-logs/all-audit-logs.vue"),
+      },
+    ],
+  },
   {
     path: "/dashboard",
     component: () => import("@/layouts/main-layout.vue"),

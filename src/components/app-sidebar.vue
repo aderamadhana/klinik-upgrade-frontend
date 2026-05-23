@@ -907,6 +907,25 @@ export default {
             },
           ],
         },
+        {
+          header: "System",
+          key: "header-system",
+          roles: ["administrator", "sudo", "it"],
+        },
+        {
+          key: "system",
+          title: "System",
+          icon: "mdi-clipboard-text-clock-outline",
+          roles: ["administrator", "sudo", "it"],
+          children: [
+            {
+              key: "resepsionis-daftar-baru",
+              title: "Audit Logs",
+              to: "/system/audit-logs",
+              roles: ["administrator", "sudo", "it"],
+            },
+          ],
+        },
       ],
     };
   },

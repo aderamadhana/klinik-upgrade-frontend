@@ -34,6 +34,36 @@ let failedQueue = [];
 const IDLE_LIMIT_MS = 4 * 60 * 60 * 1000; // 4 jam
 const REFRESH_BEFORE_MS = 5 * 60 * 1000; // refresh 5 menit sebelum expired
 
+function getSelectedTokoId() {
+  const directTokoId =
+    localStorage.getItem("selected_toko_id") ||
+    localStorage.getItem("selected_cabang_id");
+
+  if (directTokoId) {
+    return directTokoId;
+  }
+
+  try {
+    const selectedToko = JSON.parse(localStorage.getItem("selected_toko"));
+    if (selectedToko?.id) {
+      return selectedToko.id;
+    }
+  } catch (error) {
+    // ignore invalid localStorage JSON
+  }
+
+  try {
+    const selectedCabang = JSON.parse(localStorage.getItem("selected_cabang"));
+    if (selectedCabang?.id) {
+      return selectedCabang.id;
+    }
+  } catch (error) {
+    // ignore invalid localStorage JSON
+  }
+
+  return null;
+}
+
 function processQueue(error, token = null) {
   failedQueue.forEach((promise) => {
     if (error) {
@@ -86,8 +116,17 @@ export async function refreshAccessToken() {
 api.interceptors.request.use(
   async (config) => {
     const token = getToken();
+    const selectedTokoId = getSelectedTokoId();
 
-    if (!token) return config;
+    config.headers = config.headers || {};
+
+    if (selectedTokoId) {
+      config.headers["X-Toko-Id"] = selectedTokoId;
+    }
+
+    if (!token) {
+      return config;
+    }
 
     const idleDuration = Date.now() - getLastActivityAt();
 
@@ -121,6 +160,11 @@ api.interceptors.request.use(
         });
 
         config.headers.Authorization = `Bearer ${newToken}`;
+
+        if (selectedTokoId) {
+          config.headers["X-Toko-Id"] = selectedTokoId;
+        }
+
         return config;
       }
     }
@@ -129,6 +173,10 @@ api.interceptors.request.use(
 
     if (finalToken) {
       config.headers.Authorization = `Bearer ${finalToken}`;
+    }
+
+    if (selectedTokoId) {
+      config.headers["X-Toko-Id"] = selectedTokoId;
     }
 
     return config;
@@ -164,7 +212,15 @@ api.interceptors.response.use(
             failedQueue.push({ resolve, reject });
           });
 
+          originalRequest.headers = originalRequest.headers || {};
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+          const selectedTokoId = getSelectedTokoId();
+
+          if (selectedTokoId) {
+            originalRequest.headers["X-Toko-Id"] = selectedTokoId;
+          }
+
           return api(originalRequest);
         } catch (queueError) {
           return Promise.reject(queueError);
@@ -178,7 +234,14 @@ api.interceptors.response.use(
 
         processQueue(null, newToken);
 
+        originalRequest.headers = originalRequest.headers || {};
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+        const selectedTokoId = getSelectedTokoId();
+
+        if (selectedTokoId) {
+          originalRequest.headers["X-Toko-Id"] = selectedTokoId;
+        }
 
         return api(originalRequest);
       } catch (refreshError) {

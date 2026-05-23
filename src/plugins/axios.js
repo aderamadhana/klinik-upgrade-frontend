@@ -9,16 +9,53 @@ const api = axios.create({
   },
 });
 
+function getSelectedTokoId() {
+  const directTokoId =
+    localStorage.getItem("selected_toko_id") ||
+    localStorage.getItem("selected_cabang_id");
+
+  if (directTokoId) {
+    return directTokoId;
+  }
+
+  try {
+    const selectedToko = JSON.parse(localStorage.getItem("selected_toko"));
+    if (selectedToko?.id) {
+      return selectedToko.id;
+    }
+  } catch (error) {
+    // ignore invalid localStorage JSON
+  }
+
+  try {
+    const selectedCabang = JSON.parse(localStorage.getItem("selected_cabang"));
+    if (selectedCabang?.id) {
+      return selectedCabang.id;
+    }
+  } catch (error) {
+    // ignore invalid localStorage JSON
+  }
+
+  return null;
+}
+
 /**
  * REQUEST INTERCEPTOR
- * Otomatis menambahkan token ke setiap request
+ * Otomatis menambahkan token dan toko aktif ke setiap request
  */
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("access_token");
+    const selectedTokoId = getSelectedTokoId();
+
+    config.headers = config.headers || {};
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    if (selectedTokoId) {
+      config.headers["X-Toko-Id"] = selectedTokoId;
     }
 
     return config;
