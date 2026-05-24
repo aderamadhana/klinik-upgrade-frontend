@@ -172,6 +172,44 @@ const masterRoutes = [
         name: "Edit User",
         component: () => import("@/views/master/user/edit-user.vue"),
       },
+
+      {
+        path: "antrian-kategori",
+        name: "Master Kategori Antrian",
+        component: () =>
+          import("@/views/master/antrian-kategori/all-antrian-kategori.vue"),
+      },
+      {
+        path: "antrian-kategori/add",
+        name: "Tambah Kategori Antrian",
+        component: () =>
+          import("@/views/master/antrian-kategori/add-antrian-kategori.vue"),
+      },
+      {
+        path: "antrian-kategori/edit/:id",
+        name: "Edit Kategori Antrian",
+        component: () =>
+          import("@/views/master/antrian-kategori/edit-antrian-kategori.vue"),
+      },
+
+      {
+        path: "antrian-counter",
+        name: "Master Counter Antrian",
+        component: () =>
+          import("@/views/master/antrian-counter/all-antrian-counter.vue"),
+      },
+      {
+        path: "antrian-counter/add",
+        name: "Tambah Counter Antrian",
+        component: () =>
+          import("@/views/master/antrian-counter/add-antrian-counter.vue"),
+      },
+      {
+        path: "antrian-counter/edit/:id",
+        name: "Edit Counter Antrian",
+        component: () =>
+          import("@/views/master/antrian-counter/edit-antrian-counter.vue"),
+      },
     ],
   },
 ];

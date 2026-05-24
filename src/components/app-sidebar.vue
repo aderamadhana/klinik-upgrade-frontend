@@ -312,6 +312,18 @@ export default {
               to: "/master/user",
               roles: ["administrator", "superuser", "it"],
             },
+            {
+              key: "master-antrian-kategori",
+              title: "Kategori Antrian",
+              to: "/master/antrian-kategori",
+              roles: ["administrator", "superuser", "it", "management"],
+            },
+            {
+              key: "master-antrian-counter",
+              title: "Counter Antrian",
+              to: "/master/antrian-counter",
+              roles: ["administrator", "superuser", "it", "management"],
+            },
           ],
         },
 

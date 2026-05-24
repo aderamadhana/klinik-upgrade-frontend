@@ -5,13 +5,24 @@
     </header>
 
     <main class="display-shell">
-      <section class="hero-block">
-        <h1 class="hero-title">Antrian Dalam Penanganan</h1>
-        <p class="hero-subtitle">
-          Nomor aktif, counter tujuan, dan persiapan berikutnya untuk setiap
-          layanan
-        </p>
+      <section class="title-section">
+        <h1>Antrian Dalam Penanganan</h1>
+        <p>Mohon perhatikan nomor antrian dan counter tujuan.</p>
+
+        <div v-if="lastUpdated" class="last-updated">
+          Update terakhir: {{ lastUpdated }}
+        </div>
       </section>
+
+      <v-alert
+        v-if="errorMessage"
+        class="mb-5"
+        type="error"
+        variant="tonal"
+        border="start"
+      >
+        {{ errorMessage }}
+      </v-alert>
 
       <section class="panel-grid" :class="gridClass">
         <article
@@ -20,223 +31,331 @@
           class="queue-panel"
         >
           <div class="panel-header">
-            <div class="panel-title-wrap">
-              <div class="panel-icon">
-                <v-icon size="24">{{ service.icon }}</v-icon>
-              </div>
+            <div class="service-mark">
+              <v-icon size="26">{{ service.icon }}</v-icon>
+            </div>
 
-              <div>
-                <div class="panel-label">{{ service.label }}</div>
-                <div class="panel-status">
-                  <span class="live-dot"></span>
-                  Live
-                </div>
-              </div>
+            <div>
+              <div class="service-label">{{ service.label }}</div>
+              <div class="service-subtitle">Sedang Dilayani</div>
             </div>
           </div>
 
-          <div class="panel-body">
-            <div class="info-section">
-              <div class="section-label">Sedang Dilayani</div>
-
-              <div class="main-number">
-                {{ getCurrentNo(service.type) }}
-              </div>
-
-              <div class="counter-badge">
-                <v-icon size="16">mdi-storefront-outline</v-icon>
-                {{ getCurrentCounter(service.type) }}
-              </div>
+          <div class="panel-main">
+            <div class="main-number">
+              {{ getCurrentNo(service.type) }}
             </div>
 
-            <div class="divider-line"></div>
-
-            <div class="info-section info-section-next">
-              <div class="section-label">Persiapan Berikutnya</div>
-
-              <div class="next-number">
-                {{ getNextNo(service.type) }}
-              </div>
+            <div class="counter-badge">
+              {{ getCurrentCounter(service.type) }}
             </div>
+          </div>
+
+          <div class="panel-footer">
+            <span>Berikutnya</span>
+            <strong>{{ getNextNo(service.type) }}</strong>
           </div>
         </article>
       </section>
+
+      <div v-if="!loading && visibleServices.length === 0" class="empty-state">
+        Belum ada data antrian untuk ditampilkan.
+      </div>
     </main>
   </div>
 </template>
 
 <script>
+import antrianService from "@/services/antrian/antrianService";
+
 export default {
-  name: "DisplayAntrianInformativeDummy",
+  name: "DisplayAntrianInformative",
+
+  props: {
+    tokoId: {
+      type: [Number, String],
+      default: null,
+    },
+  },
 
   data() {
     return {
       logo: new URL("@/assets/logowebsitenew.png", import.meta.url).href,
-      tokoId: 2,
-      intervalId: null,
 
-      // Struktur data dummy yang lebih benar:
-      // current dan next dipisah agar counter bisa berbeda
-      antrian: {
+      loading: false,
+      errorMessage: "",
+      intervalId: null,
+      lastUpdated: "",
+
+      services: [],
+      queueMap: {
         product: {
-          current: {
-            no: "P-013",
-            counter: "Counter 1",
-          },
-          next: {
-            no: "P-014",
-            counter: "Counter 3",
-          },
+          current: null,
+          next: null,
         },
         treatment: {
-          current: {
-            no: "T-022",
-            counter: "Counter 2",
-          },
-          next: {
-            no: "T-023",
-            counter: "Counter 1",
-          },
+          current: null,
+          next: null,
         },
         vip: {
-          current: {
-            no: "V-005",
-            counter: "Counter VIP",
-          },
-          next: {
-            no: "V-006",
-            counter: "Counter VIP",
-          },
+          current: null,
+          next: null,
         },
       },
 
-      services: [
-        {
+      defaultServiceMeta: {
+        product: {
           type: "product",
           label: "Product",
-          icon: "mdi-bag-personal-outline",
+          icon: "mdi-shopping-outline",
           kode: "P",
         },
-        {
+        treatment: {
           type: "treatment",
           label: "Treatment",
           icon: "mdi-spa-outline",
           kode: "T",
         },
-        {
+        vip: {
           type: "vip",
           label: "VIP",
           icon: "mdi-crown-outline",
           kode: "V",
         },
-      ],
-
-      // dummy mapping counter yang mungkin dipakai per service
-      counterPool: {
-        product: ["Counter 1", "Counter 2", "Counter 3"],
-        treatment: ["Counter 1", "Counter 2", "Counter 4"],
-        vip: ["Counter VIP"],
       },
     };
   },
 
   computed: {
+    activeTokoId() {
+      const fromProp = Number(this.tokoId || 0);
+
+      if (fromProp) {
+        return fromProp;
+      }
+
+      const localToko =
+        localStorage.getItem("selected_toko_id") ||
+        localStorage.getItem("selected_cabang_id") ||
+        localStorage.getItem("toko_id");
+
+      return Number(localToko || 2);
+    },
+
     showVip() {
-      return this.tokoId === 2 || this.tokoId === 8;
+      return this.activeTokoId === 2 || this.activeTokoId === 8;
     },
 
     visibleServices() {
-      return this.services.filter((item) => {
-        if (item.type === "vip") return this.showVip;
+      const rows = this.services.length
+        ? this.services
+        : [
+            this.defaultServiceMeta.product,
+            this.defaultServiceMeta.treatment,
+            ...(this.showVip ? [this.defaultServiceMeta.vip] : []),
+          ];
+
+      return rows.filter((item) => {
+        if (item.type === "vip") {
+          return this.showVip;
+        }
+
         return true;
       });
     },
 
     gridClass() {
       const count = this.visibleServices.length;
+
       if (count <= 1) return "panel-grid-1";
       if (count === 2) return "panel-grid-2";
+
       return "panel-grid-3";
     },
   },
 
   mounted() {
+    this.fetchDisplay();
+
     this.intervalId = setInterval(() => {
-      this.rotateDummyQueue();
-    }, 9000);
+      this.fetchDisplay(true);
+    }, 5000);
   },
 
   beforeUnmount() {
-    if (this.intervalId) clearInterval(this.intervalId);
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+    }
   },
 
   methods: {
+    async fetchDisplay(silent = false) {
+      if (!silent) {
+        this.loading = true;
+      }
+
+      this.errorMessage = "";
+
+      try {
+        const response = await antrianService.display({
+          toko_id: this.activeTokoId,
+          tanggal: this.getTodayDate(),
+        });
+
+        const rows = response?.data || [];
+
+        this.applyDisplayRows(rows);
+        this.lastUpdated = this.getCurrentTime();
+      } catch (error) {
+        this.errorMessage = this.getErrorMessage(
+          error,
+          "Gagal mengambil data display antrian.",
+        );
+      } finally {
+        if (!silent) {
+          this.loading = false;
+        }
+      }
+    },
+
+    applyDisplayRows(rows = []) {
+      const nextServices = [];
+      const nextQueueMap = {
+        product: {
+          current: null,
+          next: null,
+        },
+        treatment: {
+          current: null,
+          next: null,
+        },
+        vip: {
+          current: null,
+          next: null,
+        },
+      };
+
+      rows.forEach((row) => {
+        const kategori = row?.kategori || {};
+        const type = this.resolveQueueType(kategori);
+
+        if (!nextQueueMap[type]) {
+          return;
+        }
+
+        if (type === "vip" && !this.showVip) {
+          return;
+        }
+
+        const serviceMeta = {
+          ...this.defaultServiceMeta[type],
+          label: kategori.nama || this.defaultServiceMeta[type].label,
+          kode: kategori.kode || this.defaultServiceMeta[type].kode,
+          icon: kategori.icon || this.defaultServiceMeta[type].icon,
+        };
+
+        const serviceExists = nextServices.some(
+          (item) => item.type === serviceMeta.type,
+        );
+
+        if (!serviceExists) {
+          nextServices.push(serviceMeta);
+        }
+
+        nextQueueMap[type] = {
+          current: row.current || null,
+          next: row.next || null,
+        };
+      });
+
+      this.services = this.sortServices(nextServices);
+      this.queueMap = nextQueueMap;
+    },
+
+    sortServices(rows = []) {
+      const order = {
+        product: 1,
+        treatment: 2,
+        vip: 3,
+      };
+
+      return [...rows].sort((a, b) => {
+        return (order[a.type] || 99) - (order[b.type] || 99);
+      });
+    },
+
+    resolveQueueType(kategori = {}) {
+      const kode = String(kategori.kode || "").toUpperCase();
+      const nama = String(kategori.nama || "").toLowerCase();
+
+      if (kode === "P" || nama.includes("product")) {
+        return "product";
+      }
+
+      if (kode === "T" || nama.includes("treatment")) {
+        return "treatment";
+      }
+
+      if (kode === "V" || nama.includes("vip")) {
+        return "vip";
+      }
+
+      return "product";
+    },
+
     getQueueItem(type) {
-      return this.antrian?.[type] || null;
+      return (
+        this.queueMap?.[type] || {
+          current: null,
+          next: null,
+        }
+      );
     },
 
     getCurrentNo(type) {
-      return this.getQueueItem(type)?.current?.no || "-";
+      const current = this.getQueueItem(type)?.current;
+
+      return current?.kode_nomor || "-";
     },
 
     getCurrentCounter(type) {
-      return this.getQueueItem(type)?.current?.counter || "-";
+      const current = this.getQueueItem(type)?.current;
+
+      return current?.counter || "-";
     },
 
     getNextNo(type) {
-      return this.getQueueItem(type)?.next?.no || "-";
+      const next = this.getQueueItem(type)?.next;
+
+      return next?.kode_nomor || "-";
     },
 
-    getNextCounter(type) {
-      return this.getQueueItem(type)?.next?.counter || "-";
+    getTodayDate() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
     },
 
-    extractNumber(value) {
-      if (!value || typeof value !== "string") return 0;
-      const match = value.match(/(\d+)$/);
-      if (!match) return 0;
+    getCurrentTime() {
+      const now = new Date();
+      const hour = String(now.getHours()).padStart(2, "0");
+      const minute = String(now.getMinutes()).padStart(2, "0");
+      const second = String(now.getSeconds()).padStart(2, "0");
 
-      const num = parseInt(match[1], 10);
-      return Number.isNaN(num) ? 0 : num;
+      return `${hour}:${minute}:${second}`;
     },
 
-    formatNumber(num) {
-      return String(num).padStart(3, "0");
-    },
+    getErrorMessage(error, fallback) {
+      const rawError = error?.response?.data?.error;
 
-    buildQueueNumber(type, num) {
-      const service = this.services.find((item) => item.type === type);
-      if (!service) return "-";
-      return `${service.kode}-${this.formatNumber(num)}`;
-    },
+      if (typeof rawError === "string") {
+        return rawError;
+      }
 
-    getRandomCounter(type) {
-      const pool = this.counterPool[type] || ["Counter 1"];
-      const randomIndex = Math.floor(Math.random() * pool.length);
-      return pool[randomIndex];
-    },
-
-    rotateDummyQueue() {
-      this.visibleServices.forEach((service) => {
-        const item = this.getQueueItem(service.type);
-        if (!item?.current || !item?.next) return;
-
-        const currentNextNo = item.next.no;
-        const currentNextCounter = item.next.counter;
-
-        const nextSequence = this.extractNumber(currentNextNo) + 1;
-
-        this.antrian[service.type] = {
-          current: {
-            no: currentNextNo,
-            counter: currentNextCounter,
-          },
-          next: {
-            no: this.buildQueueNumber(service.type, nextSequence),
-            counter: this.getRandomCounter(service.type),
-          },
-        };
-      });
+      return error?.response?.data?.message || error?.message || fallback;
     },
   },
 };
@@ -245,281 +364,289 @@ export default {
 <style scoped>
 .queue-display-page {
   min-height: 100vh;
-  background: #f6f3f5;
+  background: #f4f5f7;
   font-family: Arial, Helvetica, sans-serif;
-  color: #231a1f;
+  color: #111827;
 }
 
 .brand-bar {
-  height: 118px;
-  background: linear-gradient(90deg, #cb6c9a 0%, #a54f7a 100%);
+  height: 92px;
+  background: linear-gradient(90deg, #d86aa2 0%, #a04678 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 20px;
+  padding: 0 24px;
+  box-shadow: 0 2px 10px rgba(17, 24, 39, 0.12);
 }
 
 .brand-logo {
-  max-height: 82px;
+  max-height: 78px;
   width: auto;
   object-fit: contain;
 }
 
 .display-shell {
-  max-width: 1480px;
+  max-width: 1500px;
   margin: 0 auto;
-  padding: 36px 24px 44px;
+  padding: 38px 42px 52px;
 }
 
-.hero-block {
+.title-section {
   text-align: center;
   margin-bottom: 30px;
 }
 
-.hero-title {
+.title-section h1 {
   margin: 0;
-  font-size: 50px;
-  line-height: 1.08;
+  font-size: 42px;
+  line-height: 1.15;
   font-weight: 800;
-  color: #23161b;
+  color: #0f172a;
 }
 
-.hero-subtitle {
-  margin: 12px auto 0;
+.title-section p {
+  margin: 10px 0 0;
   font-size: 18px;
-  color: #675b61;
-  max-width: 840px;
-  line-height: 1.6;
+  color: #64748b;
+}
+
+.last-updated {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #94a3b8;
 }
 
 .panel-grid {
   display: grid;
-  gap: 22px;
+  gap: 26px;
   justify-content: center;
 }
 
 .panel-grid-1 {
-  grid-template-columns: minmax(460px, 520px);
+  grid-template-columns: minmax(420px, 560px);
 }
 
 .panel-grid-2 {
-  grid-template-columns: repeat(2, minmax(420px, 500px));
+  grid-template-columns: repeat(2, minmax(420px, 560px));
 }
 
 .panel-grid-3 {
-  grid-template-columns: repeat(3, minmax(320px, 420px));
+  grid-template-columns: repeat(3, minmax(380px, 1fr));
 }
 
 .queue-panel {
-  width: 100%;
+  min-height: 440px;
   background: #ffffff;
-  border: 1px solid #ead9e1;
-  border-radius: 22px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 520px;
-  box-shadow: 0 10px 28px rgba(44, 20, 32, 0.06);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
 }
 
 .panel-header {
-  padding: 22px 22px 16px;
-  border-bottom: 1px solid #f1e5eb;
-}
-
-.panel-title-wrap {
+  min-height: 92px;
+  padding: 22px 24px;
+  border-bottom: 1px solid #eef2f7;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
 }
 
-.panel-icon {
-  width: 52px;
-  height: 52px;
+.service-mark {
+  width: 54px;
+  height: 54px;
   border-radius: 15px;
-  background: #f6e5ed;
-  color: #9e5477;
+  background: #fdf2f8;
+  color: #b5477a;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.panel-label {
-  font-size: 32px;
+.service-label {
+  font-size: 30px;
+  line-height: 1.1;
   font-weight: 800;
-  line-height: 1.08;
-  color: #24181d;
+  color: #0f172a;
 }
 
-.panel-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-  font-size: 14px;
-  color: #5f565b;
-}
-
-.live-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #30b566;
-}
-
-.panel-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 24px 22px 22px;
-}
-
-.info-section {
-  text-align: center;
-}
-
-.info-section-next {
-  margin-top: 6px;
-}
-
-.section-label {
-  margin-bottom: 14px;
+.service-subtitle {
+  margin-top: 5px;
   font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  color: #64748b;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #877982;
+}
+
+.panel-main {
+  flex: 1;
+  padding: 34px 26px 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .main-number {
-  font-size: clamp(84px, 9vw, 128px);
-  line-height: 0.95;
+  width: 100%;
+  white-space: nowrap;
+  text-align: center;
+  font-size: clamp(76px, 7vw, 116px);
+  line-height: 1;
   font-weight: 900;
-  letter-spacing: -0.04em;
-  color: #1f1318;
-  margin-bottom: 16px;
+  letter-spacing: -0.06em;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
 }
 
 .counter-badge {
+  margin-top: 20px;
+  min-height: 42px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 800;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 999px;
-  background: #f9eef3;
-  border: 1px solid #edd9e4;
-  color: #8f5572;
-  font-size: 14px;
-  font-weight: 700;
+  justify-content: center;
 }
 
-.divider-line {
-  height: 1px;
-  background: #f1e5eb;
-  margin: 28px 0 24px;
-}
-
-.next-number {
-  font-size: 42px;
-  font-weight: 800;
-  line-height: 1.1;
-  color: #9e5477;
-  margin-bottom: 14px;
-}
-
-.next-destination {
+.panel-footer {
+  min-height: 78px;
+  margin: 0 24px 24px;
+  padding: 0 20px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
+  gap: 18px;
 }
 
-.destination-label {
-  font-size: 13px;
+.panel-footer span {
+  font-size: 17px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #8a7b83;
+  color: #64748b;
 }
 
-.destination-value {
-  font-size: 24px;
-  font-weight: 800;
-  color: #3d2b33;
+.panel-footer strong {
+  white-space: nowrap;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 900;
+  color: #b5477a;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 1360px) {
+.empty-state {
+  margin-top: 28px;
+  padding: 28px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  text-align: center;
+  color: #64748b;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+@media (max-width: 1280px) {
+  .display-shell {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+
   .panel-grid-3 {
-    grid-template-columns: repeat(3, minmax(280px, 360px));
-  }
-
-  .hero-title {
-    font-size: 42px;
-  }
-}
-
-@media (max-width: 1100px) {
-  .panel-grid-3 {
-    grid-template-columns: repeat(2, minmax(360px, 460px));
-  }
-}
-
-@media (max-width: 900px) {
-  .panel-grid-1,
-  .panel-grid-2,
-  .panel-grid-3 {
-    grid-template-columns: minmax(320px, 460px);
-  }
-
-  .brand-bar {
-    height: 90px;
-  }
-
-  .brand-logo {
-    max-height: 56px;
-  }
-
-  .hero-title {
-    font-size: 34px;
-  }
-
-  .hero-subtitle {
-    font-size: 15px;
-  }
-
-  .queue-panel {
-    min-height: 460px;
-  }
-
-  .panel-label {
-    font-size: 28px;
+    grid-template-columns: repeat(3, minmax(300px, 1fr));
   }
 
   .main-number {
-    font-size: 84px;
-  }
-
-  .next-number {
-    font-size: 34px;
-  }
-
-  .destination-value {
-    font-size: 20px;
+    font-size: clamp(66px, 7vw, 96px);
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 980px) {
+  .panel-grid-3 {
+    grid-template-columns: repeat(2, minmax(320px, 1fr));
+  }
+
+  .title-section h1 {
+    font-size: 34px;
+  }
+
+  .title-section p {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 720px) {
+  .brand-bar {
+    height: 88px;
+  }
+
+  .brand-logo {
+    max-height: 58px;
+  }
+
   .display-shell {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding: 28px 16px 40px;
+  }
+
+  .title-section {
+    margin-bottom: 22px;
+  }
+
+  .title-section h1 {
+    font-size: 28px;
+  }
+
+  .title-section p {
+    font-size: 15px;
   }
 
   .panel-grid-1,
   .panel-grid-2,
   .panel-grid-3 {
     grid-template-columns: 1fr;
+  }
+
+  .queue-panel {
+    min-height: 360px;
+  }
+
+  .panel-header {
+    min-height: 78px;
+    padding: 18px;
+  }
+
+  .service-mark {
+    width: 48px;
+    height: 48px;
+  }
+
+  .service-label {
+    font-size: 25px;
+  }
+
+  .main-number {
+    font-size: clamp(64px, 18vw, 88px);
+  }
+
+  .panel-footer {
+    min-height: 68px;
+    margin: 0 18px 18px;
+  }
+
+  .panel-footer strong {
+    font-size: 28px;
   }
 }
 </style>

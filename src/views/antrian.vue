@@ -3,9 +3,7 @@
     <div class="page-header">
       <div>
         <h1 class="page-title">Antrian</h1>
-        <p class="page-subtitle">
-          Kelola dan monitor antrian pasien (panggil, proses, selesai, skip)
-        </p>
+        <p class="page-subtitle">Kelola dan monitor antrian pasien.</p>
       </div>
 
       <v-breadcrumbs :items="breadcrumbs" divider="/" />
@@ -13,7 +11,7 @@
 
     <v-card>
       <v-card-text>
-        <div class="d-flex flex-wrap ga-3">
+        <div class="d-flex flex-wrap align-center ga-3">
           <v-btn
             :to="'/antrian/input'"
             variant="tonal"
@@ -31,6 +29,28 @@
           >
             LINK DISPLAY
           </v-btn>
+
+          <v-spacer />
+
+          <v-text-field
+            v-model="tanggal"
+            type="date"
+            label="Tanggal"
+            variant="outlined"
+            density="compact"
+            hide-details
+            style="max-width: 190px"
+            @update:model-value="fetchQueue"
+          />
+
+          <v-btn
+            variant="tonal"
+            prepend-icon="mdi-refresh"
+            :loading="loading"
+            @click="fetchQueue"
+          >
+            Refresh
+          </v-btn>
         </div>
 
         <v-alert
@@ -44,10 +64,34 @@
           {{ errorMessage }}
         </v-alert>
 
+        <v-progress-linear
+          v-if="loading"
+          class="mt-4"
+          indeterminate
+          color="primary"
+        />
+
         <v-tabs v-model="tab" class="mt-4" color="primary">
-          <v-tab value="product">Antrian Product</v-tab>
-          <v-tab value="treatment">Antrian Treatment</v-tab>
-          <v-tab v-if="showVip" value="vip">Antrian VIP</v-tab>
+          <v-tab value="product">
+            Product
+            <v-chip class="ml-2" size="x-small" variant="tonal">
+              {{ queueMap.product.length }}
+            </v-chip>
+          </v-tab>
+
+          <v-tab value="treatment">
+            Treatment
+            <v-chip class="ml-2" size="x-small" variant="tonal">
+              {{ queueMap.treatment.length }}
+            </v-chip>
+          </v-tab>
+
+          <v-tab v-if="showVip" value="vip">
+            VIP
+            <v-chip class="ml-2" size="x-small" variant="tonal">
+              {{ queueMap.vip.length }}
+            </v-chip>
+          </v-tab>
         </v-tabs>
 
         <v-window v-model="tab" class="mt-3">
@@ -60,6 +104,7 @@
               @start="handleStart"
               @finish="handleFinish"
               @skip="handleSkip"
+              @recall="handleRecall"
             />
           </v-window-item>
 
@@ -69,6 +114,7 @@
               :items="queueMap.treatment"
               :counter-options="counterOptions"
               @call="handleCall"
+              @recall="handleRecall"
               @start="handleStart"
               @finish="handleFinish"
               @skip="handleSkip"
@@ -81,6 +127,7 @@
               :items="queueMap.vip"
               :counter-options="counterOptions"
               @call="handleCall"
+              @recall="handleRecall"
               @start="handleStart"
               @finish="handleFinish"
               @skip="handleSkip"
@@ -94,204 +141,309 @@
 
 <script>
 import QueueTable from "./queue-table.vue";
+import antrianService from "@/services/antrian/antrianService";
 
 export default {
   name: "Antrian",
-  components: { QueueTable },
+
+  components: {
+    QueueTable,
+  },
 
   props: {
-    baseUrl: { type: String, default: "/" },
-    tokoId: { type: Number, default: 2 },
-    antrianProduct: { type: Array, default: () => [] },
-    antrianTreatment: { type: Array, default: () => [] },
-    antrianVip: { type: Array, default: () => [] },
+    tokoId: {
+      type: [Number, String],
+      default: null,
+    },
   },
 
   data() {
     return {
       tab: "product",
+      loading: false,
       errorMessage: "",
-      breadcrumbs: [{ title: "Antrian", disabled: true }],
+      refreshInterval: null,
 
-      counterOptions: [
-        { title: "Counter 1", value: 1 },
-        { title: "Counter 2", value: 2 },
-        { title: "Counter 3", value: 3 },
-        { title: "Counter 4", value: 4 },
-        { title: "Counter 5", value: 5 },
-        { title: "Counter 6", value: 6 },
+      tanggal: this.getTodayDate(),
+
+      breadcrumbs: [
+        {
+          title: "Antrian",
+          disabled: true,
+        },
       ],
+
+      counterOptions: [],
 
       queueMap: {
         product: [],
         treatment: [],
         vip: [],
       },
-
-      dummyProduct: [
-        {
-          id: 101,
-          tgl_antri: "2026-03-05",
-          waktu: "09:10",
-          kode: "P",
-          no: "001",
-          status: 0,
-        },
-        {
-          id: 102,
-          tgl_antri: "2026-03-05",
-          waktu: "09:18",
-          kode: "P",
-          no: "002",
-          status: 0,
-        },
-        {
-          id: 103,
-          tgl_antri: "2026-03-05",
-          waktu: "09:25",
-          kode: "P",
-          no: "003",
-          status: 1,
-          counter: 2,
-        },
-        {
-          id: 104,
-          tgl_antri: "2026-03-05",
-          waktu: "09:40",
-          kode: "P",
-          no: "004",
-          status: 2,
-          counter: 2,
-        },
-      ],
-
-      dummyTreatment: [
-        {
-          id: 201,
-          tgl_antri: "2026-03-05",
-          waktu: "10:05",
-          kode: "T",
-          no: "011",
-          status: 0,
-        },
-        {
-          id: 202,
-          tgl_antri: "2026-03-05",
-          waktu: "10:12",
-          kode: "T",
-          no: "012",
-          status: 1,
-          counter: 1,
-        },
-        {
-          id: 203,
-          tgl_antri: "2026-03-05",
-          waktu: "10:20",
-          kode: "T",
-          no: "013",
-          status: 0,
-        },
-      ],
-
-      dummyVip: [
-        {
-          id: 301,
-          tgl_antri: "2026-03-05",
-          waktu: "11:00",
-          kode: "V",
-          no: "001",
-          status: 0,
-        },
-        {
-          id: 302,
-          tgl_antri: "2026-03-05",
-          waktu: "11:08",
-          kode: "V",
-          no: "002",
-          status: 1,
-          counter: 3,
-        },
-      ],
     };
   },
 
   computed: {
+    activeTokoId() {
+      const fromProp = Number(this.tokoId || 0);
+
+      if (fromProp) {
+        return fromProp;
+      }
+
+      const localToko =
+        localStorage.getItem("selected_toko_id") ||
+        localStorage.getItem("selected_cabang_id") ||
+        localStorage.getItem("toko_id");
+
+      return Number(localToko || 2);
+    },
+
     showVip() {
-      return this.tokoId === 2 || this.tokoId === 8;
-    },
-
-    sourceProduct() {
-      return this.antrianProduct?.length
-        ? this.antrianProduct
-        : this.dummyProduct;
-    },
-
-    sourceTreatment() {
-      return this.antrianTreatment?.length
-        ? this.antrianTreatment
-        : this.dummyTreatment;
-    },
-
-    sourceVip() {
-      return this.antrianVip?.length ? this.antrianVip : this.dummyVip;
+      return this.activeTokoId === 2 || this.activeTokoId === 8;
     },
   },
 
-  watch: {
-    sourceProduct: {
-      immediate: true,
-      deep: true,
-      handler(val) {
-        this.queueMap.product = this.normalizeList(val);
-      },
-    },
+  mounted() {
+    this.fetchInitialData();
 
-    sourceTreatment: {
-      immediate: true,
-      deep: true,
-      handler(val) {
-        this.queueMap.treatment = this.normalizeList(val);
-      },
-    },
+    this.refreshInterval = setInterval(() => {
+      this.fetchQueue(true);
+    }, 8000);
+  },
 
-    sourceVip: {
-      immediate: true,
-      deep: true,
-      handler(val) {
-        this.queueMap.vip = this.normalizeList(val);
-      },
-    },
+  beforeUnmount() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
   },
 
   methods: {
-    normalizeList(list = []) {
-      return list.map((item) => ({
+    async fetchInitialData() {
+      await Promise.all([this.fetchCounters(), this.fetchQueue()]);
+    },
+
+    async fetchCounters() {
+      this.errorMessage = "";
+
+      try {
+        const response = await antrianService.counter({
+          toko_id: this.activeTokoId,
+        });
+
+        const rows = response?.data || [];
+
+        this.counterOptions = rows.map((item) => ({
+          title: item.nama,
+          value: item.id,
+        }));
+      } catch (error) {
+        this.errorMessage = this.getErrorMessage(
+          error,
+          "Gagal mengambil data counter.",
+        );
+      }
+    },
+
+    async fetchQueue(silent = false) {
+      this.errorMessage = "";
+
+      if (!silent) {
+        this.loading = true;
+      }
+
+      try {
+        const response = await antrianService.operator({
+          toko_id: this.activeTokoId,
+          tanggal: this.tanggal,
+          per_page: 300,
+        });
+
+        const payload = response?.data || {};
+        const rows = Array.isArray(payload) ? payload : payload.data || [];
+
+        this.applyQueueRows(rows);
+      } catch (error) {
+        this.errorMessage = this.getErrorMessage(
+          error,
+          "Gagal mengambil data antrian.",
+        );
+      } finally {
+        if (!silent) {
+          this.loading = false;
+        }
+      }
+    },
+
+    applyQueueRows(rows = []) {
+      const nextMap = {
+        product: [],
+        treatment: [],
+        vip: [],
+      };
+
+      rows.forEach((item) => {
+        const type = this.resolveQueueType(item);
+
+        if (!nextMap[type]) {
+          return;
+        }
+
+        nextMap[type].push(this.normalizeQueueItem(item, type));
+      });
+
+      this.queueMap = nextMap;
+
+      if (!this.showVip && this.tab === "vip") {
+        this.tab = "product";
+      }
+    },
+
+    resolveQueueType(item = {}) {
+      const kodeKategori = String(
+        item?.kategori?.kode || item?.kode_kategori || item?.kode || "",
+      ).toUpperCase();
+
+      const namaKategori = String(
+        item?.kategori?.nama || item?.nama_kategori || "",
+      ).toLowerCase();
+
+      if (kodeKategori === "P" || namaKategori.includes("product")) {
+        return "product";
+      }
+
+      if (kodeKategori === "T" || namaKategori.includes("treatment")) {
+        return "treatment";
+      }
+
+      if (kodeKategori === "V" || namaKategori.includes("vip")) {
+        return "vip";
+      }
+
+      return "product";
+    },
+
+    normalizeQueueItem(item = {}, type = "product") {
+      const kodeNomor = item.kode_nomor || this.buildKodeNomor(item);
+      const parsed = this.parseKodeNomor(kodeNomor);
+
+      return {
         ...item,
+
+        id: item.id,
+        type,
+
+        tgl_antri: this.formatDate(item.tanggal || item.created_at),
+        waktu: this.formatTime(
+          item.checkin_at ||
+            item.called_at ||
+            item.served_at ||
+            item.created_at,
+        ),
+
+        kode: parsed.kode,
+        no: parsed.no,
+        kode_nomor: kodeNomor,
+
         status: this.normalizeStatus(item.status),
-        counter: item.counter || null,
+
+        counter: item.counter_id || item.counter?.id || null,
+
+        counter_name: item.counter?.nama || item.nama_counter || "-",
+
+        source_type: item.source_type || "walk_in",
+        booking_code: item.booking?.booking_code || null,
+        nama_pasien: item.booking?.nama_pasien || item.nama_pasien || null,
+        no_hp: item.booking?.no_hp || item.no_hp || null,
+
+        appointment_at:
+          item.appointment_at || item.booking?.appointment_at || null,
+        checkin_at: item.checkin_at || null,
+
         isLoading: false,
-      }));
+      };
+    },
+
+    buildKodeNomor(item = {}) {
+      const kode = item?.kategori?.kode || item.kode || "";
+      const nomor = item.nomor || item.no || "";
+
+      if (!kode && !nomor) {
+        return "-";
+      }
+
+      return `${kode}-${String(nomor).padStart(3, "0")}`;
+    },
+
+    parseKodeNomor(kodeNomor) {
+      if (!kodeNomor || kodeNomor === "-") {
+        return {
+          kode: "-",
+          no: "-",
+        };
+      }
+
+      const parts = String(kodeNomor).split("-");
+
+      if (parts.length < 2) {
+        return {
+          kode: String(kodeNomor).charAt(0),
+          no: String(kodeNomor).slice(1),
+        };
+      }
+
+      return {
+        kode: parts[0],
+        no: parts.slice(1).join("-"),
+      };
     },
 
     normalizeStatus(status) {
-      if (status === "waiting" || status === 0) return "waiting";
-      if (status === "called") return "called";
-      if (status === "in_service" || status === 1) return "in_service";
-      if (status === "done" || status === 2) return "done";
-      if (status === "skipped") return "skipped";
+      if (status === "waiting" || status === 0) {
+        return "waiting";
+      }
+
+      if (status === "called") {
+        return "called";
+      }
+
+      if (status === "serving" || status === "in_service" || status === 1) {
+        return "in_service";
+      }
+
+      if (status === "finished" || status === "done" || status === 2) {
+        return "done";
+      }
+
+      if (status === "skipped") {
+        return "skipped";
+      }
+
+      if (status === "cancelled") {
+        return "cancelled";
+      }
+
       return "waiting";
     },
 
-    buildUrl(path) {
-      const cleanBase = this.baseUrl.endsWith("/")
-        ? this.baseUrl
-        : `${this.baseUrl}/`;
-      return `${cleanBase}${path}`;
+    toBackendStatus(uiStatus) {
+      if (uiStatus === "in_service") {
+        return "serving";
+      }
+
+      if (uiStatus === "done") {
+        return "finished";
+      }
+
+      return uiStatus;
     },
 
     setItemLoading(type, id, value) {
-      const index = this.queueMap[type].findIndex((x) => x.id === id);
-      if (index === -1) return;
+      const index = this.queueMap[type].findIndex((item) => item.id === id);
+
+      if (index === -1) {
+        return;
+      }
 
       this.queueMap[type][index] = {
         ...this.queueMap[type][index],
@@ -300,8 +452,11 @@ export default {
     },
 
     patchItem(type, id, patch) {
-      const index = this.queueMap[type].findIndex((x) => x.id === id);
-      if (index === -1) return;
+      const index = this.queueMap[type].findIndex((item) => item.id === id);
+
+      if (index === -1) {
+        return;
+      }
 
       this.queueMap[type][index] = {
         ...this.queueMap[type][index],
@@ -309,44 +464,23 @@ export default {
       };
     },
 
-    async request(url, options = {}) {
-      const response = await fetch(url, {
-        method: options.method || "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(options.headers || {}),
-        },
-        body: options.body ? JSON.stringify(options.body) : undefined,
-      });
-
-      if (!response.ok) {
-        let message = `Request gagal (${response.status})`;
-        try {
-          const result = await response.json();
-          if (result?.message) message = result.message;
-        } catch (_) {}
-        throw new Error(message);
-      }
-
-      const contentType = response.headers.get("content-type") || "";
-      if (contentType.includes("application/json")) {
-        return await response.json();
-      }
-
-      return await response.text();
-    },
-
     async runAction({ type, id, action, counter = null }) {
       this.errorMessage = "";
-      this.setItemLoading(type, id, true);
 
-      const current = this.queueMap[type].find((x) => x.id === id);
+      const current = this.queueMap[type].find((item) => item.id === id);
+
       if (!current) {
-        this.setItemLoading(type, id, false);
+        return;
+      }
+
+      if (action === "call" && !counter) {
+        this.errorMessage = "Pilih counter terlebih dahulu.";
         return;
       }
 
       const previous = { ...current };
+
+      this.setItemLoading(type, id, true);
 
       try {
         if (action === "call") {
@@ -355,13 +489,19 @@ export default {
             counter,
           });
 
-          await this.request(
-            this.buildUrl(`Antrian/No_antrian/panggil_${type}/${id}`),
-            {
-              method: "POST",
-              body: { counter },
-            },
-          );
+          await antrianService.panggil(id, {
+            counter_id: counter,
+          });
+
+          this.playQueueVoice(current, counter);
+        }
+
+        if (action === "recall") {
+          await antrianService.panggilUlang(id, {
+            counter_id: counter,
+          });
+
+          this.playQueueVoice(current, counter);
         }
 
         if (action === "start") {
@@ -369,12 +509,7 @@ export default {
             status: "in_service",
           });
 
-          await this.request(
-            this.buildUrl(`Antrian/No_antrian/in_${type}/${id}`),
-            {
-              method: "POST",
-            },
-          );
+          await antrianService.mulaiLayanan(id);
         }
 
         if (action === "finish") {
@@ -382,12 +517,7 @@ export default {
             status: "done",
           });
 
-          await this.request(
-            this.buildUrl(`Antrian/No_antrian/out_${type}/${id}`),
-            {
-              method: "POST",
-            },
-          );
+          await antrianService.selesai(id);
         }
 
         if (action === "skip") {
@@ -395,17 +525,17 @@ export default {
             status: "skipped",
           });
 
-          await this.request(
-            this.buildUrl(`Antrian/No_antrian/skip_${type}/${id}`),
-            {
-              method: "POST",
-            },
-          );
+          await antrianService.lewati(id);
         }
+
+        await this.fetchQueue(true);
       } catch (error) {
         this.patchItem(type, id, previous);
-        this.errorMessage =
-          error?.message || "Terjadi kesalahan saat memproses antrian.";
+
+        this.errorMessage = this.getErrorMessage(
+          error,
+          "Terjadi kesalahan saat memproses antrian.",
+        );
       } finally {
         this.setItemLoading(type, id, false);
       }
@@ -442,6 +572,173 @@ export default {
         id: payload.id,
         action: "skip",
       });
+    },
+
+    async handleRecall(payload) {
+      await this.runAction({
+        type: payload.type,
+        id: payload.id,
+        counter: payload.counter,
+        action: "recall",
+      });
+    },
+    getTodayDate() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
+    },
+
+    formatDate(value) {
+      if (!value) {
+        return "-";
+      }
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
+
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
+    },
+
+    formatTime(value) {
+      if (!value) {
+        return "-";
+      }
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        const raw = String(value);
+        return raw.length >= 5 ? raw.slice(0, 5) : raw;
+      }
+
+      const hour = String(date.getHours()).padStart(2, "0");
+      const minute = String(date.getMinutes()).padStart(2, "0");
+
+      return `${hour}:${minute}`;
+    },
+
+    getErrorMessage(error, fallback) {
+      return (
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        fallback
+      );
+    },
+    async playQueueVoice(item, counterId) {
+      if (!window.speechSynthesis) {
+        return;
+      }
+
+      const nomor = item.kode_nomor || `${item.kode}-${item.no}`;
+      const counter = this.getCounterTitle(
+        counterId || item.counter || item.counter_id,
+      );
+
+      const parsed = this.splitQueueCode(nomor);
+
+      window.speechSynthesis.cancel();
+
+      await this.speakQueueText("Nomor antrian");
+      await this.delayVoice(250);
+
+      await this.speakQueueText(parsed.prefixText);
+      await this.delayVoice(550);
+
+      await this.speakQueueText(parsed.numberText);
+      await this.delayVoice(350);
+
+      await this.speakQueueText(`Silakan menuju ${counter}`);
+    },
+
+    speakQueueText(text) {
+      return new Promise((resolve) => {
+        const utterance = new SpeechSynthesisUtterance(text);
+
+        utterance.lang = "id-ID";
+        utterance.rate = 0.85;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        utterance.onend = resolve;
+        utterance.onerror = resolve;
+
+        window.speechSynthesis.speak(utterance);
+      });
+    },
+
+    delayVoice(ms = 300) {
+      return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+      });
+    },
+
+    splitQueueCode(value) {
+      if (!value) {
+        return {
+          prefixText: "",
+          numberText: "",
+        };
+      }
+
+      const raw = String(value).trim().toUpperCase();
+      const parts = raw.split("-");
+
+      const prefix = parts[0] || "";
+      const number = parts[1] || "";
+
+      const prefixMap = {
+        P: "P",
+        T: "T",
+        V: "V",
+      };
+
+      return {
+        prefixText: prefixMap[prefix] || prefix,
+        numberText: this.spellQueueNumber(number),
+      };
+    },
+
+    spellQueueNumber(value) {
+      if (!value) {
+        return "";
+      }
+
+      const digitMap = {
+        0: "nol",
+        1: "satu",
+        2: "dua",
+        3: "tiga",
+        4: "empat",
+        5: "lima",
+        6: "enam",
+        7: "tujuh",
+        8: "delapan",
+        9: "sembilan",
+      };
+
+      return String(value)
+        .split("")
+        .map((char) => digitMap[char] || char)
+        .join(" ");
+    },
+
+    getCounterTitle(counterId) {
+      const found = this.counterOptions.find((item) => {
+        return Number(item.value) === Number(counterId);
+      });
+
+      return found?.title || `Counter ${counterId}`;
     },
   },
 };
