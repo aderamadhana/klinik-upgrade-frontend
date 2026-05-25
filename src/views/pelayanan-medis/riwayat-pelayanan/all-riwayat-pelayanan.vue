@@ -11,9 +11,97 @@
       <v-breadcrumbs :items="breadcrumbs" divider="/" />
     </div>
 
-    <v-card class="main-card" flat>
-      <div class="toolbar-wrap">
-        <div class="toolbar-left">
+    <v-card variant="flat" class="border mb-4">
+      <!-- TOOLBAR -->
+      <v-card-text class="pa-4">
+        <v-row dense align="center">
+          <v-col cols="12" md="4">
+            <v-text-field
+              v-model="filters.search"
+              placeholder="Cari no registrasi, pasien, no RM, dokter..."
+              prepend-inner-icon="mdi-magnify"
+              variant="outlined"
+              density="compact"
+              hide-details
+              clearable
+              @keyup.enter="onSearch"
+              @click:clear="onClearSearch"
+            />
+          </v-col>
+
+          <v-col cols="12" md="8">
+            <v-row dense justify="end" align="center">
+              <v-col cols="12" sm="6" md="3">
+                <v-text-field
+                  v-model="filters.tanggal_mulai"
+                  label="Dari Tanggal"
+                  type="date"
+                  prepend-inner-icon="mdi-calendar"
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                  @update:model-value="onFilterChange"
+                />
+              </v-col>
+
+              <v-col cols="12" sm="6" md="3">
+                <v-text-field
+                  v-model="filters.tanggal_selesai"
+                  label="Sampai Tanggal"
+                  type="date"
+                  prepend-inner-icon="mdi-calendar"
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                  @update:model-value="onFilterChange"
+                />
+              </v-col>
+
+              <v-col cols="12" sm="6" md="2">
+                <v-select
+                  v-model="filters.channel"
+                  :items="channelOptions"
+                  item-title="label"
+                  item-value="value"
+                  label="Channel"
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                  @update:model-value="onFilterChange"
+                />
+              </v-col>
+
+              <v-col cols="12" sm="6" md="2">
+                <v-select
+                  v-model="filters.layanan"
+                  :items="layananOptions"
+                  item-title="label"
+                  item-value="value"
+                  label="Layanan"
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                  @update:model-value="onFilterChange"
+                />
+              </v-col>
+
+              <v-col cols="12" sm="6" md="2">
+                <v-btn
+                  variant="outlined"
+                  color="primary"
+                  prepend-icon="mdi-refresh"
+                  :loading="loading"
+                  block
+                  @click="fetchData"
+                >
+                  Refresh
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-col>
+        </v-row>
+
+        <div class="d-flex justify-end mt-3">
           <v-chip
             color="success"
             variant="tonal"
@@ -22,222 +110,221 @@
           >
             Data Pelayanan Selesai
           </v-chip>
-
-          <v-btn
-            size="small"
-            variant="outlined"
-            color="grey-darken-1"
-            prepend-icon="mdi-refresh"
-            :loading="loading"
-            class="toolbar-btn"
-            @click="fetchData"
-          >
-            Refresh
-          </v-btn>
         </div>
+      </v-card-text>
 
-        <div class="toolbar-filter">
-          <v-text-field
-            v-model="filters.search"
-            placeholder="Cari no registrasi, pasien, no RM, dokter..."
-            prepend-inner-icon="mdi-magnify"
-            variant="outlined"
-            density="compact"
-            hide-details
-            clearable
-            class="filter-search"
-            @keyup.enter="onSearch"
-            @click:clear="onClearSearch"
-          />
+      <v-divider />
 
-          <v-text-field
-            v-model="filters.tanggal_mulai"
-            label="Dari Tanggal"
-            type="date"
-            prepend-inner-icon="mdi-calendar"
-            variant="outlined"
-            density="compact"
-            hide-details
-            class="filter-date"
-            @update:model-value="onFilterChange"
-          />
+      <!-- ALERT -->
+      <v-card-text v-if="errorMessage" class="pa-4 pb-0">
+        <v-alert
+          type="error"
+          variant="tonal"
+          density="compact"
+          closable
+          class="mb-3"
+          @click:close="errorMessage = ''"
+        >
+          {{ errorMessage }}
+        </v-alert>
+      </v-card-text>
 
-          <v-text-field
-            v-model="filters.tanggal_selesai"
-            label="Sampai Tanggal"
-            type="date"
-            prepend-inner-icon="mdi-calendar"
-            variant="outlined"
-            density="compact"
-            hide-details
-            class="filter-date"
-            @update:model-value="onFilterChange"
-          />
+      <!-- SUMMARY -->
+      <v-card-text class="pa-4 pb-0">
+        <v-row dense>
+          <v-col cols="12" sm="6" md="3">
+            <v-card variant="outlined">
+              <v-card-text class="pa-3">
+                <div class="d-flex align-center justify-space-between">
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Total Riwayat
+                    </div>
+                    <div class="text-h6 font-weight-bold">
+                      {{ summary.total }}
+                    </div>
+                  </div>
 
-          <v-select
-            v-model="filters.channel"
-            :items="channelOptions"
-            item-title="label"
-            item-value="value"
-            label="Channel"
-            variant="outlined"
-            density="compact"
-            hide-details
-            class="filter-select"
-            @update:model-value="onFilterChange"
-          />
+                  <v-avatar color="primary" variant="tonal" size="36">
+                    <v-icon icon="mdi-clipboard-text-clock-outline" size="20" />
+                  </v-avatar>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
 
-          <v-select
-            v-model="filters.layanan"
-            :items="layananOptions"
-            item-title="label"
-            item-value="value"
-            label="Layanan"
-            variant="outlined"
-            density="compact"
-            hide-details
-            class="filter-select"
-            @update:model-value="onFilterChange"
-          />
-        </div>
-      </div>
+          <v-col cols="12" sm="6" md="3">
+            <v-card variant="outlined">
+              <v-card-text class="pa-3">
+                <div class="d-flex align-center justify-space-between">
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Konsultasi
+                    </div>
+                    <div class="text-h6 font-weight-bold">
+                      {{ summary.konsultasi }}
+                    </div>
+                  </div>
 
-      <v-alert
-        v-if="errorMessage"
-        type="error"
-        variant="tonal"
-        border="start"
-        rounded="lg"
-        closable
-        class="mx-4 mb-4"
-        @click:close="errorMessage = ''"
-      >
-        {{ errorMessage }}
-      </v-alert>
+                  <v-avatar color="info" variant="tonal" size="36">
+                    <v-icon icon="mdi-stethoscope" size="20" />
+                  </v-avatar>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
 
-      <v-row class="summary-wrap" dense>
-        <v-col cols="12" md="3">
-          <v-card class="summary-card" flat>
-            <div class="summary-label">Total Riwayat</div>
-            <div class="summary-value">{{ summary.total }}</div>
-          </v-card>
-        </v-col>
+          <v-col cols="12" sm="6" md="3">
+            <v-card variant="outlined">
+              <v-card-text class="pa-3">
+                <div class="d-flex align-center justify-space-between">
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Treatment
+                    </div>
+                    <div class="text-h6 font-weight-bold">
+                      {{ summary.treatment }}
+                    </div>
+                  </div>
 
-        <v-col cols="12" md="3">
-          <v-card class="summary-card" flat>
-            <div class="summary-label">Konsultasi</div>
-            <div class="summary-value">{{ summary.konsultasi }}</div>
-          </v-card>
-        </v-col>
+                  <v-avatar color="success" variant="tonal" size="36">
+                    <v-icon icon="mdi-face-man-shimmer-outline" size="20" />
+                  </v-avatar>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
 
-        <v-col cols="12" md="3">
-          <v-card class="summary-card" flat>
-            <div class="summary-label">Treatment</div>
-            <div class="summary-value">{{ summary.treatment }}</div>
-          </v-card>
-        </v-col>
+          <v-col cols="12" sm="6" md="3">
+            <v-card variant="outlined">
+              <v-card-text class="pa-3">
+                <div class="d-flex align-center justify-space-between">
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Dengan Penjualan
+                    </div>
+                    <div class="text-h6 font-weight-bold">
+                      {{ summary.penjualan }}
+                    </div>
+                  </div>
 
-        <v-col cols="12" md="3">
-          <v-card class="summary-card" flat>
-            <div class="summary-label">Dengan Penjualan</div>
-            <div class="summary-value">{{ summary.penjualan }}</div>
-          </v-card>
-        </v-col>
-      </v-row>
+                  <v-avatar color="warning" variant="tonal" size="36">
+                    <v-icon icon="mdi-cart-check" size="20" />
+                  </v-avatar>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-card-text>
 
-      <div class="table-wrap">
+      <!-- TABLE -->
+      <v-card-text class="pa-4">
         <v-data-table
           :headers="headers"
           :items="rows"
           :loading="loading"
           item-value="id"
           density="compact"
-          class="history-table"
+          class="border"
           :items-per-page="pagination.perPage"
           hide-default-footer
           loading-text="Memuat data riwayat pelayanan..."
           no-data-text="Data riwayat pelayanan tidak ditemukan"
         >
+          <template #loading>
+            <v-skeleton-loader type="table-row@8" />
+          </template>
           <template #item.registrasi="{ item }">
-            <div class="reg-cell">
-              <button type="button" class="reg-link" @click="goToDetail(item)">
+            <div class="py-2">
+              <v-btn
+                variant="text"
+                color="primary"
+                size="small"
+                class="px-0 font-weight-bold"
+                @click="goToDetail(item)"
+              >
                 {{ getKodeRegistrasi(item) }}
-              </button>
+              </v-btn>
 
-              <div class="reg-sub">
+              <div class="text-caption text-medium-emphasis">
                 {{ getInvoiceNumber(item) }}
               </div>
             </div>
           </template>
 
           <template #item.pasien="{ item }">
-            <div class="patient-cell">
-              <div class="patient-name">
+            <div class="py-2">
+              <div class="text-body-2 font-weight-bold">
                 {{ getPasienName(item) }}
               </div>
 
-              <div class="patient-meta">
+              <div class="text-caption text-medium-emphasis mt-1">
                 {{ getPasienMeta(item) }}
               </div>
             </div>
           </template>
 
           <template #item.kunjungan="{ item }">
-            <div class="date-cell">
-              <div class="date-main">
+            <div class="py-2">
+              <div class="text-body-2 font-weight-medium">
                 {{ formatDate(item.tanggal_kunjungan || item.tanggal) }}
               </div>
 
-              <div class="date-sub">
+              <div class="text-caption text-medium-emphasis mt-1">
                 {{ getWaktuKunjungan(item) }}
               </div>
             </div>
           </template>
 
           <template #item.layanan="{ item }">
-            <div class="service-cell">
-              <div class="service-title">
+            <div class="py-2">
+              <v-chip size="small" color="primary" variant="tonal">
                 {{ getLayananLabel(item) }}
-              </div>
+              </v-chip>
 
-              <div class="service-sub">
+              <div class="text-caption text-medium-emphasis mt-1">
                 {{ formatChannel(item.channel_konsultasi) }}
               </div>
             </div>
           </template>
 
           <template #item.petugas="{ item }">
-            <div class="staff-cell">
-              <div class="staff-main">
+            <div class="py-2">
+              <div class="text-body-2 font-weight-medium">
                 {{ getDokterName(item) }}
               </div>
 
-              <div class="staff-sub">
+              <div class="text-caption text-medium-emphasis mt-1">
                 {{ getPerawatName(item) }}
               </div>
             </div>
           </template>
 
           <template #item.total="{ item }">
-            <div class="amount-cell">
+            <div class="text-body-2 font-weight-bold">
               Rp {{ formatNumber(getTotalPembayaran(item)) }}
             </div>
           </template>
 
           <template #item.status="{ item }">
-            <span class="status-pill">
+            <v-chip
+              size="small"
+              color="success"
+              variant="tonal"
+              prepend-icon="mdi-check-circle-outline"
+            >
               {{ getStatusLabel(item.status) }}
-            </span>
+            </v-chip>
           </template>
 
           <template #item.aksi="{ item }">
-            <div class="action-cell">
+            <div class="d-flex justify-end align-center ga-2 flex-wrap py-2">
               <v-btn
                 size="small"
                 color="primary"
                 variant="tonal"
                 prepend-icon="mdi-eye-outline"
-                class="text-action-btn"
                 @click="goToDetail(item)"
               >
                 Detail
@@ -246,46 +333,62 @@
           </template>
 
           <template #no-data>
-            <div class="empty-state">
-              <v-icon size="40" color="grey">
-                mdi-clipboard-text-off-outline
-              </v-icon>
+            <div class="text-center py-8">
+              <v-avatar color="grey-lighten-3" size="56" class="mb-3">
+                <v-icon
+                  icon="mdi-clipboard-text-off-outline"
+                  size="30"
+                  color="grey"
+                />
+              </v-avatar>
 
-              <div class="empty-title">Belum ada riwayat pelayanan</div>
+              <div class="text-subtitle-2 font-weight-bold mb-1">
+                Belum ada riwayat pelayanan
+              </div>
 
-              <div class="empty-text">
+              <div class="text-body-2 text-medium-emphasis">
                 Data akan muncul setelah pelayanan selesai diproses.
               </div>
             </div>
           </template>
         </v-data-table>
-      </div>
+      </v-card-text>
 
-      <div class="table-footer">
-        <div class="footer-count">
-          Total data: <strong>{{ pagination.total }}</strong>
+      <v-divider />
+
+      <!-- FOOTER -->
+      <v-card-actions class="pa-4">
+        <div
+          class="d-flex align-center justify-space-between flex-wrap ga-3 w-100"
+        >
+          <div class="text-body-2 text-medium-emphasis">
+            Total data:
+            <strong class="text-high-emphasis">
+              {{ pagination.total }}
+            </strong>
+          </div>
+
+          <div class="d-flex align-center ga-2 flex-wrap">
+            <v-select
+              v-model="pagination.perPage"
+              :items="[10, 15, 25, 50, 100]"
+              variant="outlined"
+              density="compact"
+              hide-details
+              width="96"
+              @update:model-value="onPerPageChange"
+            />
+
+            <v-pagination
+              v-model="pagination.page"
+              :length="pagination.lastPage"
+              density="compact"
+              total-visible="5"
+              @update:model-value="fetchData"
+            />
+          </div>
         </div>
-
-        <div class="footer-actions">
-          <v-select
-            v-model="pagination.perPage"
-            :items="[10, 15, 25, 50, 100]"
-            variant="outlined"
-            density="compact"
-            hide-details
-            class="per-page-field"
-            @update:model-value="onPerPageChange"
-          />
-
-          <v-pagination
-            v-model="pagination.page"
-            :length="pagination.lastPage"
-            density="comfortable"
-            total-visible="5"
-            @update:model-value="fetchData"
-          />
-        </div>
-      </div>
+      </v-card-actions>
     </v-card>
 
     <v-snackbar
@@ -295,6 +398,10 @@
       timeout="2500"
     >
       {{ snackbar.text }}
+
+      <template #actions>
+        <v-btn icon="mdi-close" variant="text" @click="snackbar.show = false" />
+      </template>
     </v-snackbar>
   </div>
 </template>

@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- PAGE HEADER: tetap pakai style existing -->
     <div class="page-header">
       <div>
         <h1 class="page-title">Registrasi Layanan</h1>
@@ -11,106 +12,123 @@
       <v-breadcrumbs :items="breadcrumbs" divider="/" />
     </div>
 
-    <v-card class="main-card" flat>
-      <div class="toolbar-wrap">
-        <div class="filter-wrap">
-          <v-text-field
-            v-model="filters.search"
-            label="Cari"
-            placeholder="Kode, nama pasien, No. RM, No. HP"
-            variant="outlined"
-            density="compact"
-            prepend-inner-icon="mdi-magnify"
-            hide-details
-            clearable
-            class="search-field"
-            @keyup.enter="fetchData"
-            @click:clear="onClearSearch"
-          />
+    <v-card variant="flat" class="border mb-4">
+      <!-- TOOLBAR -->
+      <v-card-text class="pa-4">
+        <v-row dense align="center">
+          <!-- KIRI: SEARCH -->
+          <v-col cols="12" md="5">
+            <v-text-field
+              v-model="filters.search"
+              label="Cari"
+              placeholder="Kode, nama pasien, No. RM, No. HP"
+              variant="outlined"
+              density="compact"
+              prepend-inner-icon="mdi-magnify"
+              hide-details
+              clearable
+              @keyup.enter="fetchData"
+              @click:clear="onClearSearch"
+            />
+          </v-col>
 
-          <v-text-field
-            v-model="filters.tanggal"
-            label="Tanggal"
-            type="date"
-            variant="outlined"
-            density="compact"
-            prepend-inner-icon="mdi-calendar"
-            hide-details
-            class="date-field"
-            @update:modelValue="fetchData"
-          />
+          <!-- KANAN: FILTER + ACTION -->
+          <v-col cols="12" md="7">
+            <v-row dense justify="end" align="center">
+              <v-col cols="12" sm="6" md="3">
+                <v-text-field
+                  v-model="filters.tanggal"
+                  label="Tanggal"
+                  type="date"
+                  variant="outlined"
+                  density="compact"
+                  prepend-inner-icon="mdi-calendar"
+                  hide-details
+                  @update:modelValue="fetchData"
+                />
+              </v-col>
 
-          <v-select
-            v-model="filters.status"
-            label="Status"
-            :items="statusOptions"
-            item-title="label"
-            item-value="value"
-            variant="outlined"
-            density="compact"
-            hide-details
-            clearable
-            class="status-field"
-            @update:modelValue="fetchData"
-          />
-        </div>
+              <v-col cols="12" sm="6" md="3">
+                <v-select
+                  v-model="filters.status"
+                  label="Status"
+                  :items="statusOptions"
+                  item-title="label"
+                  item-value="value"
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                  clearable
+                  @update:modelValue="fetchData"
+                />
+              </v-col>
 
-        <div class="action-wrap">
-          <v-btn
-            variant="outlined"
-            color="grey-darken-1"
-            prepend-icon="mdi-refresh"
-            :loading="loading"
-            class="toolbar-btn"
-            @click="fetchData"
-          >
-            Refresh
-          </v-btn>
+              <v-col cols="12" sm="6" md="3">
+                <v-btn
+                  variant="outlined"
+                  color="primary"
+                  prepend-icon="mdi-refresh"
+                  :loading="loading"
+                  block
+                  @click="fetchData"
+                >
+                  Refresh
+                </v-btn>
+              </v-col>
 
-          <v-btn
-            color="success"
-            prepend-icon="mdi-plus"
-            class="toolbar-btn"
-            @click="goToAdd"
-          >
-            Entry Data
-          </v-btn>
-        </div>
-      </div>
+              <v-col cols="12" sm="6" md="3">
+                <v-btn
+                  color="success"
+                  variant="flat"
+                  prepend-icon="mdi-plus"
+                  block
+                  @click="goToAdd"
+                >
+                  Entry Data
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-col>
+        </v-row>
+      </v-card-text>
 
-      <v-alert
-        v-if="!activeTokoId"
-        type="warning"
-        variant="tonal"
-        border="start"
-        rounded="lg"
-        class="mx-4 mb-4"
-      >
-        Cabang aktif belum terpilih. Data registrasi akan lebih akurat jika
-        cabang sudah dipilih dari header.
-      </v-alert>
+      <v-divider />
 
-      <v-alert
-        v-if="errorMessage"
-        type="error"
-        variant="tonal"
-        border="start"
-        rounded="lg"
-        closable
-        class="mx-4 mb-4"
-        @click:close="errorMessage = ''"
-      >
-        {{ errorMessage }}
-      </v-alert>
+      <!-- ALERT -->
+      <v-card-text v-if="!activeTokoId || errorMessage" class="pa-4 pb-0">
+        <v-alert
+          v-if="!activeTokoId"
+          type="warning"
+          variant="tonal"
+          density="compact"
+          class="mb-3"
+        >
+          Cabang aktif belum terpilih. Data registrasi akan lebih akurat jika
+          cabang sudah dipilih dari header.
+        </v-alert>
 
-      <div class="table-wrap">
+        <v-alert
+          v-if="errorMessage"
+          type="error"
+          variant="tonal"
+          density="compact"
+          closable
+          class="mb-3"
+          @click:close="errorMessage = ''"
+        >
+          {{ errorMessage }}
+        </v-alert>
+      </v-card-text>
+
+      <!-- TABLE -->
+      <v-card-text class="pa-4">
         <v-data-table
           :headers="headers"
           :items="rows"
           :loading="loading"
           item-value="id"
           density="compact"
-          class="registrasi-table"
+          class="border"
           :items-per-page="pagination.perPage"
           hide-default-footer
         >
@@ -119,63 +137,71 @@
           </template>
 
           <template #item.registrasi_pasien="{ item }">
-            <div class="identity-cell">
-              <div class="reg-block">
-                <button
-                  type="button"
-                  class="reg-code-link"
-                  @click="goToDetail(item)"
-                >
-                  {{ item.kode_registrasi || "-" }}
-                </button>
+            <div class="py-2">
+              <div class="d-flex align-start ga-3">
+                <div>
+                  <v-btn
+                    variant="text"
+                    color="primary"
+                    size="small"
+                    class="px-0 font-weight-bold"
+                    @click="goToDetail(item)"
+                  >
+                    {{ item.kode_registrasi || "-" }}
+                  </v-btn>
 
-                <div class="reg-meta">
-                  <v-icon size="14">mdi-calendar</v-icon>
-                  <span>
-                    {{ formatDate(item.tanggal_kunjungan || item.tanggal) }}
-                  </span>
+                  <div
+                    class="d-flex align-center ga-1 text-caption text-medium-emphasis"
+                  >
+                    <v-icon icon="mdi-calendar" size="14" />
+                    <span>
+                      {{ formatDate(item.tanggal_kunjungan || item.tanggal) }}
+                    </span>
+                  </div>
+
+                  <div
+                    class="d-flex align-center ga-1 text-caption text-medium-emphasis"
+                  >
+                    <v-icon icon="mdi-clock-outline" size="14" />
+                    <span>
+                      Jam
+                      {{ formatTime(item.registered_at || item.created_at) }}
+                    </span>
+                  </div>
                 </div>
 
-                <div class="reg-meta">
-                  <v-icon size="14">mdi-clock-outline</v-icon>
-                  <span>
-                    Jam {{ formatTime(item.registered_at || item.created_at) }}
-                  </span>
-                </div>
-              </div>
+                <v-divider vertical />
 
-              <div class="patient-block">
-                <div class="patient-name">
-                  {{ getPasienName(item) }}
-                </div>
+                <div class="flex-grow-1">
+                  <div class="text-body-2 font-weight-bold">
+                    {{ getPasienName(item) }}
+                  </div>
 
-                <div class="patient-meta">
-                  {{ getPasienMeta(item) }}
-                </div>
+                  <div class="text-caption text-medium-emphasis mt-1">
+                    {{ getPasienMeta(item) }}
+                  </div>
 
-                <div class="staff-line">
-                  <span>
-                    Dokter
-                    <strong>{{ getDokterName(item) }}</strong>
-                  </span>
+                  <div class="d-flex flex-wrap ga-2 mt-2">
+                    <v-chip size="x-small" color="primary" variant="tonal">
+                      Dokter: {{ getDokterName(item) }}
+                    </v-chip>
 
-                  <span>
-                    Perawat
-                    <strong>{{ getPerawatName(item) }}</strong>
-                  </span>
+                    <v-chip size="x-small" color="success" variant="tonal">
+                      Perawat: {{ getPerawatName(item) }}
+                    </v-chip>
+                  </div>
                 </div>
               </div>
             </div>
           </template>
 
           <template #item.layanan="{ item }">
-            <div class="service-cell">
+            <div class="d-flex flex-wrap ga-1 py-2">
               <v-chip
                 v-if="hasConsultation(item)"
                 size="small"
                 color="primary"
                 variant="tonal"
-                class="service-chip"
               >
                 {{ getChannelLabel(item.channel_konsultasi) }}
               </v-chip>
@@ -185,7 +211,6 @@
                 size="small"
                 color="success"
                 variant="tonal"
-                class="service-chip"
               >
                 Treatment
               </v-chip>
@@ -195,7 +220,6 @@
                 size="small"
                 color="info"
                 variant="tonal"
-                class="service-chip"
               >
                 Penjualan
               </v-chip>
@@ -206,7 +230,7 @@
                   !hasTreatment(item) &&
                   !hasSales(item)
                 "
-                class="empty-text"
+                class="text-body-2 text-medium-emphasis"
               >
                 -
               </span>
@@ -214,8 +238,8 @@
           </template>
 
           <template #item.total_status="{ item }">
-            <div class="amount-cell">
-              <div class="amount-text">
+            <div class="py-2">
+              <div class="text-body-2 font-weight-bold">
                 Rp {{ formatNumber(item.grand_total || 0) }}
               </div>
 
@@ -232,14 +256,13 @@
           </template>
 
           <template #item.actions="{ item }">
-            <div class="action-cell">
+            <div class="d-flex justify-end align-center ga-2 flex-wrap py-2">
               <v-btn
                 v-if="getPrimaryAction(item)"
                 size="small"
                 :color="getPrimaryAction(item).color"
                 variant="tonal"
                 :prepend-icon="getPrimaryAction(item).icon"
-                class="text-action-btn"
                 @click="handlePrimaryAction(item)"
               >
                 {{ getPrimaryAction(item).label }}
@@ -251,7 +274,6 @@
                 color="error"
                 variant="tonal"
                 prepend-icon="mdi-close-circle-outline"
-                class="text-action-btn"
                 @click="confirmCancel(item)"
               >
                 Cancel
@@ -260,21 +282,27 @@
           </template>
 
           <template #no-data>
-            <div class="empty-state">
-              <v-icon size="40" color="grey">
-                mdi-clipboard-text-off-outline
-              </v-icon>
+            <div class="text-center py-8">
+              <v-avatar color="grey-lighten-3" size="56" class="mb-3">
+                <v-icon
+                  icon="mdi-clipboard-text-off-outline"
+                  size="30"
+                  color="grey"
+                />
+              </v-avatar>
 
-              <div class="empty-title">Belum ada data registrasi</div>
+              <div class="text-subtitle-2 font-weight-bold mb-1">
+                Belum ada data registrasi
+              </div>
 
-              <div class="empty-description">
+              <div class="text-body-2 text-medium-emphasis mb-4">
                 Data akan muncul setelah FO menyimpan registrasi layanan.
               </div>
 
               <v-btn
                 color="success"
+                variant="flat"
                 prepend-icon="mdi-plus"
-                class="mt-4"
                 @click="goToAdd"
               >
                 Buat Registrasi
@@ -282,57 +310,78 @@
             </div>
           </template>
         </v-data-table>
-      </div>
+      </v-card-text>
 
-      <div class="table-footer">
-        <div class="footer-count">
-          Total data: <strong>{{ pagination.total }}</strong>
+      <v-divider />
+
+      <!-- FOOTER -->
+      <v-card-actions class="pa-4">
+        <div
+          class="d-flex align-center justify-space-between flex-wrap ga-3 w-100"
+        >
+          <div class="text-body-2 text-medium-emphasis">
+            Total data:
+            <strong class="text-high-emphasis">
+              {{ pagination.total }}
+            </strong>
+          </div>
+
+          <div class="d-flex align-center ga-2 flex-wrap">
+            <v-select
+              v-model="pagination.perPage"
+              :items="[10, 15, 25, 50, 100]"
+              variant="outlined"
+              density="compact"
+              hide-details
+              width="96"
+              @update:modelValue="onPerPageChange"
+            />
+
+            <v-pagination
+              v-model="pagination.page"
+              :length="pagination.lastPage"
+              density="compact"
+              total-visible="5"
+              @update:modelValue="fetchData"
+            />
+          </div>
         </div>
-
-        <div class="footer-actions">
-          <v-select
-            v-model="pagination.perPage"
-            :items="[10, 15, 25, 50, 100]"
-            variant="outlined"
-            density="compact"
-            hide-details
-            class="per-page-field"
-            @update:modelValue="onPerPageChange"
-          />
-
-          <v-pagination
-            v-model="pagination.page"
-            :length="pagination.lastPage"
-            density="comfortable"
-            total-visible="5"
-            @update:modelValue="fetchData"
-          />
-        </div>
-      </div>
+      </v-card-actions>
     </v-card>
 
+    <!-- CANCEL DIALOG -->
     <v-dialog v-model="cancelDialog.show" max-width="460">
-      <v-card rounded="lg">
-        <v-card-title class="font-weight-bold">
+      <v-card>
+        <v-card-title class="text-subtitle-1 font-weight-bold pa-4">
           Batalkan Registrasi?
         </v-card-title>
 
-        <v-card-text>
-          Data registrasi
-          <strong>
-            {{
-              cancelDialog.item?.kode_registrasi ||
-              `REG-${cancelDialog.item?.id}`
-            }}
-          </strong>
-          akan dibatalkan. Tindakan ini tidak menghapus data, hanya mengubah
-          status menjadi batal.
+        <v-divider />
+
+        <v-card-text class="pa-4">
+          <div class="text-body-2 mb-3">
+            Data registrasi
+            <strong>
+              {{
+                cancelDialog.item?.kode_registrasi ||
+                `REG-${cancelDialog.item?.id}`
+              }}
+            </strong>
+            akan dibatalkan. Tindakan ini tidak menghapus data, hanya mengubah
+            status menjadi batal.
+          </div>
+
+          <v-alert type="warning" variant="tonal" density="compact">
+            Pastikan registrasi memang tidak dilanjutkan sebelum membatalkan.
+          </v-alert>
         </v-card-text>
 
-        <v-card-actions class="justify-end">
+        <v-divider />
+
+        <v-card-actions class="justify-end pa-4">
           <v-btn
-            variant="text"
-            color="grey-darken-1"
+            variant="outlined"
+            color="secondary"
             :disabled="cancelDialog.loading"
             @click="cancelDialog.show = false"
           >
@@ -358,6 +407,10 @@
       timeout="2500"
     >
       {{ snackbar.text }}
+
+      <template #actions>
+        <v-btn icon="mdi-close" variant="text" @click="snackbar.show = false" />
+      </template>
     </v-snackbar>
   </div>
 </template>

@@ -3,169 +3,254 @@
     :model-value="modelValue"
     location="right"
     temporary
-    width="480"
-    class="promo-drawer"
+    width="520"
+    class="pa-0"
     @update:model-value="$emit('update:modelValue', $event)"
   >
-    <div class="promo-drawer-header clean">
-      <div>
-        <div class="promo-drawer-title">Pilih Voucher / Promo</div>
-        <div class="promo-drawer-subtitle">
+    <v-card flat rounded="0" class="h-100 d-flex flex-column">
+      <!-- HEADER -->
+      <v-card-item class="px-5 py-4 border-b">
+        <template #prepend>
+          <v-avatar color="success" variant="tonal" size="42">
+            <v-icon icon="mdi-ticket-percent-outline" />
+          </v-avatar>
+        </template>
+
+        <v-card-title class="text-subtitle-1 font-weight-bold pa-0">
+          Pilih Voucher / Promo
+        </v-card-title>
+
+        <v-card-subtitle class="text-body-2 pa-0 mt-1">
           Voucher yang muncul sudah sesuai item transaksi
-        </div>
-      </div>
+        </v-card-subtitle>
 
-      <v-btn icon variant="text" @click="$emit('update:modelValue', false)">
-        <v-icon>mdi-close</v-icon>
-      </v-btn>
-    </div>
+        <template #append>
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            @click="$emit('update:modelValue', false)"
+          />
+        </template>
+      </v-card-item>
 
-    <div class="promo-drawer-body clean">
-      <div class="promo-search-wrap">
-        <v-text-field
-          :model-value="promoCode"
-          placeholder="Cari nama voucher"
-          variant="outlined"
-          density="comfortable"
-          hide-details
-          prepend-inner-icon="mdi-magnify"
-          clearable
-          @update:model-value="$emit('update-promo-code', $event)"
-        />
-
-        <v-btn
-          color="success"
-          variant="flat"
-          @click="$emit('apply-promo-code')"
-        >
-          Terapkan
-        </v-btn>
-      </div>
-
-      <div class="promo-action-row">
-        <v-chip size="small" variant="tonal" color="primary">
-          {{ totalVoucher }} Voucher tersedia
-        </v-chip>
-
-        <v-btn
-          size="small"
-          variant="text"
-          color="error"
-          @click="$emit('reset-promo')"
-        >
-          Reset Semua
-        </v-btn>
-      </div>
-
-      <template v-if="keyword">
-        <div class="promo-group-clean">
-          <div class="promo-group-header">
-            <div class="promo-group-title-clean">Hasil Pencarian Voucher</div>
-            <v-chip size="x-small" variant="tonal">
-              {{ filteredAllPromoList.length }}
-            </v-chip>
-          </div>
-
-          <div v-if="!filteredAllPromoList.length" class="promo-empty-state">
-            Voucher tidak ditemukan.
-          </div>
-
-          <div
-            v-for="promo in filteredAllPromoList"
-            :key="`search-${promo.jenis_voucher_id}-${promo.id}`"
-            class="promo-card-clean"
-            :class="{ selected: isPromoSelected(promo) }"
-          >
-            <div class="promo-card-title-clean">
-              {{ getPromoTitle(promo) }}
-            </div>
-
-            <div class="promo-card-desc-clean">
-              {{ getPromoDescription(promo) }}
-            </div>
-
-            <div class="promo-meta-row">
-              <v-chip size="x-small" color="primary" variant="tonal">
-                {{ getPromoTypeLabel(promo) }}
-              </v-chip>
-
-              <v-chip size="x-small" variant="tonal">
-                Kuota: {{ getPromoKuota(promo) }}
-              </v-chip>
-            </div>
+      <!-- BODY -->
+      <v-card-text class="pa-5 flex-grow-1 overflow-y-auto bg-grey-lighten-5">
+        <!-- SEARCH -->
+        <v-card flat class="pa-4 mb-4 border">
+          <div class="d-flex align-center ga-3">
+            <v-text-field
+              :model-value="promoCode"
+              placeholder="Cari nama voucher"
+              variant="outlined"
+              density="comfortable"
+              hide-details
+              prepend-inner-icon="mdi-magnify"
+              clearable
+              @update:model-value="$emit('update-promo-code', $event)"
+            />
 
             <v-btn
-              :color="isPromoSelected(promo) ? 'error' : 'success'"
+              color="success"
               variant="flat"
-              size="small"
-              class="promo-select-btn"
-              @click="$emit('toggle-promo', promo)"
+              height="48"
+              prepend-icon="mdi-check"
+              @click="$emit('apply-promo-code')"
             >
-              {{ isPromoSelected(promo) ? "Batal" : "Pilih" }}
+              Terapkan
             </v-btn>
           </div>
-        </div>
-      </template>
+        </v-card>
 
-      <template v-else>
-        <div
-          v-for="group in promoGroups"
-          :key="group.key"
-          class="promo-group-clean"
-        >
-          <div class="promo-group-header">
-            <div class="promo-group-title-clean">{{ group.title }}</div>
-            <v-chip size="x-small" variant="tonal">
-              {{ group.items.length }}
-            </v-chip>
-          </div>
-
-          <div v-if="!group.items.length" class="promo-empty-state">
-            {{ group.emptyText }}
-          </div>
-
-          <div
-            v-for="promo in group.items"
-            :key="`${group.key}-${promo.id}`"
-            class="promo-card-clean"
-            :class="{ selected: isPromoSelected(promo) }"
+        <!-- ACTION INFO -->
+        <div class="d-flex align-center justify-space-between mb-4">
+          <v-chip
+            size="small"
+            color="primary"
+            variant="tonal"
+            prepend-icon="mdi-ticket-confirmation-outline"
           >
-            <div class="promo-card-title-clean">
-              {{ getPromoTitle(promo) }}
-            </div>
+            {{ totalVoucher }} Voucher tersedia
+          </v-chip>
 
-            <div class="promo-card-desc-clean">
-              {{ getPromoDescription(promo) }}
-            </div>
+          <v-btn
+            size="small"
+            variant="text"
+            color="error"
+            prepend-icon="mdi-refresh"
+            @click="$emit('reset-promo')"
+          >
+            Reset Semua
+          </v-btn>
+        </div>
 
-            <div class="promo-meta-row">
-              <v-chip size="x-small" variant="tonal">
-                Kuota: {{ getPromoKuota(promo) }}
-              </v-chip>
+        <!-- SEARCH RESULT -->
+        <template v-if="keyword">
+          <v-card flat class="border mb-4">
+            <v-card-item class="px-4 py-3 border-b">
+              <div class="d-flex align-center justify-space-between w-100">
+                <div class="text-subtitle-2 font-weight-bold">
+                  Hasil Pencarian Voucher
+                </div>
 
-              <v-chip
-                v-if="promo.is_bisa_digabung_promo"
-                size="x-small"
-                color="success"
+                <v-chip size="x-small" variant="tonal">
+                  {{ filteredAllPromoList.length }}
+                </v-chip>
+              </div>
+            </v-card-item>
+
+            <v-card-text class="pa-4">
+              <v-alert
+                v-if="!filteredAllPromoList.length"
+                type="info"
                 variant="tonal"
-              >
-                Bisa digabung
-              </v-chip>
-            </div>
+                density="compact"
+                text="Voucher tidak ditemukan."
+              />
 
-            <v-btn
-              :color="isPromoSelected(promo) ? 'error' : 'success'"
-              variant="flat"
-              size="small"
-              class="promo-select-btn"
-              @click="$emit('toggle-promo', promo)"
-            >
-              {{ isPromoSelected(promo) ? "Batal" : "Pilih" }}
-            </v-btn>
-          </div>
-        </div>
-      </template>
-    </div>
+              <v-card
+                v-for="promo in filteredAllPromoList"
+                :key="`search-${promo.jenis_voucher_id}-${promo.id}`"
+                flat
+                class="pa-4 mb-3 border"
+                :class="
+                  isPromoSelected(promo) ? 'bg-green-lighten-5' : 'bg-white'
+                "
+              >
+                <div class="d-flex align-start justify-space-between ga-3">
+                  <div class="flex-grow-1">
+                    <div class="text-subtitle-2 font-weight-bold mb-1">
+                      {{ getPromoTitle(promo) }}
+                    </div>
+
+                    <div class="text-body-2 text-medium-emphasis mb-3">
+                      {{ getPromoDescription(promo) }}
+                    </div>
+
+                    <div class="d-flex flex-wrap ga-2">
+                      <v-chip size="x-small" color="primary" variant="tonal">
+                        {{ getPromoTypeLabel(promo) }}
+                      </v-chip>
+
+                      <v-chip size="x-small" variant="tonal">
+                        Kuota: {{ getPromoKuota(promo) }}
+                      </v-chip>
+
+                      <v-chip
+                        v-if="promo.is_bisa_digabung_promo"
+                        size="x-small"
+                        color="success"
+                        variant="tonal"
+                      >
+                        Bisa digabung
+                      </v-chip>
+                    </div>
+                  </div>
+
+                  <v-btn
+                    :color="isPromoSelected(promo) ? 'error' : 'success'"
+                    :variant="isPromoSelected(promo) ? 'tonal' : 'flat'"
+                    size="small"
+                    min-width="84"
+                    @click="$emit('toggle-promo', promo)"
+                  >
+                    {{ isPromoSelected(promo) ? "Batal" : "Pilih" }}
+                  </v-btn>
+                </div>
+              </v-card>
+            </v-card-text>
+          </v-card>
+        </template>
+
+        <!-- GROUP LIST -->
+        <template v-else>
+          <v-card
+            v-for="group in promoGroups"
+            :key="group.key"
+            flat
+            class="border mb-4"
+          >
+            <v-card-item class="px-4 py-3 border-b bg-white">
+              <div class="d-flex align-center justify-space-between w-100">
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold">
+                    {{ group.title }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis">
+                    Pilih voucher yang sesuai kebutuhan transaksi
+                  </div>
+                </div>
+
+                <v-chip size="x-small" variant="tonal">
+                  {{ group.items.length }}
+                </v-chip>
+              </div>
+            </v-card-item>
+
+            <v-card-text class="pa-4">
+              <v-alert
+                v-if="!group.items.length"
+                type="info"
+                variant="tonal"
+                density="compact"
+                :text="group.emptyText"
+              />
+
+              <v-card
+                v-for="promo in group.items"
+                :key="`${group.key}-${promo.id}`"
+                flat
+                class="pa-4 mb-3 border"
+                :class="
+                  isPromoSelected(promo) ? 'bg-green-lighten-5' : 'bg-white'
+                "
+              >
+                <div class="d-flex align-start justify-space-between ga-3">
+                  <div class="flex-grow-1">
+                    <div class="text-subtitle-2 font-weight-bold mb-1">
+                      {{ getPromoTitle(promo) }}
+                    </div>
+
+                    <div class="text-body-2 text-medium-emphasis mb-3">
+                      {{ getPromoDescription(promo) }}
+                    </div>
+
+                    <div class="d-flex flex-wrap ga-2">
+                      <v-chip size="x-small" color="primary" variant="tonal">
+                        {{ getPromoTypeLabel(promo) }}
+                      </v-chip>
+
+                      <v-chip size="x-small" variant="tonal">
+                        Kuota: {{ getPromoKuota(promo) }}
+                      </v-chip>
+
+                      <v-chip
+                        v-if="promo.is_bisa_digabung_promo"
+                        size="x-small"
+                        color="success"
+                        variant="tonal"
+                      >
+                        Bisa digabung
+                      </v-chip>
+                    </div>
+                  </div>
+
+                  <v-btn
+                    :color="isPromoSelected(promo) ? 'error' : 'success'"
+                    :variant="isPromoSelected(promo) ? 'tonal' : 'flat'"
+                    size="small"
+                    min-width="84"
+                    @click="$emit('toggle-promo', promo)"
+                  >
+                    {{ isPromoSelected(promo) ? "Batal" : "Pilih" }}
+                  </v-btn>
+                </div>
+              </v-card>
+            </v-card-text>
+          </v-card>
+        </template>
+      </v-card-text>
+    </v-card>
   </v-navigation-drawer>
 </template>
 

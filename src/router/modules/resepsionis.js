@@ -61,6 +61,12 @@ const resepsionisRoutes = [
         name: "Daftar Booking",
         component: () => import("@/views/resepsionis/booking/all-booking.vue"),
       },
+      {
+        path: "penukaran-poin",
+        name: "Penukaran Poin",
+        component: () =>
+          import("@/views/resepsionis/penukaran-poin/all-penukaran-poin.vue"),
+      },
     ],
   },
 ];

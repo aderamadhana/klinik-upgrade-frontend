@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- PAGE HEADER: tetap pakai style existing -->
     <div class="page-header">
       <div>
         <h1 class="page-title">Booking Layanan</h1>
@@ -11,97 +12,107 @@
       <v-breadcrumbs :items="breadcrumbs" divider="/" />
     </div>
 
-    <v-card class="main-card" flat>
-      <div class="toolbar-wrap">
-        <div class="filter-wrap">
-          <v-text-field
-            v-model="filters.search"
-            label="Cari"
-            placeholder="Kode booking, nama pasien, No. HP"
-            variant="outlined"
-            density="compact"
-            prepend-inner-icon="mdi-magnify"
-            hide-details
-            clearable
-            class="search-field"
-            @keyup.enter="fetchData"
-            @click:clear="onClearSearch"
-          />
+    <v-card variant="flat" class="border mb-4">
+      <!-- TOOLBAR -->
+      <v-card-text class="pa-4">
+        <v-row dense align="center">
+          <!-- KIRI: SEARCH -->
+          <v-col cols="12" md="5" lg="5">
+            <v-text-field
+              v-model="filters.search"
+              label="Cari"
+              placeholder="Kode booking, nama pasien, No. HP"
+              variant="outlined"
+              density="compact"
+              prepend-inner-icon="mdi-magnify"
+              hide-details
+              clearable
+              @keyup.enter="fetchData"
+              @click:clear="onClearSearch"
+            />
+          </v-col>
 
-          <v-text-field
-            v-model="filters.tanggal"
-            label="Tanggal"
-            type="date"
-            variant="outlined"
-            density="compact"
-            prepend-inner-icon="mdi-calendar"
-            hide-details
-            class="date-field"
-            @update:modelValue="fetchData"
-          />
+          <!-- KANAN: FILTER + REFRESH -->
+          <v-col cols="12" md="7" lg="7">
+            <div class="d-flex justify-end align-center ga-3 flex-wrap">
+              <v-text-field
+                v-model="filters.tanggal"
+                label="Tanggal"
+                type="date"
+                variant="outlined"
+                density="compact"
+                prepend-inner-icon="mdi-calendar"
+                hide-details
+                style="max-width: 220px"
+                @update:modelValue="fetchData"
+              />
 
-          <v-select
-            v-model="filters.status"
-            label="Status"
-            :items="statusOptions"
-            item-title="label"
-            item-value="value"
-            variant="outlined"
-            density="compact"
-            hide-details
-            clearable
-            class="status-field"
-            @update:modelValue="fetchData"
-          />
-        </div>
+              <v-select
+                v-model="filters.status"
+                label="Status"
+                :items="statusOptions"
+                item-title="label"
+                item-value="value"
+                variant="outlined"
+                density="compact"
+                hide-details
+                clearable
+                style="max-width: 260px"
+                @update:modelValue="fetchData"
+              />
 
-        <div class="action-wrap">
-          <v-btn
-            variant="outlined"
-            color="grey-darken-1"
-            prepend-icon="mdi-refresh"
-            :loading="loading"
-            class="toolbar-btn"
-            @click="fetchData"
-          >
-            Refresh
-          </v-btn>
-        </div>
-      </div>
+              <v-btn
+                variant="outlined"
+                color="primary"
+                prepend-icon="mdi-refresh"
+                :loading="loading"
+                min-width="130"
+                @click="fetchData"
+              >
+                Refresh
+              </v-btn>
+            </div>
+          </v-col>
+        </v-row>
+      </v-card-text>
 
-      <v-alert
-        v-if="!activeTokoId"
-        type="warning"
-        variant="tonal"
-        border="start"
-        rounded="lg"
-        class="mx-4 mb-4"
-      >
-        Cabang aktif belum terpilih. Data booking akan lebih akurat jika cabang
-        sudah dipilih dari header.
-      </v-alert>
+      <v-divider />
 
-      <v-alert
-        v-if="errorMessage"
-        type="error"
-        variant="tonal"
-        border="start"
-        rounded="lg"
-        closable
-        class="mx-4 mb-4"
-        @click:close="errorMessage = ''"
-      >
-        {{ errorMessage }}
-      </v-alert>
+      <!-- ALERT -->
+      <v-card-text v-if="!activeTokoId || errorMessage" class="pa-4 pb-0">
+        <v-alert
+          v-if="!activeTokoId"
+          type="warning"
+          variant="tonal"
+          density="compact"
+          class="mb-3"
+        >
+          Cabang aktif belum terpilih. Data booking akan lebih akurat jika
+          cabang sudah dipilih dari header.
+        </v-alert>
 
-      <div class="table-wrap">
+        <v-alert
+          v-if="errorMessage"
+          type="error"
+          variant="tonal"
+          density="compact"
+          closable
+          class="mb-3"
+          @click:close="errorMessage = ''"
+        >
+          {{ errorMessage }}
+        </v-alert>
+      </v-card-text>
+
+      <!-- TABLE -->
+      <v-card-text class="pa-4">
         <v-data-table
           :headers="headers"
           :items="rows"
           :loading="loading"
           item-value="id"
           density="compact"
-          class="registrasi-table"
+          class="border"
           :items-per-page="pagination.perPage"
           hide-default-footer
         >
@@ -110,92 +121,98 @@
           </template>
 
           <template #item.booking_pasien="{ item }">
-            <div class="identity-cell">
-              <div class="reg-block">
-                <button
-                  type="button"
-                  class="reg-code-link"
-                  @click="openDetail(item)"
-                >
-                  {{ item.booking_code || "-" }}
-                </button>
+            <div class="py-2">
+              <div class="d-flex align-start ga-3">
+                <div>
+                  <v-btn
+                    variant="text"
+                    color="primary"
+                    size="small"
+                    class="px-0 font-weight-bold"
+                    @click="openDetail(item)"
+                  >
+                    {{ item.booking_code || "-" }}
+                  </v-btn>
 
-                <div class="reg-meta">
-                  <v-icon size="14">mdi-calendar</v-icon>
-                  <span>
-                    {{ formatDate(item.appointment_at || item.booking_date) }}
-                  </span>
+                  <div
+                    class="d-flex align-center ga-1 text-caption text-medium-emphasis"
+                  >
+                    <v-icon icon="mdi-calendar" size="14" />
+                    <span>
+                      {{ formatDate(item.appointment_at || item.booking_date) }}
+                    </span>
+                  </div>
+
+                  <div
+                    class="d-flex align-center ga-1 text-caption text-medium-emphasis"
+                  >
+                    <v-icon icon="mdi-clock-outline" size="14" />
+                    <span>
+                      Jam
+                      {{ formatTime(item.appointment_at || item.booking_time) }}
+                    </span>
+                  </div>
                 </div>
 
-                <div class="reg-meta">
-                  <v-icon size="14">mdi-clock-outline</v-icon>
-                  <span>
-                    Jam
-                    {{ formatTime(item.appointment_at || item.booking_time) }}
-                  </span>
-                </div>
-              </div>
+                <v-divider vertical />
 
-              <div class="patient-block">
-                <div class="patient-name">
-                  {{ getPasienName(item) }}
-                </div>
+                <div class="flex-grow-1">
+                  <div class="text-body-2 font-weight-bold">
+                    {{ getPasienName(item) }}
+                  </div>
 
-                <div class="patient-meta">
-                  {{ getPasienMeta(item) }}
-                </div>
+                  <div class="text-caption text-medium-emphasis mt-1">
+                    {{ getPasienMeta(item) }}
+                  </div>
 
-                <div class="staff-line">
-                  <span>
-                    Kategori
-                    <strong>{{ item.kategori?.nama || "-" }}</strong>
-                  </span>
+                  <div class="d-flex flex-wrap ga-2 mt-2">
+                    <v-chip size="x-small" color="primary" variant="tonal">
+                      Kategori: {{ item.kategori?.nama || "-" }}
+                    </v-chip>
 
-                  <span>
-                    Source
-                    <strong>{{ item.source || "-" }}</strong>
-                  </span>
+                    <v-chip size="x-small" color="secondary" variant="tonal">
+                      Source: {{ item.source || "-" }}
+                    </v-chip>
+                  </div>
                 </div>
               </div>
             </div>
           </template>
 
           <template #item.layanan="{ item }">
-            <div class="service-cell">
-              <v-chip
-                v-if="item.kategori?.nama"
-                size="small"
-                color="primary"
-                variant="tonal"
-                class="service-chip"
-              >
-                {{ item.kategori.nama }}
-              </v-chip>
+            <div class="py-2">
+              <div class="d-flex flex-wrap ga-1">
+                <v-chip
+                  v-if="item.kategori?.nama"
+                  size="small"
+                  color="primary"
+                  variant="tonal"
+                >
+                  {{ item.kategori.nama }}
+                </v-chip>
 
-              <v-chip
-                v-if="item.dokter?.nama"
-                size="small"
-                color="success"
-                variant="tonal"
-                class="service-chip"
-              >
-                Dokter: {{ item.dokter.nama }}
-              </v-chip>
+                <v-chip
+                  v-if="item.dokter?.nama"
+                  size="small"
+                  color="success"
+                  variant="tonal"
+                >
+                  Dokter: {{ item.dokter.nama }}
+                </v-chip>
 
-              <v-chip
-                v-if="item.treatment?.nama"
-                size="small"
-                color="info"
-                variant="tonal"
-                class="service-chip"
-              >
-                Treatment
-              </v-chip>
+                <v-chip
+                  v-if="item.treatment?.nama"
+                  size="small"
+                  color="info"
+                  variant="tonal"
+                >
+                  Treatment
+                </v-chip>
+              </div>
 
               <div
                 v-if="item.treatment?.nama"
-                class="text-caption text-medium-emphasis mt-1"
-                style="max-width: 320px"
+                class="text-caption text-medium-emphasis mt-1 text-truncate"
               >
                 {{ item.treatment.nama }}
               </div>
@@ -206,7 +223,7 @@
                   !item.dokter?.nama &&
                   !item.treatment?.nama
                 "
-                class="empty-text"
+                class="text-body-2 text-medium-emphasis"
               >
                 -
               </span>
@@ -214,7 +231,7 @@
           </template>
 
           <template #item.status_info="{ item }">
-            <div class="amount-cell">
+            <div class="py-2">
               <v-chip
                 size="x-small"
                 :color="statusMeta(item.status).color"
@@ -248,13 +265,12 @@
           </template>
 
           <template #item.actions="{ item }">
-            <div class="action-cell">
+            <div class="d-flex justify-end align-center ga-2 flex-wrap py-2">
               <v-btn
                 size="small"
                 color="primary"
                 variant="tonal"
                 prepend-icon="mdi-eye-outline"
-                class="text-action-btn"
                 @click="openDetail(item)"
               >
                 Detail
@@ -266,7 +282,6 @@
                 color="warning"
                 variant="tonal"
                 prepend-icon="mdi-clock-alert-outline"
-                class="text-action-btn"
                 :loading="isActionLoading(item, 'late')"
                 :disabled="actionLoadingId !== null"
                 @click="confirmAction(item, 'late')"
@@ -280,7 +295,6 @@
                 color="deep-orange"
                 variant="tonal"
                 prepend-icon="mdi-account-off-outline"
-                class="text-action-btn"
                 :loading="isActionLoading(item, 'no-show')"
                 :disabled="actionLoadingId !== null"
                 @click="confirmAction(item, 'no-show')"
@@ -294,7 +308,6 @@
                 color="error"
                 variant="tonal"
                 prepend-icon="mdi-close-circle-outline"
-                class="text-action-btn"
                 :loading="isActionLoading(item, 'cancel')"
                 :disabled="actionLoadingId !== null"
                 @click="confirmAction(item, 'cancel')"
@@ -305,147 +318,214 @@
           </template>
 
           <template #no-data>
-            <div class="empty-state">
-              <v-icon size="40" color="grey">
-                mdi-calendar-remove-outline
-              </v-icon>
+            <div class="text-center py-8">
+              <v-avatar color="grey-lighten-3" size="56" class="mb-3">
+                <v-icon
+                  icon="mdi-calendar-remove-outline"
+                  size="30"
+                  color="grey"
+                />
+              </v-avatar>
 
-              <div class="empty-title">Belum ada data booking</div>
+              <div class="text-subtitle-2 font-weight-bold mb-1">
+                Belum ada data booking
+              </div>
 
-              <div class="empty-description">
+              <div class="text-body-2 text-medium-emphasis">
                 Data booking akan muncul sesuai filter tanggal, status, dan
                 cabang aktif.
               </div>
             </div>
           </template>
         </v-data-table>
-      </div>
+      </v-card-text>
 
-      <div class="table-footer">
-        <div class="footer-count">
-          Total data: <strong>{{ pagination.total }}</strong>
-        </div>
+      <v-divider />
 
-        <div class="footer-actions">
-          <v-select
-            v-model="pagination.perPage"
-            :items="[10, 15, 25, 50, 100]"
-            variant="outlined"
-            density="compact"
-            hide-details
-            class="per-page-field"
-            @update:modelValue="onPerPageChange"
-          />
+      <!-- FOOTER -->
+      <v-card-actions class="pa-4">
+        <v-row dense align="center" class="w-100">
+          <v-col cols="12" md="4">
+            <div class="text-body-2 text-medium-emphasis">
+              Total data:
+              <strong class="text-high-emphasis">
+                {{ pagination.total }}
+              </strong>
+            </div>
+          </v-col>
 
-          <v-pagination
-            v-model="pagination.page"
-            :length="pagination.lastPage"
-            density="comfortable"
-            total-visible="5"
-            @update:modelValue="fetchData"
-          />
-        </div>
-      </div>
+          <v-col cols="12" md="8">
+            <div class="d-flex justify-md-end align-center ga-3 flex-wrap">
+              <v-select
+                v-model="pagination.perPage"
+                :items="[10, 15, 25, 50, 100]"
+                variant="outlined"
+                density="compact"
+                hide-details
+                style="max-width: 100px"
+                @update:modelValue="onPerPageChange"
+              />
+
+              <v-pagination
+                v-model="pagination.page"
+                :length="pagination.lastPage"
+                density="comfortable"
+                total-visible="5"
+                @update:modelValue="fetchData"
+              />
+            </div>
+          </v-col>
+        </v-row>
+      </v-card-actions>
     </v-card>
 
+    <!-- DETAIL DIALOG -->
     <v-dialog v-model="detailDialog.show" max-width="620">
-      <v-card rounded="lg">
-        <v-card-title class="d-flex justify-space-between align-center">
-          <span class="text-h6 font-weight-bold">Detail Booking</span>
+      <v-card>
+        <v-card-title class="d-flex justify-space-between align-center pa-4">
+          <div>
+            <div class="text-subtitle-1 font-weight-bold">Detail Booking</div>
+            <div class="text-body-2 text-medium-emphasis">
+              {{ detailDialog.item?.booking_code || "-" }}
+            </div>
+          </div>
 
           <v-btn
             icon="mdi-close"
             variant="text"
+            size="small"
             @click="detailDialog.show = false"
           />
         </v-card-title>
 
         <v-divider />
 
-        <v-card-text v-if="detailDialog.item">
+        <v-card-text v-if="detailDialog.item" class="pa-4">
           <v-row dense>
             <v-col cols="12" md="6">
-              <div class="detail-label">Kode Booking</div>
-              <div class="detail-value">
-                {{ detailDialog.item.booking_code || "-" }}
-              </div>
+              <v-card variant="outlined">
+                <v-card-text class="pa-3">
+                  <div class="text-caption text-medium-emphasis">
+                    Kode Booking
+                  </div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ detailDialog.item.booking_code || "-" }}
+                  </div>
+                </v-card-text>
+              </v-card>
             </v-col>
 
             <v-col cols="12" md="6">
-              <div class="detail-label">Status</div>
-              <v-chip
-                size="small"
-                :color="statusMeta(detailDialog.item.status).color"
-                variant="tonal"
-                :prepend-icon="statusMeta(detailDialog.item.status).icon"
-              >
-                {{ statusMeta(detailDialog.item.status).text }}
-              </v-chip>
+              <v-card variant="outlined">
+                <v-card-text class="pa-3">
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    Status
+                  </div>
+                  <v-chip
+                    size="small"
+                    :color="statusMeta(detailDialog.item.status).color"
+                    variant="tonal"
+                    :prepend-icon="statusMeta(detailDialog.item.status).icon"
+                  >
+                    {{ statusMeta(detailDialog.item.status).text }}
+                  </v-chip>
+                </v-card-text>
+              </v-card>
             </v-col>
 
             <v-col cols="12" md="6">
-              <div class="detail-label">Nama Pasien</div>
-              <div class="detail-value">
-                {{ getPasienName(detailDialog.item) }}
-              </div>
+              <v-card variant="outlined">
+                <v-card-text class="pa-3">
+                  <div class="text-caption text-medium-emphasis">
+                    Nama Pasien
+                  </div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ getPasienName(detailDialog.item) }}
+                  </div>
+                </v-card-text>
+              </v-card>
             </v-col>
 
             <v-col cols="12" md="6">
-              <div class="detail-label">Nomor HP</div>
-              <div class="detail-value">
-                {{
-                  detailDialog.item.no_hp ||
-                  detailDialog.item.pasien?.no_hp ||
-                  "-"
-                }}
-              </div>
+              <v-card variant="outlined">
+                <v-card-text class="pa-3">
+                  <div class="text-caption text-medium-emphasis">Nomor HP</div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{
+                      detailDialog.item.no_hp ||
+                      detailDialog.item.pasien?.no_hp ||
+                      "-"
+                    }}
+                  </div>
+                </v-card-text>
+              </v-card>
             </v-col>
 
             <v-col cols="12" md="6">
-              <div class="detail-label">Jadwal</div>
-              <div class="detail-value">
-                {{
-                  formatDate(
-                    detailDialog.item.appointment_at ||
-                      detailDialog.item.booking_date,
-                  )
-                }}
-                ·
-                {{
-                  formatTime(
-                    detailDialog.item.appointment_at ||
-                      detailDialog.item.booking_time,
-                  )
-                }}
-              </div>
+              <v-card variant="outlined">
+                <v-card-text class="pa-3">
+                  <div class="text-caption text-medium-emphasis">Jadwal</div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{
+                      formatDate(
+                        detailDialog.item.appointment_at ||
+                          detailDialog.item.booking_date,
+                      )
+                    }}
+                    ·
+                    {{
+                      formatTime(
+                        detailDialog.item.appointment_at ||
+                          detailDialog.item.booking_time,
+                      )
+                    }}
+                  </div>
+                </v-card-text>
+              </v-card>
             </v-col>
 
             <v-col cols="12" md="6">
-              <div class="detail-label">Kategori</div>
-              <div class="detail-value">
-                {{ detailDialog.item.kategori?.nama || "-" }}
-              </div>
+              <v-card variant="outlined">
+                <v-card-text class="pa-3">
+                  <div class="text-caption text-medium-emphasis">Kategori</div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ detailDialog.item.kategori?.nama || "-" }}
+                  </div>
+                </v-card-text>
+              </v-card>
             </v-col>
 
             <v-col cols="12" md="6">
-              <div class="detail-label">Dokter</div>
-              <div class="detail-value">
-                {{ detailDialog.item.dokter?.nama || "-" }}
-              </div>
+              <v-card variant="outlined">
+                <v-card-text class="pa-3">
+                  <div class="text-caption text-medium-emphasis">Dokter</div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ detailDialog.item.dokter?.nama || "-" }}
+                  </div>
+                </v-card-text>
+              </v-card>
             </v-col>
 
             <v-col cols="12" md="6">
-              <div class="detail-label">Treatment</div>
-              <div class="detail-value">
-                {{ detailDialog.item.treatment?.nama || "-" }}
-              </div>
+              <v-card variant="outlined">
+                <v-card-text class="pa-3">
+                  <div class="text-caption text-medium-emphasis">Treatment</div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ detailDialog.item.treatment?.nama || "-" }}
+                  </div>
+                </v-card-text>
+              </v-card>
             </v-col>
 
             <v-col cols="12">
-              <div class="detail-label">Catatan</div>
-              <div class="detail-value">
-                {{ detailDialog.item.notes || "-" }}
-              </div>
+              <v-card variant="outlined">
+                <v-card-text class="pa-3">
+                  <div class="text-caption text-medium-emphasis">Catatan</div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ detailDialog.item.notes || "-" }}
+                  </div>
+                </v-card-text>
+              </v-card>
             </v-col>
           </v-row>
         </v-card-text>
@@ -464,26 +544,36 @@
       </v-card>
     </v-dialog>
 
+    <!-- CONFIRM DIALOG -->
     <v-dialog v-model="confirmDialog.show" max-width="460">
-      <v-card rounded="lg">
-        <v-card-title class="font-weight-bold">
+      <v-card>
+        <v-card-title class="text-subtitle-1 font-weight-bold pa-4">
           {{ confirmTitle }}
         </v-card-title>
 
-        <v-card-text>
-          {{ confirmMessage }}
+        <v-divider />
 
-          <v-alert type="warning" variant="tonal" rounded="lg" class="mt-4">
-            <strong>{{ confirmDialog.item?.booking_code || "-" }}</strong>
-            <br />
-            {{ getPasienName(confirmDialog.item) }}
+        <v-card-text class="pa-4">
+          <div class="text-body-2 mb-3">
+            {{ confirmMessage }}
+          </div>
+
+          <v-alert type="warning" variant="tonal" density="compact">
+            <div class="font-weight-bold">
+              {{ confirmDialog.item?.booking_code || "-" }}
+            </div>
+            <div class="text-body-2">
+              {{ getPasienName(confirmDialog.item) }}
+            </div>
           </v-alert>
         </v-card-text>
 
-        <v-card-actions class="justify-end">
+        <v-divider />
+
+        <v-card-actions class="justify-end pa-4">
           <v-btn
-            variant="text"
-            color="grey-darken-1"
+            variant="outlined"
+            color="secondary"
             :disabled="actionLoadingId !== null"
             @click="confirmDialog.show = false"
           >
@@ -509,6 +599,10 @@
       timeout="2500"
     >
       {{ snackbar.text }}
+
+      <template #actions>
+        <v-btn icon="mdi-close" variant="text" @click="snackbar.show = false" />
+      </template>
     </v-snackbar>
   </div>
 </template>

@@ -1,66 +1,98 @@
 <template>
-  <v-card class="section-card mb-4" variant="flat">
+  <v-card variant="flat" class="mb-4 border">
     <v-card-text class="pa-5">
-      <div class="section-header-pembayaran mb-4">
+      <!-- Header -->
+      <div class="d-flex align-center justify-space-between mb-4">
         <div>
-          <div class="section-title-pembayaran">Voucher & Promo</div>
-          <div class="section-subtitle">
+          <div class="text-subtitle-1 font-weight-bold">Voucher & Promo</div>
+          <div class="text-body-2 text-medium-emphasis mt-1">
             Voucher yang muncul sudah disesuaikan dengan produk/treatment
           </div>
         </div>
+
+        <v-avatar color="success" variant="tonal" size="40">
+          <v-icon icon="mdi-ticket-percent-outline" size="22" />
+        </v-avatar>
       </div>
 
-      <div class="promo-trigger" @click="$emit('open-promo')">
-        <div class="promo-icon-wrap">
-          <v-icon size="24">mdi-ticket-percent-outline</v-icon>
-        </div>
+      <!-- Promo Trigger -->
+      <v-card
+        variant="tonal"
+        color="success"
+        class="pa-4 cursor-pointer"
+        @click="$emit('open-promo')"
+      >
+        <div class="d-flex align-center ga-3">
+          <v-avatar color="success" variant="flat" size="44">
+            <v-icon icon="mdi-ticket-percent-outline" size="24" />
+          </v-avatar>
 
-        <div class="promo-copy">
-          <div class="promo-title">Pilih Voucher / Promo</div>
-          <div class="promo-subtitle">
-            Buka daftar promo eligible untuk transaksi ini
-          </div>
-        </div>
-
-        <div class="promo-arrow">
-          <v-icon>mdi-chevron-right</v-icon>
-        </div>
-      </div>
-
-      <div v-if="appliedPromos.length" class="selected-promo-wrap mt-4">
-        <div class="selected-promo-title">Promo yang dipilih</div>
-
-        <div class="selected-promo-list">
-          <div
-            v-for="(promo, index) in appliedPromos"
-            :key="promo.id"
-            class="selected-promo-card"
-          >
-            <div class="selected-promo-content">
-              <div class="selected-promo-name">
-                {{ promo.nama || promo.nama_voucher }}
-              </div>
-
-              <div class="selected-promo-desc">
-                {{ promo.desc || promo.deskripsi }} • Potongan:
-                {{ formatCurrency(getPromoAmount(promo)) }}
-              </div>
+          <div class="flex-grow-1">
+            <div class="text-subtitle-2 font-weight-bold text-high-emphasis">
+              Pilih Voucher / Promo
             </div>
-
-            <v-btn
-              icon
-              size="small"
-              variant="text"
-              color="error"
-              @click="$emit('remove-promo', index)"
-            >
-              <v-icon size="18">mdi-close</v-icon>
-            </v-btn>
+            <div class="text-body-2 text-medium-emphasis mt-1">
+              Buka daftar promo eligible untuk transaksi ini
+            </div>
           </div>
+
+          <v-icon icon="mdi-chevron-right" size="26" />
         </div>
+      </v-card>
+
+      <!-- Selected Promos -->
+      <div v-if="appliedPromos && appliedPromos.length" class="mt-4">
+        <div class="d-flex align-center justify-space-between mb-2">
+          <div class="text-subtitle-2 font-weight-bold">Promo yang dipilih</div>
+
+          <v-chip size="small" color="success" variant="tonal">
+            {{ appliedPromos.length }} Promo
+          </v-chip>
+        </div>
+
+        <v-card variant="outlined">
+          <v-list density="compact" class="py-0">
+            <template
+              v-for="(promo, index) in appliedPromos"
+              :key="`${promo.id || promo.kode_voucher || index}`"
+            >
+              <v-list-item class="py-3">
+                <template #prepend>
+                  <v-avatar color="success" variant="tonal" size="36">
+                    <v-icon icon="mdi-ticket-confirmation-outline" size="20" />
+                  </v-avatar>
+                </template>
+
+                <v-list-item-title class="text-body-2 font-weight-bold">
+                  {{ promo.nama || promo.nama_voucher }}
+                </v-list-item-title>
+
+                <v-list-item-subtitle class="text-caption mt-1">
+                  {{ promo.desc || promo.deskripsi || "Promo transaksi" }}
+                  <span class="mx-1">•</span>
+                  Potongan:
+                  <strong>{{ formatCurrency(getPromoAmount(promo)) }}</strong>
+                </v-list-item-subtitle>
+
+                <template #append>
+                  <v-btn
+                    icon="mdi-close"
+                    size="small"
+                    variant="text"
+                    color="error"
+                    @click.stop="$emit('remove-promo', index)"
+                  />
+                </template>
+              </v-list-item>
+
+              <v-divider v-if="index < appliedPromos.length - 1" />
+            </template>
+          </v-list>
+        </v-card>
       </div>
 
-      <v-row dense class="mt-4">
+      <!-- Diskon Subtotal -->
+      <!-- <v-row dense class="mt-4">
         <v-col cols="12" md="4">
           <v-select
             :model-value="diskonSubtotal.type"
@@ -69,6 +101,7 @@
             variant="outlined"
             density="comfortable"
             hide-details="auto"
+            prepend-inner-icon="mdi-percent-outline"
             @update:model-value="
               $emit('update-diskon-subtotal', {
                 field: 'type',
@@ -85,6 +118,7 @@
             type="number"
             variant="outlined"
             density="comfortable"
+            prepend-inner-icon="mdi-cash-minus"
             :prefix="diskonSubtotal.type === 'Rp' ? 'Rp' : ''"
             :suffix="diskonSubtotal.type === '%' ? '%' : ''"
             hide-details="auto"
@@ -96,7 +130,7 @@
             "
           />
         </v-col>
-      </v-row>
+      </v-row> -->
     </v-card-text>
   </v-card>
 </template>

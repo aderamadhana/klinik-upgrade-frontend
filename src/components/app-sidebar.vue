@@ -479,7 +479,7 @@ export default {
             {
               key: "resepsionis-poin",
               title: "Penukaran Poin",
-              to: "/resepsionis/poin",
+              to: "/resepsionis/penukaran-poin",
               roles: [
                 "administrator",
                 "superuser",

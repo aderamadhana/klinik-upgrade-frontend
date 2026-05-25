@@ -11,35 +11,47 @@
       <v-breadcrumbs :items="breadcrumbs" divider="/" />
     </div>
 
-    <v-card elevation="1">
-      <v-card-title
-        class="d-flex justify-space-between align-center flex-wrap ga-3"
-      >
-        <v-btn
-          color="success"
-          prepend-icon="mdi-plus"
-          :to="'/administrasi/voucher-diskon/add'"
-        >
-          Tambah Voucher
-        </v-btn>
+    <!-- MAIN CARD -->
+    <v-card variant="flat" class="border">
+      <!-- ACTION BAR -->
+      <v-card-text class="pa-4">
+        <v-row dense align="center">
+          <v-col cols="12" md="4">
+            <v-btn
+              color="success"
+              prepend-icon="mdi-plus"
+              variant="flat"
+              :to="'/administrasi/voucher-diskon/add'"
+            >
+              Tambah Voucher
+            </v-btn>
+          </v-col>
 
-        <v-text-field
-          v-model="search"
-          placeholder="Cari voucher, deskripsi, cabang..."
-          prepend-inner-icon="mdi-magnify"
-          variant="outlined"
-          density="compact"
-          hide-details
-          clearable
-          style="max-width: 320px"
-          @keyup.enter="handleSearch"
-          @click:clear="handleClearSearch"
-        />
-      </v-card-title>
+          <v-col cols="12" md="8">
+            <div class="d-flex justify-md-end">
+              <v-text-field
+                v-model="search"
+                placeholder="Cari voucher, deskripsi, cabang..."
+                prepend-inner-icon="mdi-magnify"
+                variant="outlined"
+                density="compact"
+                hide-details
+                clearable
+                class="w-100"
+                style="max-width: 360px"
+                @keyup.enter="handleSearch"
+                @click:clear="handleClearSearch"
+              />
+            </div>
+          </v-col>
+        </v-row>
+      </v-card-text>
 
       <v-divider />
 
-      <v-card-text>
+      <!-- CONTENT -->
+      <v-card-text class="pa-4">
+        <!-- TABS -->
         <v-tabs
           v-model="activeTab"
           color="primary"
@@ -57,6 +69,7 @@
           </v-tab>
         </v-tabs>
 
+        <!-- TABLE -->
         <v-data-table-server
           :headers="headers"
           :items="vouchersForTable"
@@ -69,6 +82,7 @@
           density="compact"
           loading-text="Memuat data voucher..."
           no-data-text="Data voucher belum tersedia"
+          class="border"
           @update:page="handlePageChange"
           @update:items-per-page="handleItemsPerPageChange"
         >
@@ -77,33 +91,24 @@
           </template>
 
           <template #item.no="{ index }">
-            {{ rowNumber(index) }}
+            <span class="text-body-2">
+              {{ rowNumber(index) }}
+            </span>
           </template>
 
           <template #item.nama="{ item }">
-            <div>
-              <div class="font-weight-medium">
+            <div class="py-2">
+              <div class="text-body-2 font-weight-bold">
                 {{ item.nama || "-" }}
               </div>
 
               <div
                 v-if="item.deskripsi && item.deskripsi !== '-'"
-                class="text-caption text-medium-emphasis"
-                style="max-width: 360px"
+                class="text-caption text-medium-emphasis mt-1 text-truncate"
               >
                 {{ item.deskripsi }}
               </div>
             </div>
-          </template>
-
-          <template #item.mode_label="{ item }">
-            <v-chip
-              size="small"
-              :color="item.mode_voucher === 'direct' ? 'primary' : 'purple'"
-              variant="tonal"
-            >
-              {{ item.mode_label }}
-            </v-chip>
           </template>
 
           <template #item.jenis_label="{ item }">
@@ -117,15 +122,9 @@
           </template>
 
           <template #item.diskon_label="{ item }">
-            <span class="font-weight-bold text-success">
+            <span class="text-body-2 font-weight-bold text-success">
               {{ item.diskon_label }}
             </span>
-          </template>
-
-          <template #item.qty_generate="{ item }">
-            <v-chip size="small" color="info" variant="tonal">
-              {{ item.qty_generate }}
-            </v-chip>
           </template>
 
           <template #item.berlaku="{ item }">
@@ -139,23 +138,9 @@
           </template>
 
           <template #item.periode="{ item }">
-            {{ item.periode }}
-          </template>
-
-          <template #item.item_count="{ item }">
-            <v-chip size="small" color="secondary" variant="tonal">
-              {{ item.item_count }} item
-            </v-chip>
-          </template>
-
-          <template #item.status_label="{ item }">
-            <v-chip
-              size="small"
-              :color="getStatusColor(item.status_voucher)"
-              variant="tonal"
-            >
-              {{ item.status_label }}
-            </v-chip>
+            <span class="text-body-2">
+              {{ item.periode }}
+            </span>
           </template>
 
           <template #item.action="{ item }">
@@ -164,75 +149,97 @@
                 size="small"
                 color="primary"
                 variant="tonal"
-                icon="mdi-pencil"
-                title="Edit Voucher"
+                prepend-icon="mdi-pencil-outline"
                 :to="`/administrasi/voucher-diskon/edit-voucher-diskon/${item.id}`"
-              />
+              >
+                Edit
+              </v-btn>
 
               <v-btn
                 size="small"
                 color="amber-darken-1"
                 variant="tonal"
-                icon="mdi-format-list-bulleted"
-                title="Konfigurasi Voucher"
+                prepend-icon="mdi-format-list-bulleted"
                 :to="`/administrasi/voucher-diskon/konfigurasi-voucher-diskon/${item.id}`"
-              />
+              >
+                Konfigurasi
+              </v-btn>
 
               <v-btn
                 size="small"
-                color="primary"
+                color="info"
                 variant="tonal"
-                icon="mdi-download"
-                title="Download Voucher"
+                prepend-icon="mdi-download-outline"
                 @click="downloadVoucher(item)"
-              />
+              >
+                Download
+              </v-btn>
 
               <v-btn
                 size="small"
                 color="error"
                 variant="tonal"
-                icon="mdi-delete"
-                title="Hapus Voucher"
+                prepend-icon="mdi-delete-outline"
                 @click="confirmDelete(item)"
-              />
+              >
+                Hapus
+              </v-btn>
             </div>
           </template>
 
           <template #no-data>
-            <div class="text-center py-6">
-              <div class="text-subtitle-2 mb-1">
+            <div class="text-center py-8">
+              <v-avatar color="grey-lighten-3" size="56" class="mb-3">
+                <v-icon icon="mdi-ticket-percent-outline" size="28" />
+              </v-avatar>
+
+              <div class="text-subtitle-2 font-weight-bold mb-1">
                 Data voucher belum tersedia
               </div>
-              <div class="text-body-2 text-medium-emphasis">
+
+              <div class="text-body-2 text-medium-emphasis mb-4">
                 Klik Tambah Voucher untuk membuat voucher baru.
               </div>
+
+              <v-btn
+                color="success"
+                variant="flat"
+                prepend-icon="mdi-plus"
+                :to="'/administrasi/voucher-diskon/add'"
+              >
+                Tambah Voucher
+              </v-btn>
             </div>
           </template>
         </v-data-table-server>
       </v-card-text>
     </v-card>
 
+    <!-- DELETE DIALOG -->
     <v-dialog v-model="deleteDialog" max-width="480">
-      <v-card rounded="lg">
-        <v-card-title class="text-h6 font-weight-bold">
+      <v-card>
+        <v-card-title class="text-subtitle-1 font-weight-bold pa-4">
           Konfirmasi Hapus
         </v-card-title>
 
         <v-divider />
 
-        <v-card-text>
-          <p class="mb-2">Yakin ingin menghapus voucher ini?</p>
+        <v-card-text class="pa-4">
+          <div class="text-body-2 mb-3">Yakin ingin menghapus voucher ini?</div>
 
-          <v-alert type="warning" variant="tonal" rounded="lg">
-            <strong>{{ selectedItem?.nama || "-" }}</strong>
-            <br />
-            Data akan dihapus secara soft delete.
+          <v-alert type="warning" variant="tonal" density="comfortable">
+            <div class="font-weight-bold">
+              {{ selectedItem?.nama || "-" }}
+            </div>
+            <div class="text-body-2 mt-1">
+              Data akan dihapus secara soft delete.
+            </div>
           </v-alert>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="justify-end">
+        <v-card-actions class="justify-end pa-4">
           <v-btn
             variant="outlined"
             color="secondary"
@@ -255,8 +262,13 @@
       </v-card>
     </v-dialog>
 
+    <!-- SNACKBAR -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">
       {{ snackbar.text }}
+
+      <template #actions>
+        <v-btn variant="text" icon="mdi-close" @click="snackbar.show = false" />
+      </template>
     </v-snackbar>
   </div>
 </template>
@@ -308,14 +320,10 @@ export default {
       headers: [
         { title: "NO", key: "no", sortable: false, width: "70px" },
         { title: "NAMA", key: "nama" },
-        { title: "MODE", key: "mode_label" },
         { title: "JENIS", key: "jenis_label", sortable: false },
         { title: "DISKON", key: "diskon_label" },
-        { title: "QTY", key: "qty_generate", sortable: false },
         { title: "BERLAKU DI", key: "berlaku", sortable: false },
         { title: "PERIODE", key: "periode", sortable: false },
-        { title: "ITEM", key: "item_count", sortable: false },
-        { title: "STATUS", key: "status_label", sortable: false },
         { title: "AKSI", key: "action", sortable: false, align: "end" },
       ],
 
@@ -692,21 +700,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-:deep(.v-data-table .v-table__wrapper > table > tbody > tr > td) {
-  vertical-align: middle;
-  padding-top: 10px !important;
-  padding-bottom: 10px !important;
-}
-
-:deep(.v-data-table thead th) {
-  font-weight: 700 !important;
-  color: #374151 !important;
-  background: #fafafa !important;
-}
-
-:deep(.v-data-table tbody td) {
-  font-size: 13px;
-}
-</style>

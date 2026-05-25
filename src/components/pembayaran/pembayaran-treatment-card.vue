@@ -1,10 +1,13 @@
 <template>
-  <v-card class="section-card mb-4" variant="flat">
+  <v-card variant="flat" class="mb-4 border">
     <v-card-text class="pa-5">
-      <div class="section-header-pembayaran">
+      <!-- HEADER -->
+      <div class="d-flex align-center justify-space-between mb-4">
         <div>
-          <div class="section-title-pembayaran">Treatment</div>
-          <div class="section-subtitle">Treatment dari registrasi layanan</div>
+          <div class="text-subtitle-1 font-weight-bold">Treatment</div>
+          <div class="text-body-2 text-medium-emphasis mt-1">
+            Treatment dari registrasi layanan
+          </div>
         </div>
 
         <v-btn
@@ -12,130 +15,161 @@
           variant="tonal"
           size="small"
           prepend-icon="mdi-plus"
-          class="section-action-btn"
           @click="$emit('add-item')"
         >
           Tambah Treatment
         </v-btn>
       </div>
 
-      <div v-if="!items.length" class="empty-section-box">
-        Belum ada treatment.
-      </div>
+      <!-- EMPTY STATE -->
+      <v-alert
+        v-if="!items.length"
+        type="info"
+        variant="tonal"
+        density="compact"
+        class="mb-4"
+        text="Belum ada treatment."
+      />
 
-      <div
+      <!-- ITEM LIST -->
+      <v-card
         v-for="(item, index) in items"
         :key="item.registrasi_treatment_detail_id || `treatment-${index}`"
-        class="entry-card"
+        variant="outlined"
+        class="mb-4"
       >
-        <div class="entry-card-header">
-          <div class="entry-card-title">Treatment #{{ index + 1 }}</div>
+        <v-card-item class="px-4 py-3">
+          <template #prepend>
+            <v-avatar color="primary" variant="tonal" size="36">
+              <v-icon icon="mdi-medical-bag" size="20" />
+            </v-avatar>
+          </template>
 
-          <v-btn
-            icon
-            size="small"
-            variant="text"
-            color="error"
-            @click="$emit('remove-item', index)"
-          >
-            <v-icon size="18">mdi-delete-outline</v-icon>
-          </v-btn>
-        </div>
+          <v-card-title class="text-body-2 font-weight-bold pa-0">
+            Treatment #{{ index + 1 }}
+          </v-card-title>
 
-        <v-row dense>
-          <v-col cols="12" md="5">
-            <v-autocomplete
-              :model-value="item.nama"
-              :items="tindakanList"
-              item-title="title"
-              item-value="title"
-              label="Nama Treatment"
-              variant="outlined"
-              density="comfortable"
-              prepend-inner-icon="mdi-medical-bag"
-              hide-details="auto"
-              clearable
-              @update:model-value="updateField(index, 'nama', $event, true)"
+          <v-card-subtitle class="text-caption pa-0 mt-1">
+            Detail treatment, beautician, qty, diskon, dan subtotal
+          </v-card-subtitle>
+
+          <template #append>
+            <v-btn
+              icon="mdi-delete-outline"
+              size="small"
+              variant="text"
+              color="error"
+              @click.stop="$emit('remove-item', index)"
             />
-          </v-col>
+          </template>
+        </v-card-item>
 
-          <v-col cols="12" sm="4" md="2">
-            <v-text-field
-              :model-value="item.qty"
-              label="Qty"
-              type="number"
-              min="1"
-              variant="outlined"
-              density="comfortable"
-              hide-details="auto"
-              @update:model-value="updateField(index, 'qty', $event)"
-            />
-          </v-col>
+        <v-divider />
 
-          <v-col cols="12" sm="8" md="5">
-            <v-select
-              :model-value="item.beautician"
-              :items="perawatList"
-              item-title="title"
-              item-value="title"
-              label="Beautician / Perawat"
-              variant="outlined"
-              density="comfortable"
-              hide-details="auto"
-              clearable
-              @update:model-value="updateField(index, 'beautician', $event)"
-            />
-          </v-col>
+        <v-card-text class="pa-4">
+          <v-row dense>
+            <v-col cols="12" md="5">
+              <v-autocomplete
+                :model-value="item.nama"
+                :items="tindakanList"
+                item-title="title"
+                item-value="title"
+                label="Nama Treatment"
+                variant="outlined"
+                density="comfortable"
+                prepend-inner-icon="mdi-medical-bag"
+                hide-details="auto"
+                clearable
+                @update:model-value="updateField(index, 'nama', $event, true)"
+              />
+            </v-col>
 
-          <v-col cols="12" sm="6" md="3">
-            <v-text-field
-              :model-value="formatCurrency(item.harga)"
-              label="Harga"
-              variant="outlined"
-              density="comfortable"
-              readonly
-              hide-details="auto"
-            />
-          </v-col>
+            <v-col cols="12" sm="4" md="2">
+              <v-text-field
+                :model-value="item.qty"
+                label="Qty"
+                type="number"
+                min="1"
+                variant="outlined"
+                density="comfortable"
+                prepend-inner-icon="mdi-counter"
+                hide-details="auto"
+                @update:model-value="updateField(index, 'qty', $event)"
+              />
+            </v-col>
 
-          <v-col cols="12" sm="6" md="2">
-            <v-select
-              :model-value="item.diskon_type"
-              :items="diskonTypeList"
-              label="Tipe Diskon"
-              variant="outlined"
-              density="comfortable"
-              hide-details="auto"
-              @update:model-value="updateField(index, 'diskon_type', $event)"
-            />
-          </v-col>
+            <v-col cols="12" sm="8" md="5">
+              <v-select
+                :model-value="item.beautician"
+                :items="perawatList"
+                item-title="title"
+                item-value="title"
+                label="Beautician / Perawat"
+                variant="outlined"
+                density="comfortable"
+                prepend-inner-icon="mdi-account-heart-outline"
+                hide-details="auto"
+                clearable
+                @update:model-value="updateField(index, 'beautician', $event)"
+              />
+            </v-col>
 
-          <v-col cols="12" sm="6" md="3">
-            <v-text-field
-              :model-value="item.diskon"
-              label="Nilai Diskon"
-              type="number"
-              variant="outlined"
-              density="comfortable"
-              :prefix="item.diskon_type === 'Rp' ? 'Rp' : ''"
-              :suffix="item.diskon_type === '%' ? '%' : ''"
-              hide-details="auto"
-              @update:model-value="updateField(index, 'diskon', $event)"
-            />
-          </v-col>
+            <v-col cols="12" sm="6" md="3">
+              <v-text-field
+                :model-value="formatCurrency(item.harga)"
+                label="Harga"
+                variant="outlined"
+                density="comfortable"
+                prepend-inner-icon="mdi-cash"
+                bg-color="grey-lighten-5"
+                readonly
+                hide-details="auto"
+              />
+            </v-col>
 
-          <v-col cols="12" sm="6" md="4">
-            <v-text-field
-              :model-value="formatCurrency(getSubtotal(item))"
-              label="Subtotal"
-              readonly
-              variant="outlined"
-              density="comfortable"
-              hide-details="auto"
-            />
-          </v-col>
-        </v-row>
-      </div>
+            <v-col cols="12" sm="6" md="2">
+              <v-select
+                :model-value="item.diskon_type"
+                :items="diskonTypeList"
+                label="Tipe Diskon"
+                variant="outlined"
+                density="comfortable"
+                prepend-inner-icon="mdi-percent-outline"
+                hide-details="auto"
+                @update:model-value="updateField(index, 'diskon_type', $event)"
+              />
+            </v-col>
+
+            <v-col cols="12" sm="6" md="3">
+              <v-text-field
+                :model-value="item.diskon"
+                label="Nilai Diskon"
+                type="number"
+                variant="outlined"
+                density="comfortable"
+                prepend-inner-icon="mdi-sale-outline"
+                :prefix="item.diskon_type === 'Rp' ? 'Rp' : ''"
+                :suffix="item.diskon_type === '%' ? '%' : ''"
+                hide-details="auto"
+                @update:model-value="updateField(index, 'diskon', $event)"
+              />
+            </v-col>
+
+            <v-col cols="12" sm="6" md="4">
+              <v-text-field
+                :model-value="formatCurrency(getSubtotal(item))"
+                label="Subtotal"
+                variant="outlined"
+                density="comfortable"
+                prepend-inner-icon="mdi-calculator"
+                bg-color="grey-lighten-5"
+                readonly
+                hide-details="auto"
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
     </v-card-text>
   </v-card>
 </template>

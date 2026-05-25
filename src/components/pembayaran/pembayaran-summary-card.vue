@@ -1,53 +1,177 @@
 <template>
-  <div class="summary-sticky">
-    <v-card class="section-card mb-4" variant="flat">
+  <div>
+    <v-card variant="flat" class="mb-4 border">
       <v-card-text class="pa-5">
-        <div class="summary-title">Ringkasan Pembayaran</div>
-
-        <div class="summary-row">
-          <span>Subtotal Obat</span>
-          <strong>{{ formatCurrency(totalPenjualan) }}</strong>
-        </div>
-
-        <div class="summary-row">
-          <span>Subtotal Treatment</span>
-          <strong>{{ formatCurrency(totalTreatment) }}</strong>
-        </div>
-
-        <div class="summary-row">
-          <span>Subtotal</span>
-          <strong>{{ formatCurrency(subtotal) }}</strong>
-        </div>
-
-        <div class="summary-row">
-          <span>Diskon Subtotal</span>
-          <strong class="text-error">
-            - {{ formatCurrency(subtotalDiscountAmount) }}
-          </strong>
-        </div>
-
-        <div v-if="promoDiscountAmount > 0" class="summary-row">
-          <span>Total Promo</span>
-          <strong class="text-error">
-            - {{ formatCurrency(promoDiscountAmount) }}
-          </strong>
-        </div>
-
-        <div class="summary-grand-total">
-          <div class="summary-grand-label">Grand Total</div>
-          <div class="summary-grand-value">
-            {{ formatCurrency(grandTotal) }}
+        <!-- HEADER -->
+        <div class="d-flex align-center justify-space-between mb-4">
+          <div>
+            <div class="text-subtitle-1 font-weight-bold">
+              Ringkasan Pembayaran
+            </div>
+            <div class="text-body-2 text-medium-emphasis mt-1">
+              Total transaksi, diskon, metode bayar, dan status tagihan
+            </div>
           </div>
+
+          <v-avatar color="primary" variant="tonal" size="40">
+            <v-icon icon="mdi-receipt-text-check-outline" size="22" />
+          </v-avatar>
         </div>
 
-        <div class="section-mini-title mt-5">Pembayaran</div>
+        <!-- SUMMARY DETAIL -->
+        <v-card variant="outlined" class="mb-4">
+          <v-card-text class="pa-4">
+            <template v-if="hasItemDiscountBreakdown">
+              <div class="d-flex justify-space-between align-center mb-3">
+                <span class="text-body-2 text-medium-emphasis"
+                  >Subtotal Obat</span
+                >
+                <strong class="text-body-2">{{
+                  formatMoney(grossPenjualanAmount)
+                }}</strong>
+              </div>
 
-        <div class="quick-actions mb-3">
+              <div class="d-flex justify-space-between align-center mb-3">
+                <span class="text-body-2 text-medium-emphasis"
+                  >Subtotal Treatment</span
+                >
+                <strong class="text-body-2">{{
+                  formatMoney(grossTreatmentAmount)
+                }}</strong>
+              </div>
+
+              <div class="d-flex justify-space-between align-center mb-3">
+                <span class="text-body-2 text-medium-emphasis"
+                  >Subtotal Sebelum Diskon Item</span
+                >
+                <strong class="text-body-2">{{
+                  formatMoney(grossSubtotalAmount)
+                }}</strong>
+              </div>
+
+              <div class="d-flex justify-space-between align-center mb-3">
+                <span class="text-body-2 text-medium-emphasis">
+                  Diskon Item / Voucher Produk-Treatment
+                </span>
+                <strong class="text-body-2 text-error">
+                  - {{ formatMoney(calculatedItemDiscountAmount) }}
+                </strong>
+              </div>
+
+              <v-divider class="my-3" />
+
+              <div class="d-flex justify-space-between align-center">
+                <span class="text-body-2 font-weight-medium">
+                  Subtotal Setelah Diskon Item
+                </span>
+                <strong class="text-body-2">{{
+                  formatMoney(safeSubtotal)
+                }}</strong>
+              </div>
+            </template>
+
+            <template v-else>
+              <div class="d-flex justify-space-between align-center mb-3">
+                <span class="text-body-2 text-medium-emphasis"
+                  >Subtotal Obat</span
+                >
+                <strong class="text-body-2">{{
+                  formatMoney(safeTotalPenjualan)
+                }}</strong>
+              </div>
+
+              <div class="d-flex justify-space-between align-center mb-3">
+                <span class="text-body-2 text-medium-emphasis"
+                  >Subtotal Treatment</span
+                >
+                <strong class="text-body-2">{{
+                  formatMoney(safeTotalTreatment)
+                }}</strong>
+              </div>
+
+              <v-divider class="my-3" />
+
+              <div class="d-flex justify-space-between align-center">
+                <span class="text-body-2 font-weight-medium">Subtotal</span>
+                <strong class="text-body-2">{{
+                  formatMoney(safeSubtotal)
+                }}</strong>
+              </div>
+            </template>
+
+            <v-divider class="my-3" />
+
+            <!-- <div class="d-flex justify-space-between align-center mb-3">
+              <span class="text-body-2 text-medium-emphasis"
+                >Diskon Subtotal</span
+              >
+              <strong
+                class="text-body-2"
+                :class="safeSubtotalDiscountAmount > 0 ? 'text-error' : ''"
+              >
+                <template v-if="safeSubtotalDiscountAmount > 0">- </template>
+                {{ formatMoney(safeSubtotalDiscountAmount) }}
+              </strong>
+            </div> -->
+
+            <div
+              v-if="safePromoDiscountAmount > 0"
+              class="d-flex justify-space-between align-center"
+            >
+              <span class="text-body-2 text-medium-emphasis"
+                >Voucher Value</span
+              >
+              <strong class="text-body-2 text-error">
+                - {{ formatMoney(safePromoDiscountAmount) }}
+              </strong>
+            </div>
+          </v-card-text>
+        </v-card>
+
+        <!-- GRAND TOTAL -->
+        <v-card color="primary" variant="flat" class="mb-5">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center justify-space-between">
+              <div>
+                <div class="text-body-2 text-white">Grand Total</div>
+                <div class="text-caption text-white opacity-80">
+                  Total yang harus dibayar customer
+                </div>
+              </div>
+
+              <div class="text-h6 font-weight-bold text-white">
+                {{ formatMoney(safeGrandTotal) }}
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+
+        <!-- PEMBAYARAN TITLE -->
+        <div class="d-flex align-center justify-space-between mb-3">
+          <div>
+            <div class="text-subtitle-2 font-weight-bold">Pembayaran</div>
+            <div class="text-caption text-medium-emphasis">
+              Atur satu atau beberapa metode pembayaran
+            </div>
+          </div>
+
+          <v-chip
+            size="small"
+            :color="paymentCoverageStatus.color"
+            variant="tonal"
+          >
+            {{ paymentCoverageStatus.text }}
+          </v-chip>
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <div class="d-flex flex-wrap ga-2 mb-4">
           <v-btn
             variant="tonal"
             color="primary"
             size="small"
-            class="quick-action-btn"
+            prepend-icon="mdi-cash-check"
+            :disabled="safeGrandTotal <= 0"
             @click="$emit('set-exact-payment')"
           >
             Bayar Pas
@@ -57,7 +181,8 @@
             variant="tonal"
             color="secondary"
             size="small"
-            class="quick-action-btn"
+            prepend-icon="mdi-call-split"
+            :disabled="safeGrandTotal <= 0 || pembayaran.length <= 1"
             @click="$emit('split-evenly')"
           >
             Bagi Rata
@@ -68,149 +193,224 @@
             variant="tonal"
             color="success"
             size="small"
-            class="quick-action-btn"
+            prepend-icon="mdi-cash-sync"
+            :disabled="cashAllocated <= 0"
             @click="$emit('sync-cash-received')"
           >
             Cash Pas
           </v-btn>
         </div>
 
-        <div
+        <!-- PAYMENT METHODS -->
+        <v-card
           v-for="(pay, index) in pembayaran"
           :key="`pay-${index}`"
-          class="payment-card"
+          variant="outlined"
+          class="mb-3"
         >
-          <div class="payment-card-header">
-            <div class="payment-card-title">Metode Bayar #{{ index + 1 }}</div>
+          <v-card-item class="px-4 py-3">
+            <template #prepend>
+              <v-avatar color="primary" variant="tonal" size="34">
+                <v-icon icon="mdi-credit-card-outline" size="18" />
+              </v-avatar>
+            </template>
 
-            <v-btn
-              icon
-              size="small"
-              variant="text"
-              color="error"
-              :disabled="pembayaran.length === 1"
-              @click="$emit('remove-pay', index)"
-            >
-              <v-icon size="18">mdi-delete-outline</v-icon>
-            </v-btn>
-          </div>
+            <v-card-title class="text-body-2 font-weight-bold pa-0">
+              Metode Bayar #{{ index + 1 }}
+            </v-card-title>
 
-          <div class="payment-card-grid">
-            <v-select
-              :model-value="pay.metode_bayar_id"
-              :items="metodeList"
-              item-title="nama"
-              item-value="id"
-              label="Metode Bayar"
-              variant="outlined"
-              density="comfortable"
-              hide-details="auto"
-              @update:model-value="
-                $emit('update-payment-field', {
-                  index,
-                  field: 'metode_bayar_id',
-                  value: $event,
-                })
-              "
-            />
+            <template #append>
+              <v-btn
+                icon="mdi-delete-outline"
+                size="small"
+                variant="text"
+                color="error"
+                :disabled="pembayaran.length === 1"
+                @click="$emit('remove-pay', index)"
+              />
+            </template>
+          </v-card-item>
 
-            <v-text-field
-              :model-value="pay.nominal"
-              label="Nominal Dialokasikan"
-              type="number"
-              variant="outlined"
-              density="comfortable"
-              prefix="Rp"
-              hide-details="auto"
-              @update:model-value="
-                $emit('update-payment-field', {
-                  index,
-                  field: 'nominal',
-                  value: $event,
-                })
-              "
-            />
-          </div>
-        </div>
+          <v-divider />
+
+          <v-card-text class="pa-4">
+            <v-row dense>
+              <v-col cols="12">
+                <v-select
+                  :model-value="pay.metode_bayar_id"
+                  :items="metodeList"
+                  item-title="nama"
+                  item-value="id"
+                  label="Metode Bayar"
+                  variant="outlined"
+                  density="comfortable"
+                  hide-details="auto"
+                  prepend-inner-icon="mdi-wallet-outline"
+                  @update:model-value="
+                    $emit('update-payment-field', {
+                      index,
+                      field: 'metode_bayar_id',
+                      value: $event,
+                    })
+                  "
+                />
+              </v-col>
+
+              <v-col cols="12">
+                <v-text-field
+                  :model-value="pay.nominal"
+                  label="Nominal Dialokasikan"
+                  type="number"
+                  variant="outlined"
+                  density="comfortable"
+                  prefix="Rp"
+                  hide-details="auto"
+                  prepend-inner-icon="mdi-cash"
+                  @update:model-value="
+                    $emit('update-payment-field', {
+                      index,
+                      field: 'nominal',
+                      value: Number($event || 0),
+                    })
+                  "
+                />
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
 
         <v-btn
           variant="outlined"
+          color="primary"
           size="small"
           prepend-icon="mdi-plus"
-          class="mb-4 payment-add-btn"
+          class="mb-4"
+          block
           @click="$emit('add-pay')"
         >
           Tambah Metode Bayar
         </v-btn>
 
-        <v-divider class="my-4" />
+        <!-- PAYMENT STATUS -->
+        <v-card variant="outlined" class="mb-4">
+          <v-card-text class="pa-4">
+            <div class="d-flex justify-space-between align-center mb-3">
+              <span class="text-body-2 text-medium-emphasis"
+                >Total Metode Bayar</span
+              >
+              <strong class="text-body-2">{{
+                formatMoney(safeTotalBayar)
+              }}</strong>
+            </div>
 
-        <div class="summary-row">
-          <span>Total Metode Bayar</span>
-          <strong>{{ formatCurrency(totalBayar) }}</strong>
-        </div>
+            <div class="d-flex justify-space-between align-center mb-3">
+              <span class="text-body-2 text-medium-emphasis"
+                >Status Tagihan</span
+              >
+              <v-chip
+                :color="paymentCoverageStatus.color"
+                size="small"
+                variant="flat"
+              >
+                {{ paymentCoverageStatus.text }}
+              </v-chip>
+            </div>
 
-        <div class="summary-row">
-          <span>Status Tagihan</span>
-          <v-chip
-            :color="paymentCoverageStatus.color"
-            size="small"
-            variant="flat"
-          >
-            {{ paymentCoverageStatus.text }}
-          </v-chip>
-        </div>
+            <div class="d-flex justify-space-between align-center">
+              <span class="text-body-2 text-medium-emphasis">Sisa Tagihan</span>
+              <strong
+                class="text-body-2"
+                :class="safeSisaTagihan > 0 ? 'text-error' : 'text-success'"
+              >
+                {{ formatMoney(safeSisaTagihan) }}
+              </strong>
+            </div>
 
-        <div class="summary-row">
-          <span>Sisa Tagihan</span>
-          <strong :class="sisaTagihan > 0 ? 'text-error' : 'text-success'">
-            {{ formatCurrency(sisaTagihan) }}
-          </strong>
-        </div>
+            <template v-if="overPaymentAmount > 0">
+              <v-divider class="my-3" />
 
-        <div v-if="hasCashMethod" class="cash-received-box mt-4">
-          <div class="cash-box-title">Input Cash Diterima</div>
-          <div class="cash-box-subtitle">
-            Dipakai untuk hitung kembalian dari metode CASH
-          </div>
-
-          <v-row dense class="mt-2">
-            <v-col cols="12">
-              <v-text-field
-                :model-value="cashReceived"
-                label="Nominal Dibayar Customer (Cash)"
-                type="number"
-                variant="outlined"
-                density="comfortable"
-                prefix="Rp"
-                hide-details="auto"
-                @update:model-value="
-                  $emit('update-cash-received', Number($event || 0))
-                "
-              />
-            </v-col>
-
-            <v-col cols="12">
-              <div class="summary-row mb-2">
-                <span>Nominal CASH Dialokasikan</span>
-                <strong>{{ formatCurrency(cashAllocated) }}</strong>
-              </div>
-
-              <div class="summary-row mb-0">
-                <span>Kembalian Cash</span>
-                <strong :class="cashChange > 0 ? 'text-success' : 'text-body'">
-                  {{ formatCurrency(cashChange) }}
+              <div class="d-flex justify-space-between align-center">
+                <span class="text-body-2 text-medium-emphasis"
+                  >Lebih Bayar</span
+                >
+                <strong class="text-body-2 text-warning">
+                  {{ formatMoney(overPaymentAmount) }}
                 </strong>
               </div>
-            </v-col>
-          </v-row>
-        </div>
+            </template>
+          </v-card-text>
+        </v-card>
 
+        <!-- CASH RECEIVED -->
+        <v-card
+          v-if="hasCashMethod"
+          variant="tonal"
+          color="success"
+          class="mb-4"
+        >
+          <v-card-text class="pa-4">
+            <div class="d-flex align-start ga-3 mb-3">
+              <v-avatar color="success" variant="flat" size="36">
+                <v-icon icon="mdi-cash-register" size="20" />
+              </v-avatar>
+
+              <div>
+                <div class="text-subtitle-2 font-weight-bold">
+                  Input Cash Diterima
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  Dipakai untuk hitung kembalian dari metode CASH
+                </div>
+              </div>
+            </div>
+
+            <v-text-field
+              :model-value="cashReceived"
+              label="Nominal Dibayar Customer (Cash)"
+              type="number"
+              variant="outlined"
+              density="comfortable"
+              prefix="Rp"
+              hide-details="auto"
+              bg-color="white"
+              prepend-inner-icon="mdi-cash-plus"
+              @update:model-value="
+                $emit('update-cash-received', Number($event || 0))
+              "
+            />
+
+            <v-divider class="my-4" />
+
+            <div class="d-flex justify-space-between align-center mb-3">
+              <span class="text-body-2 text-medium-emphasis">
+                Nominal CASH Dialokasikan
+              </span>
+              <strong class="text-body-2">{{
+                formatMoney(cashAllocated)
+              }}</strong>
+            </div>
+
+            <div class="d-flex justify-space-between align-center">
+              <span class="text-body-2 text-medium-emphasis"
+                >Kembalian Cash</span
+              >
+              <strong
+                class="text-body-2"
+                :class="cashChange > 0 ? 'text-success' : 'text-body-1'"
+              >
+                {{ formatMoney(cashChange) }}
+              </strong>
+            </div>
+          </v-card-text>
+        </v-card>
+
+        <!-- SUBMIT -->
         <v-btn
           color="primary"
-          size="default"
+          size="large"
           block
-          class="save-btn mt-4"
+          prepend-icon="mdi-content-save-check-outline"
+          :disabled="disableSubmit"
           @click="$emit('submit')"
         >
           Simpan Pembayaran
@@ -231,10 +431,16 @@ export default {
     subtotalDiscountAmount: { type: Number, default: 0 },
     promoDiscountAmount: { type: Number, default: 0 },
     grandTotal: { type: Number, default: 0 },
+
+    grossPenjualan: { type: Number, default: null },
+    grossTreatment: { type: Number, default: null },
+    itemDiscountAmount: { type: Number, default: 0 },
+
     pembayaran: { type: Array, default: () => [] },
     metodeList: { type: Array, default: () => [] },
     totalBayar: { type: Number, default: 0 },
     sisaTagihan: { type: Number, default: 0 },
+
     paymentCoverageStatus: {
       type: Object,
       default: () => ({
@@ -242,10 +448,14 @@ export default {
         color: "error",
       }),
     },
+
     hasCashMethod: { type: Boolean, default: false },
     cashReceived: { type: Number, default: 0 },
     cashAllocated: { type: Number, default: 0 },
     cashChange: { type: Number, default: 0 },
+
+    disableSubmit: { type: Boolean, default: false },
+
     formatCurrency: {
       type: Function,
       required: true,
@@ -262,5 +472,86 @@ export default {
     "update-cash-received",
     "submit",
   ],
+
+  computed: {
+    safeTotalPenjualan() {
+      return Number(this.totalPenjualan || 0);
+    },
+
+    safeTotalTreatment() {
+      return Number(this.totalTreatment || 0);
+    },
+
+    safeSubtotal() {
+      return Number(this.subtotal || 0);
+    },
+
+    safeSubtotalDiscountAmount() {
+      return Number(this.subtotalDiscountAmount || 0);
+    },
+
+    safePromoDiscountAmount() {
+      return Number(this.promoDiscountAmount || 0);
+    },
+
+    safeGrandTotal() {
+      return Number(this.grandTotal || 0);
+    },
+
+    safeTotalBayar() {
+      return Number(this.totalBayar || 0);
+    },
+
+    safeSisaTagihan() {
+      return Number(this.sisaTagihan || 0);
+    },
+
+    grossPenjualanAmount() {
+      if (this.grossPenjualan !== null && this.grossPenjualan !== undefined) {
+        return Number(this.grossPenjualan || 0);
+      }
+
+      return this.safeTotalPenjualan;
+    },
+
+    grossTreatmentAmount() {
+      if (this.grossTreatment !== null && this.grossTreatment !== undefined) {
+        return Number(this.grossTreatment || 0);
+      }
+
+      return this.safeTotalTreatment;
+    },
+
+    grossSubtotalAmount() {
+      return this.grossPenjualanAmount + this.grossTreatmentAmount;
+    },
+
+    calculatedItemDiscountAmount() {
+      const explicitDiscount = Number(this.itemDiscountAmount || 0);
+
+      if (explicitDiscount > 0) {
+        return explicitDiscount;
+      }
+
+      return Math.max(this.grossSubtotalAmount - this.safeSubtotal, 0);
+    },
+
+    hasItemDiscountBreakdown() {
+      return (
+        this.calculatedItemDiscountAmount > 0 &&
+        this.grossSubtotalAmount > this.safeSubtotal
+      );
+    },
+
+    overPaymentAmount() {
+      return Math.max(this.safeTotalBayar - this.safeGrandTotal, 0);
+    },
+  },
+
+  methods: {
+    formatMoney(value) {
+      return this.formatCurrency(Number(value || 0));
+    },
+  },
 };
 </script>

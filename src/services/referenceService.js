@@ -132,6 +132,14 @@ const referenceService = {
 
     return response.data.data;
   },
+
+  async merchandise(params = {}) {
+    const response = await api.get("/reference/merchandise", {
+      params,
+    });
+
+    return response.data.data;
+  },
 };
 
 export default referenceService;

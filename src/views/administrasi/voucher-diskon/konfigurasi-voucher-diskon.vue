@@ -14,36 +14,36 @@
     <v-skeleton-loader v-if="loadingPage" type="article" />
 
     <template v-else>
-      <v-alert
-        type="info"
-        variant="tonal"
-        class="mb-4"
-        rounded="lg"
-        density="comfortable"
-      >
-        Item yang ditampilkan menyesuaikan jenis voucher:
+      <!-- INFO COMPACT -->
+      <v-alert type="info" variant="tonal" density="compact" class="mb-3">
+        Item menyesuaikan jenis voucher:
         <strong>Treatment</strong>, <strong>Produk</strong>,
         <strong>Bundling</strong>, atau <strong>Value</strong>.
         <span v-if="isVoucherBundling">
-          Untuk voucher Bundling, diskon bisa diatur per item.
+          Diskon bundling dapat diatur per item.
         </span>
         <span v-else>
-          Untuk jenis voucher ini, diskon item tidak perlu diatur karena diskon
-          mengikuti nilai voucher utama.
+          Diskon item disembunyikan karena mengikuti nilai voucher utama.
         </span>
       </v-alert>
 
-      <v-card class="section-card mb-4" elevation="1">
-        <v-card-text class="pa-0">
-          <div class="section-header">
-            <div class="section-header-left">
-              <div class="section-icon section-icon-primary">
-                <v-icon size="18">mdi-ticket-percent-outline</v-icon>
-              </div>
+      <!-- RINGKASAN VOUCHER COMPACT -->
+      <v-card variant="flat" class="border mb-3">
+        <v-card-text class="pa-4">
+          <div
+            class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
+          >
+            <div class="d-flex align-center ga-3">
+              <v-avatar color="primary" variant="tonal" size="36">
+                <v-icon icon="mdi-ticket-percent-outline" size="20" />
+              </v-avatar>
+
               <div>
-                <div class="section-title">Ringkasan Voucher</div>
-                <div class="section-subtitle">
-                  Ringkasan nilai voucher dan konfigurasi item
+                <div class="text-subtitle-2 font-weight-bold">
+                  Ringkasan Voucher
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  Nilai voucher dan jumlah item yang berlaku
                 </div>
               </div>
             </div>
@@ -67,182 +67,135 @@
             </div>
           </div>
 
-          <div class="section-divider" />
-
-          <div class="section-body">
-            <v-row>
-              <v-col cols="12" md="3">
-                <div class="summary-box">
-                  <div class="summary-label">Nama Voucher</div>
-                  <div class="summary-value text-truncate">
-                    {{ currentVoucher.nama }}
-                  </div>
+          <v-row dense>
+            <v-col cols="12" sm="6" md="3">
+              <div class="pa-3 border rounded">
+                <div class="text-caption text-medium-emphasis mb-1">
+                  Nama Voucher
                 </div>
-              </v-col>
-
-              <v-col cols="12" md="3">
-                <div class="summary-box">
-                  <div class="summary-label">Nilai Voucher</div>
-                  <div class="summary-value">
-                    {{
-                      formatDiscountValue(
-                        currentVoucher.nilai_voucher,
-                        currentVoucher.tipe_diskon,
-                      )
-                    }}
-                  </div>
+                <div class="text-body-2 font-weight-bold text-truncate">
+                  {{ currentVoucher.nama || "-" }}
                 </div>
-              </v-col>
-
-              <v-col v-if="isVoucherBundling" cols="12" md="3">
-                <div class="summary-box">
-                  <div class="summary-label">Teralokasi</div>
-                  <div class="summary-value">
-                    {{
-                      formatDiscountValue(
-                        totalAllocatedDiscount,
-                        currentVoucher.tipe_diskon,
-                      )
-                    }}
-                  </div>
-                </div>
-              </v-col>
-
-              <v-col v-if="isVoucherBundling" cols="12" md="3">
-                <div class="summary-box">
-                  <div class="summary-label">Sisa Alokasi</div>
-                  <div
-                    class="summary-value"
-                    :class="
-                      remainingDiscount < 0 ? 'text-error' : 'text-success'
-                    "
-                  >
-                    {{
-                      formatDiscountValue(
-                        remainingDiscount,
-                        currentVoucher.tipe_diskon,
-                      )
-                    }}
-                  </div>
-                </div>
-              </v-col>
-
-              <v-col v-if="!isVoucherBundling" cols="12" md="3">
-                <div class="summary-box">
-                  <div class="summary-label">Treatment Terpilih</div>
-                  <div class="summary-value">
-                    {{ configuredTreatments.length }}
-                  </div>
-                </div>
-              </v-col>
-
-              <v-col v-if="!isVoucherBundling" cols="12" md="3">
-                <div class="summary-box">
-                  <div class="summary-label">Produk Terpilih</div>
-                  <div class="summary-value">
-                    {{ configuredProducts.length }}
-                  </div>
-                </div>
-              </v-col>
-            </v-row>
-
-            <div v-if="isVoucherBundling" class="mt-3">
-              <div class="d-flex justify-space-between align-center mb-2">
-                <span class="text-body-2 text-medium-emphasis">
-                  Progress alokasi diskon bundling
-                </span>
-                <span class="text-body-2 font-weight-medium">
-                  {{ allocationPercentage }}%
-                </span>
               </div>
+            </v-col>
 
-              <v-progress-linear
-                :model-value="allocationPercentageSafe"
-                height="10"
-                rounded
-                :color="remainingDiscount < 0 ? 'error' : 'primary'"
-                bg-color="grey-lighten-3"
-              />
+            <v-col cols="12" sm="6" md="3">
+              <div class="pa-3 border rounded">
+                <div class="text-caption text-medium-emphasis mb-1">
+                  Nilai Voucher
+                </div>
+                <div class="text-body-2 font-weight-bold text-success">
+                  {{
+                    formatDiscountValue(
+                      currentVoucher.nilai_voucher,
+                      currentVoucher.tipe_diskon,
+                    )
+                  }}
+                </div>
+              </div>
+            </v-col>
+
+            <v-col v-if="isVoucherBundling" cols="12" sm="6" md="3">
+              <div class="pa-3 border rounded">
+                <div class="text-caption text-medium-emphasis mb-1">
+                  Teralokasi
+                </div>
+                <div class="text-body-2 font-weight-bold">
+                  {{
+                    formatDiscountValue(
+                      totalAllocatedDiscount,
+                      currentVoucher.tipe_diskon,
+                    )
+                  }}
+                </div>
+              </div>
+            </v-col>
+
+            <v-col v-if="isVoucherBundling" cols="12" sm="6" md="3">
+              <div class="pa-3 border rounded">
+                <div class="text-caption text-medium-emphasis mb-1">
+                  Sisa Alokasi
+                </div>
+                <div
+                  class="text-body-2 font-weight-bold"
+                  :class="remainingDiscount < 0 ? 'text-error' : 'text-success'"
+                >
+                  {{
+                    formatDiscountValue(
+                      remainingDiscount,
+                      currentVoucher.tipe_diskon,
+                    )
+                  }}
+                </div>
+              </div>
+            </v-col>
+
+            <v-col v-if="!isVoucherBundling" cols="12" sm="6" md="3">
+              <div class="pa-3 border rounded">
+                <div class="text-caption text-medium-emphasis mb-1">
+                  Treatment Terpilih
+                </div>
+                <div class="text-body-2 font-weight-bold">
+                  {{ configuredTreatments.length }}
+                </div>
+              </div>
+            </v-col>
+
+            <v-col v-if="!isVoucherBundling" cols="12" sm="6" md="3">
+              <div class="pa-3 border rounded">
+                <div class="text-caption text-medium-emphasis mb-1">
+                  Produk Terpilih
+                </div>
+                <div class="text-body-2 font-weight-bold">
+                  {{ configuredProducts.length }}
+                </div>
+              </div>
+            </v-col>
+          </v-row>
+
+          <div v-if="isVoucherBundling" class="mt-4">
+            <div class="d-flex justify-space-between align-center mb-1">
+              <span class="text-caption text-medium-emphasis">
+                Progress alokasi diskon bundling
+              </span>
+              <span class="text-caption font-weight-bold">
+                {{ allocationPercentage }}%
+              </span>
             </div>
 
-            <v-alert
-              v-else
-              type="info"
-              variant="tonal"
-              density="compact"
-              class="mt-3"
-            >
-              Diskon item disembunyikan untuk jenis voucher ini. Item hanya
-              dipakai sebagai batas penerapan voucher.
-            </v-alert>
+            <v-progress-linear
+              :model-value="allocationPercentageSafe"
+              height="8"
+              rounded
+              :color="remainingDiscount < 0 ? 'error' : 'primary'"
+              bg-color="grey-lighten-3"
+            />
           </div>
         </v-card-text>
       </v-card>
 
-      <v-card class="section-card mb-4" elevation="1">
-        <v-card-text class="pa-0">
-          <div class="section-header">
-            <div class="section-header-left">
-              <div class="section-icon section-icon-blue">
-                <v-icon size="18">mdi-store-marker-outline</v-icon>
-              </div>
-              <div>
-                <div class="section-title">Sumber Data Item</div>
-                <div class="section-subtitle">
-                  Produk dan treatment diambil berdasarkan cabang terpilih
-                </div>
-              </div>
-            </div>
-          </div>
+      <!-- PICKER ITEM -->
+      <v-row dense class="mb-3">
+        <!-- TREATMENT PICKER -->
+        <v-col
+          v-if="showTreatmentSection"
+          cols="12"
+          :md="showProductSection ? 6 : 12"
+        >
+          <v-card variant="flat" class="border h-100">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-center justify-space-between mb-3">
+                <div class="d-flex align-center ga-3">
+                  <v-avatar color="primary" variant="tonal" size="34">
+                    <v-icon icon="mdi-stethoscope" size="18" />
+                  </v-avatar>
 
-          <div class="section-divider" />
-
-          <div class="section-body">
-            <v-row>
-              <v-col cols="12" md="6">
-                <v-autocomplete
-                  v-model="selectedTokoId"
-                  label="Cabang Referensi Item *"
-                  :items="tokoOptions"
-                  item-title="nama"
-                  item-value="id"
-                  variant="outlined"
-                  density="comfortable"
-                  prepend-inner-icon="mdi-store-outline"
-                  :loading="loadingReference"
-                  :disabled="!currentVoucher.is_all_toko"
-                  clearable
-                  auto-select-first
-                  no-data-text="Cabang tidak ditemukan"
-                  :custom-filter="filterOption"
-                  @update:model-value="handleTokoChange"
-                />
-              </v-col>
-
-              <v-col cols="12" md="6">
-                <v-alert type="warning" variant="tonal" rounded="lg">
-                  Jika voucher berlaku semua cabang, pilih satu cabang sebagai
-                  referensi harga snapshot item.
-                </v-alert>
-              </v-col>
-            </v-row>
-          </div>
-        </v-card-text>
-      </v-card>
-
-      <v-row class="mb-4">
-        <v-col v-if="showTreatmentSection" cols="12" :xl="itemPickerColumn">
-          <v-card class="section-card h-100" elevation="1">
-            <v-card-text class="pa-0 fill-height">
-              <div class="section-header">
-                <div class="section-header-left">
-                  <div class="section-icon section-icon-blue">
-                    <v-icon size="18">mdi-stethoscope</v-icon>
-                  </div>
                   <div>
-                    <div class="section-title">Treatment</div>
-                    <div class="section-subtitle">
-                      Pilih treatment untuk voucher
+                    <div class="text-subtitle-2 font-weight-bold">
+                      Treatment
+                    </div>
+                    <div class="text-caption text-medium-emphasis">
+                      {{ filteredTreatmentOptions.length }} item tersedia
                     </div>
                   </div>
                 </div>
@@ -252,23 +205,20 @@
                 </v-chip>
               </div>
 
-              <div class="section-divider" />
+              <v-row dense align="center" class="mb-2">
+                <v-col cols="12" md="7">
+                  <v-text-field
+                    v-model="treatmentSearch"
+                    placeholder="Cari treatment..."
+                    prepend-inner-icon="mdi-magnify"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    clearable
+                  />
+                </v-col>
 
-              <div class="section-body">
-                <v-text-field
-                  v-model="treatmentSearch"
-                  placeholder="Cari treatment..."
-                  prepend-inner-icon="mdi-magnify"
-                  variant="outlined"
-                  density="comfortable"
-                  hide-details
-                  clearable
-                  class="mb-3"
-                />
-
-                <div
-                  class="d-flex justify-space-between align-center mb-3 flex-wrap ga-2"
-                >
+                <v-col cols="12" md="5">
                   <v-checkbox
                     v-model="selectAllTreatments"
                     label="Pilih semua hasil"
@@ -277,58 +227,63 @@
                     color="primary"
                     @update:model-value="toggleSelectAllTreatments"
                   />
+                </v-col>
+              </v-row>
 
-                  <span class="text-caption text-medium-emphasis">
-                    {{ filteredTreatmentOptions.length }} item
-                  </span>
-                </div>
-
-                <div class="picker-list">
-                  <div
+              <v-sheet height="280" class="overflow-y-auto border rounded">
+                <v-list density="compact" class="py-0">
+                  <template
                     v-for="item in filteredTreatmentOptions"
                     :key="'treatment-' + item.id"
-                    class="picker-item"
-                    :class="{ active: selectedTreatmentIds.includes(item.id) }"
-                    @click="toggleTreatmentSelection(item.id)"
                   >
-                    <div class="d-flex align-center ga-3 flex-grow-1">
-                      <v-checkbox
-                        :model-value="selectedTreatmentIds.includes(item.id)"
-                        hide-details
-                        density="compact"
-                        color="primary"
-                        @click.stop
-                        @update:model-value="toggleTreatmentSelection(item.id)"
-                      />
+                    <v-list-item
+                      :active="selectedTreatmentIds.includes(item.id)"
+                      color="primary"
+                      @click="toggleTreatmentSelection(item.id)"
+                    >
+                      <template #prepend>
+                        <v-checkbox
+                          :model-value="selectedTreatmentIds.includes(item.id)"
+                          hide-details
+                          density="compact"
+                          color="primary"
+                          @click.stop
+                          @update:model-value="
+                            toggleTreatmentSelection(item.id)
+                          "
+                        />
+                      </template>
 
-                      <div class="picker-content">
-                        <div class="picker-title">{{ item.nama }}</div>
-                        <div class="picker-subtitle">
-                          {{ formatCurrency(item.tarif_umum) }}
-                          <span v-if="item.nama_unit_treatment">
-                            • {{ item.nama_unit_treatment }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                      <v-list-item-title class="text-body-2 font-weight-medium">
+                        {{ item.nama }}
+                      </v-list-item-title>
 
-                    <v-chip size="x-small" variant="outlined">
-                      Treatment
-                    </v-chip>
-                  </div>
+                      <v-list-item-subtitle class="text-caption">
+                        {{ formatCurrency(item.tarif_umum) }}
+                        <span v-if="item.nama_unit_treatment">
+                          • {{ item.nama_unit_treatment }}
+                        </span>
+                      </v-list-item-subtitle>
 
-                  <div
-                    v-if="!filteredTreatmentOptions.length"
-                    class="empty-state"
-                  >
-                    Treatment tidak ditemukan
-                  </div>
-                </div>
-              </div>
+                      <template #append>
+                        <v-chip size="x-small" variant="outlined">
+                          Treatment
+                        </v-chip>
+                      </template>
+                    </v-list-item>
 
-              <div class="section-divider" />
+                    <v-divider />
+                  </template>
 
-              <div class="section-footer">
+                  <v-list-item v-if="!filteredTreatmentOptions.length">
+                    <v-list-item-title class="text-body-2 text-medium-emphasis">
+                      Treatment tidak ditemukan
+                    </v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-sheet>
+
+              <div class="d-flex justify-end mt-3">
                 <v-btn
                   size="small"
                   color="primary"
@@ -344,18 +299,24 @@
           </v-card>
         </v-col>
 
-        <v-col v-if="showProductSection" cols="12" :xl="itemPickerColumn">
-          <v-card class="section-card h-100" elevation="1">
-            <v-card-text class="pa-0 fill-height">
-              <div class="section-header">
-                <div class="section-header-left">
-                  <div class="section-icon section-icon-green">
-                    <v-icon size="18">mdi-pill</v-icon>
-                  </div>
+        <!-- PRODUCT PICKER -->
+        <v-col
+          v-if="showProductSection"
+          cols="12"
+          :md="showTreatmentSection ? 6 : 12"
+        >
+          <v-card variant="flat" class="border h-100">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-center justify-space-between mb-3">
+                <div class="d-flex align-center ga-3">
+                  <v-avatar color="success" variant="tonal" size="34">
+                    <v-icon icon="mdi-pill" size="18" />
+                  </v-avatar>
+
                   <div>
-                    <div class="section-title">Produk</div>
-                    <div class="section-subtitle">
-                      Pilih produk untuk voucher
+                    <div class="text-subtitle-2 font-weight-bold">Produk</div>
+                    <div class="text-caption text-medium-emphasis">
+                      {{ filteredProductOptions.length }} item tersedia
                     </div>
                   </div>
                 </div>
@@ -365,23 +326,20 @@
                 </v-chip>
               </div>
 
-              <div class="section-divider" />
+              <v-row dense align="center" class="mb-2">
+                <v-col cols="12" md="7">
+                  <v-text-field
+                    v-model="productSearch"
+                    placeholder="Cari produk..."
+                    prepend-inner-icon="mdi-magnify"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    clearable
+                  />
+                </v-col>
 
-              <div class="section-body">
-                <v-text-field
-                  v-model="productSearch"
-                  placeholder="Cari produk..."
-                  prepend-inner-icon="mdi-magnify"
-                  variant="outlined"
-                  density="comfortable"
-                  hide-details
-                  clearable
-                  class="mb-3"
-                />
-
-                <div
-                  class="d-flex justify-space-between align-center mb-3 flex-wrap ga-2"
-                >
+                <v-col cols="12" md="5">
                   <v-checkbox
                     v-model="selectAllProducts"
                     label="Pilih semua hasil"
@@ -390,68 +348,71 @@
                     color="primary"
                     @update:model-value="toggleSelectAllProducts"
                   />
+                </v-col>
+              </v-row>
 
-                  <span class="text-caption text-medium-emphasis">
-                    {{ filteredProductOptions.length }} item
-                  </span>
-                </div>
-
-                <div class="picker-list">
-                  <div
+              <v-sheet height="280" class="overflow-y-auto border rounded">
+                <v-list density="compact" class="py-0">
+                  <template
                     v-for="item in filteredProductOptions"
                     :key="'product-' + item.id"
-                    class="picker-item"
-                    :class="{ active: selectedProductIds.includes(item.id) }"
-                    @click="toggleProductSelection(item.id)"
                   >
-                    <div class="d-flex align-center ga-3 flex-grow-1">
-                      <v-checkbox
-                        :model-value="selectedProductIds.includes(item.id)"
-                        hide-details
-                        density="compact"
-                        color="primary"
-                        @click.stop
-                        @update:model-value="toggleProductSelection(item.id)"
-                      />
+                    <v-list-item
+                      :active="selectedProductIds.includes(item.id)"
+                      color="success"
+                      @click="toggleProductSelection(item.id)"
+                    >
+                      <template #prepend>
+                        <v-checkbox
+                          :model-value="selectedProductIds.includes(item.id)"
+                          hide-details
+                          density="compact"
+                          color="success"
+                          @click.stop
+                          @update:model-value="toggleProductSelection(item.id)"
+                        />
+                      </template>
 
-                      <div class="picker-content">
-                        <div class="picker-title">{{ item.nama }}</div>
-                        <div class="picker-subtitle">
-                          {{ formatCurrency(item.harga_jual) }}
-                          <span v-if="item.nama_satuan">
-                            • {{ item.nama_satuan }}
-                          </span>
+                      <v-list-item-title class="text-body-2 font-weight-medium">
+                        {{ item.nama }}
+                      </v-list-item-title>
+
+                      <v-list-item-subtitle class="text-caption">
+                        {{ formatCurrency(item.harga_jual) }}
+                        <span v-if="item.nama_satuan">
+                          • {{ item.nama_satuan }}
+                        </span>
+                      </v-list-item-subtitle>
+
+                      <template #append>
+                        <div class="d-flex ga-1 flex-wrap justify-end">
+                          <v-chip
+                            size="x-small"
+                            variant="tonal"
+                            :color="getStockColor(item.status_stok)"
+                          >
+                            {{ item.status_stok || "TERSEDIA" }}
+                          </v-chip>
+
+                          <v-chip size="x-small" variant="outlined">
+                            Produk
+                          </v-chip>
                         </div>
-                      </div>
-                    </div>
+                      </template>
+                    </v-list-item>
 
-                    <div class="d-flex ga-1 flex-wrap justify-end">
-                      <v-chip
-                        size="x-small"
-                        variant="tonal"
-                        :color="getStockColor(item.status_stok)"
-                      >
-                        {{ item.status_stok || "TERSEDIA" }}
-                      </v-chip>
+                    <v-divider />
+                  </template>
 
-                      <v-chip size="x-small" variant="outlined">
-                        Produk
-                      </v-chip>
-                    </div>
-                  </div>
+                  <v-list-item v-if="!filteredProductOptions.length">
+                    <v-list-item-title class="text-body-2 text-medium-emphasis">
+                      Produk tidak ditemukan
+                    </v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-sheet>
 
-                  <div
-                    v-if="!filteredProductOptions.length"
-                    class="empty-state"
-                  >
-                    Produk tidak ditemukan
-                  </div>
-                </div>
-              </div>
-
-              <div class="section-divider" />
-
-              <div class="section-footer">
+              <div class="d-flex justify-end mt-3">
                 <v-btn
                   size="small"
                   color="primary"
@@ -468,18 +429,24 @@
         </v-col>
       </v-row>
 
-      <v-card class="section-card" elevation="1">
-        <v-card-text class="pa-0">
-          <div class="section-header">
-            <div class="section-header-left">
-              <div class="section-icon section-icon-orange">
-                <v-icon size="18">mdi-clipboard-list-outline</v-icon>
-              </div>
+      <!-- ITEM TERPILIH -->
+      <v-card variant="flat" class="border">
+        <v-card-text class="pa-4">
+          <div
+            class="d-flex align-center justify-space-between flex-wrap ga-3 mb-3"
+          >
+            <div class="d-flex align-center ga-3">
+              <v-avatar color="warning" variant="tonal" size="34">
+                <v-icon icon="mdi-clipboard-list-outline" size="18" />
+              </v-avatar>
+
               <div>
-                <div class="section-title">Item Voucher Terpilih</div>
-                <div class="section-subtitle">
+                <div class="text-subtitle-2 font-weight-bold">
+                  Item Voucher Terpilih
+                </div>
+                <div class="text-caption text-medium-emphasis">
                   <span v-if="isVoucherBundling">
-                    Atur diskon item bundling atau hapus item yang tidak dipakai
+                    Atur diskon bundling atau hapus item
                   </span>
                   <span v-else>
                     Review item yang berlaku untuk voucher ini
@@ -509,165 +476,171 @@
             </div>
           </div>
 
-          <div class="section-divider" />
+          <v-alert
+            v-if="!isVoucherBundling"
+            type="info"
+            variant="tonal"
+            density="compact"
+            class="mb-3"
+          >
+            Kolom diskon item hanya tersedia untuk voucher Bundling.
+          </v-alert>
 
-          <div class="section-body">
-            <v-alert
-              v-if="!isVoucherBundling"
-              type="info"
-              variant="tonal"
-              density="compact"
-              class="mb-4"
-            >
-              Kolom diskon item hanya tersedia untuk voucher Bundling.
-            </v-alert>
+          <v-tabs
+            v-model="activeTab"
+            color="primary"
+            density="compact"
+            class="mb-3"
+          >
+            <v-tab v-if="showTreatmentSection" value="treatments">
+              Treatment
+            </v-tab>
 
-            <v-tabs
-              v-model="activeTab"
-              color="primary"
-              density="comfortable"
-              class="mb-4"
-            >
-              <v-tab v-if="showTreatmentSection" value="treatments">
-                Treatment
-              </v-tab>
-              <v-tab v-if="showProductSection" value="products"> Produk </v-tab>
-            </v-tabs>
+            <v-tab v-if="showProductSection" value="products"> Produk </v-tab>
+          </v-tabs>
 
-            <v-window v-model="activeTab">
-              <v-window-item v-if="showTreatmentSection" value="treatments">
-                <v-data-table
-                  :headers="treatmentTableHeaders"
-                  :items="configuredTreatments"
-                  item-value="id"
-                  density="comfortable"
-                  hide-default-footer
-                >
-                  <template #item.no="{ index }">
-                    {{ index + 1 }}
-                  </template>
+          <v-window v-model="activeTab">
+            <!-- TABLE TREATMENT -->
+            <v-window-item v-if="showTreatmentSection" value="treatments">
+              <v-data-table
+                :headers="treatmentTableHeaders"
+                :items="configuredTreatments"
+                item-value="id"
+                density="compact"
+                hide-default-footer
+                class="border"
+              >
+                <template #item.no="{ index }">
+                  {{ index + 1 }}
+                </template>
 
-                  <template #item.tarif_umum="{ item }">
-                    {{ formatCurrency(item.tarif_umum) }}
-                  </template>
+                <template #item.tarif_umum="{ item }">
+                  {{ formatCurrency(item.tarif_umum) }}
+                </template>
 
-                  <template #item.diskon_item="{ item, index }">
-                    <div class="discount-action-wrap">
-                      <v-chip size="small" color="primary" variant="tonal">
-                        {{
-                          formatDiscountValue(
-                            item.diskon_item,
-                            item.tipe_diskon_item,
-                          )
-                        }}
-                      </v-chip>
-
-                      <v-btn
-                        size="small"
-                        color="primary"
-                        variant="tonal"
-                        prepend-icon="mdi-pencil"
-                        @click="openDiscountDialog('treatment', item, index)"
-                      >
-                        Atur
-                      </v-btn>
-                    </div>
-                  </template>
-
-                  <template #item.action="{ index }">
-                    <v-btn
-                      size="small"
-                      color="error"
-                      variant="tonal"
-                      prepend-icon="mdi-delete"
-                      @click="removeConfiguredItem('treatment', index)"
-                    >
-                      Hapus
-                    </v-btn>
-                  </template>
-
-                  <template #no-data>
-                    <div class="empty-state-table">
-                      Belum ada treatment yang ditambahkan
-                    </div>
-                  </template>
-                </v-data-table>
-              </v-window-item>
-
-              <v-window-item v-if="showProductSection" value="products">
-                <v-data-table
-                  :headers="productTableHeaders"
-                  :items="configuredProducts"
-                  item-value="id"
-                  density="comfortable"
-                  hide-default-footer
-                >
-                  <template #item.no="{ index }">
-                    {{ index + 1 }}
-                  </template>
-
-                  <template #item.harga_jual="{ item }">
-                    {{ formatCurrency(item.harga_jual) }}
-                  </template>
-
-                  <template #item.status_stok="{ item }">
-                    <v-chip
-                      size="small"
-                      variant="tonal"
-                      :color="getStockColor(item.status_stok)"
-                    >
-                      {{ item.status_stok || "TERSEDIA" }}
+                <template #item.diskon_item="{ item, index }">
+                  <div class="d-flex align-center ga-2">
+                    <v-chip size="small" color="primary" variant="tonal">
+                      {{
+                        formatDiscountValue(
+                          item.diskon_item,
+                          item.tipe_diskon_item,
+                        )
+                      }}
                     </v-chip>
-                  </template>
 
-                  <template #item.diskon_item="{ item, index }">
-                    <div class="discount-action-wrap">
-                      <v-chip size="small" color="primary" variant="tonal">
-                        {{
-                          formatDiscountValue(
-                            item.diskon_item,
-                            item.tipe_diskon_item,
-                          )
-                        }}
-                      </v-chip>
-
-                      <v-btn
-                        size="small"
-                        color="primary"
-                        variant="tonal"
-                        prepend-icon="mdi-pencil"
-                        @click="openDiscountDialog('product', item, index)"
-                      >
-                        Atur
-                      </v-btn>
-                    </div>
-                  </template>
-
-                  <template #item.action="{ index }">
                     <v-btn
                       size="small"
-                      color="error"
+                      color="primary"
                       variant="tonal"
-                      prepend-icon="mdi-delete"
-                      @click="removeConfiguredItem('product', index)"
+                      prepend-icon="mdi-pencil"
+                      @click="openDiscountDialog('treatment', item, index)"
                     >
-                      Hapus
+                      Atur
                     </v-btn>
-                  </template>
+                  </div>
+                </template>
 
-                  <template #no-data>
-                    <div class="empty-state-table">
-                      Belum ada produk yang ditambahkan
-                    </div>
-                  </template>
-                </v-data-table>
-              </v-window-item>
-            </v-window>
-          </div>
+                <template #item.action="{ index }">
+                  <v-btn
+                    size="small"
+                    color="error"
+                    variant="tonal"
+                    prepend-icon="mdi-delete-outline"
+                    @click="removeConfiguredItem('treatment', index)"
+                  >
+                    Hapus
+                  </v-btn>
+                </template>
+
+                <template #no-data>
+                  <div
+                    class="text-center py-4 text-body-2 text-medium-emphasis"
+                  >
+                    Belum ada treatment yang ditambahkan
+                  </div>
+                </template>
+              </v-data-table>
+            </v-window-item>
+
+            <!-- TABLE PRODUCT -->
+            <v-window-item v-if="showProductSection" value="products">
+              <v-data-table
+                :headers="productTableHeaders"
+                :items="configuredProducts"
+                item-value="id"
+                density="compact"
+                hide-default-footer
+                class="border"
+              >
+                <template #item.no="{ index }">
+                  {{ index + 1 }}
+                </template>
+
+                <template #item.harga_jual="{ item }">
+                  {{ formatCurrency(item.harga_jual) }}
+                </template>
+
+                <template #item.status_stok="{ item }">
+                  <v-chip
+                    size="small"
+                    variant="tonal"
+                    :color="getStockColor(item.status_stok)"
+                  >
+                    {{ item.status_stok || "TERSEDIA" }}
+                  </v-chip>
+                </template>
+
+                <template #item.diskon_item="{ item, index }">
+                  <div class="d-flex align-center ga-2">
+                    <v-chip size="small" color="primary" variant="tonal">
+                      {{
+                        formatDiscountValue(
+                          item.diskon_item,
+                          item.tipe_diskon_item,
+                        )
+                      }}
+                    </v-chip>
+
+                    <v-btn
+                      size="small"
+                      color="primary"
+                      variant="tonal"
+                      prepend-icon="mdi-pencil"
+                      @click="openDiscountDialog('product', item, index)"
+                    >
+                      Atur
+                    </v-btn>
+                  </div>
+                </template>
+
+                <template #item.action="{ index }">
+                  <v-btn
+                    size="small"
+                    color="error"
+                    variant="tonal"
+                    prepend-icon="mdi-delete-outline"
+                    @click="removeConfiguredItem('product', index)"
+                  >
+                    Hapus
+                  </v-btn>
+                </template>
+
+                <template #no-data>
+                  <div
+                    class="text-center py-4 text-body-2 text-medium-emphasis"
+                  >
+                    Belum ada produk yang ditambahkan
+                  </div>
+                </template>
+              </v-data-table>
+            </v-window-item>
+          </v-window>
         </v-card-text>
       </v-card>
 
-      <div class="d-flex flex-column flex-md-row justify-end ga-3 mt-6">
+      <!-- ACTION -->
+      <div class="d-flex flex-column flex-md-row justify-end ga-2 mt-4">
         <v-btn
           color="secondary"
           variant="outlined"
@@ -690,11 +663,14 @@
       </div>
     </template>
 
-    <v-dialog v-model="discountDialog" max-width="520">
-      <v-card rounded="lg">
-        <v-card-title class="d-flex justify-space-between align-center">
+    <!-- DISCOUNT DIALOG -->
+    <v-dialog v-model="discountDialog" max-width="480">
+      <v-card>
+        <v-card-title class="d-flex justify-space-between align-center pa-4">
           <div>
-            <div class="text-h6 font-weight-bold">Diskon Item Bundling</div>
+            <div class="text-subtitle-1 font-weight-bold">
+              Diskon Item Bundling
+            </div>
             <div class="text-body-2 text-medium-emphasis">
               {{ discountItemName }}
             </div>
@@ -710,35 +686,42 @@
 
         <v-divider />
 
-        <v-card-text>
-          <v-select
-            v-model="discountForm.tipe_diskon_item"
-            label="Tipe Diskon Item"
-            :items="tipeDiskonItemOptions"
-            item-title="label"
-            item-value="value"
-            variant="outlined"
-            density="comfortable"
-            prepend-inner-icon="mdi-percent-outline"
-            class="mb-4"
-          />
+        <v-card-text class="pa-4">
+          <v-row dense>
+            <v-col cols="12" md="5">
+              <v-select
+                v-model="discountForm.tipe_diskon_item"
+                label="Tipe Diskon"
+                :items="tipeDiskonItemOptions"
+                item-title="label"
+                item-value="value"
+                variant="outlined"
+                density="compact"
+                prepend-inner-icon="mdi-percent-outline"
+                hide-details="auto"
+              />
+            </v-col>
 
-          <v-text-field
-            v-model="discountForm.diskon_item"
-            :label="
-              discountForm.tipe_diskon_item === 'percent'
-                ? 'Nilai Diskon (%)'
-                : 'Nominal Diskon'
-            "
-            type="number"
-            variant="outlined"
-            density="comfortable"
-            prepend-inner-icon="mdi-cash-minus"
-            :suffix="discountForm.tipe_diskon_item === 'percent' ? '%' : ''"
-            :prefix="discountForm.tipe_diskon_item === 'nominal' ? 'Rp' : ''"
-            hint="Masukkan nilai diskon khusus untuk item bundling ini"
-            persistent-hint
-          />
+            <v-col cols="12" md="7">
+              <v-text-field
+                v-model="discountForm.diskon_item"
+                :label="
+                  discountForm.tipe_diskon_item === 'percent'
+                    ? 'Nilai Diskon (%)'
+                    : 'Nominal Diskon'
+                "
+                type="number"
+                variant="outlined"
+                density="compact"
+                prepend-inner-icon="mdi-cash-minus"
+                :suffix="discountForm.tipe_diskon_item === 'percent' ? '%' : ''"
+                :prefix="
+                  discountForm.tipe_diskon_item === 'nominal' ? 'Rp' : ''
+                "
+                hide-details="auto"
+              />
+            </v-col>
+          </v-row>
         </v-card-text>
 
         <v-divider />
@@ -752,13 +735,19 @@
             Batal
           </v-btn>
 
-          <v-btn color="primary" @click="saveDiscountDialog"> Simpan </v-btn>
+          <v-btn color="primary" variant="flat" @click="saveDiscountDialog">
+            Simpan
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">
       {{ snackbar.text }}
+
+      <template #actions>
+        <v-btn icon="mdi-close" variant="text" @click="snackbar.show = false" />
+      </template>
     </v-snackbar>
   </div>
 </template>
@@ -799,6 +788,7 @@ export default {
         id: null,
         nama: "-",
         nilai_voucher: 0,
+        total_diskon_maksimal: null,
         tipe_diskon: "nominal",
         mode_label: "-",
         berlaku_label: "-",
@@ -1115,6 +1105,12 @@ export default {
         id: detail.id,
         nama: detail.nama_voucher || detail.nama || "-",
         nilai_voucher: Number(detail.total_diskon || 0),
+        total_diskon_maksimal:
+          tipeDiskon === "percent"
+            ? Number(
+                detail.total_diskon_maksimal || detail.maksimal_diskon || 0,
+              )
+            : null,
         tipe_diskon: tipeDiskon || "nominal",
         mode_label:
           detail.mode_voucher === "generate"
@@ -1692,7 +1688,12 @@ export default {
       if (!this.selectedTokoId) {
         return "Cabang referensi item wajib dipilih";
       }
-
+      if (
+        this.currentVoucher.tipe_diskon === "percent" &&
+        Number(this.currentVoucher.total_diskon_maksimal || 0) < 1
+      ) {
+        return "Total diskon maksimal voucher persen belum tersedia. Edit voucher terlebih dahulu dan isi maksimal diskon.";
+      }
       if (this.showTreatmentSection && !this.showProductSection) {
         if (!this.configuredTreatments.length) {
           return "Minimal pilih 1 treatment untuk voucher jenis Treatment";
@@ -1806,6 +1807,12 @@ export default {
         template_voucher_id: detail.template_voucher_id,
         tipe_diskon: this.normalizeTipeDiskon(detail.tipe_diskon),
         total_diskon: Number(detail.total_diskon || 0),
+        total_diskon_maksimal:
+          this.normalizeTipeDiskon(detail.tipe_diskon) === "percent"
+            ? Number(
+                detail.total_diskon_maksimal || detail.maksimal_diskon || 0,
+              )
+            : null,
         is_unlimited_generate:
           modeVoucher === "direct" && isUnlimitedGenerate ? 1 : 0,
         qty_generate:
@@ -1890,148 +1897,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.section-card {
-  overflow: hidden;
-}
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 18px 20px 14px;
-  flex-wrap: wrap;
-}
-.section-header-left {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-.section-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 2px;
-}
-.section-icon-primary {
-  background: rgba(25, 118, 210, 0.12);
-  color: rgb(25, 118, 210);
-}
-.section-icon-blue {
-  background: rgba(33, 150, 243, 0.12);
-  color: rgb(33, 150, 243);
-}
-.section-icon-green {
-  background: rgba(76, 175, 80, 0.12);
-  color: rgb(76, 175, 80);
-}
-.section-icon-orange {
-  background: rgba(255, 152, 0, 0.12);
-  color: rgb(255, 152, 0);
-}
-.section-title {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-.section-subtitle {
-  font-size: 14px;
-  color: rgba(0, 0, 0, 0.62);
-  margin-top: 2px;
-}
-.section-divider {
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-}
-.section-body {
-  padding: 16px 20px;
-}
-.section-footer {
-  padding: 14px 20px;
-  display: flex;
-  justify-content: flex-end;
-}
-.summary-box {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 14px;
-  padding: 14px 16px;
-  height: 100%;
-  background: #fff;
-}
-.summary-label {
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.55);
-  margin-bottom: 6px;
-}
-.summary-value {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-.picker-list {
-  min-height: 320px;
-  max-height: 320px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-right: 2px;
-}
-.picker-item {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 14px;
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  background: #fff;
-  transition: all 0.18s ease;
-  cursor: pointer;
-}
-.picker-item:hover {
-  border-color: rgba(25, 118, 210, 0.3);
-  background: rgba(25, 118, 210, 0.03);
-}
-.picker-item.active {
-  border-color: rgb(25, 118, 210);
-  background: rgba(25, 118, 210, 0.06);
-}
-.picker-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.picker-title {
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-.picker-subtitle {
-  font-size: 13px;
-  color: rgba(0, 0, 0, 0.62);
-}
-.discount-action-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.empty-state,
-.empty-state-table {
-  text-align: center;
-  color: rgba(0, 0, 0, 0.55);
-  padding: 28px 12px;
-}
-:deep(.v-data-table thead th) {
-  font-weight: 700 !important;
-  color: #374151 !important;
-  background: #fafafa !important;
-}
-:deep(.v-data-table tbody td) {
-  font-size: 13px;
-}
-</style>

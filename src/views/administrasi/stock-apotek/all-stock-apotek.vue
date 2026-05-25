@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- PAGE HEADER: tetap pakai style existing -->
     <div class="page-header">
       <div>
         <h1 class="page-title">Manajemen Stok Apotek</h1>
@@ -12,10 +13,12 @@
       <v-breadcrumbs :items="breadcrumbs" divider="/" />
     </div>
 
+    <!-- ALERT -->
     <v-alert
       v-if="alert.show"
       :type="alert.type"
       variant="tonal"
+      density="compact"
       closable
       class="mb-4"
       @click:close="alert.show = false"
@@ -23,75 +26,88 @@
       {{ alert.message }}
     </v-alert>
 
-    <StockSummaryCards :summary="summary" :format-number="formatNumber" />
+    <!-- SUMMARY -->
+    <!-- <div class="mb-4">
+      <StockSummaryCards :summary="summary" :format-number="formatNumber" />
+    </div> -->
 
-    <StockActionCards
-      :loading-stock="loading.stock"
-      @refresh-stock="refreshStockFromButton"
-      @open-penerimaan="openPenerimaanDialog"
-      @open-penyesuaian="openPenyesuaianDialog"
-    />
+    <!-- ACTION -->
+    <div class="mb-4">
+      <StockActionCards
+        :loading-stock="loading.stock"
+        @refresh-stock="refreshStockFromButton"
+        @open-penerimaan="openPenerimaanDialog"
+        @open-penyesuaian="openPenyesuaianDialog"
+      />
+    </div>
 
-    <StockProductTable
-      v-model:search="filter.search"
-      v-model:tempatProdukId="filter.tempat_produk_id"
-      v-model:showOnlyAttention="filter.showOnlyAttention"
-      v-model:showOnlyEmpty="filter.showOnlyEmpty"
-      :items="filteredStockRows"
-      :loading="loading.stock"
-      :tempat-produk-options="tempatProdukOptions"
-      :selected-tempat-name="selectedTempatName"
-      :headers="stockHeaders"
-      :total-items="pagination.stock.total"
-      :items-per-page="pagination.stock.itemsPerPage"
-      :page="pagination.stock.page"
-      :format-number="formatNumber"
-      :format-currency="formatCurrency"
-      :get-stock-status="getStockStatus"
-      :get-stock-progress="getStockProgress"
-      @refresh="refreshStockFromFilter"
-      @reset-filter="resetLocalFilter"
-      @open-kartu="openKartuDialog"
-      @open-penyesuaian="openPenyesuaianDialog"
-      @update-options="handleStockTableOptions"
-    />
+    <!-- TABLE STOK -->
+    <div class="mb-4">
+      <StockProductTable
+        v-model:search="filter.search"
+        v-model:tempatProdukId="filter.tempat_produk_id"
+        v-model:showOnlyAttention="filter.showOnlyAttention"
+        v-model:showOnlyEmpty="filter.showOnlyEmpty"
+        :items="filteredStockRows"
+        :loading="loading.stock"
+        :tempat-produk-options="tempatProdukOptions"
+        :selected-tempat-name="selectedTempatName"
+        :headers="stockHeaders"
+        :total-items="pagination.stock.total"
+        :items-per-page="pagination.stock.itemsPerPage"
+        :page="pagination.stock.page"
+        :format-number="formatNumber"
+        :format-currency="formatCurrency"
+        :get-stock-status="getStockStatus"
+        :get-stock-progress="getStockProgress"
+        @refresh="refreshStockFromFilter"
+        @reset-filter="resetLocalFilter"
+        @open-kartu="openKartuDialog"
+        @open-penyesuaian="openPenyesuaianDialog"
+        @update-options="handleStockTableOptions"
+      />
+    </div>
 
-    <StockHistoryPanels
-      v-model:penerimaanSearch="penerimaanFilter.search"
-      v-model:penerimaanStatus="penerimaanFilter.status"
-      v-model:penyesuaianSearch="penyesuaianFilter.search"
-      v-model:jenisPenyesuaian="penyesuaianFilter.jenis_penyesuaian"
-      :penerimaan-rows="penerimaanRows"
-      :penyesuaian-rows="penyesuaianRows"
-      :penerimaan-headers="penerimaanHeaders"
-      :penyesuaian-headers="penyesuaianHeaders"
-      :status-options="statusOptions"
-      :jenis-penyesuaian-options="jenisPenyesuaianOptions"
-      :loading-penerimaan="loading.penerimaan"
-      :loading-penyesuaian="loading.penyesuaian"
-      :penerimaan-total="pagination.penerimaan.total"
-      :penerimaan-page="pagination.penerimaan.page"
-      :penerimaan-items-per-page="pagination.penerimaan.itemsPerPage"
-      :penyesuaian-total="pagination.penyesuaian.total"
-      :penyesuaian-page="pagination.penyesuaian.page"
-      :penyesuaian-items-per-page="pagination.penyesuaian.itemsPerPage"
-      :format-date="formatDate"
-      :format-number="formatNumber"
-      :format-currency="formatCurrency"
-      :get-status-color="getStatusColor"
-      :get-supplier-name="getSupplierName"
-      @refresh-penerimaan="refreshPenerimaanFromFilter"
-      @refresh-penyesuaian="refreshPenyesuaianFromFilter"
-      @update-penerimaan-options="handlePenerimaanTableOptions"
-      @update-penyesuaian-options="handlePenyesuaianTableOptions"
-      @show-penerimaan-detail="showPenerimaanDetail"
-      @show-penyesuaian-detail="showPenyesuaianDetail"
-      @post-penerimaan="confirmPostPenerimaan"
-      @cancel-penerimaan="confirmCancelPenerimaan"
-      @post-penyesuaian="confirmPostPenyesuaian"
-      @cancel-penyesuaian="confirmCancelPenyesuaian"
-    />
+    <!-- HISTORY -->
+    <div class="mb-4">
+      <StockHistoryPanels
+        v-model:penerimaanSearch="penerimaanFilter.search"
+        v-model:penerimaanStatus="penerimaanFilter.status"
+        v-model:penyesuaianSearch="penyesuaianFilter.search"
+        v-model:jenisPenyesuaian="penyesuaianFilter.jenis_penyesuaian"
+        :penerimaan-rows="penerimaanRows"
+        :penyesuaian-rows="penyesuaianRows"
+        :penerimaan-headers="penerimaanHeaders"
+        :penyesuaian-headers="penyesuaianHeaders"
+        :status-options="statusOptions"
+        :jenis-penyesuaian-options="jenisPenyesuaianOptions"
+        :loading-penerimaan="loading.penerimaan"
+        :loading-penyesuaian="loading.penyesuaian"
+        :penerimaan-total="pagination.penerimaan.total"
+        :penerimaan-page="pagination.penerimaan.page"
+        :penerimaan-items-per-page="pagination.penerimaan.itemsPerPage"
+        :penyesuaian-total="pagination.penyesuaian.total"
+        :penyesuaian-page="pagination.penyesuaian.page"
+        :penyesuaian-items-per-page="pagination.penyesuaian.itemsPerPage"
+        :format-date="formatDate"
+        :format-number="formatNumber"
+        :format-currency="formatCurrency"
+        :get-status-color="getStatusColor"
+        :get-supplier-name="getSupplierName"
+        @refresh-penerimaan="refreshPenerimaanFromFilter"
+        @refresh-penyesuaian="refreshPenyesuaianFromFilter"
+        @update-penerimaan-options="handlePenerimaanTableOptions"
+        @update-penyesuaian-options="handlePenyesuaianTableOptions"
+        @show-penerimaan-detail="showPenerimaanDetail"
+        @show-penyesuaian-detail="showPenyesuaianDetail"
+        @post-penerimaan="confirmPostPenerimaan"
+        @cancel-penerimaan="confirmCancelPenerimaan"
+        @post-penyesuaian="confirmPostPenyesuaian"
+        @cancel-penyesuaian="confirmCancelPenyesuaian"
+      />
+    </div>
 
+    <!-- DIALOG: KARTU STOK -->
     <StockKartuDialog
       v-model="kartuDialog.show"
       :item="kartuDialog.item"
@@ -107,6 +123,7 @@
       @fetch="fetchKartuStok"
     />
 
+    <!-- DIALOG: PENERIMAAN -->
     <StockPenerimaanDialog
       v-model="penerimaanDialog"
       :form="penerimaanForm"
@@ -122,6 +139,7 @@
       @submit-post="submitPenerimaan(true)"
     />
 
+    <!-- DIALOG: PENYESUAIAN -->
     <StockPenyesuaianDialog
       v-model="penyesuaianDialog"
       :form="penyesuaianForm"
@@ -138,6 +156,7 @@
       @submit-post="submitPenyesuaian(true)"
     />
 
+    <!-- DIALOG: DETAIL -->
     <StockDetailDialog
       v-model="detailDialog.show"
       :dialog="detailDialog"
@@ -147,6 +166,7 @@
       :get-status-color="getStatusColor"
     />
 
+    <!-- DIALOG: KONFIRMASI -->
     <StockConfirmDialog
       v-model="confirmDialog.show"
       :title="confirmDialog.title"
