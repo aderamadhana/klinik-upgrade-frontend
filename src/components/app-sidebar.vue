@@ -324,6 +324,18 @@ export default {
               to: "/master/antrian-counter",
               roles: ["administrator", "superuser", "it", "management"],
             },
+            {
+              key: "master-member-tier",
+              title: "Member Tier",
+              to: "/master/member-tier",
+              roles: ["administrator", "sudo", "it", "management"],
+            },
+            {
+              key: "master-poin-rule",
+              title: "Poin Rule",
+              to: "/master/poin-rule",
+              roles: ["administrator", "sudo", "it", "management"],
+            },
           ],
         },
 
@@ -352,18 +364,18 @@ export default {
             "apoteker",
           ],
           children: [
-            {
-              key: "administrasi-jadwal-dokter",
-              title: "Jadwal Dokter",
-              to: "/administrasi/jadwal-dokter",
-              roles: ["administrator", "superuser", "it", "management"],
-            },
-            {
-              key: "administrasi-jadwal-nurse",
-              title: "Jadwal Nurse & Beautician",
-              to: "/administrasi/jadwal-nurse",
-              roles: ["administrator", "superuser", "it", "management", "sp"],
-            },
+            // {
+            //   key: "administrasi-jadwal-dokter",
+            //   title: "Jadwal Dokter",
+            //   to: "/administrasi/jadwal-dokter",
+            //   roles: ["administrator", "superuser", "it", "management"],
+            // },
+            // {
+            //   key: "administrasi-jadwal-nurse",
+            //   title: "Jadwal Nurse & Beautician",
+            //   to: "/administrasi/jadwal-nurse",
+            //   roles: ["administrator", "superuser", "it", "management", "sp"],
+            // },
             {
               key: "administrasi-stock-apotek",
               title: "Stock Apotek",
@@ -390,20 +402,20 @@ export default {
           key: "header-pengaturan-sistem",
           roles: ["administrator", "superuser", "it"],
         },
-        {
-          key: "pengaturan-sistem",
-          title: "Pengaturan Sistem",
-          icon: "mdi-cog-outline",
-          roles: ["administrator", "superuser", "it"],
-          children: [
-            {
-              key: "pengaturan-whatsapp",
-              title: "Pengaturan WhatsApp",
-              to: "/pengaturan/whatsapp",
-              roles: ["administrator", "superuser", "it"],
-            },
-          ],
-        },
+        // {
+        //   key: "pengaturan-sistem",
+        //   title: "Pengaturan Sistem",
+        //   icon: "mdi-cog-outline",
+        //   roles: ["administrator", "superuser", "it"],
+        //   children: [
+        //     {
+        //       key: "pengaturan-whatsapp",
+        //       title: "Pengaturan WhatsApp",
+        //       to: "/pengaturan/whatsapp",
+        //       roles: ["administrator", "superuser", "it"],
+        //     },
+        //   ],
+        // },
 
         {
           header: "MENU RESEPSIONIS",
@@ -656,25 +668,25 @@ export default {
           ],
         },
 
-        {
-          header: "MENU WHATSAPP",
-          key: "header-whatsapp",
-          roles: ["administrator", "superuser", "it", "management"],
-        },
-        {
-          key: "whatsapp",
-          title: "WhatsApp Logs",
-          icon: "mdi-whatsapp",
-          roles: ["administrator", "superuser", "it", "management"],
-          children: [
-            {
-              key: "wa-undian",
-              title: "Kirim Undian",
-              to: "/wa/undian",
-              roles: ["administrator", "superuser", "it", "management"],
-            },
-          ],
-        },
+        // {
+        //   header: "MENU WHATSAPP",
+        //   key: "header-whatsapp",
+        //   roles: ["administrator", "superuser", "it", "management"],
+        // },
+        // {
+        //   key: "whatsapp",
+        //   title: "WhatsApp Logs",
+        //   icon: "mdi-whatsapp",
+        //   roles: ["administrator", "superuser", "it", "management"],
+        //   children: [
+        //     {
+        //       key: "wa-undian",
+        //       title: "Kirim Undian",
+        //       to: "/wa/undian",
+        //       roles: ["administrator", "superuser", "it", "management"],
+        //     },
+        //   ],
+        // },
 
         {
           header: "SETTLEMENT ACCURATE",

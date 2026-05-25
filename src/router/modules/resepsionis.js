@@ -56,6 +56,11 @@ const resepsionisRoutes = [
         component: () =>
           import("@/views/resepsionis/daftar-konsultasi-online/form-daftar-konsultasi-online.vue"),
       },
+      {
+        path: "booking",
+        name: "Daftar Booking",
+        component: () => import("@/views/resepsionis/booking/all-booking.vue"),
+      },
     ],
   },
 ];

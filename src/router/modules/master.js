@@ -210,6 +210,41 @@ const masterRoutes = [
         component: () =>
           import("@/views/master/antrian-counter/edit-antrian-counter.vue"),
       },
+
+      {
+        path: "member-tier",
+        name: "Master Member Tier",
+        component: () =>
+          import("@/views/master/member-tier/all-member-tier.vue"),
+      },
+      {
+        path: "member-tier/add",
+        name: "Tambah Member Tier",
+        component: () =>
+          import("@/views/master/member-tier/add-member-tier.vue"),
+      },
+      {
+        path: "member-tier/edit/:id",
+        name: "Edit Member Tier",
+        component: () =>
+          import("@/views/master/member-tier/edit-member-tier.vue"),
+      },
+
+      {
+        path: "poin-rule",
+        name: "Master Poin Rule",
+        component: () => import("@/views/master/poin-rule/all-poin-rule.vue"),
+      },
+      {
+        path: "poin-rule/add",
+        name: "Tambah Poin Rule",
+        component: () => import("@/views/master/poin-rule/add-poin-rule.vue"),
+      },
+      {
+        path: "poin-rule/edit/:id",
+        name: "Edit Poin Rule",
+        component: () => import("@/views/master/poin-rule/edit-poin-rule.vue"),
+      },
     ],
   },
 ];

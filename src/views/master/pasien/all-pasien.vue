@@ -193,7 +193,7 @@ export default {
   data() {
     return {
       breadcrumbs: [
-        { title: "Administrasi", disabled: true },
+        { title: "Master", disabled: true },
         { title: "Pasien", disabled: false, to: "/master/pasien" },
       ],
 

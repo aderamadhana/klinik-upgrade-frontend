@@ -60,7 +60,6 @@
       v-model:penerimaanSearch="penerimaanFilter.search"
       v-model:penerimaanStatus="penerimaanFilter.status"
       v-model:penyesuaianSearch="penyesuaianFilter.search"
-      v-model:penyesuaianStatus="penyesuaianFilter.status"
       v-model:jenisPenyesuaian="penyesuaianFilter.jenis_penyesuaian"
       :penerimaan-rows="penerimaanRows"
       :penyesuaian-rows="penyesuaianRows"
@@ -323,7 +322,7 @@ export default {
         { title: "Harga Jual", key: "harga_jual", width: 140 },
         { title: "Stok Akhir", key: "stok_akhir", width: 120 },
         { title: "Reserved", key: "stok_reserved", width: 120 },
-        { title: "Stok Tersedia", key: "stok_tersedia", width: 220 },
+        { title: "Bisa Dijual", key: "stok_tersedia", width: 220 },
         { title: "Status", key: "status", width: 120 },
         {
           title: "Action",
@@ -382,15 +381,15 @@ export default {
     filteredStockRows() {
       let rows = [...this.stockRows];
 
+      if (this.filter.showOnlyEmpty) {
+        rows = rows.filter((row) => Number(row.stok_tersedia || 0) <= 0);
+      }
+
       if (this.filter.showOnlyAttention) {
         rows = rows.filter((row) => {
           const status = this.getStockStatus(row);
           return status.value === "LOW" || status.value === "EMPTY";
         });
-      }
-
-      if (this.filter.showOnlyEmpty) {
-        rows = rows.filter((row) => Number(row.stok_tersedia || 0) <= 0);
       }
 
       return rows;
@@ -413,6 +412,11 @@ export default {
         0,
       );
 
+      const totalBisaDijual = rowsForSummary.reduce(
+        (sum, row) => sum + Number(row.stok_tersedia || 0),
+        0,
+      );
+
       const perluPerhatian = rowsForSummary.filter((row) => {
         const status = this.getStockStatus(row);
         return status.value === "LOW" || status.value === "EMPTY";
@@ -422,6 +426,7 @@ export default {
         totalProduk,
         totalStokAkhir,
         totalReserved,
+        totalBisaDijual,
         perluPerhatian,
       };
     },
@@ -471,6 +476,7 @@ export default {
         this.loading.initial = false;
       }
     },
+
     getStockRequestParams() {
       const params = {
         toko_id: this.selectedTokoId,
@@ -488,6 +494,7 @@ export default {
 
       return params;
     },
+
     async fetchTempatProduk() {
       try {
         if (typeof referenceService.tempatProduk !== "function") {
@@ -568,6 +575,7 @@ export default {
       if (!this.selectedTokoId) {
         this.showError("Cabang belum dipilih.");
         this.stockRows = [];
+        this.allFallbackStockRows = [];
         this.pagination.stock.total = 0;
         return;
       }
@@ -584,8 +592,10 @@ export default {
         );
 
         const payload = this.extractPaginator(response);
+        const normalizedRows = this.normalizeStockRows(payload.rows);
 
-        this.stockRows = this.normalizeStockRows(payload.rows);
+        this.stockRows = normalizedRows;
+        this.allFallbackStockRows = [];
         this.pagination.stock.total = payload.total;
         this.pagination.stock.page = payload.page;
         this.pagination.stock.itemsPerPage = payload.perPage;
@@ -1223,7 +1233,7 @@ export default {
     },
 
     normalizeStockRows(rows = []) {
-      return rows.map((row) => {
+      return rows.map((row, index) => {
         const produkToko =
           row.produk_toko || row.produkToko || row.master_produk_toko || {};
         const produk =
@@ -1263,52 +1273,86 @@ export default {
 
         const tempatProdukId =
           row.tempat_produk_id ||
-          row.tempat_produk_id ||
           tempatProduk.id ||
           produk.tempat_produk_id ||
-          produk.tempat_produk_id ||
+          produkToko.tempat_produk_id ||
           this.getApotekTempatId();
 
-        const stokAkhir = Number(row.stok_akhir || row.stok || row.stock || 0);
-        const stokReserved = Number(row.stok_reserved || row.reserved || 0);
+        const stokAkhir = Number(row.stok_akhir ?? row.stok ?? row.stock ?? 0);
+        const stokReserved = Number(row.stok_reserved ?? row.reserved ?? 0);
+
+        /*
+          Sumber utama untuk transaksi adalah stok_tersedia dari backend.
+          Jika backend belum mengirim stok_tersedia, baru hitung dari stok_akhir - reserved.
+          Jangan pakai stok_awal untuk menentukan stok yang bisa dijual.
+        */
+        const stokTersedia = Number(
+          row.stok_tersedia ?? Math.max(stokAkhir - stokReserved, 0),
+        );
+
+        const stokMinimum = Number(
+          row.stok_minimum ?? produkToko.stok_minimum ?? 0,
+        );
+
+        const hargaJual = Number(
+          row.harga_jual ??
+            produkToko.harga_jual ??
+            row.harga_jual_terakhir ??
+            0,
+        );
+
+        const hargaBeli = Number(
+          row.harga_beli ??
+            produkToko.harga_beli ??
+            row.harga_beli_terakhir ??
+            0,
+        );
+
+        const isStokHabis = stokTersedia <= 0;
+        const isStokMinimum =
+          stokTersedia > 0 && stokMinimum > 0 && stokTersedia <= stokMinimum;
 
         return {
           ...row,
-          id: row.id || `${produkTokoId}-${tempatProdukId}`,
+          id:
+            row.id ||
+            row.stock_produk_toko_id ||
+            `${produkTokoId || "produk"}-${tempatProdukId || "tempat"}-${index}`,
+
           produk_toko_id: produkTokoId,
           produk_id: produkId,
           tempat_produk_id: tempatProdukId,
+
           tempat_produk_nama:
             tempatProduk.nama_tempat_produk ||
             row.nama_tempat_produk ||
             this.getTempatName(tempatProdukId),
+
           kode_produk: kodeProduk,
           nama_produk: namaProduk,
           label_produk: `${kodeProduk} - ${namaProduk}`,
-          harga_jual: Number(
-            row.harga_jual ||
-              produkToko.harga_jual ||
-              row.harga_jual_terakhir ||
-              0,
-          ),
-          harga_beli: Number(
-            row.harga_beli ||
-              produkToko.harga_beli ||
-              row.harga_beli_terakhir ||
-              0,
-          ),
+
+          harga_jual: hargaJual,
+          harga_beli: hargaBeli,
+
           stok_akhir: stokAkhir,
           stok_reserved: stokReserved,
-          stok_tersedia: stokAkhir - stokReserved,
-          stok_minimum: Number(
-            row.stok_minimum || produkToko.stok_minimum || 0,
-          ),
+          stok_tersedia: stokTersedia,
+          stok_minimum: stokMinimum,
+
+          is_stok_habis: isStokHabis ? 1 : 0,
+          is_stok_minimum: isStokMinimum ? 1 : 0,
+          status_stok: isStokHabis
+            ? "KOSONG"
+            : isStokMinimum
+              ? "MINIMUM"
+              : "AMAN",
         };
       });
     },
 
     normalizeProdukOptions(rows = []) {
-      const mapped = rows.map((row) => {
+      const mapped = rows.map((row, index) => {
         const produkToko = row.produk_toko || row.produkToko || row;
         const produk =
           row.produk || produkToko.produk || row.master_produk || {};
@@ -1327,9 +1371,8 @@ export default {
 
         const tempatProdukId =
           row.tempat_produk_id ||
-          row.tempat_produk_id ||
           produk.tempat_produk_id ||
-          produk.tempat_produk_id ||
+          produkToko.tempat_produk_id ||
           this.getApotekTempatId();
 
         const kodeProduk =
@@ -1347,19 +1390,39 @@ export default {
           produk.nama ||
           "-";
 
+        const stokTersedia = Number(row.stok_tersedia ?? 0);
+        const stokMinimum = Number(
+          row.stok_minimum ?? produkToko.stok_minimum ?? 0,
+        );
+
+        const isStokHabis = stokTersedia <= 0;
+        const isStokMinimum =
+          stokTersedia > 0 && stokMinimum > 0 && stokTersedia <= stokMinimum;
+
         return {
           ...row,
+          id: row.id || produkTokoId || `produk-option-${index}`,
           produk_toko_id: produkTokoId,
           produk_id: produkId,
           tempat_produk_id: tempatProdukId,
+
           kode_produk: kodeProduk,
           nama_produk: namaProduk,
           label_produk: `${kodeProduk} - ${namaProduk}`,
-          harga_jual: Number(row.harga_jual || produkToko.harga_jual || 0),
-          harga_beli: Number(row.harga_beli || produkToko.harga_beli || 0),
-          stok_minimum: Number(
-            row.stok_minimum || produkToko.stok_minimum || 0,
-          ),
+
+          harga_jual: Number(row.harga_jual ?? produkToko.harga_jual ?? 0),
+          harga_beli: Number(row.harga_beli ?? produkToko.harga_beli ?? 0),
+
+          stok_tersedia: stokTersedia,
+          stok_minimum: stokMinimum,
+          is_stok_habis: isStokHabis ? 1 : 0,
+          is_stok_minimum: isStokMinimum ? 1 : 0,
+
+          disabled: isStokHabis,
+          title: isStokHabis ? `${namaProduk} (kosong)` : namaProduk,
+          subtitle: isStokHabis
+            ? "Stok kosong"
+            : `Bisa dijual: ${this.formatNumber(stokTersedia)}`,
         };
       });
 
@@ -1391,6 +1454,9 @@ export default {
         stok_reserved: 0,
         stok_tersedia: 0,
         stok_minimum: Number(row.stok_minimum || 0),
+        is_stok_habis: 1,
+        is_stok_minimum: 0,
+        status_stok: "KOSONG",
         is_fallback_master_produk: true,
       }));
     },
@@ -1471,7 +1537,7 @@ export default {
       if (minimum > 0 && tersedia <= minimum) {
         return {
           value: "LOW",
-          label: "Menipis",
+          label: "Minimum",
           color: "warning",
         };
       }
