@@ -140,6 +140,13 @@ const referenceService = {
 
     return response.data.data;
   },
+
+  async accurateItemMapping(params = {}) {
+    const response = await api.get("/reference/accurate-item-mapping", {
+      params,
+    });
+    return response.data.data;
+  },
 };
 
 export default referenceService;

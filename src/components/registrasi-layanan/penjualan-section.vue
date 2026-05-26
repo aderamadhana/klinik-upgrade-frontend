@@ -1,29 +1,39 @@
 <template>
   <div class="mt-3">
-    <div class="section-head mb-4">
-      <div>
-        <div class="section-title">Penjualan</div>
-        <div class="section-subtitle">
-          Tambahkan produk atau obat yang dijual ke pasien
-        </div>
-      </div>
+    <v-card variant="flat" class="border mb-4">
+      <v-card-text class="pa-4">
+        <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+          <div class="d-flex align-center ga-3">
+            <v-avatar color="info" variant="tonal" size="42">
+              <v-icon size="22">mdi-cart-outline</v-icon>
+            </v-avatar>
 
-      <v-btn
-        color="primary"
-        variant="tonal"
-        prepend-icon="mdi-plus"
-        :disabled="!activeTokoId"
-        @click="addItem"
-      >
-        Tambah Produk
-      </v-btn>
-    </div>
+            <div>
+              <div class="text-subtitle-1 font-weight-bold">Penjualan</div>
+              <div class="text-caption text-medium-emphasis">
+                Tambahkan produk atau obat yang dijual ke pasien
+              </div>
+            </div>
+          </div>
+
+          <v-btn
+            color="primary"
+            variant="flat"
+            prepend-icon="mdi-plus"
+            :disabled="!activeTokoId"
+            @click="addItem"
+          >
+            Tambah Produk
+          </v-btn>
+        </div>
+      </v-card-text>
+    </v-card>
 
     <v-alert
       v-if="!activeTokoId"
       type="warning"
       variant="tonal"
-      rounded="lg"
+      density="comfortable"
       border="start"
       class="mb-4"
     >
@@ -35,7 +45,7 @@
       v-if="errorMessage"
       type="error"
       variant="tonal"
-      rounded="lg"
+      density="comfortable"
       border="start"
       class="mb-4"
       closable
@@ -44,120 +54,163 @@
       {{ errorMessage }}
     </v-alert>
 
-    <div
+    <v-card
       v-for="(item, index) in penjualanItems"
       :key="item.__key || `penjualan-${index}`"
-      class="item-box mb-4"
+      variant="outlined"
+      class="mb-3"
     >
-      <v-row density="comfortable">
-        <v-col cols="12" md="4">
-          <v-autocomplete
-            :model-value="item.produk_toko_id"
-            :items="produkOptions"
-            item-title="label_simple"
-            item-value="produk_toko_id"
-            :item-props="getProdukItemProps"
-            :custom-filter="filterProduk"
-            label="Produk"
-            :placeholder="
-              activeTokoId
-                ? 'Ketik nama produk'
-                : 'Pilih cabang terlebih dahulu'
-            "
-            variant="outlined"
-            density="comfortable"
-            prepend-inner-icon="mdi-pill"
-            :loading="loadingProduk"
-            :disabled="!activeTokoId"
-            clearable
-            hide-details="auto"
-            menu-icon="mdi-chevron-down"
-            auto-select-first
-            @update:modelValue="onProdukChange(index, $event)"
-            @click:clear="onProdukChange(index, null)"
-          >
-            <template #message>
-              Produk kosong tetap tampil, tetapi tidak bisa dipilih.
-            </template>
+      <v-card-text class="pa-3">
+        <div
+          class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3"
+        >
+          <div class="d-flex align-center ga-2">
+            <v-chip
+              color="info"
+              variant="tonal"
+              size="small"
+              class="font-weight-medium"
+            >
+              Produk {{ index + 1 }}
+            </v-chip>
 
-            <template #no-data>
-              <div class="pa-3 text-body-2 text-medium-emphasis">
-                Produk tidak ditemukan.
-              </div>
-            </template>
-          </v-autocomplete>
-        </v-col>
+            <v-chip
+              v-if="item.produk_toko_id"
+              :color="Number(item.stok_tersedia || 0) > 0 ? 'success' : 'error'"
+              variant="tonal"
+              size="small"
+            >
+              Stok: {{ formatStock(item.stok_tersedia) }}
+            </v-chip>
+          </div>
 
-        <v-col cols="6" md="2">
-          <v-text-field
-            :model-value="formatRupiah(item.harga)"
-            label="Harga"
-            variant="outlined"
-            density="comfortable"
-            readonly
-            hide-details="auto"
-          />
-        </v-col>
-
-        <v-col cols="6" md="2">
-          <v-text-field
-            :model-value="item.jumlah"
-            label="Qty"
-            type="number"
-            min="1"
-            :max="item.stok_tersedia || undefined"
-            variant="outlined"
-            density="comfortable"
-            hide-details="auto"
-            :disabled="!item.produk_toko_id"
-            @update:modelValue="updateItem(index, 'jumlah', toNumber($event))"
-          >
-            <template #details>
-              <span
-                v-if="item.produk_toko_id"
-                class="text-caption text-medium-emphasis"
-              >
-                Maks: {{ formatStock(item.stok_tersedia) }}
-              </span>
-            </template>
-          </v-text-field>
-        </v-col>
-
-        <v-col cols="12" md="3">
-          <v-text-field
-            :model-value="formatRupiah(getItemSubtotal(item))"
-            label="Subtotal"
-            readonly
-            variant="outlined"
-            density="comfortable"
-            hide-details="auto"
-          />
-        </v-col>
-
-        <v-col cols="12" md="1" class="d-flex justify-end align-center">
           <v-btn
             color="error"
-            variant="text"
-            icon="mdi-delete-outline"
+            variant="tonal"
+            size="small"
+            prepend-icon="mdi-delete-outline"
             :disabled="penjualanItems.length === 1"
             @click="removeItem(index)"
-          />
-        </v-col>
-      </v-row>
-    </div>
-
-    <div class="total-box">
-      <div>
-        <div class="total-box__label">Total Penjualan</div>
-        <div class="total-box__subtitle">
-          Total dari seluruh produk yang dipilih
+          >
+            Hapus
+          </v-btn>
         </div>
-      </div>
 
-      <div class="total-box__value">
-        Rp {{ formatNumberSafe(displayTotalPenjualan) }}
-      </div>
-    </div>
+        <v-row dense>
+          <v-col cols="12" md="4">
+            <v-autocomplete
+              :model-value="item.produk_toko_id"
+              :items="produkOptions"
+              item-title="label_simple"
+              item-value="produk_toko_id"
+              :item-props="getProdukItemProps"
+              :custom-filter="filterProduk"
+              label="Produk"
+              :placeholder="
+                activeTokoId
+                  ? 'Ketik nama produk'
+                  : 'Pilih cabang terlebih dahulu'
+              "
+              variant="outlined"
+              density="comfortable"
+              prepend-inner-icon="mdi-pill"
+              :loading="loadingProduk"
+              :disabled="!activeTokoId"
+              clearable
+              hide-details="auto"
+              menu-icon="mdi-chevron-down"
+              auto-select-first
+              @update:modelValue="onProdukChange(index, $event)"
+              @click:clear="onProdukChange(index, null)"
+            >
+              <template #message>
+                Produk kosong tetap tampil, tetapi tidak bisa dipilih.
+              </template>
+
+              <template #no-data>
+                <div class="pa-3 text-body-2 text-medium-emphasis">
+                  Produk tidak ditemukan.
+                </div>
+              </template>
+            </v-autocomplete>
+          </v-col>
+
+          <v-col cols="12" sm="6" md="2">
+            <v-text-field
+              :model-value="formatRupiah(item.harga)"
+              label="Harga"
+              variant="outlined"
+              density="comfortable"
+              prepend-inner-icon="mdi-cash"
+              readonly
+              hide-details="auto"
+            />
+          </v-col>
+
+          <v-col cols="12" sm="6" md="2">
+            <v-text-field
+              :model-value="item.jumlah"
+              label="Qty"
+              type="number"
+              min="1"
+              :max="item.stok_tersedia || undefined"
+              variant="outlined"
+              density="comfortable"
+              prepend-inner-icon="mdi-counter"
+              hide-details="auto"
+              :disabled="!item.produk_toko_id"
+              @update:modelValue="updateItem(index, 'jumlah', toNumber($event))"
+            >
+              <template #details>
+                <span
+                  v-if="item.produk_toko_id"
+                  class="text-caption text-medium-emphasis"
+                >
+                  Maks: {{ formatStock(item.stok_tersedia) }}
+                </span>
+              </template>
+            </v-text-field>
+          </v-col>
+
+          <v-col cols="12" md="4">
+            <v-text-field
+              :model-value="formatRupiah(getItemSubtotal(item))"
+              label="Subtotal"
+              variant="outlined"
+              density="comfortable"
+              prepend-inner-icon="mdi-calculator-variant-outline"
+              readonly
+              hide-details="auto"
+            />
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
+
+    <v-card color="primary" variant="tonal" class="mt-4">
+      <v-card-text class="pa-4">
+        <div class="d-flex align-center justify-space-between flex-wrap ga-3">
+          <div class="d-flex align-center ga-3">
+            <v-avatar color="primary" variant="flat" size="42">
+              <v-icon size="22">mdi-cash-multiple</v-icon>
+            </v-avatar>
+
+            <div>
+              <div class="text-subtitle-1 font-weight-bold">
+                Total Penjualan
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                Total dari seluruh produk yang dipilih
+              </div>
+            </div>
+          </div>
+
+          <div class="text-h5 font-weight-bold">
+            Rp {{ formatNumberSafe(displayTotalPenjualan) }}
+          </div>
+        </div>
+      </v-card-text>
+    </v-card>
   </div>
 </template>
 
@@ -1034,73 +1087,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.section-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.section-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.section-subtitle {
-  margin-top: 6px;
-  font-size: 13px;
-  color: #64748b;
-}
-
-.item-box {
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  padding: 16px;
-  background: #fff;
-}
-
-.total-box {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 18px 20px;
-  border-radius: 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-
-.total-box__label {
-  font-size: 15px;
-  font-weight: 700;
-  color: #334155;
-}
-
-.total-box__subtitle {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #64748b;
-}
-
-.total-box__value {
-  font-size: 22px;
-  font-weight: 800;
-  color: #0284c7;
-  white-space: nowrap;
-}
-
-:deep(.v-list-item--disabled) {
-  opacity: 0.55;
-}
-
-@media (max-width: 768px) {
-  .total-box {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-}
-</style>

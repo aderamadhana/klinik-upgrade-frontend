@@ -11,181 +11,331 @@
       <v-breadcrumbs :items="breadcrumbs" divider="/" />
     </div>
 
-    <v-stepper v-model="currentStepKey" flat class="registrasi-stepper">
-      <div class="simple-stepper">
-        <div class="simple-stepper__track"></div>
-        <div
-          class="simple-stepper__progress"
-          :style="{ width: progressWidth }"
-        ></div>
+    <v-alert
+      v-if="mappingWarning"
+      type="warning"
+      variant="tonal"
+      density="comfortable"
+      class="mb-4"
+      closable
+      @click:close="mappingWarning = ''"
+    >
+      {{ mappingWarning }}
+    </v-alert>
 
-        <div class="simple-stepper__list">
-          <button
-            v-for="(step, index) in availableSteps"
-            :key="step.key"
-            type="button"
-            class="simple-stepper__item"
-            :class="{
-              'is-active': step.key === currentStepKey,
-              'is-complete': index < currentStepIndex,
-            }"
-            @click="goToStep(step.key, index)"
-          >
-            <div class="simple-stepper__icon">
-              <v-icon size="18">
-                {{ index < currentStepIndex ? "mdi-check" : step.icon }}
-              </v-icon>
+    <v-row dense>
+      <v-col cols="12" md="3">
+        <v-card variant="flat" class="border mb-4">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center ga-3 mb-4">
+              <v-avatar color="primary" variant="tonal" size="44">
+                <v-icon size="24">mdi-clipboard-text-outline</v-icon>
+              </v-avatar>
+
+              <div>
+                <div class="text-subtitle-1 font-weight-bold">
+                  Progress Form
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  Step {{ currentStepIndex + 1 }} dari
+                  {{ availableSteps.length }}
+                </div>
+              </div>
             </div>
 
-            <div class="simple-stepper__label">
-              {{ step.shortTitle || step.title }}
-            </div>
-          </button>
-        </div>
-      </div>
-
-      <div class="step-body">
-        <InformasiRegistrasi
-          v-if="currentStepKey === 'registrasi'"
-          :form="form"
-          :rules="rules"
-          :pasien-list="pasienList"
-          :dokter-list="dokterList"
-          :perawat-list="perawatList"
-          @update-field="updateFormField"
-          @patient-change="onPatientChange"
-        />
-
-        <PilihLayanan
-          v-else-if="currentStepKey === 'layanan'"
-          :form="form"
-          @update-field="updateLayananField"
-          @update-layanan-field="updateLayananField"
-        />
-
-        <KonsultasiOffline
-          v-else-if="
-            currentStepKey === 'konsultasi' &&
-            form.layanan.channel_konsultasi === 'offline'
-          "
-          :form="form"
-          :rules="rules"
-          @update-konsultasi-offline="updateKonsultasiOffline"
-        />
-
-        <KonsultasiOnline
-          v-else-if="
-            currentStepKey === 'konsultasi' &&
-            form.layanan.channel_konsultasi === 'online'
-          "
-          :form="form"
-          :rules="rules"
-          :drag-active="dragActive"
-          :consultation-history="consultationHistory"
-          :history-headers="historyHeaders"
-          :photo-cards="photoCards"
-          @update-konsultasi-online="updateKonsultasiOnline"
-          @drag-over="onDragOver"
-          @drag-leave="onDragLeave"
-          @file-drop="onDrop"
-          @file-change="onFileChange"
-          @remove-image="removeImage"
-        />
-
-        <TreatmentSection
-          v-else-if="currentStepKey === 'treatment'"
-          :form="form"
-          :tindakan-list="tindakanList"
-          :total-treatment="totalTreatment"
-          :format-number="formatNumber"
-          :get-subtotal="getTreatmentSubtotal"
-          @update-treatment="form.treatment = $event"
-          @update-item="updateTreatmentItem"
-          @add-item="addTreatmentItem"
-          @remove-item="removeTreatmentItem"
-        />
-
-        <PenjualanSection
-          v-else-if="currentStepKey === 'penjualan'"
-          :form="form"
-          :obat-list="obatList"
-          :total-penjualan="totalPenjualan"
-          :format-number="formatNumber"
-          :get-subtotal="getPenjualanSubtotal"
-          @update-item="updatePenjualanItem"
-          @add-item="addPenjualanItem"
-          @remove-item="removePenjualanItem"
-        />
-
-        <RingkasanSection
-          v-else-if="currentStepKey === 'ringkasan'"
-          :form="form"
-          :pasien-list="pasienList"
-          :dokter-list="dokterList"
-          :perawat-list="perawatList"
-          :tindakan-list="tindakanList"
-          :obat-list="obatList"
-          :total-treatment="totalTreatment"
-          :total-penjualan="totalPenjualan"
-          :format-number="formatNumber"
-          :get-treatment-subtotal="getTreatmentSubtotal"
-          :get-penjualan-subtotal="getPenjualanSubtotal"
-        />
-
-        <div class="step-inline-footer">
-          <div class="step-inline-footer__info">
-            <div class="step-inline-footer__title">
-              {{ currentStepMeta.title }}
-            </div>
-            <div class="step-inline-footer__subtitle">
-              {{ currentStepMeta.subtitle }}
-            </div>
-          </div>
-
-          <div class="step-inline-footer__actions">
-            <v-btn
-              variant="outlined"
-              color="grey-darken-1"
-              prepend-icon="mdi-arrow-left"
-              :disabled="isFirstStep || loading"
-              @click="prevStep"
-            >
-              Sebelumnya
-            </v-btn>
-
-            <v-btn
-              variant="outlined"
-              color="error"
-              prepend-icon="mdi-refresh"
-              :disabled="loading"
-              @click="resetForm"
-            >
-              Reset
-            </v-btn>
-
-            <v-btn
-              v-if="!isLastStep"
+            <v-progress-linear
+              :model-value="
+                availableSteps.length
+                  ? ((currentStepIndex + 1) / availableSteps.length) * 100
+                  : 0
+              "
               color="primary"
-              prepend-icon="mdi-arrow-right"
-              :disabled="loading"
-              @click="nextStep"
-            >
-              Lanjut
-            </v-btn>
+              height="8"
+              rounded
+              class="mb-4"
+            />
 
-            <v-btn
-              v-else
-              color="success"
-              prepend-icon="mdi-content-save-outline"
-              :loading="loading"
-              @click="handleSubmit"
+            <div class="d-flex flex-column ga-2">
+              <v-card
+                v-for="(step, index) in availableSteps"
+                :key="step.key"
+                :color="
+                  step.key === currentStepKey
+                    ? 'primary'
+                    : index < currentStepIndex
+                      ? 'success'
+                      : undefined
+                "
+                :variant="
+                  step.key === currentStepKey || index < currentStepIndex
+                    ? 'tonal'
+                    : 'outlined'
+                "
+                rounded="lg"
+                role="button"
+                @click="goToStep(step.key, index)"
+              >
+                <v-card-text class="pa-3">
+                  <div class="d-flex align-center ga-3">
+                    <v-avatar
+                      :color="
+                        step.key === currentStepKey
+                          ? 'primary'
+                          : index < currentStepIndex
+                            ? 'success'
+                            : 'grey'
+                      "
+                      :variant="
+                        step.key === currentStepKey || index < currentStepIndex
+                          ? 'flat'
+                          : 'tonal'
+                      "
+                      size="32"
+                    >
+                      <v-icon size="18">
+                        {{ index < currentStepIndex ? "mdi-check" : step.icon }}
+                      </v-icon>
+                    </v-avatar>
+
+                    <div class="flex-grow-1">
+                      <div class="text-body-2 font-weight-bold">
+                        {{ step.shortTitle || step.title }}
+                      </div>
+
+                      <div
+                        v-if="step.key === currentStepKey"
+                        class="text-caption text-medium-emphasis"
+                      >
+                        Sedang diisi
+                      </div>
+
+                      <div
+                        v-else-if="index < currentStepIndex"
+                        class="text-caption text-medium-emphasis"
+                      >
+                        Selesai
+                      </div>
+
+                      <div v-else class="text-caption text-medium-emphasis">
+                        Belum diisi
+                      </div>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" md="9">
+        <v-card variant="flat" class="border mb-4">
+          <v-card-text class="pa-4">
+            <div
+              class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
             >
-              Simpan Registrasi
-            </v-btn>
-          </div>
-        </div>
-      </div>
-    </v-stepper>
+              <div class="d-flex align-center ga-3">
+                <v-avatar color="primary" variant="tonal" size="46">
+                  <v-icon size="24">
+                    {{
+                      currentStepMeta.icon || "mdi-file-document-edit-outline"
+                    }}
+                  </v-icon>
+                </v-avatar>
+
+                <div>
+                  <div class="text-h6 font-weight-bold">
+                    {{ currentStepMeta.title }}
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    {{ currentStepMeta.subtitle }}
+                  </div>
+                </div>
+              </div>
+
+              <v-chip color="primary" variant="tonal" class="font-weight-bold">
+                {{
+                  Math.round(
+                    availableSteps.length
+                      ? ((currentStepIndex + 1) / availableSteps.length) * 100
+                      : 0,
+                  )
+                }}%
+              </v-chip>
+            </div>
+
+            <v-divider class="mb-4" />
+
+            <v-window v-model="currentStepKey">
+              <v-window-item value="registrasi">
+                <InformasiRegistrasi
+                  v-if="currentStepKey === 'registrasi'"
+                  :form="form"
+                  :rules="rules"
+                  :pasien-list="pasienList"
+                  :dokter-list="dokterList"
+                  :perawat-list="perawatList"
+                  @update-field="updateFormField"
+                  @patient-change="onPatientChange"
+                />
+              </v-window-item>
+
+              <v-window-item value="layanan">
+                <PilihLayanan
+                  v-if="currentStepKey === 'layanan'"
+                  :form="form"
+                  :selected-konsultasi-mapping="selectedKonsultasiMapping"
+                  :accurate-mapping-list="accurateMappingList"
+                  @update-field="updateLayananField"
+                  @update-layanan-field="updateLayananField"
+                />
+              </v-window-item>
+
+              <v-window-item value="konsultasi">
+                <KonsultasiOffline
+                  v-if="
+                    currentStepKey === 'konsultasi' &&
+                    form.layanan.channel_konsultasi === 'offline'
+                  "
+                  :form="form"
+                  :rules="rules"
+                  @update-konsultasi-offline="updateKonsultasiOffline"
+                />
+
+                <KonsultasiOnline
+                  v-else-if="
+                    currentStepKey === 'konsultasi' &&
+                    form.layanan.channel_konsultasi === 'online'
+                  "
+                  :form="form"
+                  :rules="rules"
+                  :drag-active="dragActive"
+                  :consultation-history="consultationHistory"
+                  :history-headers="historyHeaders"
+                  :photo-cards="photoCards"
+                  @update-konsultasi-online="updateKonsultasiOnline"
+                  @drag-over="onDragOver"
+                  @drag-leave="onDragLeave"
+                  @file-drop="onDrop"
+                  @file-change="onFileChange"
+                  @remove-image="removeImage"
+                />
+              </v-window-item>
+
+              <v-window-item value="treatment">
+                <TreatmentSection
+                  v-if="currentStepKey === 'treatment'"
+                  :form="form"
+                  :tindakan-list="tindakanList"
+                  :total-treatment="totalTreatment"
+                  :format-number="formatNumber"
+                  :get-subtotal="getTreatmentSubtotal"
+                  @update-treatment="form.treatment = $event"
+                  @update-item="updateTreatmentItem"
+                  @add-item="addTreatmentItem"
+                  @remove-item="removeTreatmentItem"
+                />
+              </v-window-item>
+
+              <v-window-item value="penjualan">
+                <PenjualanSection
+                  v-if="currentStepKey === 'penjualan'"
+                  :form="form"
+                  :obat-list="obatList"
+                  :total-penjualan="totalPenjualan"
+                  :format-number="formatNumber"
+                  :get-subtotal="getPenjualanSubtotal"
+                  @update-item="updatePenjualanItem"
+                  @add-item="addPenjualanItem"
+                  @remove-item="removePenjualanItem"
+                />
+              </v-window-item>
+
+              <v-window-item value="ringkasan">
+                <RingkasanSection
+                  v-if="currentStepKey === 'ringkasan'"
+                  :form="form"
+                  :pasien-list="pasienList"
+                  :dokter-list="dokterList"
+                  :perawat-list="perawatList"
+                  :tindakan-list="tindakanList"
+                  :obat-list="obatList"
+                  :total-treatment="totalTreatment"
+                  :total-penjualan="totalPenjualan"
+                  :total-konsultasi="totalKonsultasi"
+                  :selected-konsultasi-mapping="selectedKonsultasiMapping"
+                  :format-number="formatNumber"
+                  :get-treatment-subtotal="getTreatmentSubtotal"
+                  :get-penjualan-subtotal="getPenjualanSubtotal"
+                />
+              </v-window-item>
+            </v-window>
+          </v-card-text>
+        </v-card>
+
+        <v-card variant="flat" class="border">
+          <v-card-text class="pa-4">
+            <div
+              class="d-flex align-center justify-space-between flex-wrap ga-3"
+            >
+              <div>
+                <div class="text-subtitle-2 font-weight-bold">
+                  {{ currentStepMeta.title }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  {{ currentStepMeta.subtitle }}
+                </div>
+              </div>
+
+              <div class="d-flex flex-wrap ga-2">
+                <v-btn
+                  variant="outlined"
+                  color="grey-darken-1"
+                  prepend-icon="mdi-arrow-left"
+                  :disabled="isFirstStep || loading"
+                  @click="prevStep"
+                >
+                  Sebelumnya
+                </v-btn>
+
+                <v-btn
+                  variant="tonal"
+                  color="error"
+                  prepend-icon="mdi-refresh"
+                  :disabled="loading"
+                  @click="resetForm"
+                >
+                  Reset
+                </v-btn>
+
+                <v-btn
+                  v-if="!isLastStep"
+                  color="primary"
+                  variant="flat"
+                  append-icon="mdi-arrow-right"
+                  :disabled="loading"
+                  @click="nextStep"
+                >
+                  Lanjut
+                </v-btn>
+
+                <v-btn
+                  v-else
+                  color="success"
+                  variant="flat"
+                  prepend-icon="mdi-content-save-outline"
+                  :loading="loading"
+                  :disabled="loading"
+                  @click="handleSubmit"
+                >
+                  Simpan Registrasi
+                </v-btn>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
 
     <v-snackbar
       v-model="snackbar.show"
@@ -200,6 +350,7 @@
 
 <script>
 import registrasiLayananService from "@/services/registrasi/registrasiLayananService";
+import referenceService from "@/services/referenceService";
 
 import InformasiRegistrasi from "@/components/registrasi-layanan/informasi-registrasi.vue";
 import PilihLayanan from "@/components/registrasi-layanan/pilih-layanan.vue";
@@ -237,6 +388,8 @@ export default {
       loading: false,
       dragActive: null,
       consultationHistory: [],
+      accurateMappingList: [],
+      mappingWarning: "",
 
       snackbar: {
         show: false,
@@ -424,6 +577,34 @@ export default {
         return sum + this.getPenjualanSubtotal(item);
       }, 0);
     },
+
+    selectedKonsultasiSourceCode() {
+      return this.getKonsultasiSourceCode();
+    },
+
+    selectedKonsultasiMapping() {
+      return this.getAccurateMappingBySourceCode(
+        this.selectedKonsultasiSourceCode,
+      );
+    },
+
+    totalKonsultasi() {
+      const mapping = this.selectedKonsultasiMapping;
+
+      if (!this.form?.layanan?.ada_konsultasi || !mapping) {
+        return 0;
+      }
+
+      if (this.form?.layanan?.ada_treatment) {
+        return 0;
+      }
+
+      if (!this.toBoolean(mapping.is_billable)) {
+        return 0;
+      }
+
+      return Number(mapping.default_harga || 0);
+    },
   },
 
   watch: {
@@ -434,6 +615,7 @@ export default {
 
   created() {
     this.form = this.getInitialForm();
+    this.loadAccurateMappings();
   },
 
   methods: {
@@ -464,6 +646,7 @@ export default {
         "Gagal menyimpan registrasi"
       );
     },
+
     showSnackbar(text, color = "success") {
       this.snackbar.show = true;
       this.snackbar.text = text;
@@ -477,6 +660,10 @@ export default {
       const year = d.getFullYear();
 
       return `${year}-${month}-${day}`;
+    },
+
+    toBoolean(value) {
+      return value === true || value === 1 || value === "1";
     },
 
     createEmptyTreatmentItem() {
@@ -515,12 +702,22 @@ export default {
         dokter_id: null,
         perawat_id: null,
 
+        konsultasi_source_code: null,
+        konsultasi_source_name: null,
+        total_konsultasi: 0,
+        rule_biaya_konsultasi: 0,
+        is_pembelian_online: false,
+
         layanan: {
           ada_konsultasi: false,
           channel_konsultasi: "",
+          konsultasi_source_code: null,
+          konsultasi_source_name: null,
+          konsultasi_mapping_id: null,
           ada_treatment: false,
           ada_penjualan: false,
           route_treatment: "",
+          is_pembelian_online: false,
         },
 
         konsultasi_offline: {
@@ -535,12 +732,15 @@ export default {
           produk_sebelumnya: "",
           sedang_hamil: "",
           sedang_menyusui: "",
+
           bukti_foto_kiri: "",
           bukti_foto_depan: "",
           bukti_foto_kanan: "",
+
           preview_before_1: "",
           preview_before_2: "",
           preview_before_3: "",
+
           file_name_1: "",
           file_name_2: "",
           file_name_3: "",
@@ -557,27 +757,170 @@ export default {
       };
     },
 
+    async loadAccurateMappings() {
+      this.mappingWarning = "";
+
+      try {
+        if (typeof referenceService.accurateItemMapping !== "function") {
+          this.mappingWarning =
+            "Method referenceService.accurateItemMapping belum tersedia.";
+          this.accurateMappingList = [];
+          return;
+        }
+
+        this.accurateMappingList = await referenceService.accurateItemMapping();
+
+        this.syncRegistrasiAccurateMapping();
+      } catch (error) {
+        console.error(error);
+        this.accurateMappingList = [];
+        this.mappingWarning =
+          "Mapping Accurate gagal dimuat. Cek endpoint /reference/accurate-item-mapping.";
+      }
+    },
+
+    async ensureAccurateMappingsLoaded() {
+      if (
+        Array.isArray(this.accurateMappingList) &&
+        this.accurateMappingList.length > 0
+      ) {
+        return true;
+      }
+
+      await this.loadAccurateMappings();
+
+      return (
+        Array.isArray(this.accurateMappingList) &&
+        this.accurateMappingList.length > 0
+      );
+    },
+
+    getAccurateMappingBySourceCode(sourceCode) {
+      if (!sourceCode) {
+        return null;
+      }
+
+      return (
+        (this.accurateMappingList || []).find((item) => {
+          return (
+            String(item?.source_code || "").toUpperCase() ===
+            String(sourceCode || "").toUpperCase()
+          );
+        }) || null
+      );
+    },
+
+    getKonsultasiSourceCode() {
+      const layanan = this.form?.layanan || {};
+
+      if (!layanan.ada_konsultasi) {
+        return null;
+      }
+
+      if (layanan.konsultasi_source_code) {
+        return layanan.konsultasi_source_code;
+      }
+
+      return layanan.channel_konsultasi === "online"
+        ? "KONSULTASI_ONLINE"
+        : "KONSULTASI_OFFLINE";
+    },
+
+    syncRegistrasiAccurateMapping() {
+      if (!this.form) return;
+
+      const sourceCode = this.getKonsultasiSourceCode();
+      const mapping = this.getAccurateMappingBySourceCode(sourceCode);
+
+      this.form.konsultasi_source_code = mapping?.source_code || sourceCode;
+      this.form.konsultasi_source_name =
+        mapping?.source_name ||
+        this.form.layanan?.konsultasi_source_name ||
+        mapping?.nama_accurate ||
+        null;
+
+      this.form.total_konsultasi = this.totalKonsultasi;
+
+      if (!sourceCode) {
+        this.form.rule_biaya_konsultasi = 0;
+      } else if (this.form.layanan.ada_treatment) {
+        this.form.rule_biaya_konsultasi = 2;
+      } else if (this.totalKonsultasi > 0) {
+        this.form.rule_biaya_konsultasi = 1;
+      } else {
+        this.form.rule_biaya_konsultasi = 3;
+      }
+
+      this.form.is_pembelian_online = Boolean(
+        this.form.layanan?.is_pembelian_online,
+      );
+    },
+
+    validateRequiredAccurateMapping() {
+      if (!this.form?.layanan?.ada_konsultasi) {
+        return true;
+      }
+
+      const sourceCode = this.getKonsultasiSourceCode();
+
+      if (!sourceCode) {
+        this.showSnackbar("Source code konsultasi belum terbentuk", "error");
+        return false;
+      }
+
+      const mapping = this.getAccurateMappingBySourceCode(sourceCode);
+
+      if (!mapping) {
+        this.showSnackbar(
+          `Mapping Accurate ${sourceCode} belum tersedia di master_accurate_item_mapping`,
+          "error",
+        );
+        return false;
+      }
+
+      if (
+        this.toBoolean(mapping.is_send_to_accurate) &&
+        !mapping.kode_accurate
+      ) {
+        this.showSnackbar(
+          `Kode Accurate untuk ${mapping.source_name || sourceCode} belum diisi`,
+          "error",
+        );
+        return false;
+      }
+
+      return true;
+    },
+
     normalizeLayanan(value = {}) {
       const adaKonsultasi = Boolean(value.ada_konsultasi);
-      const adaTreatment = Boolean(value.ada_treatment);
-      const adaPenjualan = Boolean(value.ada_penjualan);
 
+      let konsultasiSourceCode = value.konsultasi_source_code || null;
       let channelKonsultasi = value.channel_konsultasi || "";
 
       if (!adaKonsultasi) {
+        konsultasiSourceCode = null;
         channelKonsultasi = "";
       }
 
-      if (adaKonsultasi && !channelKonsultasi) {
-        channelKonsultasi = "offline";
+      if (adaKonsultasi && konsultasiSourceCode && !channelKonsultasi) {
+        channelKonsultasi = String(konsultasiSourceCode)
+          .toUpperCase()
+          .includes("ONLINE")
+          ? "online"
+          : "offline";
       }
 
       return {
         ada_konsultasi: adaKonsultasi,
         channel_konsultasi: channelKonsultasi,
-        ada_treatment: adaTreatment,
-        ada_penjualan: adaPenjualan,
+        konsultasi_source_code: konsultasiSourceCode,
+        konsultasi_source_name: value.konsultasi_source_name || null,
+        konsultasi_mapping_id: value.konsultasi_mapping_id || null,
+        ada_treatment: Boolean(value.ada_treatment),
+        ada_penjualan: Boolean(value.ada_penjualan),
         route_treatment: value.route_treatment || "",
+        is_pembelian_online: Boolean(value.is_pembelian_online),
       };
     },
 
@@ -639,6 +982,7 @@ export default {
     applyLayananSelection(value = {}) {
       this.form.layanan = this.normalizeLayanan(value);
       this.syncDetailItemsByLayanan();
+      this.syncRegistrasiAccurateMapping();
       this.ensureCurrentStepAvailable();
     },
 
@@ -667,9 +1011,13 @@ export default {
       if (
         Object.prototype.hasOwnProperty.call(payload, "ada_konsultasi") ||
         Object.prototype.hasOwnProperty.call(payload, "ada_treatment") ||
-        Object.prototype.hasOwnProperty.call(payload, "ada_penjualan")
+        Object.prototype.hasOwnProperty.call(payload, "ada_penjualan") ||
+        Object.prototype.hasOwnProperty.call(payload, "is_pembelian_online")
       ) {
-        this.applyLayananSelection(payload);
+        this.applyLayananSelection({
+          ...this.form.layanan,
+          ...payload,
+        });
         return;
       }
 
@@ -748,6 +1096,7 @@ export default {
 
     getTreatmentSubtotal(item) {
       const base = Number(item.harga || 0) * Number(item.jumlah || 0);
+
       const diskon =
         item.diskon_type === "%"
           ? (base * Number(item.diskon_value || 0)) / 100
@@ -758,6 +1107,7 @@ export default {
 
     getPenjualanSubtotal(item) {
       const base = Number(item.harga || 0) * Number(item.jumlah || 0);
+
       const diskon =
         item.diskon_type === "%"
           ? (base * Number(item.diskon_value || 0)) / 100
@@ -895,7 +1245,8 @@ export default {
         this.validateLayananStep() &&
         this.validateKonsultasiStep() &&
         this.validateTreatmentStep() &&
-        this.validatePenjualanStep()
+        this.validatePenjualanStep() &&
+        this.validateRequiredAccurateMapping()
       );
     },
 
@@ -924,6 +1275,13 @@ export default {
 
       try {
         this.form.toko_id = this.getSelectedTokoId();
+
+        await this.ensureAccurateMappingsLoaded();
+        this.syncRegistrasiAccurateMapping();
+
+        if (!this.validateRequiredAccurateMapping()) {
+          return;
+        }
 
         const response = await registrasiLayananService.create(this.form);
 
@@ -955,7 +1313,6 @@ export default {
         this.resetForm();
       } catch (error) {
         console.error(error);
-
         this.showSnackbar(this.getErrorMessage(error), "error");
       } finally {
         this.loading = false;
@@ -967,6 +1324,9 @@ export default {
       this.form = this.getInitialForm();
       this.dragActive = null;
       this.consultationHistory = [];
+      this.mappingWarning = "";
+
+      this.syncRegistrasiAccurateMapping();
       this.showSnackbar("Form berhasil direset", "success");
     },
 
@@ -1011,7 +1371,7 @@ export default {
         before_3: "preview_before_3",
       };
 
-      const hiddenMap = {
+      const fileMap = {
         before_1: "bukti_foto_kiri",
         before_2: "bukti_foto_depan",
         before_3: "bukti_foto_kanan",
@@ -1023,28 +1383,37 @@ export default {
         before_3: "file_name_3",
       };
 
-      this.form.konsultasi_online[previewMap[key]] = URL.createObjectURL(file);
-      this.form.konsultasi_online[hiddenMap[key]] = file;
-      this.form.konsultasi_online[fileNameMap[key]] = file.name;
+      const previewKey = previewMap[key];
+      const fileKey = fileMap[key];
+      const fileNameKey = fileNameMap[key];
+
+      if (!previewKey || !fileKey || !fileNameKey) return;
+
+      this.form.konsultasi_online[previewKey] = URL.createObjectURL(file);
+      this.form.konsultasi_online[fileKey] = file;
+      this.form.konsultasi_online[fileNameKey] = file.name;
     },
 
-    onDrop(event, key) {
+    onDrop(payload) {
       this.dragActive = null;
 
-      const file = event?.dataTransfer?.files?.[0];
+      const file = payload?.file || payload?.event?.dataTransfer?.files?.[0];
 
       if (!file) return;
 
-      this.processImageFile(file, key);
+      this.processImageFile(file, payload?.key);
     },
 
-    onFileChange(event, key) {
-      const file = event?.target?.files?.[0];
+    onFileChange(payload) {
+      const file = payload?.file || payload?.event?.target?.files?.[0];
 
       if (!file) return;
 
-      this.processImageFile(file, key);
-      event.target.value = "";
+      this.processImageFile(file, payload?.key);
+
+      if (payload?.event?.target) {
+        payload.event.target.value = "";
+      }
     },
 
     removeImage(key) {
@@ -1054,7 +1423,7 @@ export default {
         before_3: "preview_before_3",
       };
 
-      const hiddenMap = {
+      const fileMap = {
         before_1: "bukti_foto_kiri",
         before_2: "bukti_foto_depan",
         before_3: "bukti_foto_kanan",
@@ -1066,199 +1435,16 @@ export default {
         before_3: "file_name_3",
       };
 
-      this.form.konsultasi_online[previewMap[key]] = "";
-      this.form.konsultasi_online[hiddenMap[key]] = "";
-      this.form.konsultasi_online[fileNameMap[key]] = "";
+      const previewKey = previewMap[key];
+      const fileKey = fileMap[key];
+      const fileNameKey = fileNameMap[key];
+
+      if (!previewKey || !fileKey || !fileNameKey) return;
+
+      this.form.konsultasi_online[previewKey] = "";
+      this.form.konsultasi_online[fileKey] = "";
+      this.form.konsultasi_online[fileNameKey] = "";
     },
   },
 };
 </script>
-
-<style scoped>
-.registrasi-layanan-page {
-  background: #f8fafc;
-  min-height: 100%;
-}
-
-.page-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.registrasi-stepper {
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 24px;
-  overflow: hidden;
-  background: #ffffff;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
-}
-
-.simple-stepper {
-  position: relative;
-  padding: 20px 24px 14px;
-  border-bottom: 1px solid #eef2f7;
-  background: #fff;
-}
-
-.simple-stepper__track {
-  position: absolute;
-  top: 39px;
-  left: 56px;
-  right: 56px;
-  height: 2px;
-  background: #e2e8f0;
-  border-radius: 999px;
-}
-
-.simple-stepper__progress {
-  position: absolute;
-  top: 39px;
-  left: 56px;
-  height: 2px;
-  background: rgb(var(--v-theme-primary));
-  border-radius: 999px;
-  transition: width 0.25s ease;
-}
-
-.simple-stepper__list {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.simple-stepper__item {
-  border: none;
-  background: transparent;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  min-width: 88px;
-  cursor: pointer;
-  padding: 0;
-}
-
-.simple-stepper__icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f1f5f9;
-  color: #64748b;
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 1px #dbe4ee;
-  transition: all 0.2s ease;
-}
-
-.simple-stepper__label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-  text-align: center;
-  line-height: 1.3;
-}
-
-.simple-stepper__item.is-active .simple-stepper__icon {
-  background: rgb(var(--v-theme-primary));
-  color: #fff;
-  box-shadow: 0 0 0 1px rgba(var(--v-theme-primary), 0.18);
-}
-
-.simple-stepper__item.is-active .simple-stepper__label {
-  color: #0f172a;
-}
-
-.simple-stepper__item.is-complete .simple-stepper__icon {
-  background: rgb(var(--v-theme-success));
-  color: #fff;
-  box-shadow: 0 0 0 1px rgba(var(--v-theme-success), 0.18);
-}
-
-.simple-stepper__item.is-complete .simple-stepper__label {
-  color: #334155;
-}
-
-.step-body {
-  padding: 20px;
-  background: #fff;
-}
-
-.step-inline-footer {
-  margin-top: 20px;
-  padding: 16px 20px;
-  border-top: 1px solid #eef2f7;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  background: #fff;
-}
-
-.step-inline-footer__title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.2;
-}
-
-.step-inline-footer__subtitle {
-  margin-top: 4px;
-  font-size: 13px;
-  color: #64748b;
-}
-
-.step-inline-footer__actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 768px) {
-  .simple-stepper {
-    padding: 18px 12px 12px;
-    overflow-x: auto;
-  }
-
-  .simple-stepper__track,
-  .simple-stepper__progress {
-    display: none;
-  }
-
-  .simple-stepper__list {
-    justify-content: flex-start;
-    min-width: max-content;
-    gap: 14px;
-  }
-
-  .simple-stepper__item {
-    min-width: 72px;
-  }
-
-  .step-body {
-    padding: 14px;
-  }
-
-  .step-inline-footer {
-    padding: 14px;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .step-inline-footer__actions {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .step-inline-footer__actions .v-btn {
-    width: 100%;
-  }
-}
-</style>

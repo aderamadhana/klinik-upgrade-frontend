@@ -3,174 +3,238 @@
     <v-alert
       type="info"
       variant="tonal"
-      rounded="lg"
+      density="comfortable"
       border="start"
-      class="mb-5"
+      class="mb-4"
     >
       FO cukup mengisi header kunjungan dan penanggung jawab awal yang relevan.
-      Penentuan detail medis tidak dilakukan di tahap ini.
+      Detail medis diisi pada tahap pelayanan.
     </v-alert>
 
-    <div class="group-wrap mb-5">
-      <div class="group-head mb-4">
-        <div class="group-title">
-          <v-icon class="mr-2" color="primary">
-            mdi-card-account-details-outline
-          </v-icon>
-          Data Registrasi
-        </div>
-        <div class="group-subtitle">
-          Informasi utama untuk membuat visit / kunjungan pasien
-        </div>
-      </div>
+    <v-row dense>
+      <v-col cols="12" md="7">
+        <v-card variant="flat" class="border h-100">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center ga-3 mb-4">
+              <v-avatar color="primary" variant="tonal" size="42">
+                <v-icon size="22">mdi-card-account-details-outline</v-icon>
+              </v-avatar>
 
-      <v-row density="comfortable">
-        <v-col cols="12" md="3">
-          <v-text-field
-            :model-value="form.tanggal"
-            label="Tanggal Registrasi"
-            type="date"
-            variant="outlined"
-            density="comfortable"
-            prepend-inner-icon="mdi-calendar"
-            :rules="[rules.required]"
-            hide-details="auto"
-            @update:modelValue="updateField('tanggal', $event)"
-          />
-        </v-col>
-
-        <v-col cols="12" md="9">
-          <v-autocomplete
-            :model-value="form.pasien_new_id"
-            :search="pasienSearch"
-            label="Pasien"
-            placeholder="Cari nama pasien, No. RM, No. HP, atau identitas"
-            :items="pasienOptions"
-            item-title="text"
-            item-value="id"
-            variant="outlined"
-            density="comfortable"
-            prepend-inner-icon="mdi-account-search"
-            :rules="[rules.required]"
-            :loading="loadingPasien"
-            clearable
-            no-filter
-            hide-details="auto"
-            menu-icon="mdi-chevron-down"
-            @update:search="handlePasienSearch"
-            @update:modelValue="onPatientSelected"
-            @click:clear="clearPatient"
-          >
-            <template #message>
-              Data pasien diambil dari semua cabang.
-            </template>
-
-            <template #no-data>
-              <div class="pa-4 text-body-2 text-medium-emphasis">
-                Data pasien tidak ditemukan. Ketik minimal 2 karakter untuk
-                mencari.
+              <div>
+                <div class="text-subtitle-1 font-weight-bold">
+                  Data Registrasi
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  Informasi utama untuk membuat visit / kunjungan pasien
+                </div>
               </div>
-            </template>
-          </v-autocomplete>
-        </v-col>
-      </v-row>
-    </div>
+            </div>
 
-    <div class="group-wrap">
-      <div class="group-head mb-4">
-        <div class="group-title">
-          <v-icon class="mr-2" color="primary">
-            mdi-account-tie-outline
-          </v-icon>
-          Penanggung Jawab Awal
-        </div>
-        <div class="group-subtitle">
-          Pilih dokter dan perawat / beautician yang bertugas pada kunjungan ini
-        </div>
-      </div>
+            <v-row dense>
+              <v-col cols="12" md="4">
+                <v-text-field
+                  :model-value="form.tanggal"
+                  label="Tanggal Registrasi"
+                  type="date"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-calendar"
+                  :rules="[rules.required]"
+                  hide-details="auto"
+                  @update:modelValue="updateField('tanggal', $event)"
+                />
+              </v-col>
 
-      <v-alert
-        v-if="!activeTokoId"
-        type="warning"
-        variant="tonal"
-        rounded="lg"
-        border="start"
-        class="mb-4"
-      >
-        Cabang belum terpilih. Data dokter dan perawat akan muncul setelah
-        cabang aktif tersedia.
-      </v-alert>
+              <v-col cols="12" md="8">
+                <v-autocomplete
+                  :model-value="form.pasien_new_id"
+                  :search="pasienSearch"
+                  label="Pasien"
+                  placeholder="Cari nama pasien, No. RM, No. HP, atau identitas"
+                  :items="pasienOptions"
+                  item-title="text"
+                  item-value="id"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-account-search"
+                  :rules="[rules.required]"
+                  :loading="loadingPasien"
+                  clearable
+                  no-filter
+                  hide-details="auto"
+                  menu-icon="mdi-chevron-down"
+                  @update:search="handlePasienSearch"
+                  @update:modelValue="onPatientSelected"
+                  @click:clear="clearPatient"
+                >
+                  <template #message>
+                    Data pasien diambil dari semua cabang.
+                  </template>
 
-      <v-row density="comfortable">
-        <v-col cols="12" md="6">
-          <v-autocomplete
-            :model-value="form.dokter_id"
-            label="Dokter Tujuan / Penanggung Jawab Awal"
-            :placeholder="
-              activeTokoId
-                ? 'Cari / pilih dokter'
-                : 'Pilih cabang terlebih dahulu'
-            "
-            :items="dokterOptions"
-            item-title="text"
-            item-value="id"
-            variant="outlined"
-            density="comfortable"
-            prepend-inner-icon="mdi-stethoscope"
-            :loading="loadingKaryawan"
-            :disabled="!activeTokoId"
-            clearable
-            hide-details="auto"
-            menu-icon="mdi-chevron-down"
-            @update:modelValue="onDokterSelected"
-          >
-            <template #message>
-              Data dokter difilter berdasarkan cabang aktif.
-            </template>
+                  <template #no-data>
+                    <div class="pa-4">
+                      <div class="d-flex align-center ga-3">
+                        <v-avatar color="grey" variant="tonal" size="38">
+                          <v-icon size="20">mdi-account-search-outline</v-icon>
+                        </v-avatar>
 
-            <template #no-data>
-              <div class="pa-4 text-body-2 text-medium-emphasis">
-                Tidak ada dokter pada cabang aktif.
+                        <div>
+                          <div class="text-body-2 font-weight-medium">
+                            Data pasien tidak ditemukan
+                          </div>
+                          <div class="text-caption text-medium-emphasis">
+                            Ketik minimal 2 karakter untuk mencari.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </v-autocomplete>
+              </v-col>
+            </v-row>
+
+            <v-divider class="my-4" />
+
+            <div class="d-flex align-start ga-3">
+              <v-icon color="primary" size="20" class="mt-1">
+                mdi-information-outline
+              </v-icon>
+
+              <div>
+                <div class="text-body-2 font-weight-medium">
+                  Pasien bisa berasal dari semua cabang
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  Sistem hanya membutuhkan pasien dan tanggal registrasi untuk
+                  membuat kunjungan awal.
+                </div>
               </div>
-            </template>
-          </v-autocomplete>
-        </v-col>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
-        <v-col cols="12" md="6">
-          <v-autocomplete
-            :model-value="form.perawat_id"
-            label="Perawat / Beautician Tujuan"
-            :placeholder="
-              activeTokoId
-                ? 'Cari / pilih perawat atau beautician'
-                : 'Pilih cabang terlebih dahulu'
-            "
-            :items="perawatOptions"
-            item-title="text"
-            item-value="id"
-            variant="outlined"
-            density="comfortable"
-            prepend-inner-icon="mdi-account-heart-outline"
-            :loading="loadingKaryawan"
-            :disabled="!activeTokoId"
-            clearable
-            hide-details="auto"
-            menu-icon="mdi-chevron-down"
-            @update:modelValue="onPerawatSelected"
-          >
-            <template #message>
-              Data perawat difilter berdasarkan cabang aktif.
-            </template>
+      <v-col cols="12" md="5">
+        <v-card variant="flat" class="border h-100">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center ga-3 mb-4">
+              <v-avatar color="success" variant="tonal" size="42">
+                <v-icon size="22">mdi-account-tie-outline</v-icon>
+              </v-avatar>
 
-            <template #no-data>
-              <div class="pa-4 text-body-2 text-medium-emphasis">
-                Tidak ada perawat / beautician pada cabang aktif.
+              <div>
+                <div class="text-subtitle-1 font-weight-bold">
+                  Penanggung Jawab Awal
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  Dokter dan perawat / beautician cabang aktif
+                </div>
               </div>
-            </template>
-          </v-autocomplete>
-        </v-col>
-      </v-row>
-    </div>
+            </div>
+
+            <v-alert
+              v-if="!activeTokoId"
+              type="warning"
+              variant="tonal"
+              density="compact"
+              border="start"
+              class="mb-4"
+            >
+              Cabang belum terpilih. Data dokter dan perawat akan muncul setelah
+              cabang aktif tersedia.
+            </v-alert>
+
+            <v-row dense>
+              <v-col cols="12">
+                <v-autocomplete
+                  :model-value="form.dokter_id"
+                  label="Dokter Tujuan / Penanggung Jawab Awal"
+                  :placeholder="
+                    activeTokoId
+                      ? 'Cari / pilih dokter'
+                      : 'Pilih cabang terlebih dahulu'
+                  "
+                  :items="dokterOptions"
+                  item-title="text"
+                  item-value="id"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-stethoscope"
+                  :loading="loadingKaryawan"
+                  :disabled="!activeTokoId"
+                  clearable
+                  hide-details="auto"
+                  menu-icon="mdi-chevron-down"
+                  @update:modelValue="onDokterSelected"
+                >
+                  <template #message>
+                    Data dokter difilter berdasarkan cabang aktif.
+                  </template>
+
+                  <template #no-data>
+                    <div class="pa-4 text-body-2 text-medium-emphasis">
+                      Tidak ada dokter pada cabang aktif.
+                    </div>
+                  </template>
+                </v-autocomplete>
+              </v-col>
+
+              <v-col cols="12">
+                <v-autocomplete
+                  :model-value="form.perawat_id"
+                  label="Perawat / Beautician Tujuan"
+                  :placeholder="
+                    activeTokoId
+                      ? 'Cari / pilih perawat atau beautician'
+                      : 'Pilih cabang terlebih dahulu'
+                  "
+                  :items="perawatOptions"
+                  item-title="text"
+                  item-value="id"
+                  variant="outlined"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-account-heart-outline"
+                  :loading="loadingKaryawan"
+                  :disabled="!activeTokoId"
+                  clearable
+                  hide-details="auto"
+                  menu-icon="mdi-chevron-down"
+                  @update:modelValue="onPerawatSelected"
+                >
+                  <template #message>
+                    Data perawat difilter berdasarkan cabang aktif.
+                  </template>
+
+                  <template #no-data>
+                    <div class="pa-4 text-body-2 text-medium-emphasis">
+                      Tidak ada perawat / beautician pada cabang aktif.
+                    </div>
+                  </template>
+                </v-autocomplete>
+              </v-col>
+            </v-row>
+
+            <v-divider class="my-4" />
+
+            <div class="d-flex align-start ga-3">
+              <v-icon color="success" size="20" class="mt-1">
+                mdi-check-circle-outline
+              </v-icon>
+
+              <div>
+                <div class="text-body-2 font-weight-medium">
+                  Penanggung jawab bisa disesuaikan nanti
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  Tahap ini hanya menentukan jalur awal pasien setelah
+                  registrasi.
+                </div>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
   </div>
 </template>
 
