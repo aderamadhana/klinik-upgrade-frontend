@@ -1,375 +1,553 @@
 <template>
   <div class="mt-3">
-    <div class="section-head mb-4">
-      <div>
-        <div class="section-title">Ringkasan Registrasi</div>
-        <div class="section-subtitle">
-          Periksa kembali data registrasi sebelum disimpan
+    <v-card variant="tonal" class="mb-3">
+      <v-card-text class="pa-3 d-flex align-center justify-space-between ga-3">
+        <div>
+          <div class="text-subtitle-1 font-weight-bold">
+            Ringkasan Registrasi
+          </div>
+          <div class="text-caption text-medium-emphasis">
+            Periksa kembali data registrasi sebelum disimpan
+          </div>
         </div>
-      </div>
 
-      <v-chip
-        :color="isReadyToSave ? 'success' : 'error'"
-        variant="tonal"
-        size="small"
-        class="font-weight-bold"
-      >
-        {{ isReadyToSave ? "Siap Disimpan" : "Belum Lengkap" }}
-      </v-chip>
-    </div>
+        <v-chip
+          :color="isReadyToSave ? 'success' : 'error'"
+          variant="tonal"
+          size="small"
+          class="font-weight-bold"
+        >
+          <v-icon start size="15">
+            {{
+              isReadyToSave
+                ? "mdi-check-circle-outline"
+                : "mdi-alert-circle-outline"
+            }}
+          </v-icon>
+          {{ isReadyToSave ? "Siap Disimpan" : "Belum Lengkap" }}
+        </v-chip>
+      </v-card-text>
+    </v-card>
 
     <v-row dense>
       <v-col cols="12" md="6">
-        <div class="summary-box">
-          <div class="summary-box__title">
-            <v-icon size="18" color="primary" class="mr-2">
+        <v-card variant="outlined" class="h-100">
+          <v-card-title
+            class="pa-3 pb-1 text-subtitle-2 font-weight-bold d-flex align-center"
+          >
+            <v-icon size="17" color="primary" class="mr-2">
               mdi-account-details-outline
             </v-icon>
             Informasi Registrasi
-          </div>
+          </v-card-title>
 
-          <div class="summary-row">
-            <span>Tanggal</span>
-            <strong>{{ form.tanggal || "-" }}</strong>
-          </div>
+          <v-card-text class="pa-3 pt-1">
+            <v-list density="compact" class="pa-0">
+              <v-list-item class="px-0 py-1">
+                <template #title>
+                  <div class="d-flex justify-space-between ga-3">
+                    <span class="text-caption text-medium-emphasis"
+                      >Tanggal</span
+                    >
+                    <strong class="text-caption text-right">{{
+                      form.tanggal || "-"
+                    }}</strong>
+                  </div>
+                </template>
+              </v-list-item>
 
-          <div class="summary-row">
-            <span>Pasien</span>
-            <strong>{{ selectedPatientName }}</strong>
-          </div>
+              <v-list-item class="px-0 py-1">
+                <template #title>
+                  <div class="d-flex justify-space-between ga-3">
+                    <span class="text-caption text-medium-emphasis"
+                      >Pasien</span
+                    >
+                    <strong class="text-caption text-right">{{
+                      selectedPatientName
+                    }}</strong>
+                  </div>
+                </template>
+              </v-list-item>
 
-          <div class="summary-row">
-            <span>Dokter Awal</span>
-            <strong>{{ selectedDokterName }}</strong>
-          </div>
+              <v-list-item class="px-0 py-1">
+                <template #title>
+                  <div class="d-flex justify-space-between ga-3">
+                    <span class="text-caption text-medium-emphasis"
+                      >Dokter Awal</span
+                    >
+                    <strong class="text-caption text-right">{{
+                      selectedDokterName
+                    }}</strong>
+                  </div>
+                </template>
+              </v-list-item>
 
-          <div class="summary-row">
-            <span>Perawat Awal</span>
-            <strong>{{ selectedPerawatName }}</strong>
-          </div>
-        </div>
+              <v-list-item class="px-0 py-1">
+                <template #title>
+                  <div class="d-flex justify-space-between ga-3">
+                    <span class="text-caption text-medium-emphasis"
+                      >Perawat Awal</span
+                    >
+                    <strong class="text-caption text-right">{{
+                      selectedPerawatName
+                    }}</strong>
+                  </div>
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+        </v-card>
       </v-col>
 
       <v-col cols="12" md="6">
-        <div class="summary-box">
-          <div class="summary-box__title">
-            <v-icon size="18" color="primary" class="mr-2">
+        <v-card variant="outlined" class="h-100">
+          <v-card-title
+            class="pa-3 pb-1 text-subtitle-2 font-weight-bold d-flex align-center"
+          >
+            <v-icon size="17" color="primary" class="mr-2">
               mdi-format-list-checks
             </v-icon>
             Layanan Dipilih
-          </div>
+          </v-card-title>
 
-          <div class="chip-wrap">
-            <v-chip
-              v-if="layananState.ada_konsultasi"
-              color="primary"
-              variant="tonal"
-              size="small"
-            >
-              Konsultasi {{ formatChannel(layananState.channel_konsultasi) }}
-            </v-chip>
+          <v-card-text class="pa-3 pt-1">
+            <div class="d-flex flex-wrap ga-1 mb-2">
+              <v-chip
+                v-if="layananState.ada_konsultasi"
+                color="primary"
+                variant="tonal"
+                size="x-small"
+              >
+                Konsultasi {{ formatChannel(layananState.channel_konsultasi) }}
+              </v-chip>
 
-            <v-chip
-              v-if="layananState.ada_treatment"
-              color="success"
-              variant="tonal"
-              size="small"
-            >
-              Treatment
-            </v-chip>
+              <v-chip
+                v-if="layananState.ada_treatment"
+                color="success"
+                variant="tonal"
+                size="x-small"
+              >
+                Treatment
+              </v-chip>
 
-            <v-chip
-              v-if="layananState.ada_penjualan"
-              color="info"
-              variant="tonal"
-              size="small"
-            >
-              Penjualan Produk
-            </v-chip>
+              <v-chip
+                v-if="layananState.ada_penjualan"
+                color="info"
+                variant="tonal"
+                size="x-small"
+              >
+                Penjualan Produk
+              </v-chip>
 
-            <v-chip
-              v-if="!hasSelectedLayanan"
-              color="error"
-              variant="tonal"
-              size="small"
-            >
-              Belum ada layanan dipilih
-            </v-chip>
-          </div>
+              <v-chip
+                v-if="!hasSelectedLayanan"
+                color="error"
+                variant="tonal"
+                size="x-small"
+              >
+                Belum ada layanan dipilih
+              </v-chip>
+            </div>
 
-          <div class="summary-row mt-3">
-            <span>Konsultasi</span>
-            <strong>{{ layananState.ada_konsultasi ? "Ya" : "Tidak" }}</strong>
-          </div>
+            <v-list density="compact" class="pa-0">
+              <v-list-item class="px-0 py-1">
+                <template #title>
+                  <div class="d-flex justify-space-between ga-3">
+                    <span class="text-caption text-medium-emphasis"
+                      >Konsultasi</span
+                    >
+                    <strong class="text-caption">
+                      {{ layananState.ada_konsultasi ? "Ya" : "Tidak" }}
+                    </strong>
+                  </div>
+                </template>
+              </v-list-item>
 
-          <div v-if="layananState.ada_konsultasi" class="summary-row">
-            <span>Channel Konsultasi</span>
-            <strong>{{
-              formatChannel(layananState.channel_konsultasi)
-            }}</strong>
-          </div>
+              <v-list-item v-if="layananState.ada_konsultasi" class="px-0 py-1">
+                <template #title>
+                  <div class="d-flex justify-space-between ga-3">
+                    <span class="text-caption text-medium-emphasis"
+                      >Channel</span
+                    >
+                    <strong class="text-caption">
+                      {{ formatChannel(layananState.channel_konsultasi) }}
+                    </strong>
+                  </div>
+                </template>
+              </v-list-item>
 
-          <div class="summary-row">
-            <span>Treatment</span>
-            <strong>{{ layananState.ada_treatment ? "Ya" : "Tidak" }}</strong>
-          </div>
+              <v-list-item class="px-0 py-1">
+                <template #title>
+                  <div class="d-flex justify-space-between ga-3">
+                    <span class="text-caption text-medium-emphasis"
+                      >Treatment</span
+                    >
+                    <strong class="text-caption">
+                      {{ layananState.ada_treatment ? "Ya" : "Tidak" }}
+                    </strong>
+                  </div>
+                </template>
+              </v-list-item>
 
-          <div class="summary-row">
-            <span>Penjualan Produk</span>
-            <strong>{{ layananState.ada_penjualan ? "Ya" : "Tidak" }}</strong>
-          </div>
-        </div>
+              <v-list-item class="px-0 py-1">
+                <template #title>
+                  <div class="d-flex justify-space-between ga-3">
+                    <span class="text-caption text-medium-emphasis"
+                      >Penjualan</span
+                    >
+                    <strong class="text-caption">
+                      {{ layananState.ada_penjualan ? "Ya" : "Tidak" }}
+                    </strong>
+                  </div>
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+        </v-card>
       </v-col>
 
       <v-col v-if="layananState.ada_konsultasi" cols="12">
-        <div class="summary-box">
-          <div class="summary-box__title">
-            <v-icon size="18" color="primary" class="mr-2">
+        <v-card variant="outlined">
+          <v-card-title
+            class="pa-3 pb-1 text-subtitle-2 font-weight-bold d-flex align-center"
+          >
+            <v-icon size="17" color="primary" class="mr-2">
               {{
                 isConsultationOnline ? "mdi-video-outline" : "mdi-stethoscope"
               }}
             </v-icon>
             Detail Konsultasi
             {{ formatChannel(layananState.channel_konsultasi) }}
-          </div>
+          </v-card-title>
 
-          <template v-if="isConsultationOnline">
-            <v-row dense>
-              <v-col cols="12" md="6">
-                <div class="detail-box">
-                  <div class="detail-label">Keluhan Utama</div>
-                  <div class="detail-value multiline">
+          <v-card-text class="pa-3 pt-1">
+            <template v-if="isConsultationOnline">
+              <v-row dense>
+                <v-col cols="12" md="6">
+                  <div class="text-caption text-medium-emphasis">
+                    Keluhan Utama
+                  </div>
+                  <div class="text-caption font-weight-medium">
                     {{ konsultasiOnlineState.keluhan || "-" }}
                   </div>
-                </div>
-              </v-col>
+                </v-col>
 
-              <v-col cols="12" md="6">
-                <div class="detail-box">
-                  <div class="detail-label">Alergi</div>
-                  <div class="detail-value multiline">
+                <v-col cols="12" md="6">
+                  <div class="text-caption text-medium-emphasis">Alergi</div>
+                  <div class="text-caption font-weight-medium">
                     {{ konsultasiOnlineState.alergi || "-" }}
                   </div>
-                </div>
-              </v-col>
+                </v-col>
 
-              <v-col cols="12" md="4">
-                <div class="detail-box">
-                  <div class="detail-label">Request Dokter</div>
-                  <div class="detail-value">
+                <v-col cols="12" md="4">
+                  <div class="text-caption text-medium-emphasis">
+                    Request Dokter
+                  </div>
+                  <div class="text-caption font-weight-medium">
                     {{ konsultasiOnlineState.request_dokter || "-" }}
                   </div>
-                </div>
-              </v-col>
+                </v-col>
 
-              <v-col cols="12" md="4">
-                <div class="detail-box">
-                  <div class="detail-label">Sedang Hamil</div>
-                  <div class="detail-value">
+                <v-col cols="12" md="4">
+                  <div class="text-caption text-medium-emphasis">
+                    Sedang Hamil
+                  </div>
+                  <div class="text-caption font-weight-medium">
                     {{ formatYesNo(konsultasiOnlineState.sedang_hamil) }}
                   </div>
-                </div>
-              </v-col>
+                </v-col>
 
-              <v-col cols="12" md="4">
-                <div class="detail-box">
-                  <div class="detail-label">Sedang Menyusui</div>
-                  <div class="detail-value">
+                <v-col cols="12" md="4">
+                  <div class="text-caption text-medium-emphasis">
+                    Sedang Menyusui
+                  </div>
+                  <div class="text-caption font-weight-medium">
                     {{ formatYesNo(konsultasiOnlineState.sedang_menyusui) }}
                   </div>
-                </div>
-              </v-col>
+                </v-col>
 
-              <v-col cols="12">
-                <div class="detail-box">
-                  <div class="detail-label">Produk / Obat Sebelumnya</div>
-                  <div class="detail-value multiline">
+                <v-col cols="12">
+                  <div class="text-caption text-medium-emphasis">
+                    Produk / Obat Sebelumnya
+                  </div>
+                  <div class="text-caption font-weight-medium">
                     {{ konsultasiOnlineState.produk_sebelumnya || "-" }}
                   </div>
-                </div>
-              </v-col>
-            </v-row>
-          </template>
+                </v-col>
+              </v-row>
+            </template>
 
-          <template v-else>
-            <v-row dense>
-              <v-col cols="12" md="6">
-                <div class="detail-box">
-                  <div class="detail-label">Keluhan Awal</div>
-                  <div class="detail-value multiline">
+            <template v-else>
+              <v-row dense>
+                <v-col cols="12" md="6">
+                  <div class="text-caption text-medium-emphasis">
+                    Keluhan Awal
+                  </div>
+                  <div class="text-caption font-weight-medium">
                     {{ konsultasiOfflineState.keluhan_awal || "-" }}
                   </div>
-                </div>
-              </v-col>
+                </v-col>
 
-              <v-col cols="12" md="6">
-                <div class="detail-box">
-                  <div class="detail-label">Catatan</div>
-                  <div class="detail-value multiline">
+                <v-col cols="12" md="6">
+                  <div class="text-caption text-medium-emphasis">Catatan</div>
+                  <div class="text-caption font-weight-medium">
                     {{ konsultasiOfflineState.catatan || "-" }}
                   </div>
-                </div>
-              </v-col>
-            </v-row>
-          </template>
-        </div>
+                </v-col>
+              </v-row>
+            </template>
+          </v-card-text>
+        </v-card>
       </v-col>
 
       <v-col v-if="layananState.ada_treatment" cols="12">
-        <div class="summary-box">
-          <div class="summary-box__title">
-            <v-icon size="18" color="success" class="mr-2"> mdi-spa </v-icon>
-            Ringkasan Treatment
-          </div>
+        <v-card variant="outlined">
+          <v-card-title
+            class="pa-3 pb-1 d-flex align-center justify-space-between"
+          >
+            <div class="text-subtitle-2 font-weight-bold d-flex align-center">
+              <v-icon size="17" color="success" class="mr-2">mdi-spa</v-icon>
+              Ringkasan Treatment
+            </div>
 
-          <template v-if="selectedTreatmentItems.length">
-            <div class="item-table">
-              <div class="item-table__head">
-                <span>Treatment</span>
-                <span>Qty</span>
-                <span>Harga</span>
-                <span>Subtotal</span>
+            <v-chip color="success" variant="tonal" size="x-small">
+              Rp {{ formatNumber(calculatedTreatmentTotal) }}
+            </v-chip>
+          </v-card-title>
+
+          <v-card-text class="pa-3 pt-1">
+            <template v-if="selectedTreatmentItems.length">
+              <v-table density="compact">
+                <thead>
+                  <tr>
+                    <th class="text-caption">Treatment</th>
+                    <th class="text-caption">Qty</th>
+                    <th class="text-caption">Harga</th>
+                    <th class="text-caption text-right">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in selectedTreatmentItems" :key="item.key">
+                    <td class="text-caption">{{ item.nama }}</td>
+                    <td class="text-caption">{{ item.jumlah }}</td>
+                    <td class="text-caption">
+                      Rp {{ formatNumber(item.harga) }}
+                    </td>
+                    <td
+                      class="text-caption text-right font-weight-bold text-success"
+                    >
+                      Rp {{ formatNumber(item.subtotal) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </v-table>
+
+              <v-divider class="my-2" />
+
+              <div class="d-flex justify-space-between ga-3">
+                <span class="text-caption text-medium-emphasis"
+                  >Total Treatment</span
+                >
+                <strong class="text-caption text-success">
+                  Rp {{ formatNumber(calculatedTreatmentTotal) }}
+                </strong>
               </div>
 
               <div
-                v-for="item in selectedTreatmentItems"
-                :key="item.key"
-                class="item-table__row"
+                v-if="treatmentRoutingLabel !== '-'"
+                class="d-flex justify-space-between ga-3 mt-1"
               >
-                <span>{{ item.nama }}</span>
-                <span>{{ item.jumlah }}</span>
-                <span>Rp {{ formatNumber(item.harga) }}</span>
-                <strong>Rp {{ formatNumber(item.subtotal) }}</strong>
+                <span class="text-caption text-medium-emphasis">Routing</span>
+                <strong class="text-caption text-right">{{
+                  treatmentRoutingLabel
+                }}</strong>
               </div>
-            </div>
+            </template>
 
-            <div class="summary-row total-row mt-3">
-              <span>Total Treatment</span>
-              <strong class="text-success">
-                Rp {{ formatNumber(calculatedTreatmentTotal) }}
-              </strong>
-            </div>
-
-            <div v-if="treatmentRoutingLabel !== '-'" class="summary-row">
-              <span>Routing Treatment</span>
-              <strong>{{ treatmentRoutingLabel }}</strong>
-            </div>
-          </template>
-
-          <template v-else>
-            <div class="empty-box">Belum ada item treatment yang dipilih.</div>
-          </template>
-        </div>
+            <template v-else>
+              <v-alert color="info" variant="tonal" density="compact">
+                Belum ada item treatment yang dipilih.
+              </v-alert>
+            </template>
+          </v-card-text>
+        </v-card>
       </v-col>
 
       <v-col v-if="layananState.ada_penjualan" cols="12">
-        <div class="summary-box">
-          <div class="summary-box__title">
-            <v-icon size="18" color="info" class="mr-2"> mdi-pill </v-icon>
-            Ringkasan Penjualan Produk
-          </div>
-
-          <template v-if="selectedPenjualanItems.length">
-            <div class="item-table">
-              <div class="item-table__head">
-                <span>Produk</span>
-                <span>Qty</span>
-                <span>Harga</span>
-                <span>Subtotal</span>
-              </div>
-
-              <div
-                v-for="item in selectedPenjualanItems"
-                :key="item.key"
-                class="item-table__row"
-              >
-                <span>{{ item.nama }}</span>
-                <span>{{ item.jumlah }} {{ item.unit }}</span>
-                <span>Rp {{ formatNumber(item.harga) }}</span>
-                <strong>Rp {{ formatNumber(item.subtotal) }}</strong>
-              </div>
+        <v-card variant="outlined">
+          <v-card-title
+            class="pa-3 pb-1 d-flex align-center justify-space-between"
+          >
+            <div class="text-subtitle-2 font-weight-bold d-flex align-center">
+              <v-icon size="17" color="info" class="mr-2">mdi-pill</v-icon>
+              Ringkasan Penjualan Produk
             </div>
 
-            <div class="summary-row total-row mt-3">
-              <span>Total Penjualan</span>
-              <strong class="text-info">
-                Rp {{ formatNumber(calculatedPenjualanTotal) }}
-              </strong>
-            </div>
-          </template>
+            <v-chip color="info" variant="tonal" size="x-small">
+              Rp {{ formatNumber(calculatedPenjualanTotal) }}
+            </v-chip>
+          </v-card-title>
 
-          <template v-else>
-            <div class="empty-box">Belum ada produk yang dipilih.</div>
-          </template>
-        </div>
+          <v-card-text class="pa-3 pt-1">
+            <template v-if="selectedPenjualanItems.length">
+              <v-table density="compact">
+                <thead>
+                  <tr>
+                    <th class="text-caption">Produk</th>
+                    <th class="text-caption">Qty</th>
+                    <th class="text-caption">Harga</th>
+                    <th class="text-caption text-right">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="item in selectedPenjualanItems" :key="item.key">
+                    <td class="text-caption">{{ item.nama }}</td>
+                    <td class="text-caption">
+                      {{ item.jumlah }} {{ item.unit }}
+                    </td>
+                    <td class="text-caption">
+                      Rp {{ formatNumber(item.harga) }}
+                    </td>
+                    <td
+                      class="text-caption text-right font-weight-bold text-info"
+                    >
+                      Rp {{ formatNumber(item.subtotal) }}
+                    </td>
+                  </tr>
+                </tbody>
+              </v-table>
+
+              <v-divider class="my-2" />
+
+              <div class="d-flex justify-space-between ga-3">
+                <span class="text-caption text-medium-emphasis"
+                  >Total Penjualan</span
+                >
+                <strong class="text-caption text-info">
+                  Rp {{ formatNumber(calculatedPenjualanTotal) }}
+                </strong>
+              </div>
+            </template>
+
+            <template v-else>
+              <v-alert color="info" variant="tonal" density="compact">
+                Belum ada produk yang dipilih.
+              </v-alert>
+            </template>
+          </v-card-text>
+        </v-card>
       </v-col>
 
       <v-col cols="12" md="6">
-        <div class="summary-box">
-          <div class="summary-box__title">
-            <v-icon size="18" color="warning" class="mr-2">
+        <v-card variant="outlined" class="h-100">
+          <v-card-title
+            class="pa-3 pb-1 text-subtitle-2 font-weight-bold d-flex align-center"
+          >
+            <v-icon size="17" color="warning" class="mr-2">
               mdi-source-branch
             </v-icon>
             Preview Antrian & Task
-          </div>
+          </v-card-title>
 
-          <div class="summary-row">
-            <span>Antrian Aktif Awal</span>
-            <strong>{{ queueSummary.antrianAwal }}</strong>
-          </div>
+          <v-card-text class="pa-3 pt-1">
+            <v-list density="compact" class="pa-0">
+              <v-list-item class="px-0 py-1">
+                <template #title>
+                  <div class="d-flex justify-space-between ga-3">
+                    <span class="text-caption text-medium-emphasis"
+                      >Antrian Aktif Awal</span
+                    >
+                    <strong class="text-caption text-right">
+                      {{ queueSummary.antrianAwal }}
+                    </strong>
+                  </div>
+                </template>
+              </v-list-item>
 
-          <div class="summary-row">
-            <span>Task Berikutnya</span>
-            <strong>{{ queueSummary.taskBerikutnya }}</strong>
-          </div>
+              <v-list-item class="px-0 py-1">
+                <template #title>
+                  <div class="d-flex justify-space-between ga-3">
+                    <span class="text-caption text-medium-emphasis"
+                      >Task Berikutnya</span
+                    >
+                    <strong class="text-caption text-right">
+                      {{ queueSummary.taskBerikutnya }}
+                    </strong>
+                  </div>
+                </template>
+              </v-list-item>
 
-          <div class="summary-row">
-            <span>Flow Penjualan</span>
-            <strong>{{ queueSummary.penjualanFlow }}</strong>
-          </div>
-        </div>
+              <v-list-item class="px-0 py-1">
+                <template #title>
+                  <div class="d-flex justify-space-between ga-3">
+                    <span class="text-caption text-medium-emphasis"
+                      >Flow Penjualan</span
+                    >
+                    <strong class="text-caption text-right">
+                      {{ queueSummary.penjualanFlow }}
+                    </strong>
+                  </div>
+                </template>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+        </v-card>
       </v-col>
 
       <v-col cols="12" md="6">
-        <div class="summary-box">
-          <div class="summary-box__title">
-            <v-icon size="18" color="success" class="mr-2">
+        <v-card variant="outlined" class="h-100">
+          <v-card-title
+            class="pa-3 pb-1 text-subtitle-2 font-weight-bold d-flex align-center"
+          >
+            <v-icon size="17" color="success" class="mr-2">
               mdi-clipboard-check-outline
             </v-icon>
             Checklist Validasi
-          </div>
+          </v-card-title>
 
-          <template v-if="validationIssues.length">
-            <div
-              v-for="(issue, index) in validationIssues"
-              :key="index"
-              class="issue-item"
-            >
-              {{ issue }}
-            </div>
-          </template>
+          <v-card-text class="pa-3 pt-1">
+            <template v-if="validationIssues.length">
+              <div class="d-flex flex-column ga-1">
+                <v-alert
+                  v-for="(issue, index) in validationIssues"
+                  :key="index"
+                  color="warning"
+                  variant="tonal"
+                  density="compact"
+                >
+                  {{ issue }}
+                </v-alert>
+              </div>
+            </template>
 
-          <template v-else>
-            <div class="ok-item">
-              Semua data minimum untuk registrasi sudah lengkap.
-            </div>
-          </template>
-        </div>
+            <template v-else>
+              <v-alert color="success" variant="tonal" density="compact">
+                Semua data minimum untuk registrasi sudah lengkap.
+              </v-alert>
+            </template>
+          </v-card-text>
+        </v-card>
       </v-col>
 
       <v-col v-if="Number(grandTotal || 0) > 0" cols="12">
-        <div class="summary-box grand">
-          <div>
-            <div class="summary-box__title mb-1">Grand Total Estimasi</div>
-            <div class="grand-subtitle">
-              Total dari treatment dan penjualan produk yang dipilih
+        <v-card color="primary" variant="tonal">
+          <v-card-text
+            class="pa-3 d-flex align-center justify-space-between ga-3"
+          >
+            <div>
+              <div class="text-subtitle-2 font-weight-bold">
+                Grand Total Estimasi
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                Total dari treatment dan penjualan produk yang dipilih
+              </div>
             </div>
-          </div>
 
-          <div class="summary-total grand-text">
-            Rp {{ formatNumber(grandTotal) }}
-          </div>
-        </div>
+            <div class="text-h6 font-weight-bold">
+              Rp {{ formatNumber(grandTotal) }}
+            </div>
+          </v-card-text>
+        </v-card>
       </v-col>
     </v-row>
   </div>

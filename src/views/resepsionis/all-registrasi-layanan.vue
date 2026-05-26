@@ -882,23 +882,126 @@ export default {
       });
     },
 
+    isCompletedStatus(value) {
+      if (value === null || value === undefined || value === "") return false;
+
+      const stringValue = String(value).toLowerCase();
+      const numberValue = Number(value);
+
+      return (
+        numberValue >= 2 ||
+        [
+          "selesai",
+          "done",
+          "complete",
+          "completed",
+          "finish",
+          "finished",
+        ].includes(stringValue)
+      );
+    },
+
+    isDoctorDone(item) {
+      const booleanFlags = [
+        item?.is_dokter_selesai,
+        item?.is_dokter_done,
+        item?.dokter_selesai,
+        item?.doctor_done,
+        item?.has_dokter_done,
+      ];
+
+      if (booleanFlags.some((value) => this.isTrue(value))) {
+        return true;
+      }
+
+      const timestamps = [
+        item?.waktu_selesai_dokter,
+        item?.tanggal_selesai_dokter,
+        item?.dokter_finished_at,
+        item?.doctor_finished_at,
+      ];
+
+      if (timestamps.some(Boolean)) {
+        return true;
+      }
+
+      const statuses = [
+        item?.status_antrian_dokter,
+        item?.antrian_dokter_status,
+        item?.antrian_dokter?.status,
+        item?.antrianDokter?.status,
+        item?.konsultasi?.status,
+        item?.perawatan?.status_dokter,
+      ];
+
+      return statuses.some((value) => this.isCompletedStatus(value));
+    },
+
+    isNurseDone(item) {
+      const booleanFlags = [
+        item?.is_perawat_selesai,
+        item?.is_perawat_done,
+        item?.perawat_selesai,
+        item?.nurse_done,
+        item?.has_perawat_done,
+      ];
+
+      if (booleanFlags.some((value) => this.isTrue(value))) {
+        return true;
+      }
+
+      const timestamps = [
+        item?.waktu_selesai_perawat,
+        item?.tanggal_selesai_perawat,
+        item?.perawat_finished_at,
+        item?.nurse_finished_at,
+      ];
+
+      if (timestamps.some(Boolean)) {
+        return true;
+      }
+
+      const statuses = [
+        item?.status_antrian_perawat,
+        item?.antrian_perawat_status,
+        item?.antrian_perawat?.status,
+        item?.antrianPerawat?.status,
+        item?.perawatan?.status_perawat,
+      ];
+
+      return statuses.some((value) => this.isCompletedStatus(value));
+    },
+
     isDoctorFlow(item) {
-      return this.hasConsultation(item);
+      const needDoctor = this.hasConsultation(item) || this.hasTreatment(item);
+
+      return needDoctor && !this.isDoctorDone(item);
     },
 
     isPaymentFlow(item) {
-      const needPayment =
-        (this.hasSales(item) || this.hasTreatment(item)) &&
-        !this.hasConsultation(item);
+      const needPayment = this.hasSales(item) || this.hasTreatment(item);
 
-      return needPayment && !this.isPaymentPaid(item);
+      if (!needPayment) {
+        return false;
+      }
+
+      if (this.isPaymentPaid(item)) {
+        return false;
+      }
+
+      if (this.hasTreatment(item) && !this.isDoctorDone(item)) {
+        return false;
+      }
+
+      return true;
     },
 
     isNurseFlow(item) {
       return (
         this.hasTreatment(item) &&
-        !this.hasConsultation(item) &&
-        this.isPaymentPaid(item)
+        this.isDoctorDone(item) &&
+        this.isPaymentPaid(item) &&
+        !this.isNurseDone(item)
       );
     },
 

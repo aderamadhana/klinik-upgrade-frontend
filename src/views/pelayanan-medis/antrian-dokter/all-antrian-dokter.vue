@@ -119,83 +119,27 @@
       <!-- SUMMARY -->
       <v-card-text class="pa-4 pb-0">
         <v-row dense>
-          <v-col cols="12" sm="6" md="3">
-            <v-card variant="outlined">
+          <v-col
+            v-for="card in summaryCards"
+            :key="card.key"
+            cols="12"
+            sm="6"
+            md="3"
+          >
+            <v-card :color="card.color" variant="tonal">
               <v-card-text class="pa-3">
                 <div class="d-flex align-center justify-space-between">
                   <div>
-                    <div class="text-caption text-medium-emphasis">
-                      Total Antrian
+                    <div class="text-caption font-weight-medium">
+                      {{ card.label }}
                     </div>
-                    <div class="text-h6 font-weight-bold">
-                      {{ summary.total }}
-                    </div>
-                  </div>
 
-                  <v-avatar color="primary" variant="tonal" size="36">
-                    <v-icon icon="mdi-format-list-numbered" size="20" />
-                  </v-avatar>
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-
-          <v-col cols="12" sm="6" md="3">
-            <v-card variant="outlined">
-              <v-card-text class="pa-3">
-                <div class="d-flex align-center justify-space-between">
-                  <div>
-                    <div class="text-caption text-medium-emphasis">
-                      Menunggu
-                    </div>
-                    <div class="text-h6 font-weight-bold">
-                      {{ summary.menunggu }}
+                    <div class="text-h6 font-weight-bold mt-1">
+                      {{ card.value }}
                     </div>
                   </div>
 
-                  <v-avatar color="warning" variant="tonal" size="36">
-                    <v-icon icon="mdi-clock-outline" size="20" />
-                  </v-avatar>
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-
-          <v-col cols="12" sm="6" md="3">
-            <v-card variant="outlined">
-              <v-card-text class="pa-3">
-                <div class="d-flex align-center justify-space-between">
-                  <div>
-                    <div class="text-caption text-medium-emphasis">
-                      Diproses
-                    </div>
-                    <div class="text-h6 font-weight-bold">
-                      {{ summary.diproses }}
-                    </div>
-                  </div>
-
-                  <v-avatar color="info" variant="tonal" size="36">
-                    <v-icon icon="mdi-progress-clock" size="20" />
-                  </v-avatar>
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-
-          <v-col cols="12" sm="6" md="3">
-            <v-card variant="outlined">
-              <v-card-text class="pa-3">
-                <div class="d-flex align-center justify-space-between">
-                  <div>
-                    <div class="text-caption text-medium-emphasis">Selesai</div>
-                    <div class="text-h6 font-weight-bold">
-                      {{ summary.selesai }}
-                    </div>
-                  </div>
-
-                  <v-avatar color="success" variant="tonal" size="36">
-                    <v-icon icon="mdi-check-circle-outline" size="20" />
-                  </v-avatar>
+                  <v-icon :icon="card.icon" size="28" />
                 </div>
               </v-card-text>
             </v-card>
@@ -220,20 +164,32 @@
           <template #loading>
             <v-skeleton-loader type="table-row@8" />
           </template>
-          <template #item.registrasi="{ item }">
-            <v-btn
-              variant="text"
-              color="primary"
-              size="small"
-              class="px-0 font-weight-bold"
-              @click="goToDetailRegistrasi(item)"
-            >
-              {{ getKodeRegistrasi(item) }}
-            </v-btn>
-          </template>
 
-          <template #item.pasien="{ item }">
-            <div class="py-2">
+          <template #item.pasien_kunjungan="{ item }">
+            <div class="py-3">
+              <div class="d-flex align-center ga-2 flex-wrap mb-2">
+                <v-btn
+                  variant="text"
+                  color="primary"
+                  size="small"
+                  class="px-0 font-weight-bold"
+                  prepend-icon="mdi-ticket-confirmation-outline"
+                  @click="goToDetailRegistrasi(item)"
+                >
+                  {{ getKodeRegistrasi(item) }}
+                </v-btn>
+
+                <v-chip
+                  size="small"
+                  color="secondary"
+                  variant="tonal"
+                  prepend-icon="mdi-calendar-clock-outline"
+                >
+                  {{ formatDate(item.tanggal_kunjungan || item.tanggal) }}
+                  {{ getWaktuKunjungan(item) }}
+                </v-chip>
+              </div>
+
               <div class="text-body-2 font-weight-bold">
                 {{ getPasienName(item) }}
               </div>
@@ -244,41 +200,39 @@
             </div>
           </template>
 
-          <template #item.kunjungan="{ item }">
-            <div class="py-2">
-              <div class="text-body-2 font-weight-medium">
-                {{ formatDate(item.tanggal_kunjungan || item.tanggal) }}
-              </div>
-
-              <div class="text-caption text-medium-emphasis mt-1">
-                {{ getWaktuKunjungan(item) }}
-              </div>
-            </div>
-          </template>
-
           <template #item.layanan="{ item }">
-            <div class="py-2">
-              <div class="text-body-2 font-weight-medium">
+            <div class="py-3">
+              <!-- <div class="text-body-2 font-weight-bold mb-2">
                 {{ formatLayanan(item) }}
-              </div>
+              </div> -->
 
-              <div class="text-caption text-medium-emphasis mt-1">
-                {{ formatNextFlow(item) }}
+              <div class="d-flex align-center ga-1 flex-wrap">
+                <v-chip
+                  v-for="chip in getLayananChips(item)"
+                  :key="chip.label"
+                  :color="chip.color"
+                  :prepend-icon="chip.icon"
+                  size="small"
+                  variant="tonal"
+                >
+                  {{ chip.label }}
+                </v-chip>
               </div>
             </div>
           </template>
 
           <template #item.dokter="{ item }">
-            <div class="py-2">
-              <div class="text-body-2 font-weight-medium">
+            <div class="py-3">
+              <div class="text-body-2 font-weight-bold">
                 {{ getDokterName(item) }}
               </div>
 
               <v-chip
-                size="x-small"
-                color="primary"
+                size="small"
+                :color="getChannelColor(item.channel_konsultasi)"
+                :prepend-icon="getChannelIcon(item.channel_konsultasi)"
                 variant="tonal"
-                class="mt-1"
+                class="mt-2"
               >
                 {{ formatChannel(item.channel_konsultasi) }}
               </v-chip>
@@ -286,19 +240,25 @@
           </template>
 
           <template #item.status="{ item }">
-            <v-chip size="small" :color="getStatusColor(item)" variant="tonal">
+            <v-chip
+              size="default"
+              :color="getStatusColor(item)"
+              :prepend-icon="getStatusIcon(item)"
+              variant="flat"
+              class="font-weight-bold"
+            >
               {{ formatStatus(item) }}
             </v-chip>
           </template>
 
           <template #item.aksi="{ item }">
-            <div class="d-flex justify-end align-center ga-2 flex-wrap py-2">
+            <div class="d-flex justify-end align-center ga-2 py-2 flex-wrap">
               <v-btn
                 size="small"
                 color="primary"
-                variant="tonal"
+                variant="flat"
                 prepend-icon="mdi-play-circle-outline"
-                @click="goToProsesAntrianDokter(item)"
+                @click.stop="goToProsesAntrianDokter(item)"
               >
                 Proses
               </v-btn>
@@ -308,7 +268,7 @@
                 color="error"
                 variant="tonal"
                 prepend-icon="mdi-delete-outline"
-                @click="confirmDelete(item)"
+                @click.stop="confirmDelete(item)"
               >
                 Hapus
               </v-btn>
@@ -385,31 +345,39 @@
         <v-divider />
 
         <v-card-text class="pa-4">
-          <div class="text-body-2 mb-3">
+          <v-alert
+            type="warning"
+            variant="tonal"
+            density="compact"
+            class="mb-4"
+          >
             Data antrian dokter ini akan dihapus dari daftar antrian.
-          </div>
+          </v-alert>
 
           <v-card v-if="selectedItem" variant="outlined">
             <v-card-text class="pa-3">
-              <div class="d-flex justify-space-between align-center mb-2">
+              <div class="d-flex justify-space-between align-center mb-2 ga-3">
                 <span class="text-body-2 text-medium-emphasis">
                   No Registrasi
                 </span>
-                <strong class="text-body-2">
+
+                <strong class="text-body-2 text-right">
                   {{ getKodeRegistrasi(selectedItem) }}
                 </strong>
               </div>
 
-              <div class="d-flex justify-space-between align-center mb-2">
+              <div class="d-flex justify-space-between align-center mb-2 ga-3">
                 <span class="text-body-2 text-medium-emphasis"> Pasien </span>
-                <strong class="text-body-2">
+
+                <strong class="text-body-2 text-right">
                   {{ getPasienName(selectedItem) }}
                 </strong>
               </div>
 
-              <div class="d-flex justify-space-between align-center">
+              <div class="d-flex justify-space-between align-center ga-3">
                 <span class="text-body-2 text-medium-emphasis"> Dokter </span>
-                <strong class="text-body-2">
+
+                <strong class="text-body-2 text-right">
                   {{ getDokterName(selectedItem) }}
                 </strong>
               </div>
@@ -432,6 +400,7 @@
           <v-btn
             color="error"
             variant="flat"
+            prepend-icon="mdi-delete-outline"
             :loading="deleteLoading"
             @click="deleteItem"
           >
@@ -518,47 +487,35 @@ export default {
 
       headers: [
         {
-          title: "No Registrasi",
-          key: "registrasi",
+          title: "Pasien / Kunjungan",
+          key: "pasien_kunjungan",
           sortable: false,
-          width: 190,
-        },
-        {
-          title: "Pasien",
-          key: "pasien",
-          sortable: false,
-          minWidth: 260,
-        },
-        {
-          title: "Kunjungan",
-          key: "kunjungan",
-          sortable: false,
-          width: 170,
+          minWidth: 390,
         },
         {
           title: "Layanan",
           key: "layanan",
           sortable: false,
-          minWidth: 220,
+          minWidth: 260,
         },
         {
           title: "Dokter / Channel",
           key: "dokter",
           sortable: false,
-          minWidth: 240,
+          minWidth: 220,
         },
         {
           title: "Status",
           key: "status",
           sortable: false,
-          width: 130,
+          width: 150,
         },
         {
           title: "Aksi",
           key: "aksi",
           sortable: false,
           align: "end",
-          width: 210,
+          width: 250,
         },
       ],
     };
@@ -580,6 +537,39 @@ export default {
         selesai: this.rows.filter((x) => this.getStatusValue(x) === "selesai")
           .length,
       };
+    },
+
+    summaryCards() {
+      return [
+        {
+          key: "total",
+          label: "Total Antrian",
+          value: this.summary.total,
+          color: "primary",
+          icon: "mdi-format-list-numbered",
+        },
+        {
+          key: "menunggu",
+          label: "Menunggu",
+          value: this.summary.menunggu,
+          color: "warning",
+          icon: "mdi-clock-outline",
+        },
+        {
+          key: "diproses",
+          label: "Diproses",
+          value: this.summary.diproses,
+          color: "info",
+          icon: "mdi-progress-clock",
+        },
+        {
+          key: "selesai",
+          label: "Selesai",
+          value: this.summary.selesai,
+          color: "success",
+          icon: "mdi-check-circle-outline",
+        },
+      ];
     },
   },
 
@@ -789,12 +779,6 @@ export default {
       );
     },
 
-    getNomorAntrian(item) {
-      return (
-        item?.nomor_antrian || item?.no_antrian || item?.kode_antrian || "-"
-      );
-    },
-
     getPasienName(item) {
       return (
         item?.pasien?.nama ||
@@ -807,12 +791,10 @@ export default {
 
     getPasienMeta(item) {
       const pasien = item?.pasien || {};
+      const noRm = pasien.no_rm || item.no_rm;
+      const noHp = pasien.no_hp || item.no_hp;
 
-      return (
-        [pasien.no_rm || item.no_rm, pasien.no_hp || item.no_hp]
-          .filter(Boolean)
-          .join(" • ") || "-"
-      );
+      return [noRm, noHp].filter(Boolean).join(" • ") || "-";
     },
 
     getDokterName(item) {
@@ -822,7 +804,7 @@ export default {
         item?.dokter?.nama ||
         item?.nama_dokter ||
         item?.dokter_nama ||
-        "-"
+        "Belum ditentukan"
       );
     },
 
@@ -833,19 +815,44 @@ export default {
       return this.formatTime(item?.registered_at || item?.created_at);
     },
 
+    normalizeStatus(raw) {
+      if (raw === 0 || raw === "0") return "menunggu";
+      if (raw === 1 || raw === "1") return "menunggu";
+      if (raw === 2 || raw === "2") return "selesai";
+      if (raw === 9 || raw === "9") return "batal";
+
+      const value = String(raw || "menunggu").toLowerCase();
+
+      if (["waiting", "menunggu"].includes(value)) return "menunggu";
+      if (["called", "dipanggil"].includes(value)) return "dipanggil";
+      if (["process", "processing", "proses", "diproses"].includes(value)) {
+        return "proses";
+      }
+      if (["done", "finish", "finished", "selesai"].includes(value)) {
+        return "selesai";
+      }
+      if (["cancel", "cancelled", "batal"].includes(value)) return "batal";
+
+      return value;
+    },
+
     getStatusValue(item) {
+      if (
+        typeof item === "string" ||
+        typeof item === "number" ||
+        item === null ||
+        item === undefined
+      ) {
+        return this.normalizeStatus(item);
+      }
+
       const raw =
         item?.status_antrian ||
         item?.queue_status ||
         item?.status_task ||
         item?.status;
 
-      if (raw === 0 || raw === "0") return "menunggu";
-      if (raw === 1 || raw === "1") return "menunggu";
-      if (raw === 2 || raw === "2") return "selesai";
-      if (raw === 9 || raw === "9") return "batal";
-
-      return String(raw || "menunggu").toLowerCase();
+      return this.normalizeStatus(raw);
     },
 
     formatStatus(item) {
@@ -862,18 +869,32 @@ export default {
       return map[status] || status || "-";
     },
 
-    getStatusClass(item) {
+    getStatusColor(item) {
       const status = this.getStatusValue(item);
 
       const map = {
-        menunggu: "status-waiting",
-        dipanggil: "status-called",
-        proses: "status-process",
-        selesai: "status-done",
-        batal: "status-cancel",
+        menunggu: "warning",
+        dipanggil: "info",
+        proses: "primary",
+        selesai: "success",
+        batal: "error",
       };
 
-      return map[status] || "status-waiting";
+      return map[status] || "grey";
+    },
+
+    getStatusIcon(item) {
+      const status = this.getStatusValue(item);
+
+      const map = {
+        menunggu: "mdi-clock-outline",
+        dipanggil: "mdi-bell-ring-outline",
+        proses: "mdi-progress-clock",
+        selesai: "mdi-check-circle-outline",
+        batal: "mdi-close-circle-outline",
+      };
+
+      return map[status] || "mdi-help-circle-outline";
     },
 
     formatChannel(channel) {
@@ -885,16 +906,33 @@ export default {
       return "Tanpa Konsultasi";
     },
 
+    getChannelColor(channel) {
+      const value = String(channel || "").toLowerCase();
+
+      if (value === "1" || value === "offline") return "primary";
+      if (value === "2" || value === "online") return "info";
+
+      return "secondary";
+    },
+
+    getChannelIcon(channel) {
+      const value = String(channel || "").toLowerCase();
+
+      if (value === "1" || value === "offline") {
+        return "mdi-hospital-building";
+      }
+
+      if (value === "2" || value === "online") {
+        return "mdi-monitor-account";
+      }
+
+      return "mdi-minus-circle-outline";
+    },
+
     formatLayanan(item) {
-      const hasKonsultasi =
-        this.isTrue(item?.ada_konsultasi) ||
-        Number(item?.channel_konsultasi || 0) > 0;
-
-      const hasTreatment =
-        this.isTrue(item?.ada_treatment) || this.isTrue(item?.is_treatment);
-
-      const hasPenjualan =
-        this.isTrue(item?.ada_penjualan) || this.isTrue(item?.is_penjualan);
+      const hasKonsultasi = this.hasKonsultasi(item);
+      const hasTreatment = this.hasTreatment(item);
+      const hasPenjualan = this.hasPenjualan(item);
 
       if (hasKonsultasi && hasTreatment && hasPenjualan) {
         return "Konsultasi + Treatment + Penjualan";
@@ -915,17 +953,61 @@ export default {
       return "Pelayanan Dokter";
     },
 
-    formatNextFlow(item) {
-      const hasTreatment =
-        this.isTrue(item?.ada_treatment) || this.isTrue(item?.is_treatment);
+    getLayananChips(item) {
+      const chips = [];
 
-      const needNurse =
-        this.isTrue(item?.perlu_tindakan_perawat) ||
-        this.isTrue(item?.is_tindakan_perawat);
+      if (this.hasKonsultasi(item)) {
+        chips.push({
+          label: "Konsultasi",
+          color: "primary",
+          icon: "mdi-stethoscope",
+        });
+      }
 
-      if (hasTreatment && needNurse) return "Lanjut ke Nurse Station";
-      if (hasTreatment) return "Ditangani dokter";
-      return "Tanpa treatment";
+      if (this.hasTreatment(item)) {
+        chips.push({
+          label: "Treatment",
+          color: "secondary",
+          icon: "mdi-face-woman-shimmer-outline",
+        });
+      }
+
+      if (this.hasPenjualan(item)) {
+        chips.push({
+          label: "Penjualan",
+          color: "success",
+          icon: "mdi-cart-outline",
+        });
+      }
+
+      if (!chips.length) {
+        chips.push({
+          label: "Dokter",
+          color: "info",
+          icon: "mdi-doctor",
+        });
+      }
+
+      return chips;
+    },
+
+    hasKonsultasi(item) {
+      return (
+        this.isTrue(item?.ada_konsultasi) ||
+        Number(item?.channel_konsultasi || 0) > 0
+      );
+    },
+
+    hasTreatment(item) {
+      return (
+        this.isTrue(item?.ada_treatment) || this.isTrue(item?.is_treatment)
+      );
+    },
+
+    hasPenjualan(item) {
+      return (
+        this.isTrue(item?.ada_penjualan) || this.isTrue(item?.is_penjualan)
+      );
     },
 
     isTrue(value) {
