@@ -1,61 +1,36 @@
 <template>
   <div class="mt-3">
-    <v-card variant="flat" class="border mb-4">
-      <v-card-text class="pa-4">
-        <div
-          class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
-        >
-          <div class="d-flex align-center ga-3">
-            <v-avatar color="primary" variant="tonal" size="42">
-              <v-icon size="22">mdi-clipboard-list-outline</v-icon>
-            </v-avatar>
+    <v-alert
+      type="info"
+      variant="tonal"
+      rounded="lg"
+      border="start"
+      class="mb-5"
+    >
+      Pilih satu atau lebih layanan yang dibutuhkan pada kunjungan ini.
+    </v-alert>
 
-            <div>
-              <div class="text-subtitle-1 font-weight-bold">Jenis Layanan</div>
-              <div class="text-caption text-medium-emphasis">
-                Pilih layanan yang dibutuhkan pasien.
-              </div>
+    <v-card variant="outlined" class="mb-4">
+      <v-card-text class="pa-4">
+        <div class="d-flex align-center ga-3 mb-4">
+          <v-avatar color="primary" variant="tonal" size="42">
+            <v-icon size="22">mdi-clipboard-list-outline</v-icon>
+          </v-avatar>
+
+          <div>
+            <div class="text-subtitle-1 font-weight-bold">Jenis Layanan</div>
+            <div class="text-caption text-medium-emphasis">
+              Tentukan layanan utama pasien pada kunjungan ini.
             </div>
           </div>
-
-          <v-chip
-            :color="
-              localLayanan.ada_konsultasi ||
-              localLayanan.ada_treatment ||
-              localLayanan.ada_penjualan
-                ? 'success'
-                : 'warning'
-            "
-            variant="tonal"
-            size="small"
-            class="font-weight-medium"
-          >
-            <v-icon start size="16">
-              {{
-                localLayanan.ada_konsultasi ||
-                localLayanan.ada_treatment ||
-                localLayanan.ada_penjualan
-                  ? "mdi-check-circle-outline"
-                  : "mdi-alert-circle-outline"
-              }}
-            </v-icon>
-            {{
-              localLayanan.ada_konsultasi ||
-              localLayanan.ada_treatment ||
-              localLayanan.ada_penjualan
-                ? "Layanan dipilih"
-                : "Belum ada layanan"
-            }}
-          </v-chip>
         </div>
 
         <v-row dense>
           <v-col cols="12" md="4">
             <v-card
-              :color="localLayanan.ada_konsultasi ? 'primary' : undefined"
-              :variant="localLayanan.ada_konsultasi ? 'tonal' : 'outlined'"
-              hover
-              rounded="lg"
+              variant="outlined"
+              class="service-card h-100"
+              :class="{ 'service-card--active': localLayanan.ada_konsultasi }"
               role="button"
               tabindex="0"
               @click="toggleService('ada_konsultasi')"
@@ -82,7 +57,6 @@
                 <div class="text-subtitle-2 font-weight-bold mt-4">
                   Konsultasi
                 </div>
-
                 <div class="text-caption text-medium-emphasis mt-1">
                   Konsultasi dokter, online, SPPG, SPKK, atau jenis konsultasi
                   lain.
@@ -93,10 +67,9 @@
 
           <v-col cols="12" md="4">
             <v-card
-              :color="localLayanan.ada_treatment ? 'success' : undefined"
-              :variant="localLayanan.ada_treatment ? 'tonal' : 'outlined'"
-              hover
-              rounded="lg"
+              variant="outlined"
+              class="service-card h-100"
+              :class="{ 'service-card--active': localLayanan.ada_treatment }"
               role="button"
               tabindex="0"
               @click="toggleService('ada_treatment')"
@@ -104,8 +77,8 @@
             >
               <v-card-text class="pa-4">
                 <div class="d-flex align-start justify-space-between ga-3">
-                  <v-avatar color="success" variant="tonal" size="42">
-                    <v-icon size="22">mdi-spa</v-icon>
+                  <v-avatar color="primary" variant="tonal" size="42">
+                    <v-icon size="22">mdi-face-woman-shimmer-outline</v-icon>
                   </v-avatar>
 
                   <v-icon
@@ -123,9 +96,8 @@
                 <div class="text-subtitle-2 font-weight-bold mt-4">
                   Treatment
                 </div>
-
                 <div class="text-caption text-medium-emphasis mt-1">
-                  Pasien menjalani tindakan atau treatment.
+                  Digunakan jika pasien menjalani tindakan atau treatment.
                 </div>
               </v-card-text>
             </v-card>
@@ -133,10 +105,9 @@
 
           <v-col cols="12" md="4">
             <v-card
-              :color="localLayanan.ada_penjualan ? 'info' : undefined"
-              :variant="localLayanan.ada_penjualan ? 'tonal' : 'outlined'"
-              hover
-              rounded="lg"
+              variant="outlined"
+              class="service-card h-100"
+              :class="{ 'service-card--active': localLayanan.ada_penjualan }"
               role="button"
               tabindex="0"
               @click="toggleService('ada_penjualan')"
@@ -144,8 +115,8 @@
             >
               <v-card-text class="pa-4">
                 <div class="d-flex align-start justify-space-between ga-3">
-                  <v-avatar color="info" variant="tonal" size="42">
-                    <v-icon size="22">mdi-pill</v-icon>
+                  <v-avatar color="primary" variant="tonal" size="42">
+                    <v-icon size="22">mdi-cart-outline</v-icon>
                   </v-avatar>
 
                   <v-icon
@@ -163,9 +134,8 @@
                 <div class="text-subtitle-2 font-weight-bold mt-4">
                   Penjualan Produk
                 </div>
-
                 <div class="text-caption text-medium-emphasis mt-1">
-                  Pasien membeli produk atau obat.
+                  Digunakan jika ada penjualan obat atau produk.
                 </div>
               </v-card-text>
             </v-card>
@@ -177,44 +147,26 @@
     <v-expand-transition>
       <v-card
         v-if="localLayanan.ada_konsultasi"
-        variant="flat"
-        class="border mb-4"
+        variant="outlined"
+        class="mb-4"
       >
         <v-card-text class="pa-4">
-          <div
-            class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
-          >
-            <div class="d-flex align-center ga-3">
-              <v-avatar color="primary" variant="tonal" size="42">
-                <v-icon size="22">mdi-account-voice</v-icon>
-              </v-avatar>
+          <div class="d-flex align-center ga-3 mb-4">
+            <v-avatar color="primary" variant="tonal" size="42">
+              <v-icon size="22">mdi-format-list-checks</v-icon>
+            </v-avatar>
 
-              <div>
-                <div class="text-subtitle-1 font-weight-bold">
-                  Pilih Jenis Konsultasi
-                </div>
-                <div class="text-caption text-medium-emphasis">
-                  Pilihan mengikuti master mapping yang aktif.
-                </div>
+            <div>
+              <div class="text-subtitle-1 font-weight-bold">
+                Jenis Konsultasi
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                Pilih jenis konsultasi dari master mapping yang aktif.
               </div>
             </div>
-
-            <v-chip color="primary" variant="tonal" size="small">
-              {{ konsultasiMappingOptions.length }} opsi tersedia
-            </v-chip>
           </div>
 
-          <v-alert
-            v-if="!konsultasiMappingOptions.length"
-            type="warning"
-            variant="tonal"
-            density="comfortable"
-            border="start"
-          >
-            Belum ada mapping konsultasi aktif.
-          </v-alert>
-
-          <template v-else>
+          <template v-if="konsultasiGroups.length">
             <div
               v-for="group in konsultasiGroups"
               :key="group.key"
@@ -224,7 +176,6 @@
                 <v-icon size="18" color="primary">
                   {{ group.icon }}
                 </v-icon>
-
                 <div class="text-subtitle-2 font-weight-bold">
                   {{ group.title }}
                 </div>
@@ -235,71 +186,65 @@
                   v-for="mapping in group.items"
                   :key="mapping.id || mapping.source_code"
                   cols="12"
-                  md="6"
-                  lg="4"
+                  md="4"
                 >
                   <v-card
-                    :color="
-                      localLayanan.konsultasi_source_code ===
-                      mapping.source_code
-                        ? 'primary'
-                        : undefined
-                    "
-                    :variant="
-                      localLayanan.konsultasi_source_code ===
-                      mapping.source_code
-                        ? 'tonal'
-                        : 'outlined'
-                    "
-                    hover
-                    rounded="lg"
+                    variant="outlined"
+                    class="mapping-card h-100"
+                    :class="{
+                      'mapping-card--active':
+                        String(
+                          localLayanan.konsultasi_source_code || '',
+                        ).toUpperCase() ===
+                        String(mapping.source_code || '').toUpperCase(),
+                    }"
                     role="button"
                     tabindex="0"
                     @click="selectKonsultasiMapping(mapping)"
                     @keyup.enter="selectKonsultasiMapping(mapping)"
                   >
-                    <v-card-text class="pa-3">
-                      <div class="d-flex align-start ga-3">
+                    <v-card-text class="pa-4">
+                      <div
+                        class="d-flex align-start justify-space-between ga-3"
+                      >
                         <v-avatar color="primary" variant="tonal" size="38">
                           <v-icon size="20">
                             {{ getKonsultasiIcon(mapping) }}
                           </v-icon>
                         </v-avatar>
 
-                        <div class="flex-grow-1">
-                          <div class="text-body-2 font-weight-bold">
-                            {{
-                              mapping.source_name ||
-                              mapping.nama_accurate ||
-                              mapping.source_code
-                            }}
-                          </div>
-
-                          <div class="text-caption text-medium-emphasis mt-1">
-                            Biaya default
-                          </div>
-
-                          <div class="text-body-2 font-weight-bold mt-1">
-                            Rp {{ formatNumber(mapping.default_harga || 0) }}
-                          </div>
-                        </div>
-
                         <v-icon
                           :color="
-                            localLayanan.konsultasi_source_code ===
-                            mapping.source_code
+                            String(
+                              localLayanan.konsultasi_source_code || '',
+                            ).toUpperCase() ===
+                            String(mapping.source_code || '').toUpperCase()
                               ? 'success'
                               : 'grey'
                           "
                           size="24"
                         >
                           {{
-                            localLayanan.konsultasi_source_code ===
-                            mapping.source_code
+                            String(
+                              localLayanan.konsultasi_source_code || "",
+                            ).toUpperCase() ===
+                            String(mapping.source_code || "").toUpperCase()
                               ? "mdi-check-circle"
                               : "mdi-checkbox-blank-circle-outline"
                           }}
                         </v-icon>
+                      </div>
+
+                      <div class="text-subtitle-2 font-weight-bold mt-3">
+                        {{ getMappingTitle(mapping) }}
+                      </div>
+
+                      <div class="text-caption text-medium-emphasis mt-1">
+                        {{ mapping.source_code || "-" }}
+                      </div>
+
+                      <div class="text-body-2 font-weight-bold mt-2">
+                        Rp {{ formatNumber(mapping.default_harga || 0) }}
                       </div>
                     </v-card-text>
                   </v-card>
@@ -307,16 +252,22 @@
               </v-row>
             </div>
           </template>
+
+          <v-alert
+            v-else
+            type="warning"
+            variant="tonal"
+            border="start"
+            density="comfortable"
+          >
+            Master mapping konsultasi belum tersedia atau belum aktif.
+          </v-alert>
         </v-card-text>
       </v-card>
     </v-expand-transition>
 
     <v-expand-transition>
-      <v-card
-        v-if="localLayanan.ada_penjualan"
-        variant="flat"
-        class="border mb-4"
-      >
+      <v-card v-if="localLayanan.ada_penjualan" variant="outlined" class="mb-4">
         <v-card-text class="pa-4">
           <div class="d-flex align-center justify-space-between flex-wrap ga-4">
             <div class="d-flex align-center ga-3">
@@ -329,18 +280,19 @@
                   Opsi Penjualan
                 </div>
                 <div class="text-caption text-medium-emphasis">
-                  Tandai jika transaksi berasal dari pembelian online.
+                  Aktifkan hanya jika transaksi ini benar-benar berasal dari
+                  pembelian online.
                 </div>
               </div>
             </div>
 
             <v-switch
-              v-model="localLayanan.is_pembelian_online"
+              :model-value="localLayanan.is_pembelian_online"
               color="primary"
               density="compact"
               hide-details
               inset
-              @update:model-value="emitLayanan"
+              @update:model-value="updatePembelianOnline"
             >
               <template #label>
                 <span class="text-body-2 font-weight-medium">
@@ -354,7 +306,11 @@
     </v-expand-transition>
 
     <v-expand-transition>
-      <v-card v-if="validationMessages.length" variant="flat" class="border">
+      <v-card
+        v-if="validationMessages.length"
+        variant="outlined"
+        class="border-warning"
+      >
         <v-card-text class="pa-4">
           <div class="d-flex flex-column ga-2">
             <v-alert
@@ -383,12 +339,10 @@ export default {
       type: Object,
       required: true,
     },
-
     accurateMappingList: {
       type: Array,
       default: () => [],
     },
-
     selectedKonsultasiMapping: {
       type: Object,
       default: null,
@@ -483,20 +437,10 @@ export default {
       return groups;
     },
 
-    pembelianOnlineMapping() {
-      return (
-        this.activeMappings.find((item) => {
-          return (
-            this.normalizeSourceType(item.source_type) === "pembelian" &&
-            String(item.source_code || "").toUpperCase() === "PEMBELIAN_ONLINE"
-          );
-        }) || null
-      );
-    },
-
     selectedKonsultasiMappingLocal() {
-      return this.getMappingBySourceCode(
-        this.localLayanan.konsultasi_source_code,
+      return (
+        this.selectedKonsultasiMapping ||
+        this.getMappingBySourceCode(this.localLayanan.konsultasi_source_code)
       );
     },
 
@@ -516,45 +460,6 @@ export default {
         !this.localLayanan.konsultasi_source_code
       ) {
         messages.push("Jenis konsultasi wajib dipilih.");
-      }
-
-      if (
-        this.localLayanan.ada_konsultasi &&
-        this.localLayanan.konsultasi_source_code &&
-        !this.selectedKonsultasiMappingLocal
-      ) {
-        messages.push(
-          `Mapping konsultasi ${this.localLayanan.konsultasi_source_code} tidak ditemukan.`,
-        );
-      }
-
-      if (
-        this.localLayanan.ada_konsultasi &&
-        this.selectedKonsultasiMappingLocal &&
-        this.toBoolean(
-          this.selectedKonsultasiMappingLocal.is_send_to_accurate,
-        ) &&
-        !this.selectedKonsultasiMappingLocal.kode_accurate
-      ) {
-        messages.push(
-          `Kode Accurate ${this.selectedKonsultasiMappingLocal.source_code} belum diisi.`,
-        );
-      }
-
-      if (
-        this.localLayanan.is_pembelian_online &&
-        !this.pembelianOnlineMapping
-      ) {
-        messages.push("Mapping PEMBELIAN_ONLINE belum tersedia.");
-      }
-
-      if (
-        this.localLayanan.is_pembelian_online &&
-        this.pembelianOnlineMapping &&
-        this.toBoolean(this.pembelianOnlineMapping.is_send_to_accurate) &&
-        !this.pembelianOnlineMapping.kode_accurate
-      ) {
-        messages.push("Kode Accurate PEMBELIAN_ONLINE belum diisi.");
       }
 
       return messages;
@@ -592,6 +497,7 @@ export default {
 
     normalizeLayanan(value = {}) {
       const adaKonsultasi = Boolean(value?.ada_konsultasi);
+      const adaPenjualan = Boolean(value?.ada_penjualan);
 
       let konsultasiSourceCode =
         value?.konsultasi_source_code ||
@@ -629,9 +535,11 @@ export default {
         konsultasi_mapping_id:
           selectedMapping?.id || value?.konsultasi_mapping_id || null,
         ada_treatment: Boolean(value?.ada_treatment),
-        ada_penjualan: Boolean(value?.ada_penjualan),
+        ada_penjualan: adaPenjualan,
         route_treatment: value?.route_treatment || "",
-        is_pembelian_online: Boolean(value?.is_pembelian_online),
+        is_pembelian_online: adaPenjualan
+          ? Boolean(value?.is_pembelian_online)
+          : false,
       };
     },
 
@@ -654,7 +562,12 @@ export default {
     },
 
     toBoolean(value) {
-      return value === true || value === 1 || value === "1";
+      return (
+        value === true ||
+        value === 1 ||
+        value === "1" ||
+        String(value).toLowerCase() === "true"
+      );
     },
 
     formatNumber(value) {
@@ -698,9 +611,17 @@ export default {
       return "mdi-hospital-building";
     },
 
+    getMappingTitle(mapping) {
+      return (
+        mapping?.source_name ||
+        mapping?.nama_accurate ||
+        mapping?.source_code ||
+        "-"
+      );
+    },
+
     ensureDefaultKonsultasiMapping() {
       if (!this.localLayanan.ada_konsultasi) return;
-
       if (this.localLayanan.konsultasi_source_code) return;
 
       const firstMapping =
@@ -767,6 +688,15 @@ export default {
       this.emitLayanan();
     },
 
+    updatePembelianOnline(value) {
+      this.localLayanan = this.normalizeLayanan({
+        ...this.localLayanan,
+        is_pembelian_online: Boolean(value),
+      });
+
+      this.emitLayanan();
+    },
+
     emitLayanan() {
       const selectedMapping = this.getMappingBySourceCode(
         this.localLayanan.konsultasi_source_code,
@@ -806,3 +736,28 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.service-card,
+.mapping-card {
+  cursor: pointer;
+  transition: 0.16s ease;
+  background: #ffffff;
+}
+
+.service-card:hover,
+.mapping-card:hover {
+  border-color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.04);
+}
+
+.service-card--active,
+.mapping-card--active {
+  border-color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.08);
+}
+
+.border-warning {
+  border-color: rgb(var(--v-theme-warning)) !important;
+}
+</style>

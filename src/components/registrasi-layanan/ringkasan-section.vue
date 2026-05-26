@@ -1,10 +1,10 @@
 <template>
-  <div>
-    <v-card color="primary" variant="tonal" class="mb-4">
+  <div class="mt-3">
+    <v-card variant="flat" color="primary" class="mb-4" rounded="lg">
       <v-card-text class="pa-4">
         <div class="d-flex align-center justify-space-between flex-wrap ga-3">
           <div class="d-flex align-center ga-3">
-            <v-avatar color="primary" variant="flat" size="46">
+            <v-avatar color="white" variant="tonal" size="44">
               <v-icon size="24">mdi-clipboard-check-outline</v-icon>
             </v-avatar>
 
@@ -12,7 +12,7 @@
               <div class="text-subtitle-1 font-weight-bold">
                 Ringkasan Registrasi
               </div>
-              <div class="text-caption text-medium-emphasis">
+              <div class="text-body-2">
                 Periksa kembali data sebelum registrasi disimpan.
               </div>
             </div>
@@ -103,7 +103,7 @@
         <v-card variant="outlined" class="h-100">
           <v-card-text class="pa-4">
             <div class="d-flex align-center ga-3 mb-3">
-              <v-avatar color="info" variant="tonal" size="38">
+              <v-avatar color="primary" variant="tonal" size="38">
                 <v-icon size="20">mdi-format-list-checks</v-icon>
               </v-avatar>
 
@@ -119,14 +119,14 @@
 
             <v-divider class="mb-3" />
 
-            <div class="d-flex flex-wrap ga-2 mb-3">
+            <div class="d-flex align-center flex-wrap ga-2 mb-4">
               <v-chip
                 v-if="layananState.ada_konsultasi"
                 color="primary"
                 variant="tonal"
                 size="small"
               >
-                <v-icon start size="15">mdi-stethoscope</v-icon>
+                <v-icon start size="16">mdi-stethoscope</v-icon>
                 Konsultasi
               </v-chip>
 
@@ -136,7 +136,7 @@
                 variant="tonal"
                 size="small"
               >
-                <v-icon start size="15">mdi-spa</v-icon>
+                <v-icon start size="16">mdi-face-woman-shimmer-outline</v-icon>
                 Treatment
               </v-chip>
 
@@ -146,16 +146,12 @@
                 variant="tonal"
                 size="small"
               >
-                <v-icon start size="15">mdi-pill</v-icon>
+                <v-icon start size="16">mdi-cart-outline</v-icon>
                 Penjualan
               </v-chip>
 
               <v-chip
-                v-if="
-                  !layananState.ada_konsultasi &&
-                  !layananState.ada_treatment &&
-                  !layananState.ada_penjualan
-                "
+                v-if="!hasSelectedLayanan"
                 color="warning"
                 variant="tonal"
                 size="small"
@@ -166,9 +162,27 @@
 
             <v-row dense>
               <v-col v-if="layananState.ada_konsultasi" cols="12" sm="6">
+                <div class="text-caption text-medium-emphasis">
+                  Jenis Konsultasi
+                </div>
+                <div class="text-body-2 font-weight-bold">
+                  {{ consultationLabel }}
+                </div>
+              </v-col>
+
+              <v-col v-if="layananState.ada_konsultasi" cols="12" sm="6">
                 <div class="text-caption text-medium-emphasis">Channel</div>
                 <div class="text-body-2 font-weight-bold">
-                  {{ formatChannel(layananState.channel_konsultasi) }}
+                  {{ isConsultationOnline ? "Online" : "Offline" }}
+                </div>
+              </v-col>
+
+              <v-col v-if="layananState.ada_treatment" cols="12" sm="6">
+                <div class="text-caption text-medium-emphasis">
+                  Jalur Treatment
+                </div>
+                <div class="text-body-2 font-weight-bold">
+                  {{ treatmentRoutingLabel }}
                 </div>
               </v-col>
 
@@ -217,7 +231,7 @@
               </div>
 
               <v-chip color="primary" variant="tonal" size="small">
-                {{ formatChannel(layananState.channel_konsultasi) }}
+                {{ isConsultationOnline ? "Online" : "Offline" }}
               </v-chip>
             </div>
 
@@ -226,81 +240,43 @@
             <template v-if="isConsultationOnline">
               <v-row dense>
                 <v-col cols="12" md="6">
-                  <v-card variant="tonal" color="grey" class="h-100">
-                    <v-card-text class="pa-3">
-                      <div class="text-caption text-medium-emphasis">
-                        Request Dokter
-                      </div>
-                      <div class="text-body-2 font-weight-medium">
-                        {{ konsultasiOnlineState.request_dokter || "-" }}
-                      </div>
-                    </v-card-text>
-                  </v-card>
+                  <div class="readonly-box">
+                    <div class="text-caption text-medium-emphasis">Keluhan</div>
+                    <div class="text-body-2">
+                      {{ konsultasiOnlineState.keluhan || "-" }}
+                    </div>
+                  </div>
                 </v-col>
 
                 <v-col cols="12" md="6">
-                  <v-card variant="tonal" color="grey" class="h-100">
-                    <v-card-text class="pa-3">
-                      <div class="text-caption text-medium-emphasis">
-                        Alergi
-                      </div>
-                      <div class="text-body-2 font-weight-medium">
-                        {{ konsultasiOnlineState.alergi || "-" }}
-                      </div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-
-                <v-col cols="12">
-                  <v-card variant="tonal" color="grey">
-                    <v-card-text class="pa-3">
-                      <div class="text-caption text-medium-emphasis">
-                        Keluhan
-                      </div>
-                      <div class="text-body-2 font-weight-medium">
-                        {{ konsultasiOnlineState.keluhan || "-" }}
-                      </div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-
-                <v-col cols="12">
-                  <v-card variant="tonal" color="grey">
-                    <v-card-text class="pa-3">
-                      <div class="text-caption text-medium-emphasis">
-                        Produk Sebelumnya
-                      </div>
-                      <div class="text-body-2 font-weight-medium">
-                        {{ konsultasiOnlineState.produk_sebelumnya || "-" }}
-                      </div>
-                    </v-card-text>
-                  </v-card>
+                  <div class="readonly-box">
+                    <div class="text-caption text-medium-emphasis">Alergi</div>
+                    <div class="text-body-2">
+                      {{ konsultasiOnlineState.alergi || "-" }}
+                    </div>
+                  </div>
                 </v-col>
 
                 <v-col cols="12" md="6">
-                  <v-card variant="tonal" color="grey">
-                    <v-card-text class="pa-3">
-                      <div class="text-caption text-medium-emphasis">
-                        Sedang Hamil
-                      </div>
-                      <div class="text-body-2 font-weight-medium">
-                        {{ konsultasiOnlineState.sedang_hamil || "-" }}
-                      </div>
-                    </v-card-text>
-                  </v-card>
+                  <div class="readonly-box">
+                    <div class="text-caption text-medium-emphasis">
+                      Sedang Hamil
+                    </div>
+                    <div class="text-body-2">
+                      {{ konsultasiOnlineState.sedang_hamil || "-" }}
+                    </div>
+                  </div>
                 </v-col>
 
                 <v-col cols="12" md="6">
-                  <v-card variant="tonal" color="grey">
-                    <v-card-text class="pa-3">
-                      <div class="text-caption text-medium-emphasis">
-                        Sedang Menyusui
-                      </div>
-                      <div class="text-body-2 font-weight-medium">
-                        {{ konsultasiOnlineState.sedang_menyusui || "-" }}
-                      </div>
-                    </v-card-text>
-                  </v-card>
+                  <div class="readonly-box">
+                    <div class="text-caption text-medium-emphasis">
+                      Sedang Menyusui
+                    </div>
+                    <div class="text-body-2">
+                      {{ konsultasiOnlineState.sedang_menyusui || "-" }}
+                    </div>
+                  </div>
                 </v-col>
               </v-row>
             </template>
@@ -308,29 +284,23 @@
             <template v-else>
               <v-row dense>
                 <v-col cols="12" md="6">
-                  <v-card variant="tonal" color="grey" class="h-100">
-                    <v-card-text class="pa-3">
-                      <div class="text-caption text-medium-emphasis">
-                        Keluhan Awal
-                      </div>
-                      <div class="text-body-2 font-weight-medium">
-                        {{ konsultasiOfflineState.keluhan_awal || "-" }}
-                      </div>
-                    </v-card-text>
-                  </v-card>
+                  <div class="readonly-box">
+                    <div class="text-caption text-medium-emphasis">
+                      Keluhan Awal
+                    </div>
+                    <div class="text-body-2">
+                      {{ konsultasiOfflineState.keluhan_awal || "-" }}
+                    </div>
+                  </div>
                 </v-col>
 
                 <v-col cols="12" md="6">
-                  <v-card variant="tonal" color="grey" class="h-100">
-                    <v-card-text class="pa-3">
-                      <div class="text-caption text-medium-emphasis">
-                        Catatan
-                      </div>
-                      <div class="text-body-2 font-weight-medium">
-                        {{ konsultasiOfflineState.catatan || "-" }}
-                      </div>
-                    </v-card-text>
-                  </v-card>
+                  <div class="readonly-box">
+                    <div class="text-caption text-medium-emphasis">Catatan</div>
+                    <div class="text-body-2">
+                      {{ konsultasiOfflineState.catatan || "-" }}
+                    </div>
+                  </div>
                 </v-col>
               </v-row>
             </template>
@@ -341,12 +311,10 @@
       <v-col v-if="layananState.ada_treatment" cols="12" md="6">
         <v-card variant="outlined" class="h-100">
           <v-card-text class="pa-4">
-            <div
-              class="d-flex align-center justify-space-between flex-wrap ga-3 mb-3"
-            >
+            <div class="d-flex align-center justify-space-between ga-3 mb-3">
               <div class="d-flex align-center ga-3">
                 <v-avatar color="success" variant="tonal" size="38">
-                  <v-icon size="20">mdi-spa</v-icon>
+                  <v-icon size="20">mdi-face-woman-shimmer-outline</v-icon>
                 </v-avatar>
 
                 <div>
@@ -364,39 +332,33 @@
 
             <v-divider class="mb-3" />
 
-            <template v-if="selectedTreatmentItems.length">
-              <div class="d-flex flex-column ga-2">
-                <v-card
-                  v-for="item in selectedTreatmentItems"
-                  :key="item.key"
-                  variant="tonal"
-                  color="grey"
-                >
-                  <v-card-text class="pa-3">
-                    <div class="d-flex justify-space-between ga-3">
-                      <div>
-                        <div class="text-body-2 font-weight-bold">
-                          {{ item.nama }}
-                        </div>
-                        <div class="text-caption text-medium-emphasis">
-                          {{ item.jumlah }} x Rp {{ formatNumber(item.harga) }}
-                        </div>
-                      </div>
+            <div
+              v-if="selectedTreatmentItems.length"
+              class="d-flex flex-column ga-2"
+            >
+              <div
+                v-for="item in selectedTreatmentItems"
+                :key="item.key"
+                class="summary-item"
+              >
+                <div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ item.nama }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis">
+                    {{ item.jumlah }} x Rp {{ formatNumber(item.harga) }}
+                  </div>
+                </div>
 
-                      <strong class="text-body-2 text-success text-right">
-                        Rp {{ formatNumber(item.subtotal) }}
-                      </strong>
-                    </div>
-                  </v-card-text>
-                </v-card>
+                <div class="text-body-2 font-weight-bold">
+                  Rp {{ formatNumber(item.subtotal) }}
+                </div>
               </div>
-            </template>
+            </div>
 
-            <template v-else>
-              <v-alert color="info" variant="tonal" density="compact">
-                Belum ada treatment yang dipilih.
-              </v-alert>
-            </template>
+            <v-alert v-else type="warning" variant="tonal" density="compact">
+              Item treatment belum dipilih.
+            </v-alert>
           </v-card-text>
         </v-card>
       </v-col>
@@ -404,9 +366,7 @@
       <v-col v-if="layananState.ada_penjualan" cols="12" md="6">
         <v-card variant="outlined" class="h-100">
           <v-card-text class="pa-4">
-            <div
-              class="d-flex align-center justify-space-between flex-wrap ga-3 mb-3"
-            >
+            <div class="d-flex align-center justify-space-between ga-3 mb-3">
               <div class="d-flex align-center ga-3">
                 <v-avatar color="info" variant="tonal" size="38">
                   <v-icon size="20">mdi-pill</v-icon>
@@ -429,40 +389,33 @@
 
             <v-divider class="mb-3" />
 
-            <template v-if="selectedPenjualanItems.length">
-              <div class="d-flex flex-column ga-2">
-                <v-card
-                  v-for="item in selectedPenjualanItems"
-                  :key="item.key"
-                  variant="tonal"
-                  color="grey"
-                >
-                  <v-card-text class="pa-3">
-                    <div class="d-flex justify-space-between ga-3">
-                      <div>
-                        <div class="text-body-2 font-weight-bold">
-                          {{ item.nama }}
-                        </div>
-                        <div class="text-caption text-medium-emphasis">
-                          {{ item.jumlah }} {{ item.unit || "" }} x Rp
-                          {{ formatNumber(item.harga) }}
-                        </div>
-                      </div>
+            <div
+              v-if="selectedPenjualanItems.length"
+              class="d-flex flex-column ga-2"
+            >
+              <div
+                v-for="item in selectedPenjualanItems"
+                :key="item.key"
+                class="summary-item"
+              >
+                <div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ item.nama }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis">
+                    {{ item.jumlah }} x Rp {{ formatNumber(item.harga) }}
+                  </div>
+                </div>
 
-                      <strong class="text-body-2 text-info text-right">
-                        Rp {{ formatNumber(item.subtotal) }}
-                      </strong>
-                    </div>
-                  </v-card-text>
-                </v-card>
+                <div class="text-body-2 font-weight-bold">
+                  Rp {{ formatNumber(item.subtotal) }}
+                </div>
               </div>
-            </template>
+            </div>
 
-            <template v-else>
-              <v-alert color="info" variant="tonal" density="compact">
-                Belum ada produk yang dipilih.
-              </v-alert>
-            </template>
+            <v-alert v-else type="warning" variant="tonal" density="compact">
+              Produk belum dipilih.
+            </v-alert>
           </v-card-text>
         </v-card>
       </v-col>
@@ -521,30 +474,28 @@
         </v-card>
       </v-col>
 
-      <v-col v-if="Number(grandTotal || 0) > 0" cols="12" md="6">
-        <v-card color="primary" variant="tonal" class="h-100">
-          <v-card-text class="pa-4">
-            <div
-              class="d-flex align-center justify-space-between ga-3 flex-wrap"
-            >
-              <div class="d-flex align-center ga-3">
-                <v-avatar color="primary" variant="flat" size="42">
-                  <v-icon size="22">mdi-cash-multiple</v-icon>
-                </v-avatar>
+      <v-col v-if="Number(grandTotal || 0) > 0" cols="12">
+        <v-card color="primary" variant="tonal">
+          <v-card-text
+            class="pa-4 d-flex align-center justify-space-between ga-3 flex-wrap"
+          >
+            <div class="d-flex align-center ga-3">
+              <v-avatar color="primary" variant="flat" size="42">
+                <v-icon size="22">mdi-cash-multiple</v-icon>
+              </v-avatar>
 
-                <div>
-                  <div class="text-subtitle-1 font-weight-bold">
-                    Grand Total Estimasi
-                  </div>
-                  <div class="text-caption text-medium-emphasis">
-                    Total dari konsultasi, treatment, dan penjualan produk.
-                  </div>
+              <div>
+                <div class="text-subtitle-1 font-weight-bold">
+                  Grand Total Estimasi
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  Total dari konsultasi, treatment, dan penjualan produk.
                 </div>
               </div>
+            </div>
 
-              <div class="text-h5 font-weight-bold">
-                Rp {{ formatNumber(grandTotal) }}
-              </div>
+            <div class="text-h6 font-weight-bold">
+              Rp {{ formatNumber(grandTotal) }}
             </div>
           </v-card-text>
         </v-card>
@@ -562,67 +513,46 @@ export default {
       type: Object,
       required: true,
     },
-
     pasienList: {
       type: Array,
       default: () => [],
     },
-
     dokterList: {
       type: Array,
       default: () => [],
     },
-
     perawatList: {
       type: Array,
       default: () => [],
     },
-
     tindakanList: {
       type: Array,
       default: () => [],
     },
-
     obatList: {
       type: Array,
       default: () => [],
     },
-
     accurateMappingList: {
       type: Array,
       default: () => [],
     },
-
-    selectedKonsultasiMapping: {
-      type: Object,
-      default: null,
-    },
-
     totalTreatment: {
       type: Number,
       default: 0,
     },
-
     totalPenjualan: {
       type: Number,
       default: 0,
     },
-
-    totalKonsultasi: {
-      type: Number,
-      default: 0,
-    },
-
     formatNumber: {
       type: Function,
       required: true,
     },
-
     getTreatmentSubtotal: {
       type: Function,
       default: null,
     },
-
     getPenjualanSubtotal: {
       type: Function,
       default: null,
@@ -634,6 +564,9 @@ export default {
       return {
         ada_konsultasi: false,
         channel_konsultasi: "",
+        konsultasi_source_code: null,
+        konsultasi_source_name: null,
+        konsultasi_mapping_id: null,
         ada_treatment: false,
         ada_penjualan: false,
         route_treatment: "",
@@ -677,30 +610,60 @@ export default {
       };
     },
 
-    hasSelectedLayanan() {
-      return (
-        Boolean(this.layananState.ada_konsultasi) ||
-        Boolean(this.layananState.ada_treatment) ||
-        Boolean(this.layananState.ada_penjualan)
+    activeMappings() {
+      return (this.accurateMappingList || []).filter((item) => {
+        if (!item) return false;
+
+        return (
+          !this.toBoolean(item.is_delete) &&
+          this.toBoolean(item.is_active !== undefined ? item.is_active : true)
+        );
+      });
+    },
+
+    selectedKonsultasiMapping() {
+      if (this.layananState.konsultasi_mapping_id) {
+        const byId = this.activeMappings.find((item) => {
+          return (
+            String(item.id || "") ===
+            String(this.layananState.konsultasi_mapping_id || "")
+          );
+        });
+
+        if (byId) return byId;
+      }
+
+      return this.getMappingBySourceCode(
+        this.layananState.konsultasi_source_code,
       );
     },
 
     isConsultationOnline() {
-      return this.layananState.channel_konsultasi === "online";
+      return (
+        String(this.layananState.channel_konsultasi || "").toLowerCase() ===
+          "online" ||
+        String(this.layananState.konsultasi_source_code || "")
+          .toUpperCase()
+          .includes("ONLINE")
+      );
     },
 
-    konsultasiSourceCode() {
-      if (!this.layananState.ada_konsultasi) {
-        return null;
-      }
-
-      return this.isConsultationOnline
-        ? "KONSULTASI_ONLINE"
-        : "KONSULTASI_OFFLINE";
+    consultationLabel() {
+      return (
+        this.layananState.konsultasi_source_name ||
+        this.selectedKonsultasiMapping?.source_name ||
+        this.selectedKonsultasiMapping?.nama_accurate ||
+        this.layananState.konsultasi_source_code ||
+        "-"
+      );
     },
 
-    pembelianOnlineMapping() {
-      return this.getMappingBySourceCode("PEMBELIAN_ONLINE");
+    hasSelectedLayanan() {
+      return (
+        this.layananState.ada_konsultasi ||
+        this.layananState.ada_treatment ||
+        this.layananState.ada_penjualan
+      );
     },
 
     selectedPatientName() {
@@ -709,12 +672,17 @@ export default {
         this.getDisplayText(this.form?.selected_pasien) ||
         this.getDisplayText(this.form?.pasien_detail) ||
         this.form?.pasien_nama ||
-        this.form?.nama_pasien ||
-        this.form?.nama_pelanggan;
+        this.form?.nama_pasien;
 
       if (direct) return direct;
 
-      const item = this.findById(this.pasienList, this.form?.pasien_new_id);
+      const id =
+        this.form?.pasien_id ||
+        this.form?.pasien_new_id ||
+        this.form?.selected_pasien_id;
+
+      const item = this.findById(this.pasienList, id);
+
       return this.getDisplayText(item) || "-";
     },
 
@@ -722,13 +690,13 @@ export default {
       const direct =
         this.getDisplayText(this.form?.dokter) ||
         this.getDisplayText(this.form?.selected_dokter) ||
-        this.getDisplayText(this.form?.dokter_detail) ||
         this.form?.dokter_nama ||
         this.form?.nama_dokter;
 
       if (direct) return direct;
 
       const item = this.findById(this.dokterList, this.form?.dokter_id);
+
       return this.getDisplayText(item) || "-";
     },
 
@@ -736,13 +704,13 @@ export default {
       const direct =
         this.getDisplayText(this.form?.perawat) ||
         this.getDisplayText(this.form?.selected_perawat) ||
-        this.getDisplayText(this.form?.perawat_detail) ||
         this.form?.perawat_nama ||
         this.form?.nama_perawat;
 
       if (direct) return direct;
 
       const item = this.findById(this.perawatList, this.form?.perawat_id);
+
       return this.getDisplayText(item) || "-";
     },
 
@@ -784,9 +752,9 @@ export default {
     },
 
     calculatedTreatmentTotal() {
-      if (Number(this.totalTreatment || 0) > 0) {
-        return Number(this.totalTreatment || 0);
-      }
+      const manual = Number(this.totalTreatment || 0);
+
+      if (manual > 0) return manual;
 
       return this.selectedTreatmentItems.reduce((sum, item) => {
         return sum + Number(item.subtotal || 0);
@@ -794,9 +762,9 @@ export default {
     },
 
     calculatedPenjualanTotal() {
-      if (Number(this.totalPenjualan || 0) > 0) {
-        return Number(this.totalPenjualan || 0);
-      }
+      const manual = Number(this.totalPenjualan || 0);
+
+      if (manual > 0) return manual;
 
       return this.selectedPenjualanItems.reduce((sum, item) => {
         return sum + Number(item.subtotal || 0);
@@ -804,7 +772,15 @@ export default {
     },
 
     calculatedKonsultasiTotal() {
-      return Number(this.totalKonsultasi || this.form?.total_konsultasi || 0);
+      if (!this.layananState.ada_konsultasi) return 0;
+
+      if (this.layananState.ada_treatment) return 0;
+
+      const fromForm = Number(this.form?.total_konsultasi || 0);
+
+      if (fromForm > 0) return fromForm;
+
+      return Number(this.selectedKonsultasiMapping?.default_harga || 0);
     },
 
     grandTotal() {
@@ -846,40 +822,16 @@ export default {
 
       if (
         this.layananState.ada_konsultasi &&
-        this.isEmpty(this.layananState.channel_konsultasi)
+        this.isEmpty(this.layananState.konsultasi_source_code)
       ) {
-        issues.push("Channel konsultasi belum dipilih.");
-      }
-
-      if (this.layananState.ada_konsultasi && !this.selectedKonsultasiMapping) {
-        issues.push(
-          `Mapping Accurate ${this.konsultasiSourceCode} belum tersedia.`,
-        );
+        issues.push("Jenis konsultasi belum dipilih.");
       }
 
       if (
         this.layananState.ada_konsultasi &&
-        this.selectedKonsultasiMapping &&
-        this.toBoolean(this.selectedKonsultasiMapping.is_send_to_accurate) &&
-        this.isEmpty(this.selectedKonsultasiMapping.kode_accurate)
+        this.isEmpty(this.layananState.channel_konsultasi)
       ) {
-        issues.push(`Kode Accurate ${this.konsultasiSourceCode} belum diisi.`);
-      }
-
-      if (
-        this.layananState.is_pembelian_online &&
-        !this.pembelianOnlineMapping
-      ) {
-        issues.push("Mapping Accurate PEMBELIAN_ONLINE belum tersedia.");
-      }
-
-      if (
-        this.layananState.is_pembelian_online &&
-        this.pembelianOnlineMapping &&
-        this.toBoolean(this.pembelianOnlineMapping.is_send_to_accurate) &&
-        this.isEmpty(this.pembelianOnlineMapping.kode_accurate)
-      ) {
-        issues.push("Kode Accurate PEMBELIAN_ONLINE belum diisi.");
+        issues.push("Channel konsultasi belum dipilih.");
       }
 
       if (this.layananState.ada_konsultasi && this.isConsultationOnline) {
@@ -973,9 +925,7 @@ export default {
       ) {
         penjualanFlow = "Produk ikut dalam transaksi kunjungan";
       } else if (this.layananState.ada_penjualan) {
-        penjualanFlow = this.layananState.is_pembelian_online
-          ? "Produk online langsung masuk pembayaran"
-          : "Produk langsung masuk pembayaran";
+        penjualanFlow = "Produk langsung masuk pembayaran";
       }
 
       return {
@@ -994,25 +944,11 @@ export default {
     },
 
     toBoolean(value) {
-      return value === true || value === 1 || value === "1";
-    },
-
-    formatChannel(value) {
-      if (value === "online") return "Online";
-      if (value === "offline") return "Offline";
-      return "-";
-    },
-
-    getMappingBySourceCode(sourceCode) {
-      if (!sourceCode) return null;
-
       return (
-        (this.accurateMappingList || []).find((item) => {
-          return (
-            item?.source_type === "registrasi_layanan" &&
-            item?.source_code === sourceCode
-          );
-        }) || null
+        value === true ||
+        value === 1 ||
+        value === "1" ||
+        String(value).toLowerCase() === "true"
       );
     },
 
@@ -1035,54 +971,63 @@ export default {
       return value;
     },
 
-    findById(list, value) {
-      const normalizedValue = this.normalizeValue(value);
+    findById(list, id) {
+      const normalizedId = this.normalizeValue(id);
 
-      if (this.isEmpty(normalizedValue)) return null;
+      if (this.isEmpty(normalizedId)) return null;
 
-      return (list || []).find((row) => {
-        const candidates = [
-          row?.id,
-          row?.value,
-          row?.new_id,
-          row?.treatment_id,
-          row?.tindakan_id,
-          row?.produk_id,
-          row?.obat_id,
-          row?.karyawan_id,
-          row?.pasien_new_id,
-          row?.kode,
-        ];
+      return (
+        (list || []).find((item) => {
+          const candidates = [
+            item?.id,
+            item?.value,
+            item?.new_id,
+            item?.pasien_new_id,
+            item?.karyawan_id,
+            item?.treatment_id,
+            item?.produk_id,
+            item?.obat_id,
+          ];
 
-        return candidates.some((candidate) => {
-          return (
-            !this.isEmpty(candidate) &&
-            String(candidate) === String(normalizedValue)
-          );
-        });
-      });
+          return candidates.some((candidate) => {
+            return String(candidate ?? "") === String(normalizedId ?? "");
+          });
+        }) || null
+      );
     },
 
-    getDisplayText(row) {
-      if (!row || typeof row === "string" || typeof row === "number") {
-        return "";
+    getDisplayText(item) {
+      if (!item) return "";
+
+      if (typeof item === "string" || typeof item === "number") {
+        return String(item);
       }
 
       return (
-        row.nama ||
-        row.text ||
-        row.label ||
-        row.name ||
-        row.nama_pasien ||
-        row.nama_pelanggan ||
-        row.nama_karyawan ||
-        row.nama_dokter ||
-        row.nama_perawat ||
-        row.nama_treatment ||
-        row.nama_produk ||
-        row.nama_obat ||
-        row.title ||
+        item.nama ||
+        item.name ||
+        item.text ||
+        item.title ||
+        item.label ||
+        item.nama_pasien ||
+        item.nama_karyawan ||
+        item.nama_treatment ||
+        item.nama_produk ||
+        item.nama_obat_bahan ||
         ""
+      );
+    },
+
+    getMappingBySourceCode(sourceCode) {
+      if (!sourceCode) return null;
+
+      return (
+        this.activeMappings.find((item) => {
+          return (
+            String(item.source_code || "").toUpperCase() ===
+            String(sourceCode || "").toUpperCase()
+          );
+        }) || null
       );
     },
 
@@ -1090,81 +1035,69 @@ export default {
       if (!item) return null;
 
       if (type === "treatment") {
-        return this.normalizeValue(
-          item.tindakan_id ??
-            item.treatment_id ??
-            item.master_treatment_id ??
-            item.id,
+        return (
+          item.treatment_toko_id ||
+          item.master_treatment_toko_id ||
+          item.treatment_id ||
+          item.master_treatment_id ||
+          item.id ||
+          null
         );
       }
 
-      if (type === "produk") {
-        return this.normalizeValue(
-          item.produk_id ??
-            item.obat_id ??
-            item.produk_toko_id ??
-            item.master_produk_id ??
-            item.id,
-        );
-      }
-
-      return this.normalizeValue(item.id);
+      return (
+        item.produk_toko_id ||
+        item.master_produk_toko_id ||
+        item.obat_toko_id ||
+        item.produk_id ||
+        item.master_produk_id ||
+        item.obat_id ||
+        item.id ||
+        null
+      );
     },
 
     resolvePrice(item) {
       return Number(
-        item?.harga ??
-          item?.harga_jual ??
-          item?.harga_treatment ??
-          item?.treatment_harga ??
-          item?.produk_harga ??
-          item?.price ??
+        item.harga ||
+          item.harga_jual ||
+          item.harga_treatment ||
+          item.treatment_harga ||
+          item.harga_produk ||
+          item.price ||
           0,
       );
     },
 
     resolveTreatmentSubtotal(item) {
-      if (typeof this.getTreatmentSubtotal === "function") {
+      if (this.getTreatmentSubtotal) {
         return Number(this.getTreatmentSubtotal(item) || 0);
       }
 
-      const base =
-        this.resolvePrice(item) * Number(item?.jumlah || item?.qty || 0);
-      const diskonType = item?.diskon_type || item?.diskon_tipe || "%";
-      const diskonValue = Number(item?.diskon_value || item?.diskon || 0);
-      const diskonReferral = Number(item?.diskon_referral || 0);
-
-      const diskon =
-        diskonType === "%" ? (base * diskonValue) / 100 : diskonValue;
-
-      return Math.max(base - diskon - diskonReferral, 0);
+      return (
+        Number(item.subtotal || item.total || 0) ||
+        this.resolvePrice(item) * Number(item.jumlah || item.qty || 0)
+      );
     },
 
     resolvePenjualanSubtotal(item) {
-      if (typeof this.getPenjualanSubtotal === "function") {
+      if (this.getPenjualanSubtotal) {
         return Number(this.getPenjualanSubtotal(item) || 0);
       }
 
-      const base =
-        this.resolvePrice(item) * Number(item?.jumlah || item?.qty || 0);
-      const diskonType = item?.diskon_type || item?.diskon_tipe || "%";
-      const diskonValue = Number(item?.diskon_value || item?.diskon || 0);
-      const diskonReferral = Number(item?.diskon_referral || 0);
-
-      const diskon =
-        diskonType === "%" ? (base * diskonValue) / 100 : diskonValue;
-
-      return Math.max(base - diskon - diskonReferral, 0);
+      return (
+        Number(item.subtotal || item.total || 0) ||
+        this.resolvePrice(item) * Number(item.jumlah || item.qty || 0)
+      );
     },
 
     getTreatmentName(item) {
       const direct =
-        item?.nama ||
-        item?.nama_treatment ||
-        item?.treatment_nama ||
-        item?.nama_tindakan ||
-        item?.label ||
-        item?.text;
+        item.nama ||
+        item.nama_treatment ||
+        item.treatment_name ||
+        item.nama_item ||
+        item.label;
 
       if (direct) return direct;
 
@@ -1172,18 +1105,19 @@ export default {
         this.tindakanList,
         this.getItemId(item, "treatment"),
       );
-      return this.getDisplayText(found) || "-";
+
+      return this.getDisplayText(found) || "Treatment";
     },
 
     getProdukName(item) {
       const direct =
-        item?.nama ||
-        item?.nama_produk ||
-        item?.nama_obat ||
-        item?.produk_nama ||
-        item?.obat_nama ||
-        item?.label ||
-        item?.text;
+        item.nama ||
+        item.nama_produk ||
+        item.nama_obat_bahan ||
+        item.produk_name ||
+        item.obat_name ||
+        item.nama_item ||
+        item.label;
 
       if (direct) return direct;
 
@@ -1191,8 +1125,35 @@ export default {
         this.obatList,
         this.getItemId(item, "produk"),
       );
-      return this.getDisplayText(found) || "-";
+
+      return this.getDisplayText(found) || "Produk";
     },
   },
 };
 </script>
+
+<style scoped>
+.readonly-box {
+  min-height: 64px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f5f5f5;
+}
+
+.summary-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f5f5f5;
+}
+
+.queue-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+</style>
