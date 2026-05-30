@@ -21,13 +21,22 @@
       </div>
 
       <!-- EMPTY STATE -->
-      <v-alert
-        v-if="!items.length"
-        type="info"
-        density="compact"
-        class="mb-4"
-        text="Belum ada produk."
-      />
+      <div
+        v-if="!items || items.length === 0"
+        class="d-flex flex-column align-center justify-center text-center pa-8"
+      >
+        <v-avatar color="grey-lighten-3" size="56" class="mb-3">
+          <v-icon size="30" color="grey"> mdi-pill-off </v-icon>
+        </v-avatar>
+
+        <div class="text-subtitle-2 font-weight-bold mb-1">
+          Belum ada produk
+        </div>
+
+        <div class="text-body-2 text-medium-emphasis">
+          Produk dari registrasi layanan atau resep dokter akan muncul di sini.
+        </div>
+      </div>
 
       <!-- ITEM LIST -->
       <v-card

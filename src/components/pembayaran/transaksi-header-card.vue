@@ -174,7 +174,7 @@
                 <div class="text-body-2 font-weight-bold">
                   Perbarui Data Pasien
                 </div>
-                <div class="text-caption text-medium-emphasis">
+                <div class="text-caption text-white text-medium-emphasis">
                   Fitur ini belum aktif pada halaman pembayaran
                 </div>
               </div>
