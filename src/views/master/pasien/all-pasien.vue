@@ -39,7 +39,6 @@
         <v-alert
           v-if="successMessage"
           type="success"
-          variant="tonal"
           density="comfortable"
           class="mb-4"
           closable
@@ -51,7 +50,6 @@
         <v-alert
           v-if="errorMessage"
           type="error"
-          variant="tonal"
           density="comfortable"
           class="mb-4"
           closable
@@ -97,7 +95,6 @@
           <template #item.jenis_kelamin="{ item }">
             <v-chip
               size="small"
-              variant="tonal"
               :color="item.jenis_kelamin === 'L' ? 'blue' : 'pink'"
             >
               {{ formatJenisKelamin(item) }}
@@ -109,7 +106,6 @@
               <v-btn
                 size="small"
                 color="info"
-                variant="tonal"
                 prepend-icon="mdi-history"
                 :to="`/master/pasien/riwayat/${item.id}`"
               >
@@ -119,7 +115,6 @@
               <v-btn
                 size="small"
                 color="warning"
-                variant="tonal"
                 prepend-icon="mdi-pencil"
                 :to="`/master/pasien/edit/${item.id}`"
               >
@@ -129,7 +124,6 @@
               <v-btn
                 size="small"
                 color="error"
-                variant="tonal"
                 prepend-icon="mdi-delete"
                 @click="openDeleteDialog(item)"
               >

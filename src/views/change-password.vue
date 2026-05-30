@@ -14,7 +14,6 @@
     <v-alert
       v-if="errorMessage"
       type="error"
-      variant="tonal"
       class="mb-4"
       closable
       @click:close="errorMessage = ''"
@@ -25,7 +24,6 @@
     <v-alert
       v-if="successMessage"
       type="success"
-      variant="tonal"
       class="mb-4"
       closable
       @click:close="successMessage = ''"
@@ -98,7 +96,7 @@
             </v-col>
           </v-row>
 
-          <v-alert type="info" variant="tonal" class="mt-2">
+          <v-alert type="info" class="mt-2">
             Setelah password berhasil diubah, status wajib ganti password akan
             dinonaktifkan.
           </v-alert>

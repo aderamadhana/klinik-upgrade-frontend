@@ -13,7 +13,7 @@
             </div>
           </div>
 
-          <v-avatar color="primary" variant="tonal" size="40">
+          <v-avatar color="primary" size="40">
             <v-icon icon="mdi-receipt-text-check-outline" size="22" />
           </v-avatar>
         </div>
@@ -155,11 +155,7 @@
             </div>
           </div>
 
-          <v-chip
-            size="small"
-            :color="paymentCoverageStatus.color"
-            variant="tonal"
-          >
+          <v-chip size="small" :color="paymentCoverageStatus.color">
             {{ paymentCoverageStatus.text }}
           </v-chip>
         </div>
@@ -167,7 +163,6 @@
         <!-- QUICK ACTIONS -->
         <div class="d-flex flex-wrap ga-2 mb-4">
           <v-btn
-            variant="tonal"
             color="primary"
             size="small"
             prepend-icon="mdi-cash-check"
@@ -178,7 +173,6 @@
           </v-btn>
 
           <v-btn
-            variant="tonal"
             color="secondary"
             size="small"
             prepend-icon="mdi-call-split"
@@ -190,7 +184,6 @@
 
           <v-btn
             v-if="hasCashMethod"
-            variant="tonal"
             color="success"
             size="small"
             prepend-icon="mdi-cash-sync"
@@ -210,7 +203,7 @@
         >
           <v-card-item class="px-4 py-3">
             <template #prepend>
-              <v-avatar color="primary" variant="tonal" size="34">
+              <v-avatar color="primary" size="34">
                 <v-icon icon="mdi-credit-card-outline" size="18" />
               </v-avatar>
             </template>
@@ -342,12 +335,7 @@
         </v-card>
 
         <!-- CASH RECEIVED -->
-        <v-card
-          v-if="hasCashMethod"
-          variant="tonal"
-          color="success"
-          class="mb-4"
-        >
+        <v-card v-if="hasCashMethod" color="success" class="mb-4">
           <v-card-text class="pa-4">
             <div class="d-flex align-start ga-3 mb-3">
               <v-avatar color="success" variant="flat" size="36">

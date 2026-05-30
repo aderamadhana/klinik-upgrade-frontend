@@ -1,12 +1,6 @@
 <template>
   <div class="mt-3">
-    <v-alert
-      type="info"
-      variant="tonal"
-      density="comfortable"
-      border="start"
-      class="mb-4"
-    >
+    <v-alert type="info" density="comfortable" border="start" class="mb-4">
       Bagian ini hanya muncul jika layanan konsultasi dipilih dan channel
       konsultasi adalah offline.
     </v-alert>
@@ -17,7 +11,7 @@
           class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
         >
           <div class="d-flex align-center ga-3">
-            <v-avatar color="primary" variant="tonal" size="42">
+            <v-avatar color="primary" size="42">
               <v-icon size="22">mdi-clipboard-text-outline</v-icon>
             </v-avatar>
 
@@ -31,12 +25,7 @@
             </div>
           </div>
 
-          <v-chip
-            color="primary"
-            variant="tonal"
-            size="small"
-            class="font-weight-medium"
-          >
+          <v-chip color="primary" size="small" class="font-weight-medium">
             <v-icon start size="16">mdi-stethoscope</v-icon>
             Konsultasi Offline
           </v-chip>
@@ -65,7 +54,7 @@
           </v-col>
 
           <v-col cols="12" md="5">
-            <v-card variant="tonal" color="primary" class="h-100">
+            <v-card color="primary" class="h-100">
               <v-card-text class="pa-4">
                 <div class="d-flex align-start ga-3">
                   <v-icon size="22">mdi-information-outline</v-icon>

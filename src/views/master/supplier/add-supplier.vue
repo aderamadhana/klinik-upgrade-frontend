@@ -149,7 +149,6 @@
 
             <v-btn
               color="primary"
-              variant="tonal"
               prepend-icon="mdi-plus"
               @click="addTokoMapping"
             >
@@ -157,7 +156,7 @@
             </v-btn>
           </div>
 
-          <v-alert type="info" variant="tonal" class="mb-4" rounded="lg">
+          <v-alert type="info" class="mb-4" rounded="lg">
             Centang <strong>Default</strong> jika supplier ini menjadi supplier
             utama di cabang tersebut.
           </v-alert>

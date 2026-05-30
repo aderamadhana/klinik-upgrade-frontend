@@ -130,12 +130,7 @@
             </v-col>
           </v-row>
 
-          <v-alert
-            type="warning"
-            variant="tonal"
-            density="compact"
-            class="mt-2"
-          >
+          <v-alert type="warning" density="compact" class="mt-2">
             Mengubah rule aktif dapat mempengaruhi perhitungan poin untuk
             transaksi berikutnya.
           </v-alert>
@@ -143,11 +138,7 @@
           <v-divider class="my-5" />
 
           <div class="d-flex justify-end ga-2">
-            <v-btn
-              variant="tonal"
-              color="grey"
-              @click="$router.push('/master/poin-rule')"
-            >
+            <v-btn color="grey" @click="$router.push('/master/poin-rule')">
               Kembali
             </v-btn>
 

@@ -115,7 +115,6 @@
             <v-chip
               size="small"
               :color="getJenisVoucherColor(item.jenis_voucher_id)"
-              variant="tonal"
             >
               {{ item.jenis_label }}
             </v-chip>
@@ -131,7 +130,6 @@
             <v-chip
               size="small"
               :color="item.is_all_toko ? 'success' : 'primary'"
-              variant="tonal"
             >
               {{ item.berlaku }}
             </v-chip>
@@ -148,7 +146,6 @@
               <v-btn
                 size="small"
                 color="primary"
-                variant="tonal"
                 prepend-icon="mdi-pencil-outline"
                 :to="`/administrasi/voucher-diskon/edit-voucher-diskon/${item.id}`"
               >
@@ -158,7 +155,6 @@
               <v-btn
                 size="small"
                 color="amber-darken-1"
-                variant="tonal"
                 prepend-icon="mdi-format-list-bulleted"
                 :to="`/administrasi/voucher-diskon/konfigurasi-voucher-diskon/${item.id}`"
               >
@@ -168,7 +164,6 @@
               <v-btn
                 size="small"
                 color="info"
-                variant="tonal"
                 prepend-icon="mdi-download-outline"
                 @click="downloadVoucher(item)"
               >
@@ -178,7 +173,6 @@
               <v-btn
                 size="small"
                 color="error"
-                variant="tonal"
                 prepend-icon="mdi-delete-outline"
                 @click="confirmDelete(item)"
               >
@@ -227,7 +221,7 @@
         <v-card-text class="pa-4">
           <div class="text-body-2 mb-3">Yakin ingin menghapus voucher ini?</div>
 
-          <v-alert type="warning" variant="tonal" density="comfortable">
+          <v-alert type="warning" density="comfortable">
             <div class="font-weight-bold">
               {{ selectedItem?.nama || "-" }}
             </div>

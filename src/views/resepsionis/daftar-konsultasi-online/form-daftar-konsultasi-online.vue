@@ -15,7 +15,6 @@
     <v-alert
       v-if="flashError"
       type="error"
-      variant="tonal"
       closable
       class="mb-4"
       @click:close="flashError = ''"
@@ -26,7 +25,6 @@
     <v-alert
       v-if="flashSuccess"
       type="success"
-      variant="tonal"
       closable
       class="mb-4"
       @click:close="flashSuccess = ''"

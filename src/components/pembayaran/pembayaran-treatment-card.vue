@@ -12,7 +12,6 @@
 
         <v-btn
           color="primary"
-          variant="tonal"
           size="small"
           prepend-icon="mdi-plus"
           @click="$emit('add-item')"
@@ -25,7 +24,6 @@
       <v-alert
         v-if="!items.length"
         type="info"
-        variant="tonal"
         density="compact"
         class="mb-4"
         text="Belum ada treatment."
@@ -40,7 +38,7 @@
       >
         <v-card-item class="px-4 py-3">
           <template #prepend>
-            <v-avatar color="primary" variant="tonal" size="36">
+            <v-avatar color="primary" size="36">
               <v-icon icon="mdi-medical-bag" size="20" />
             </v-avatar>
           </template>

@@ -10,14 +10,13 @@
           </div>
         </div>
 
-        <v-avatar color="success" variant="tonal" size="40">
+        <v-avatar color="success" size="40">
           <v-icon icon="mdi-ticket-percent-outline" size="22" />
         </v-avatar>
       </div>
 
       <!-- Promo Trigger -->
       <v-card
-        variant="tonal"
         color="success"
         class="pa-4 cursor-pointer"
         @click="$emit('open-promo')"
@@ -45,7 +44,7 @@
         <div class="d-flex align-center justify-space-between mb-2">
           <div class="text-subtitle-2 font-weight-bold">Promo yang dipilih</div>
 
-          <v-chip size="small" color="success" variant="tonal">
+          <v-chip size="small" color="success">
             {{ appliedPromos.length }} Promo
           </v-chip>
         </div>
@@ -58,7 +57,7 @@
             >
               <v-list-item class="py-3">
                 <template #prepend>
-                  <v-avatar color="success" variant="tonal" size="36">
+                  <v-avatar color="success" size="36">
                     <v-icon icon="mdi-ticket-confirmation-outline" size="20" />
                   </v-avatar>
                 </template>

@@ -14,7 +14,6 @@
     <v-alert
       v-if="errorMessage"
       type="error"
-      variant="tonal"
       class="mb-4"
       closable
       @click:close="errorMessage = ''"
@@ -100,7 +99,6 @@
                 v-for="place in item.penempatan"
                 :key="place.id || place.toko_id"
                 size="small"
-                variant="tonal"
                 :color="Number(place.is_primary) === 1 ? 'primary' : 'default'"
               >
                 {{ place.nama_toko }}
@@ -117,7 +115,6 @@
             <v-chip
               size="small"
               :color="Number(item.is_delete) === 1 ? 'error' : 'success'"
-              variant="tonal"
             >
               {{ Number(item.is_delete) === 1 ? "Nonaktif" : "Aktif" }}
             </v-chip>
@@ -128,7 +125,6 @@
               <v-btn
                 size="small"
                 color="primary"
-                variant="tonal"
                 prepend-icon="mdi-pencil"
                 :to="`/master/karyawan/edit/${getItemId(item)}`"
               >
@@ -138,7 +134,6 @@
               <v-btn
                 size="small"
                 color="error"
-                variant="tonal"
                 prepend-icon="mdi-delete"
                 @click="confirmDelete(item)"
               >

@@ -18,17 +18,16 @@
         <div class="hero-wrapper">
           <div class="hero-left">
             <div class="patient-meta-top mb-2">
-              <v-chip size="small" variant="tonal" color="primary">
+              <v-chip size="small" color="primary">
                 {{ patient.noRm }}
               </v-chip>
               <v-chip
                 size="small"
-                variant="tonal"
                 :color="patient.gender === 'Perempuan' ? 'pink' : 'blue'"
               >
                 {{ patient.gender }}
               </v-chip>
-              <v-chip size="small" variant="tonal" color="grey">
+              <v-chip size="small" color="grey">
                 {{ patient.kategori }}
               </v-chip>
             </div>
@@ -47,7 +46,6 @@
                 v-if="patient.nikInvalid"
                 size="small"
                 color="error"
-                variant="tonal"
                 class="mr-2 mb-2"
               >
                 NIK tidak valid
@@ -57,7 +55,6 @@
                 v-if="!patient.ihsNumber"
                 size="small"
                 color="warning"
-                variant="tonal"
                 class="mr-2 mb-2"
               >
                 IHS belum terhubung
@@ -129,7 +126,6 @@
       v-if="patient.nikInvalid || !patient.ihsNumber"
       class="mb-4"
       type="warning"
-      variant="tonal"
       border="start"
     >
       <div class="font-weight-medium mb-1">Perlu perhatian</div>
@@ -301,12 +297,7 @@
                   </div>
 
                   <div class="history-meta">
-                    <v-chip
-                      size="small"
-                      color="primary"
-                      variant="tonal"
-                      class="mb-1"
-                    >
+                    <v-chip size="small" color="primary" class="mb-1">
                       {{ item.transaksi }}
                     </v-chip>
                     <div class="history-clinic">{{ item.klinik }}</div>

@@ -80,7 +80,6 @@
 
           <v-btn
             color="primary"
-            variant="tonal"
             size="small"
             prepend-icon="mdi-plus"
             @click="$emit('add-row')"
@@ -193,7 +192,6 @@
 
         <v-btn
           color="primary"
-          variant="tonal"
           :loading="loading"
           @click="$emit('submit-draft')"
         >

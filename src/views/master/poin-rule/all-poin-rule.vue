@@ -75,7 +75,6 @@
                 Number(item.is_berlaku_kelipatan) === 1 ? 'primary' : 'grey'
               "
               size="small"
-              variant="tonal"
             >
               {{
                 Number(item.is_berlaku_kelipatan) === 1 ? "Kelipatan" : "Tidak"
@@ -87,7 +86,6 @@
             <v-chip
               :color="Number(item.is_active) === 1 ? 'success' : 'grey'"
               size="small"
-              variant="tonal"
             >
               {{ Number(item.is_active) === 1 ? "Aktif" : "Nonaktif" }}
             </v-chip>
@@ -97,7 +95,6 @@
             <div class="d-flex align-center justify-center ga-2">
               <v-btn
                 size="small"
-                variant="tonal"
                 color="primary"
                 prepend-icon="mdi-pencil"
                 @click="$router.push(`/master/poin-rule/edit/${item.id}`)"
@@ -107,7 +104,6 @@
 
               <v-btn
                 size="small"
-                variant="tonal"
                 color="error"
                 prepend-icon="mdi-delete"
                 @click="confirmDelete(item)"

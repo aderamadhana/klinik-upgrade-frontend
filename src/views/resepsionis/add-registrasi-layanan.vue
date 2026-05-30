@@ -14,7 +14,6 @@
     <v-alert
       v-if="mappingWarning"
       type="warning"
-      variant="tonal"
       density="comfortable"
       class="mb-4"
       closable
@@ -28,7 +27,7 @@
         <v-card variant="flat" class="border mb-4">
           <v-card-text class="pa-4">
             <div class="d-flex align-center ga-3 mb-4">
-              <v-avatar color="primary" variant="tonal" size="44">
+              <v-avatar color="primary" size="44">
                 <v-icon size="24">mdi-clipboard-text-outline</v-icon>
               </v-avatar>
 
@@ -135,7 +134,7 @@
               class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
             >
               <div class="d-flex align-center ga-3">
-                <v-avatar color="primary" variant="tonal" size="46">
+                <v-avatar color="primary" size="46">
                   <v-icon size="24">
                     {{
                       currentStepMeta.icon || "mdi-file-document-edit-outline"
@@ -153,7 +152,7 @@
                 </div>
               </div>
 
-              <v-chip color="primary" variant="tonal" class="font-weight-bold">
+              <v-chip color="primary" class="font-weight-bold">
                 {{
                   Math.round(
                     availableSteps.length
@@ -299,7 +298,6 @@
                 </v-btn>
 
                 <v-btn
-                  variant="tonal"
                   color="error"
                   prepend-icon="mdi-refresh"
                   :disabled="loading"
@@ -695,7 +693,6 @@ export default {
     getInitialForm() {
       return {
         toko_id: localStorage.getItem("selected_toko_id") || null,
-
         tanggal: this.getToday(),
         pasien_new_id: null,
         pasien_id: null,
@@ -704,20 +701,40 @@ export default {
 
         konsultasi_source_code: null,
         konsultasi_source_name: null,
+        konsultasi_mapping_id: null,
+        konsultasi_kode_accurate: null,
+        konsultasi_nama_accurate: null,
+
         total_konsultasi: 0,
         rule_biaya_konsultasi: 0,
+
         is_pembelian_online: false,
+        pembelian_online_source_code: null,
+        pembelian_online_source_name: null,
+        pembelian_online_mapping_id: null,
+        pembelian_online_kode_accurate: null,
+        pembelian_online_nama_accurate: null,
 
         layanan: {
           ada_konsultasi: false,
           channel_konsultasi: "",
+
           konsultasi_source_code: null,
           konsultasi_source_name: null,
           konsultasi_mapping_id: null,
+          konsultasi_kode_accurate: null,
+          konsultasi_nama_accurate: null,
+
           ada_treatment: false,
           ada_penjualan: false,
           route_treatment: "",
+
           is_pembelian_online: false,
+          pembelian_online_source_code: null,
+          pembelian_online_source_name: null,
+          pembelian_online_mapping_id: null,
+          pembelian_online_kode_accurate: null,
+          pembelian_online_nama_accurate: null,
         },
 
         konsultasi_offline: {
@@ -732,15 +749,12 @@ export default {
           produk_sebelumnya: "",
           sedang_hamil: "",
           sedang_menyusui: "",
-
           bukti_foto_kiri: "",
           bukti_foto_depan: "",
           bukti_foto_kanan: "",
-
           preview_before_1: "",
           preview_before_2: "",
           preview_before_3: "",
-
           file_name_1: "",
           file_name_2: "",
           file_name_3: "",
@@ -838,6 +852,36 @@ export default {
         this.form.layanan?.konsultasi_source_name ||
         mapping?.nama_accurate ||
         null;
+      this.form.konsultasi_mapping_id =
+        mapping?.id || this.form.layanan?.konsultasi_mapping_id || null;
+      this.form.konsultasi_kode_accurate =
+        mapping?.kode_accurate ||
+        this.form.layanan?.konsultasi_kode_accurate ||
+        null;
+      this.form.konsultasi_nama_accurate =
+        mapping?.nama_accurate ||
+        this.form.layanan?.konsultasi_nama_accurate ||
+        null;
+
+      if (this.form.layanan) {
+        this.form.layanan.konsultasi_source_code =
+          mapping?.source_code || sourceCode;
+        this.form.layanan.konsultasi_source_name =
+          mapping?.source_name ||
+          this.form.layanan?.konsultasi_source_name ||
+          mapping?.nama_accurate ||
+          null;
+        this.form.layanan.konsultasi_mapping_id =
+          mapping?.id || this.form.layanan?.konsultasi_mapping_id || null;
+        this.form.layanan.konsultasi_kode_accurate =
+          mapping?.kode_accurate ||
+          this.form.layanan?.konsultasi_kode_accurate ||
+          null;
+        this.form.layanan.konsultasi_nama_accurate =
+          mapping?.nama_accurate ||
+          this.form.layanan?.konsultasi_nama_accurate ||
+          null;
+      }
 
       this.form.total_konsultasi = this.totalKonsultasi;
 
@@ -851,42 +895,113 @@ export default {
         this.form.rule_biaya_konsultasi = 3;
       }
 
-      this.form.is_pembelian_online = Boolean(
+      const isPembelianOnline = Boolean(
+        this.form.layanan?.ada_penjualan &&
         this.form.layanan?.is_pembelian_online,
       );
+
+      const pembelianOnlineMapping = isPembelianOnline
+        ? this.getPembelianOnlineMapping()
+        : null;
+
+      this.form.is_pembelian_online = isPembelianOnline;
+      this.form.pembelian_online_source_code = isPembelianOnline
+        ? pembelianOnlineMapping?.source_code || "PEMBELIAN_ONLINE"
+        : null;
+      this.form.pembelian_online_source_name = isPembelianOnline
+        ? pembelianOnlineMapping?.source_name ||
+          this.form.layanan?.pembelian_online_source_name ||
+          "Pembelian Online"
+        : null;
+      this.form.pembelian_online_mapping_id = isPembelianOnline
+        ? pembelianOnlineMapping?.id ||
+          this.form.layanan?.pembelian_online_mapping_id ||
+          null
+        : null;
+      this.form.pembelian_online_kode_accurate = isPembelianOnline
+        ? pembelianOnlineMapping?.kode_accurate ||
+          this.form.layanan?.pembelian_online_kode_accurate ||
+          null
+        : null;
+      this.form.pembelian_online_nama_accurate = isPembelianOnline
+        ? pembelianOnlineMapping?.nama_accurate ||
+          this.form.layanan?.pembelian_online_nama_accurate ||
+          null
+        : null;
+
+      if (this.form.layanan) {
+        this.form.layanan.is_pembelian_online = isPembelianOnline;
+        this.form.layanan.pembelian_online_source_code =
+          this.form.pembelian_online_source_code;
+        this.form.layanan.pembelian_online_source_name =
+          this.form.pembelian_online_source_name;
+        this.form.layanan.pembelian_online_mapping_id =
+          this.form.pembelian_online_mapping_id;
+        this.form.layanan.pembelian_online_kode_accurate =
+          this.form.pembelian_online_kode_accurate;
+        this.form.layanan.pembelian_online_nama_accurate =
+          this.form.pembelian_online_nama_accurate;
+      }
+    },
+    getPembelianOnlineMapping() {
+      return this.getAccurateMappingBySourceCode("PEMBELIAN_ONLINE");
     },
 
     validateRequiredAccurateMapping() {
-      if (!this.form?.layanan?.ada_konsultasi) {
-        return true;
-      }
+      if (this.form?.layanan?.ada_konsultasi) {
+        const sourceCode = this.getKonsultasiSourceCode();
 
-      const sourceCode = this.getKonsultasiSourceCode();
+        if (!sourceCode) {
+          this.showSnackbar("Source code konsultasi belum terbentuk", "error");
+          return false;
+        }
 
-      if (!sourceCode) {
-        this.showSnackbar("Source code konsultasi belum terbentuk", "error");
-        return false;
-      }
+        const mapping = this.getAccurateMappingBySourceCode(sourceCode);
 
-      const mapping = this.getAccurateMappingBySourceCode(sourceCode);
+        if (!mapping) {
+          this.showSnackbar(
+            `Mapping Accurate ${sourceCode} belum tersedia di master_accurate_item_mapping`,
+            "error",
+          );
+          return false;
+        }
 
-      if (!mapping) {
-        this.showSnackbar(
-          `Mapping Accurate ${sourceCode} belum tersedia di master_accurate_item_mapping`,
-          "error",
-        );
-        return false;
+        if (
+          this.toBoolean(mapping.is_send_to_accurate) &&
+          !mapping.kode_accurate
+        ) {
+          this.showSnackbar(
+            `Kode Accurate untuk ${mapping.source_name || sourceCode} belum diisi`,
+            "error",
+          );
+          return false;
+        }
       }
 
       if (
-        this.toBoolean(mapping.is_send_to_accurate) &&
-        !mapping.kode_accurate
+        this.form?.layanan?.ada_penjualan &&
+        this.form?.layanan?.is_pembelian_online
       ) {
-        this.showSnackbar(
-          `Kode Accurate untuk ${mapping.source_name || sourceCode} belum diisi`,
-          "error",
-        );
-        return false;
+        const mapping = this.getPembelianOnlineMapping();
+
+        if (!mapping) {
+          this.showSnackbar(
+            "Mapping Accurate PEMBELIAN_ONLINE belum tersedia di master_accurate_item_mapping",
+            "error",
+          );
+          return false;
+        }
+
+        if (
+          this.toBoolean(mapping.is_send_to_accurate) &&
+          !mapping.kode_accurate
+        ) {
+          this.showSnackbar(
+            "Kode Accurate untuk PEMBELIAN_ONLINE belum diisi",
+            "error",
+          );
+          return false;
+        }
       }
 
       return true;
@@ -894,6 +1009,8 @@ export default {
 
     normalizeLayanan(value = {}) {
       const adaKonsultasi = Boolean(value.ada_konsultasi);
+      const adaTreatment = Boolean(value.ada_treatment);
+      const adaPenjualan = Boolean(value.ada_penjualan);
 
       let konsultasiSourceCode = value.konsultasi_source_code || null;
       let channelKonsultasi = value.channel_konsultasi || "";
@@ -911,16 +1028,74 @@ export default {
           : "offline";
       }
 
+      const konsultasiMapping = adaKonsultasi
+        ? this.getAccurateMappingBySourceCode(konsultasiSourceCode)
+        : null;
+
+      const isPembelianOnline = adaPenjualan
+        ? Boolean(value.is_pembelian_online)
+        : false;
+
+      const pembelianOnlineMapping = isPembelianOnline
+        ? this.getPembelianOnlineMapping()
+        : null;
+
       return {
         ada_konsultasi: adaKonsultasi,
         channel_konsultasi: channelKonsultasi,
-        konsultasi_source_code: konsultasiSourceCode,
-        konsultasi_source_name: value.konsultasi_source_name || null,
-        konsultasi_mapping_id: value.konsultasi_mapping_id || null,
-        ada_treatment: Boolean(value.ada_treatment),
-        ada_penjualan: Boolean(value.ada_penjualan),
+
+        konsultasi_source_code: adaKonsultasi
+          ? konsultasiMapping?.source_code || konsultasiSourceCode
+          : null,
+        konsultasi_source_name: adaKonsultasi
+          ? konsultasiMapping?.source_name ||
+            value.konsultasi_source_name ||
+            null
+          : null,
+        konsultasi_mapping_id: adaKonsultasi
+          ? konsultasiMapping?.id || value.konsultasi_mapping_id || null
+          : null,
+        konsultasi_kode_accurate: adaKonsultasi
+          ? konsultasiMapping?.kode_accurate ||
+            value.konsultasi_kode_accurate ||
+            null
+          : null,
+        konsultasi_nama_accurate: adaKonsultasi
+          ? konsultasiMapping?.nama_accurate ||
+            value.konsultasi_nama_accurate ||
+            null
+          : null,
+
+        ada_treatment: adaTreatment,
+        ada_penjualan: adaPenjualan,
         route_treatment: value.route_treatment || "",
-        is_pembelian_online: Boolean(value.is_pembelian_online),
+
+        is_pembelian_online: isPembelianOnline,
+        pembelian_online_source_code: isPembelianOnline
+          ? pembelianOnlineMapping?.source_code ||
+            value.pembelian_online_source_code ||
+            "PEMBELIAN_ONLINE"
+          : null,
+        pembelian_online_source_name: isPembelianOnline
+          ? pembelianOnlineMapping?.source_name ||
+            value.pembelian_online_source_name ||
+            "Pembelian Online"
+          : null,
+        pembelian_online_mapping_id: isPembelianOnline
+          ? pembelianOnlineMapping?.id ||
+            value.pembelian_online_mapping_id ||
+            null
+          : null,
+        pembelian_online_kode_accurate: isPembelianOnline
+          ? pembelianOnlineMapping?.kode_accurate ||
+            value.pembelian_online_kode_accurate ||
+            null
+          : null,
+        pembelian_online_nama_accurate: isPembelianOnline
+          ? pembelianOnlineMapping?.nama_accurate ||
+            value.pembelian_online_nama_accurate ||
+            null
+          : null,
       };
     },
 

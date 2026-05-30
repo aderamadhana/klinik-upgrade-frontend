@@ -23,7 +23,6 @@
         <v-alert
           v-if="errorMessage"
           type="error"
-          variant="tonal"
           density="compact"
           closable
           class="mb-4"
@@ -32,7 +31,7 @@
           {{ errorMessage }}
         </v-alert>
 
-        <v-alert type="info" variant="tonal" density="compact" class="mb-5">
+        <v-alert type="info" density="compact" class="mb-5">
           Field yang tampil mengikuti jenis layanan pasien.
         </v-alert>
 
@@ -54,7 +53,6 @@
           <v-alert
             :type="ruleAlert.type"
             :color="ruleAlert.color"
-            variant="tonal"
             density="compact"
             class="mb-5"
           >

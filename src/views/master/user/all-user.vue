@@ -90,7 +90,6 @@
                 :key="cabang.id"
                 size="small"
                 color="primary"
-                variant="tonal"
               >
                 {{ cabang.nama }}
               </v-chip>
@@ -100,11 +99,7 @@
           </template>
 
           <template #item.role="{ item }">
-            <v-chip
-              size="small"
-              :color="getRoleColor(item.role)"
-              variant="tonal"
-            >
+            <v-chip size="small" :color="getRoleColor(item.role)">
               {{ item.role || "-" }}
             </v-chip>
           </template>
@@ -113,7 +108,6 @@
             <v-chip
               size="small"
               :color="Number(item.is_active) === 1 ? 'success' : 'error'"
-              variant="tonal"
             >
               {{ Number(item.is_active) === 1 ? "Aktif" : "Nonaktif" }}
             </v-chip>
@@ -124,7 +118,6 @@
               <v-btn
                 size="small"
                 color="primary"
-                variant="tonal"
                 prepend-icon="mdi-pencil"
                 :to="`/master/user/edit/${item.id}`"
               >
@@ -134,7 +127,6 @@
               <v-btn
                 size="small"
                 color="error"
-                variant="tonal"
                 prepend-icon="mdi-delete"
                 @click="confirmDelete(item)"
               >

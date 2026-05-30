@@ -14,7 +14,6 @@
     <v-alert
       v-if="alert.show"
       :type="alert.type"
-      variant="tonal"
       density="compact"
       closable
       class="mb-4"
@@ -33,7 +32,7 @@
               class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
             >
               <div class="d-flex align-center ga-3">
-                <v-avatar color="primary" variant="tonal" size="40">
+                <v-avatar color="primary" size="40">
                   <v-icon icon="mdi-account-star-outline" size="22" />
                 </v-avatar>
 
@@ -49,7 +48,6 @@
 
               <v-chip
                 color="primary"
-                variant="tonal"
                 size="small"
                 prepend-icon="mdi-calendar-clock"
               >
@@ -151,7 +149,7 @@
                 class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
               >
                 <div class="d-flex align-center ga-3">
-                  <v-avatar color="info" variant="tonal" size="40">
+                  <v-avatar color="info" size="40">
                     <v-icon icon="mdi-history" size="22" />
                   </v-avatar>
 
@@ -165,7 +163,7 @@
                   </div>
                 </div>
 
-                <v-chip color="info" variant="tonal" size="small">
+                <v-chip color="info" size="small">
                   {{ riwayatPenukaranRows.length }} Riwayat
                 </v-chip>
               </div>
@@ -210,7 +208,6 @@
                   <v-chip
                     size="small"
                     :color="item.status === 'Berhasil' ? 'success' : 'warning'"
-                    variant="tonal"
                   >
                     {{ item.status }}
                   </v-chip>
@@ -239,7 +236,7 @@
               class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
             >
               <div class="d-flex align-center ga-3">
-                <v-avatar color="primary" variant="tonal" size="40">
+                <v-avatar color="primary" size="40">
                   <v-icon icon="mdi-gift-outline" size="22" />
                 </v-avatar>
 
@@ -255,7 +252,6 @@
 
               <v-btn
                 color="primary"
-                variant="tonal"
                 size="small"
                 prepend-icon="mdi-plus"
                 @click="addRow"
@@ -267,7 +263,6 @@
             <v-alert
               v-if="!rows.length"
               type="info"
-              variant="tonal"
               density="compact"
               text="Belum ada merchandise yang dipilih."
             />
@@ -344,7 +339,6 @@
                   <v-btn
                     icon="mdi-delete-outline"
                     color="error"
-                    variant="tonal"
                     size="small"
                     @click="removeRow(index)"
                   />
@@ -368,7 +362,7 @@
         <v-card variant="flat" class="border mb-4">
           <v-card-text class="pa-4">
             <div class="d-flex align-center ga-3 mb-4">
-              <v-avatar color="warning" variant="tonal" size="40">
+              <v-avatar color="warning" size="40">
                 <v-icon icon="mdi-star-circle-outline" size="22" />
               </v-avatar>
 
@@ -382,11 +376,7 @@
               </div>
             </div>
 
-            <v-card
-              :color="sisaPoin < 0 ? 'error' : 'warning'"
-              variant="tonal"
-              class="mb-4"
-            >
+            <v-card :color="sisaPoin < 0 ? 'error' : 'warning'" class="mb-4">
               <v-card-text class="pa-4">
                 <div class="text-body-2">Sisa Poin</div>
 
@@ -431,7 +421,6 @@
             <v-alert
               v-if="!form.pasien_id"
               type="warning"
-              variant="tonal"
               density="compact"
               class="mb-3"
             >
@@ -441,7 +430,6 @@
             <v-alert
               v-else-if="isBelowMinimum"
               type="warning"
-              variant="tonal"
               density="compact"
               class="mb-3"
             >
@@ -451,7 +439,6 @@
             <v-alert
               v-else-if="!rows.length"
               type="info"
-              variant="tonal"
               density="compact"
               class="mb-3"
             >
@@ -461,7 +448,6 @@
             <v-alert
               v-else-if="hasIncompleteRows"
               type="warning"
-              variant="tonal"
               density="compact"
               class="mb-3"
             >
@@ -471,7 +457,6 @@
             <v-alert
               v-else-if="sisaPoin < 0"
               type="error"
-              variant="tonal"
               density="compact"
               class="mb-3"
             >

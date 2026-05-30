@@ -11,7 +11,7 @@
       <!-- HEADER -->
       <v-card-item class="px-5 py-4 border-b">
         <template #prepend>
-          <v-avatar color="success" variant="tonal" size="42">
+          <v-avatar color="success" size="42">
             <v-icon icon="mdi-ticket-percent-outline" />
           </v-avatar>
         </template>
@@ -67,7 +67,6 @@
           <v-chip
             size="small"
             color="primary"
-            variant="tonal"
             prepend-icon="mdi-ticket-confirmation-outline"
           >
             {{ totalVoucher }} Voucher tersedia
@@ -93,7 +92,7 @@
                   Hasil Pencarian Voucher
                 </div>
 
-                <v-chip size="x-small" variant="tonal">
+                <v-chip size="x-small">
                   {{ filteredAllPromoList.length }}
                 </v-chip>
               </div>
@@ -103,7 +102,6 @@
               <v-alert
                 v-if="!filteredAllPromoList.length"
                 type="info"
-                variant="tonal"
                 density="compact"
                 text="Voucher tidak ditemukan."
               />
@@ -128,11 +126,11 @@
                     </div>
 
                     <div class="d-flex flex-wrap ga-2">
-                      <v-chip size="x-small" color="primary" variant="tonal">
+                      <v-chip size="x-small" color="primary">
                         {{ getPromoTypeLabel(promo) }}
                       </v-chip>
 
-                      <v-chip size="x-small" variant="tonal">
+                      <v-chip size="x-small">
                         Kuota: {{ getPromoKuota(promo) }}
                       </v-chip>
 
@@ -140,7 +138,6 @@
                         v-if="promo.is_bisa_digabung_promo"
                         size="x-small"
                         color="success"
-                        variant="tonal"
                       >
                         Bisa digabung
                       </v-chip>
@@ -181,7 +178,7 @@
                   </div>
                 </div>
 
-                <v-chip size="x-small" variant="tonal">
+                <v-chip size="x-small">
                   {{ group.items.length }}
                 </v-chip>
               </div>
@@ -191,7 +188,6 @@
               <v-alert
                 v-if="!group.items.length"
                 type="info"
-                variant="tonal"
                 density="compact"
                 :text="group.emptyText"
               />
@@ -216,11 +212,11 @@
                     </div>
 
                     <div class="d-flex flex-wrap ga-2">
-                      <v-chip size="x-small" color="primary" variant="tonal">
+                      <v-chip size="x-small" color="primary">
                         {{ getPromoTypeLabel(promo) }}
                       </v-chip>
 
-                      <v-chip size="x-small" variant="tonal">
+                      <v-chip size="x-small">
                         Kuota: {{ getPromoKuota(promo) }}
                       </v-chip>
 
@@ -228,7 +224,6 @@
                         v-if="promo.is_bisa_digabung_promo"
                         size="x-small"
                         color="success"
-                        variant="tonal"
                       >
                         Bisa digabung
                       </v-chip>

@@ -99,7 +99,6 @@
                 v-if="Number(item.is_obat_resep || 0) === 1"
                 size="small"
                 color="primary"
-                variant="tonal"
               >
                 Resep
               </v-chip>
@@ -108,7 +107,6 @@
                 v-if="Number(item.is_obat_bebas || 0) === 1"
                 size="small"
                 color="success"
-                variant="tonal"
               >
                 Bebas
               </v-chip>
@@ -125,7 +123,7 @@
           </template>
 
           <template #item.jumlah_cabang="{ item }">
-            <v-chip size="small" color="info" variant="tonal">
+            <v-chip size="small" color="info">
               {{ item.jumlah_cabang }}
             </v-chip>
           </template>
@@ -138,7 +136,6 @@
             <v-chip
               size="small"
               :color="Number(item.is_delete || 0) === 1 ? 'error' : 'success'"
-              variant="tonal"
             >
               {{ Number(item.is_delete || 0) === 1 ? "Deleted" : "Aktif" }}
             </v-chip>
@@ -149,7 +146,6 @@
               <v-btn
                 color="primary"
                 size="small"
-                variant="tonal"
                 prepend-icon="mdi-pencil"
                 :to="'/master/product-global/edit/' + item.id"
               >
@@ -159,7 +155,6 @@
               <v-btn
                 color="info"
                 size="small"
-                variant="tonal"
                 prepend-icon="mdi-eye"
                 @click="detailProduk(item)"
               >
@@ -169,7 +164,6 @@
               <v-btn
                 color="error"
                 size="small"
-                variant="tonal"
                 prepend-icon="mdi-delete"
                 @click="openDeleteDialog(item)"
               >
@@ -196,7 +190,7 @@
         <v-card-title class="pa-0">
           <div class="detail-hero">
             <div class="d-flex align-center ga-3">
-              <v-avatar color="primary" variant="tonal" size="48">
+              <v-avatar color="primary" size="48">
                 <v-icon icon="mdi-package-variant-closed" size="28" />
               </v-avatar>
 
@@ -211,7 +205,7 @@
             </div>
 
             <div class="d-flex ga-2 flex-wrap">
-              <v-chip size="small" color="primary" variant="tonal">
+              <v-chip size="small" color="primary">
                 {{ selectedItem?.kode || "-" }}
               </v-chip>
 
@@ -222,7 +216,6 @@
                 "
                 size="small"
                 color="indigo"
-                variant="tonal"
               >
                 Accurate: {{ selectedItem.kode_accurate }}
               </v-chip>
@@ -234,7 +227,6 @@
                     ? 'error'
                     : 'success'
                 "
-                variant="tonal"
               >
                 {{
                   Number(selectedItem?.is_delete || 0) === 1
@@ -251,7 +243,7 @@
         <v-card-text class="pa-5">
           <v-row class="mb-2">
             <v-col cols="12" md="3">
-              <v-card variant="tonal" color="primary" rounded="lg">
+              <v-card color="primary" rounded="lg">
                 <v-card-text class="pa-4">
                   <div class="detail-mini-label">Jumlah Cabang</div>
                   <div class="detail-mini-value">
@@ -262,7 +254,7 @@
             </v-col>
 
             <v-col cols="12" md="3">
-              <v-card variant="tonal" color="success" rounded="lg">
+              <v-card color="success" rounded="lg">
                 <v-card-text class="pa-4">
                   <div class="detail-mini-label">Range Harga</div>
                   <div class="detail-mini-value text-truncate">
@@ -273,7 +265,7 @@
             </v-col>
 
             <v-col cols="12" md="3">
-              <v-card variant="tonal" color="info" rounded="lg">
+              <v-card color="info" rounded="lg">
                 <v-card-text class="pa-4">
                   <div class="detail-mini-label">Jenis Obat</div>
                   <div class="d-flex ga-1 flex-wrap mt-1">
@@ -310,7 +302,7 @@
             </v-col>
 
             <v-col cols="12" md="3">
-              <v-card variant="tonal" color="secondary" rounded="lg">
+              <v-card color="secondary" rounded="lg">
                 <v-card-text class="pa-4">
                   <div class="detail-mini-label">Satuan</div>
                   <div class="detail-mini-value">
@@ -397,7 +389,7 @@
               </div>
             </div>
 
-            <v-chip color="info" variant="tonal" size="small">
+            <v-chip color="info" size="small">
               {{ selectedItem?.toko_configs?.length || 0 }} cabang
             </v-chip>
           </div>
@@ -417,7 +409,7 @@
               </template>
 
               <template #item.supplier_nama="{ item }">
-                <v-chip size="small" color="secondary" variant="tonal">
+                <v-chip size="small" color="secondary">
                   {{ item.supplier_nama || "-" }}
                 </v-chip>
               </template>
@@ -433,7 +425,7 @@
               </template>
 
               <template #item.stok_awal="{ item }">
-                <v-chip size="small" color="primary" variant="tonal">
+                <v-chip size="small" color="primary">
                   {{ formatNumber(item.stok_awal) }}
                 </v-chip>
               </template>
@@ -444,7 +436,6 @@
                   :color="
                     Number(item.stok_minimum || 0) > 0 ? 'warning' : 'grey'
                   "
-                  variant="tonal"
                 >
                   {{ formatNumber(item.stok_minimum) }}
                 </v-chip>
@@ -487,7 +478,7 @@
         <v-card-text>
           <p class="mb-2">Yakin ingin menghapus produk ini?</p>
 
-          <v-alert type="warning" variant="tonal" rounded="lg">
+          <v-alert type="warning" rounded="lg">
             <strong>{{ selectedItem?.nama || "-" }}</strong>
             <br />
             Data akan dihapus secara soft delete.

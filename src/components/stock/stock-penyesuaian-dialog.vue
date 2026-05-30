@@ -68,7 +68,6 @@
 
           <v-btn
             color="primary"
-            variant="tonal"
             size="small"
             prepend-icon="mdi-plus"
             @click="$emit('add-row')"
@@ -136,7 +135,6 @@
                         ? 'success'
                         : 'grey'
                   "
-                  variant="tonal"
                 >
                   {{ formatNumber(getSelisih(row)) }}
                 </v-chip>
@@ -185,7 +183,6 @@
 
         <v-btn
           color="primary"
-          variant="tonal"
           :loading="loading"
           @click="$emit('submit-draft')"
         >

@@ -15,7 +15,7 @@
 
     <template v-else>
       <!-- INFO COMPACT -->
-      <v-alert type="info" variant="tonal" density="compact" class="mb-3">
+      <v-alert type="info" density="compact" class="mb-3">
         Item menyesuaikan jenis voucher:
         <strong>Treatment</strong>, <strong>Produk</strong>,
         <strong>Bundling</strong>, atau <strong>Value</strong>.
@@ -34,7 +34,7 @@
             class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
           >
             <div class="d-flex align-center ga-3">
-              <v-avatar color="primary" variant="tonal" size="36">
+              <v-avatar color="primary" size="36">
                 <v-icon icon="mdi-ticket-percent-outline" size="20" />
               </v-avatar>
 
@@ -49,18 +49,17 @@
             </div>
 
             <div class="d-flex ga-2 flex-wrap">
-              <v-chip size="small" color="primary" variant="tonal">
+              <v-chip size="small" color="primary">
                 {{ currentVoucher.mode_label }}
               </v-chip>
 
-              <v-chip size="small" color="purple" variant="tonal">
+              <v-chip size="small" color="purple">
                 {{ currentVoucher.jenis_voucher_label }}
               </v-chip>
 
               <v-chip
                 size="small"
                 :color="currentVoucher.is_all_toko ? 'success' : 'warning'"
-                variant="tonal"
               >
                 {{ currentVoucher.berlaku_label }}
               </v-chip>
@@ -186,7 +185,7 @@
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between mb-3">
                 <div class="d-flex align-center ga-3">
-                  <v-avatar color="primary" variant="tonal" size="34">
+                  <v-avatar color="primary" size="34">
                     <v-icon icon="mdi-stethoscope" size="18" />
                   </v-avatar>
 
@@ -200,7 +199,7 @@
                   </div>
                 </div>
 
-                <v-chip size="small" color="primary" variant="tonal">
+                <v-chip size="small" color="primary">
                   {{ selectedTreatmentIds.length }} dipilih
                 </v-chip>
               </div>
@@ -309,7 +308,7 @@
             <v-card-text class="pa-4">
               <div class="d-flex align-center justify-space-between mb-3">
                 <div class="d-flex align-center ga-3">
-                  <v-avatar color="success" variant="tonal" size="34">
+                  <v-avatar color="success" size="34">
                     <v-icon icon="mdi-pill" size="18" />
                   </v-avatar>
 
@@ -321,7 +320,7 @@
                   </div>
                 </div>
 
-                <v-chip size="small" color="success" variant="tonal">
+                <v-chip size="small" color="success">
                   {{ selectedProductIds.length }} dipilih
                 </v-chip>
               </div>
@@ -388,7 +387,6 @@
                         <div class="d-flex ga-1 flex-wrap justify-end">
                           <v-chip
                             size="x-small"
-                            variant="tonal"
                             :color="getStockColor(item.status_stok)"
                           >
                             {{ item.status_stok || "TERSEDIA" }}
@@ -436,7 +434,7 @@
             class="d-flex align-center justify-space-between flex-wrap ga-3 mb-3"
           >
             <div class="d-flex align-center ga-3">
-              <v-avatar color="warning" variant="tonal" size="34">
+              <v-avatar color="warning" size="34">
                 <v-icon icon="mdi-clipboard-list-outline" size="18" />
               </v-avatar>
 
@@ -456,21 +454,11 @@
             </div>
 
             <div class="d-flex ga-2 flex-wrap">
-              <v-chip
-                v-if="showTreatmentSection"
-                size="small"
-                color="primary"
-                variant="tonal"
-              >
+              <v-chip v-if="showTreatmentSection" size="small" color="primary">
                 {{ configuredTreatments.length }} Treatment
               </v-chip>
 
-              <v-chip
-                v-if="showProductSection"
-                size="small"
-                color="success"
-                variant="tonal"
-              >
+              <v-chip v-if="showProductSection" size="small" color="success">
                 {{ configuredProducts.length }} Produk
               </v-chip>
             </div>
@@ -479,7 +467,6 @@
           <v-alert
             v-if="!isVoucherBundling"
             type="info"
-            variant="tonal"
             density="compact"
             class="mb-3"
           >
@@ -520,7 +507,7 @@
 
                 <template #item.diskon_item="{ item, index }">
                   <div class="d-flex align-center ga-2">
-                    <v-chip size="small" color="primary" variant="tonal">
+                    <v-chip size="small" color="primary">
                       {{
                         formatDiscountValue(
                           item.diskon_item,
@@ -532,7 +519,6 @@
                     <v-btn
                       size="small"
                       color="primary"
-                      variant="tonal"
                       prepend-icon="mdi-pencil"
                       @click="openDiscountDialog('treatment', item, index)"
                     >
@@ -545,7 +531,6 @@
                   <v-btn
                     size="small"
                     color="error"
-                    variant="tonal"
                     prepend-icon="mdi-delete-outline"
                     @click="removeConfiguredItem('treatment', index)"
                   >
@@ -582,18 +567,14 @@
                 </template>
 
                 <template #item.status_stok="{ item }">
-                  <v-chip
-                    size="small"
-                    variant="tonal"
-                    :color="getStockColor(item.status_stok)"
-                  >
+                  <v-chip size="small" :color="getStockColor(item.status_stok)">
                     {{ item.status_stok || "TERSEDIA" }}
                   </v-chip>
                 </template>
 
                 <template #item.diskon_item="{ item, index }">
                   <div class="d-flex align-center ga-2">
-                    <v-chip size="small" color="primary" variant="tonal">
+                    <v-chip size="small" color="primary">
                       {{
                         formatDiscountValue(
                           item.diskon_item,
@@ -605,7 +586,6 @@
                     <v-btn
                       size="small"
                       color="primary"
-                      variant="tonal"
                       prepend-icon="mdi-pencil"
                       @click="openDiscountDialog('product', item, index)"
                     >
@@ -618,7 +598,6 @@
                   <v-btn
                     size="small"
                     color="error"
-                    variant="tonal"
                     prepend-icon="mdi-delete-outline"
                     @click="removeConfiguredItem('product', index)"
                   >

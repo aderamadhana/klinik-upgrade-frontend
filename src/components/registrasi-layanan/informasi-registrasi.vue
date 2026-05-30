@@ -1,12 +1,6 @@
 <template>
   <div class="mt-3">
-    <v-alert
-      type="info"
-      variant="tonal"
-      density="comfortable"
-      border="start"
-      class="mb-4"
-    >
+    <v-alert type="info" density="comfortable" border="start" class="mb-4">
       FO cukup mengisi header kunjungan dan penanggung jawab awal yang relevan.
       Detail medis diisi pada tahap pelayanan.
     </v-alert>
@@ -16,7 +10,7 @@
         <v-card variant="flat" class="border h-100">
           <v-card-text class="pa-4">
             <div class="d-flex align-center ga-3 mb-4">
-              <v-avatar color="primary" variant="tonal" size="42">
+              <v-avatar color="primary" size="42">
                 <v-icon size="22">mdi-card-account-details-outline</v-icon>
               </v-avatar>
 
@@ -74,7 +68,7 @@
                   <template #no-data>
                     <div class="pa-4">
                       <div class="d-flex align-center ga-3">
-                        <v-avatar color="grey" variant="tonal" size="38">
+                        <v-avatar color="grey" size="38">
                           <v-icon size="20">mdi-account-search-outline</v-icon>
                         </v-avatar>
 
@@ -118,7 +112,7 @@
         <v-card variant="flat" class="border h-100">
           <v-card-text class="pa-4">
             <div class="d-flex align-center ga-3 mb-4">
-              <v-avatar color="success" variant="tonal" size="42">
+              <v-avatar color="success" size="42">
                 <v-icon size="22">mdi-account-tie-outline</v-icon>
               </v-avatar>
 
@@ -135,7 +129,6 @@
             <v-alert
               v-if="!activeTokoId"
               type="warning"
-              variant="tonal"
               density="compact"
               border="start"
               class="mb-4"

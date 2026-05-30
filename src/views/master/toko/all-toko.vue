@@ -68,7 +68,7 @@
           </template>
 
           <template #item.kode_toko="{ item }">
-            <v-chip size="small" color="primary" variant="tonal">
+            <v-chip size="small" color="primary">
               {{ item.kode_toko || "-" }}
             </v-chip>
           </template>
@@ -80,11 +80,7 @@
           </template>
 
           <template #item.jenis_toko="{ item }">
-            <v-chip
-              size="small"
-              :color="getJenisTokoColor(item.jenis_toko)"
-              variant="tonal"
-            >
+            <v-chip size="small" :color="getJenisTokoColor(item.jenis_toko)">
               {{ getJenisTokoLabel(item.jenis_toko) }}
             </v-chip>
           </template>
@@ -103,7 +99,7 @@
             <v-chip
               size="small"
               :color="Number(item.is_delete) === 1 ? 'error' : 'success'"
-              variant="tonal"
+              
             >
               {{ Number(item.is_delete) === 1 ? "Nonaktif" : "Aktif" }}
             </v-chip>
@@ -114,7 +110,7 @@
               <!-- <v-btn
                 size="small"
                 color="primary"
-                variant="tonal"
+                
                 prepend-icon="mdi-pencil"
                 :to="'/master/toko/edit/' + item.id"
               >
@@ -124,7 +120,6 @@
               <v-btn
                 size="small"
                 color="error"
-                variant="tonal"
                 prepend-icon="mdi-delete"
                 @click="confirmDelete(item)"
               >
@@ -157,7 +152,7 @@
         <v-card-text>
           <p class="mb-2">Yakin ingin menghapus toko ini?</p>
 
-          <v-alert type="warning" variant="tonal" rounded="lg">
+          <v-alert type="warning" rounded="lg">
             <strong>{{ selectedItem?.nama_toko || "-" }}</strong>
             <br />
             Data akan dihapus secara soft delete.

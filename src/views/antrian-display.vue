@@ -14,13 +14,7 @@
         </div>
       </section>
 
-      <v-alert
-        v-if="errorMessage"
-        class="mb-5"
-        type="error"
-        variant="tonal"
-        border="start"
-      >
+      <v-alert v-if="errorMessage" class="mb-5" type="error" border="start">
         {{ errorMessage }}
       </v-alert>
 

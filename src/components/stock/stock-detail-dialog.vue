@@ -29,11 +29,7 @@
 
           <v-col cols="12" md="3">
             <div class="info-label">Status</div>
-            <v-chip
-              size="small"
-              :color="getStatusColor(dialog.data?.status)"
-              variant="tonal"
-            >
+            <v-chip size="small" :color="getStatusColor(dialog.data?.status)">
               {{ dialog.data?.status || "-" }}
             </v-chip>
           </v-col>

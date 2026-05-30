@@ -35,11 +35,7 @@
     </template>
 
     <template #item.status="{ item }">
-      <v-chip
-        size="small"
-        :color="statusMeta(item.status).color"
-        variant="tonal"
-      >
+      <v-chip size="small" :color="statusMeta(item.status).color">
         {{ statusMeta(item.status).text }}
       </v-chip>
     </template>
@@ -74,7 +70,6 @@
           <v-btn
             color="grey-darken-1"
             size="small"
-            variant="tonal"
             :loading="item.isLoading"
             :disabled="item.isLoading"
             @click="emitSkip(item)"
@@ -87,7 +82,6 @@
           <v-btn
             color="primary"
             size="small"
-            variant="tonal"
             :loading="item.isLoading"
             :disabled="item.isLoading"
             @click="emitRecall(item)"
@@ -108,7 +102,6 @@
           <v-btn
             color="grey-darken-1"
             size="small"
-            variant="tonal"
             :loading="item.isLoading"
             :disabled="item.isLoading"
             @click="emitSkip(item)"

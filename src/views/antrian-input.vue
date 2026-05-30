@@ -34,7 +34,6 @@
         v-if="errorMessage"
         class="mb-5"
         type="error"
-        variant="tonal"
         closable
         @click:close="errorMessage = ''"
       >

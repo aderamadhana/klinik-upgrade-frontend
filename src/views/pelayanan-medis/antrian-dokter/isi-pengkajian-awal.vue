@@ -24,7 +24,7 @@
       <div class="section-header">Form Pengkajian Awal</div>
 
       <v-card-text class="pa-5">
-        <v-alert type="info" variant="tonal" class="mb-6">
+        <v-alert type="info" class="mb-6">
           Lengkapi pengkajian awal pasien sebelum melanjutkan ke form SOAP.
         </v-alert>
 

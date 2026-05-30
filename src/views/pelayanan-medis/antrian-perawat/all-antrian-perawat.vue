@@ -77,7 +77,6 @@
         <div class="d-flex justify-end mt-3">
           <v-chip
             color="success"
-            variant="tonal"
             size="small"
             prepend-icon="mdi-timer-sync-outline"
           >
@@ -92,7 +91,6 @@
       <v-card-text v-if="errorMessage" class="pa-4 pb-0">
         <v-alert
           type="error"
-          variant="tonal"
           density="compact"
           closable
           class="mb-3"
@@ -118,7 +116,7 @@
                     </div>
                   </div>
 
-                  <v-avatar color="primary" variant="tonal" size="36">
+                  <v-avatar color="primary" size="36">
                     <v-icon icon="mdi-format-list-numbered" size="20" />
                   </v-avatar>
                 </div>
@@ -139,7 +137,7 @@
                     </div>
                   </div>
 
-                  <v-avatar color="warning" variant="tonal" size="36">
+                  <v-avatar color="warning" size="36">
                     <v-icon icon="mdi-clock-outline" size="20" />
                   </v-avatar>
                 </div>
@@ -160,7 +158,7 @@
                     </div>
                   </div>
 
-                  <v-avatar color="info" variant="tonal" size="36">
+                  <v-avatar color="info" size="36">
                     <v-icon icon="mdi-progress-clock" size="20" />
                   </v-avatar>
                 </div>
@@ -179,7 +177,7 @@
                     </div>
                   </div>
 
-                  <v-avatar color="success" variant="tonal" size="36">
+                  <v-avatar color="success" size="36">
                     <v-icon icon="mdi-check-circle-outline" size="20" />
                   </v-avatar>
                 </div>
@@ -265,7 +263,6 @@
               <v-chip
                 size="x-small"
                 :color="isTrue(item.cppt) ? 'success' : 'warning'"
-                variant="tonal"
                 :prepend-icon="
                   isTrue(item.cppt)
                     ? 'mdi-check-circle-outline'
@@ -278,7 +275,6 @@
               <v-chip
                 size="x-small"
                 :color="isTrue(item.before_after) ? 'success' : 'warning'"
-                variant="tonal"
                 :prepend-icon="
                   isTrue(item.before_after)
                     ? 'mdi-check-circle-outline'
@@ -291,7 +287,6 @@
               <v-chip
                 size="x-small"
                 :color="isTrue(item.bahan_treatment) ? 'success' : 'warning'"
-                variant="tonal"
                 :prepend-icon="
                   isTrue(item.bahan_treatment)
                     ? 'mdi-check-circle-outline'
@@ -304,7 +299,7 @@
           </template>
 
           <template #item.status="{ item }">
-            <v-chip size="small" :color="getStatusColor(item)" variant="tonal">
+            <v-chip size="small" :color="getStatusColor(item)">
               {{ formatStatus(item) }}
             </v-chip>
           </template>
@@ -314,7 +309,6 @@
               <v-btn
                 size="small"
                 color="primary"
-                variant="tonal"
                 prepend-icon="mdi-stethoscope"
                 @click="goToInputCppt(item)"
               >
@@ -324,7 +318,6 @@
               <v-btn
                 size="small"
                 color="success"
-                variant="tonal"
                 prepend-icon="mdi-camera"
                 @click="goToInputBeforeAfter(item)"
               >
@@ -334,7 +327,6 @@
               <v-btn
                 size="small"
                 color="warning"
-                variant="tonal"
                 prepend-icon="mdi-flask"
                 @click="goToInputBahanTreatment(item)"
               >
@@ -345,7 +337,6 @@
                 v-if="canDeleteQueue(item)"
                 size="small"
                 color="error"
-                variant="tonal"
                 prepend-icon="mdi-delete-outline"
                 @click="confirmDelete(item)"
               >

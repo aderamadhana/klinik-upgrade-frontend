@@ -17,7 +17,7 @@
       <v-divider />
 
       <v-card-text class="pt-6">
-        <v-alert type="info" variant="tonal" class="mb-6" rounded="lg">
+        <v-alert type="info" class="mb-6" rounded="lg">
           Isi data utama toko terlebih dahulu. Kolom bertanda
           <strong>*</strong> wajib diisi.
         </v-alert>

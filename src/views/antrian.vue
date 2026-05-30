@@ -14,7 +14,6 @@
         <div class="d-flex flex-wrap align-center ga-3">
           <v-btn
             :to="'/antrian/input'"
-            variant="tonal"
             target="_blank"
             prepend-icon="mdi-link-variant"
           >
@@ -24,7 +23,6 @@
           <v-btn
             :to="'/antrian/display'"
             target="_blank"
-            variant="tonal"
             prepend-icon="mdi-monitor"
           >
             LINK DISPLAY
@@ -44,7 +42,6 @@
           />
 
           <v-btn
-            variant="tonal"
             prepend-icon="mdi-refresh"
             :loading="loading"
             @click="fetchQueue"
@@ -57,7 +54,6 @@
           v-if="errorMessage"
           class="mt-4"
           type="error"
-          variant="tonal"
           closable
           @click:close="errorMessage = ''"
         >
@@ -74,21 +70,21 @@
         <v-tabs v-model="tab" class="mt-4" color="primary">
           <v-tab value="product">
             Product
-            <v-chip class="ml-2" size="x-small" variant="tonal">
+            <v-chip class="ml-2" size="x-small">
               {{ queueMap.product.length }}
             </v-chip>
           </v-tab>
 
           <v-tab value="treatment">
             Treatment
-            <v-chip class="ml-2" size="x-small" variant="tonal">
+            <v-chip class="ml-2" size="x-small">
               {{ queueMap.treatment.length }}
             </v-chip>
           </v-tab>
 
           <v-tab v-if="showVip" value="vip">
             VIP
-            <v-chip class="ml-2" size="x-small" variant="tonal">
+            <v-chip class="ml-2" size="x-small">
               {{ queueMap.vip.length }}
             </v-chip>
           </v-tab>

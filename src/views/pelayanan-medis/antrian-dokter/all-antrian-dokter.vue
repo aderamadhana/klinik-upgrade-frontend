@@ -91,7 +91,6 @@
         <div class="d-flex justify-end mt-3">
           <v-chip
             color="success"
-            variant="tonal"
             size="small"
             prepend-icon="mdi-timer-sync-outline"
           >
@@ -106,7 +105,6 @@
       <v-card-text v-if="errorMessage" class="pa-4 pb-0">
         <v-alert
           type="error"
-          variant="tonal"
           density="compact"
           closable
           class="mb-3"
@@ -126,7 +124,7 @@
             sm="6"
             md="3"
           >
-            <v-card :color="card.color" variant="tonal">
+            <v-card :color="card.color">
               <v-card-text class="pa-3">
                 <div class="d-flex align-center justify-space-between">
                   <div>
@@ -182,7 +180,6 @@
                 <v-chip
                   size="small"
                   color="secondary"
-                  variant="tonal"
                   prepend-icon="mdi-calendar-clock-outline"
                 >
                   {{ formatDate(item.tanggal_kunjungan || item.tanggal) }}
@@ -213,7 +210,6 @@
                   :color="chip.color"
                   :prepend-icon="chip.icon"
                   size="small"
-                  variant="tonal"
                 >
                   {{ chip.label }}
                 </v-chip>
@@ -231,7 +227,6 @@
                 size="small"
                 :color="getChannelColor(item.channel_konsultasi)"
                 :prepend-icon="getChannelIcon(item.channel_konsultasi)"
-                variant="tonal"
                 class="mt-2"
               >
                 {{ formatChannel(item.channel_konsultasi) }}
@@ -266,7 +261,6 @@
               <v-btn
                 size="small"
                 color="error"
-                variant="tonal"
                 prepend-icon="mdi-delete-outline"
                 @click.stop="confirmDelete(item)"
               >
@@ -345,12 +339,7 @@
         <v-divider />
 
         <v-card-text class="pa-4">
-          <v-alert
-            type="warning"
-            variant="tonal"
-            density="compact"
-            class="mb-4"
-          >
+          <v-alert type="warning" density="compact" class="mb-4">
             Data antrian dokter ini akan dihapus dari daftar antrian.
           </v-alert>
 

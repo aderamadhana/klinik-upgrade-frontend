@@ -72,7 +72,7 @@
           </template>
 
           <template #item.tipe_mutasi="{ item }">
-            <v-chip size="small" variant="tonal">
+            <v-chip size="small">
               {{ item.tipe_mutasi }}
             </v-chip>
           </template>

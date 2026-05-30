@@ -22,7 +22,7 @@
         <v-divider />
 
         <v-card-text class="pt-6">
-          <v-alert type="info" variant="tonal" class="mb-6" rounded="lg">
+          <v-alert type="info" class="mb-6" rounded="lg">
             Ubah data supplier, lalu sesuaikan cabang yang menggunakan supplier
             ini.
           </v-alert>
@@ -157,7 +157,6 @@
 
               <v-btn
                 color="primary"
-                variant="tonal"
                 prepend-icon="mdi-plus"
                 @click="addTokoMapping"
               >
@@ -165,7 +164,7 @@
               </v-btn>
             </div>
 
-            <v-alert type="info" variant="tonal" class="mb-4" rounded="lg">
+            <v-alert type="info" class="mb-4" rounded="lg">
               Centang <strong>Default</strong> jika supplier ini menjadi
               supplier utama di cabang tersebut.
             </v-alert>

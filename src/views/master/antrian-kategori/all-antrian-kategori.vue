@@ -91,7 +91,6 @@
               <v-chip
                 size="small"
                 :color="item.toko_id ? 'primary' : 'success'"
-                variant="tonal"
               >
                 {{ item.toko?.nama || item.toko?.nama_toko || "Global" }}
               </v-chip>
@@ -102,7 +101,6 @@
                 <v-chip
                   size="small"
                   :color="item.is_priority ? 'warning' : 'grey'"
-                  variant="tonal"
                 >
                   {{ item.is_priority ? "Prioritas" : "Normal" }}
                 </v-chip>
@@ -117,7 +115,6 @@
               <v-chip
                 size="small"
                 :color="item.is_active ? 'success' : 'error'"
-                variant="tonal"
               >
                 {{ item.is_active ? "Aktif" : "Nonaktif" }}
               </v-chip>
@@ -128,7 +125,6 @@
                 <v-btn
                   size="small"
                   color="primary"
-                  variant="tonal"
                   prepend-icon="mdi-pencil"
                   :to="'/master/antrian-kategori/edit/' + item.id"
                 >
@@ -138,7 +134,6 @@
                 <v-btn
                   size="small"
                   color="error"
-                  variant="tonal"
                   prepend-icon="mdi-delete"
                   @click="confirmDelete(item)"
                 >
@@ -174,7 +169,7 @@
         <v-card-text>
           <p class="mb-2">Yakin ingin menghapus kategori antrian ini?</p>
 
-          <v-alert type="warning" variant="tonal" rounded="lg">
+          <v-alert type="warning" rounded="lg">
             <strong>{{ selectedItem?.nama || "-" }}</strong>
             <br />
             Data akan dihapus secara soft delete.

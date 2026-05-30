@@ -19,7 +19,7 @@
       <v-divider />
 
       <v-card-text class="pt-6">
-        <v-alert type="info" variant="tonal" class="mb-6" rounded="lg">
+        <v-alert type="info" class="mb-6" rounded="lg">
           Gunakan Input Manual untuk membuat satu kategori. Gunakan Samakan
           Cabang untuk menyalin seluruh kategori dari Global/cabang sumber ke
           cabang tujuan.
@@ -200,7 +200,7 @@
               </v-col>
 
               <v-col cols="12">
-                <v-alert type="warning" variant="tonal" rounded="lg">
+                <v-alert type="warning" rounded="lg">
                   Jika kode kategori sudah ada di cabang tujuan, data akan
                   diperbarui. Jika belum ada, data akan dibuat baru.
                 </v-alert>

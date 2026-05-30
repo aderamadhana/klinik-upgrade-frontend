@@ -128,7 +128,7 @@
             </v-col>
           </v-row>
 
-          <v-alert type="info" variant="tonal" density="compact" class="mt-2">
+          <v-alert type="info" density="compact" class="mt-2">
             Mengubah tier dapat mempengaruhi perhitungan benefit member untuk
             transaksi berikutnya.
           </v-alert>
@@ -136,11 +136,7 @@
           <v-divider class="my-5" />
 
           <div class="d-flex justify-end ga-2">
-            <v-btn
-              variant="tonal"
-              color="grey"
-              @click="$router.push('/master/member-tier')"
-            >
+            <v-btn color="grey" @click="$router.push('/master/member-tier')">
               Kembali
             </v-btn>
 

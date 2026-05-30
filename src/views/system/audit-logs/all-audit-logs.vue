@@ -212,48 +212,27 @@
       </div>
 
       <div class="quick-filter-row">
-        <v-btn
-          size="small"
-          variant="tonal"
-          class="quick-chip"
-          @click="quickFilter('create')"
-        >
+        <v-btn size="small" class="quick-chip" @click="quickFilter('create')">
           Tampilkan create
         </v-btn>
 
-        <v-btn
-          size="small"
-          variant="tonal"
-          class="quick-chip"
-          @click="quickFilter('update')"
-        >
+        <v-btn size="small" class="quick-chip" @click="quickFilter('update')">
           Tampilkan update
         </v-btn>
 
-        <v-btn
-          size="small"
-          variant="tonal"
-          class="quick-chip"
-          @click="quickFilter('delete')"
-        >
+        <v-btn size="small" class="quick-chip" @click="quickFilter('delete')">
           Tampilkan delete
         </v-btn>
 
         <v-btn
           size="small"
-          variant="tonal"
           class="quick-chip"
           @click="quickFilter('force_delete')"
         >
           Tampilkan force delete
         </v-btn>
 
-        <v-btn
-          size="small"
-          variant="tonal"
-          class="quick-chip"
-          @click="resetFilters"
-        >
+        <v-btn size="small" class="quick-chip" @click="resetFilters">
           Reset filter
         </v-btn>
 
@@ -321,7 +300,6 @@
           <v-chip
             size="small"
             :color="getActionColor(item.action)"
-            variant="tonal"
             class="status-chip"
           >
             {{ formatAction(item.action) }}
@@ -347,7 +325,6 @@
           <div class="action-cell">
             <v-btn
               size="small"
-              variant="tonal"
               color="primary"
               class="mr-2"
               @click="openDetail(item)"
@@ -460,7 +437,6 @@
                   <v-chip
                     size="small"
                     :color="getActionColor(selectedItem.action)"
-                    variant="tonal"
                   >
                     {{ formatAction(selectedItem.action) }}
                   </v-chip>

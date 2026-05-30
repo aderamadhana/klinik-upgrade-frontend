@@ -102,12 +102,7 @@
         </v-row>
 
         <div class="d-flex justify-end mt-3">
-          <v-chip
-            color="success"
-            variant="tonal"
-            size="small"
-            prepend-icon="mdi-history"
-          >
+          <v-chip color="success" size="small" prepend-icon="mdi-history">
             Data Pelayanan Selesai
           </v-chip>
         </div>
@@ -119,7 +114,6 @@
       <v-card-text v-if="errorMessage" class="pa-4 pb-0">
         <v-alert
           type="error"
-          variant="tonal"
           density="compact"
           closable
           class="mb-3"
@@ -145,7 +139,7 @@
                     </div>
                   </div>
 
-                  <v-avatar color="primary" variant="tonal" size="36">
+                  <v-avatar color="primary" size="36">
                     <v-icon icon="mdi-clipboard-text-clock-outline" size="20" />
                   </v-avatar>
                 </div>
@@ -166,7 +160,7 @@
                     </div>
                   </div>
 
-                  <v-avatar color="info" variant="tonal" size="36">
+                  <v-avatar color="info" size="36">
                     <v-icon icon="mdi-stethoscope" size="20" />
                   </v-avatar>
                 </div>
@@ -187,7 +181,7 @@
                     </div>
                   </div>
 
-                  <v-avatar color="success" variant="tonal" size="36">
+                  <v-avatar color="success" size="36">
                     <v-icon icon="mdi-face-man-shimmer-outline" size="20" />
                   </v-avatar>
                 </div>
@@ -208,7 +202,7 @@
                     </div>
                   </div>
 
-                  <v-avatar color="warning" variant="tonal" size="36">
+                  <v-avatar color="warning" size="36">
                     <v-icon icon="mdi-cart-check" size="20" />
                   </v-avatar>
                 </div>
@@ -279,7 +273,7 @@
 
           <template #item.layanan="{ item }">
             <div class="py-2">
-              <v-chip size="small" color="primary" variant="tonal">
+              <v-chip size="small" color="primary">
                 {{ getLayananLabel(item) }}
               </v-chip>
 
@@ -311,7 +305,6 @@
             <v-chip
               size="small"
               color="success"
-              variant="tonal"
               prepend-icon="mdi-check-circle-outline"
             >
               {{ getStatusLabel(item.status) }}
@@ -323,7 +316,6 @@
               <v-btn
                 size="small"
                 color="primary"
-                variant="tonal"
                 prepend-icon="mdi-eye-outline"
                 @click="goToDetail(item)"
               >

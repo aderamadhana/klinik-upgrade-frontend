@@ -19,7 +19,7 @@
       <v-divider />
 
       <v-card-text class="pt-6">
-        <v-alert type="info" variant="tonal" class="mb-6" rounded="lg">
+        <v-alert type="info" class="mb-6" rounded="lg">
           Pilih jenis reward terlebih dahulu. Field diskon akan menyesuaikan
           otomatis.
         </v-alert>

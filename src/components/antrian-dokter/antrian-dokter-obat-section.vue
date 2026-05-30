@@ -7,7 +7,6 @@
 
       <v-btn
         color="primary"
-        variant="tonal"
         size="small"
         prepend-icon="mdi-plus"
         @click="addRow"
@@ -74,7 +73,6 @@
             <div class="d-flex justify-end ga-2">
               <v-btn
                 color="error"
-                variant="tonal"
                 icon="mdi-delete-outline"
                 :disabled="items.length === 1"
                 @click="removeRow(index)"

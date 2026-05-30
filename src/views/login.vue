@@ -97,7 +97,6 @@ export default {
         <v-alert
           v-if="errorMessage"
           type="error"
-          variant="tonal"
           density="compact"
           class="mb-5"
         >

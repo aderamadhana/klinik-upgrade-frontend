@@ -8,7 +8,7 @@
               <div class="stat-label">Total Item</div>
               <div class="stat-value">{{ summary.totalProduk }}</div>
             </div>
-            <v-avatar color="primary" variant="tonal">
+            <v-avatar color="primary">
               <v-icon>mdi-pill</v-icon>
             </v-avatar>
           </div>
@@ -26,7 +26,7 @@
                 {{ formatNumber(summary.totalStokAkhir) }}
               </div>
             </div>
-            <v-avatar color="success" variant="tonal">
+            <v-avatar color="success">
               <v-icon>mdi-package-variant-closed</v-icon>
             </v-avatar>
           </div>
@@ -44,7 +44,7 @@
                 {{ formatNumber(summary.totalReserved) }}
               </div>
             </div>
-            <v-avatar color="warning" variant="tonal">
+            <v-avatar color="warning">
               <v-icon>mdi-lock-clock</v-icon>
             </v-avatar>
           </div>
@@ -60,7 +60,7 @@
               <div class="stat-label">Perlu Perhatian</div>
               <div class="stat-value">{{ summary.perluPerhatian }}</div>
             </div>
-            <v-avatar color="error" variant="tonal">
+            <v-avatar color="error">
               <v-icon>mdi-alert-circle-outline</v-icon>
             </v-avatar>
           </div>

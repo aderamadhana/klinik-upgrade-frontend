@@ -58,7 +58,7 @@
       <v-divider />
 
       <v-card-text class="pa-4 pa-md-5">
-        <v-alert type="info" variant="tonal" density="comfortable" class="mb-5">
+        <v-alert type="info" density="comfortable" class="mb-5">
           Upload masing-masing 3 foto untuk tahap Before dan After. Klik tahap
           yang ingin dikerjakan, lalu upload foto pada slot yang tersedia.
         </v-alert>
@@ -137,7 +137,6 @@
 
           <v-chip
             size="small"
-            variant="tonal"
             :color="isCurrentStepComplete ? 'success' : 'default'"
           >
             {{ currentUploadedCount }}/3 terupload
@@ -160,7 +159,6 @@
 
                 <v-chip
                   size="x-small"
-                  variant="tonal"
                   :color="slot.previewUrl ? 'success' : 'default'"
                 >
                   {{ slot.previewUrl ? "Terupload" : "Kosong" }}

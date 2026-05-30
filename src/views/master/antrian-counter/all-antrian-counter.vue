@@ -97,7 +97,6 @@
               <v-chip
                 size="small"
                 :color="item.is_active ? 'success' : 'error'"
-                variant="tonal"
               >
                 {{ item.is_active ? "Aktif" : "Nonaktif" }}
               </v-chip>
@@ -108,7 +107,6 @@
                 <v-btn
                   size="small"
                   color="primary"
-                  variant="tonal"
                   prepend-icon="mdi-pencil"
                   :to="'/master/antrian-counter/edit/' + item.id"
                 >
@@ -118,7 +116,6 @@
                 <v-btn
                   size="small"
                   color="error"
-                  variant="tonal"
                   prepend-icon="mdi-delete"
                   @click="confirmDelete(item)"
                 >
@@ -154,7 +151,7 @@
         <v-card-text>
           <p class="mb-2">Yakin ingin menghapus counter antrian ini?</p>
 
-          <v-alert type="warning" variant="tonal" rounded="lg">
+          <v-alert type="warning" rounded="lg">
             <strong>{{ selectedItem?.nama || "-" }}</strong>
             <br />
             Data akan dihapus secara soft delete.

@@ -87,7 +87,7 @@
             </template>
 
             <template #item.jenis_reward="{ item }">
-              <v-chip size="small" color="primary" variant="tonal">
+              <v-chip size="small" color="primary">
                 {{ formatJenisReward(item.jenis_reward) }}
               </v-chip>
             </template>
@@ -104,7 +104,6 @@
               <v-chip
                 size="small"
                 :color="Number(item.stok || 0) > 0 ? 'success' : 'error'"
-                variant="tonal"
               >
                 {{ formatNumber(item.stok) }}
               </v-chip>
@@ -115,7 +114,6 @@
                 <v-btn
                   size="small"
                   color="primary"
-                  variant="tonal"
                   prepend-icon="mdi-pencil"
                   :to="'/master/merchandise/edit/' + item.id"
                 >
@@ -125,7 +123,6 @@
                 <v-btn
                   size="small"
                   color="error"
-                  variant="tonal"
                   prepend-icon="mdi-delete"
                   @click="confirmDelete(item)"
                 >
@@ -161,7 +158,7 @@
         <v-card-text>
           <p class="mb-2">Yakin ingin menghapus merchandise ini?</p>
 
-          <v-alert type="warning" variant="tonal" rounded="lg">
+          <v-alert type="warning" rounded="lg">
             <strong>{{ selectedItem?.nama || "-" }}</strong>
             <br />
             Data akan dihapus secara soft delete.

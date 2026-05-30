@@ -58,7 +58,7 @@
           Tampilkan stok kosong
         </v-chip>
 
-        <v-chip variant="tonal" size="small" @click="$emit('reset-filter')">
+        <v-chip size="small" @click="$emit('reset-filter')">
           Reset filter
         </v-chip>
       </div>
@@ -120,11 +120,7 @@
         </template>
 
         <template #item.status="{ item }">
-          <v-chip
-            size="small"
-            :color="getStockStatus(item).color"
-            variant="tonal"
-          >
+          <v-chip size="small" :color="getStockStatus(item).color">
             {{ getStockStatus(item).label }}
           </v-chip>
         </template>
@@ -134,7 +130,6 @@
             <v-btn
               size="small"
               color="primary"
-              variant="tonal"
               prepend-icon="mdi-card-bulleted-outline"
               @click="$emit('open-kartu', item)"
             >
@@ -144,7 +139,6 @@
             <v-btn
               size="small"
               color="warning"
-              variant="tonal"
               icon="mdi-pencil-outline"
               @click="$emit('open-penyesuaian', item)"
             />

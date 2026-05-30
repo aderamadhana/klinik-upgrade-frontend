@@ -83,7 +83,6 @@
         <v-alert
           v-if="!activeTokoId"
           type="warning"
-          variant="tonal"
           density="compact"
           class="mb-3"
         >
@@ -94,7 +93,6 @@
         <v-alert
           v-if="errorMessage"
           type="error"
-          variant="tonal"
           density="compact"
           closable
           class="mb-3"
@@ -166,11 +164,11 @@
                   </div>
 
                   <div class="d-flex flex-wrap ga-2 mt-2">
-                    <v-chip size="x-small" color="primary" variant="tonal">
+                    <v-chip size="x-small" color="primary">
                       Kategori: {{ item.kategori?.nama || "-" }}
                     </v-chip>
 
-                    <v-chip size="x-small" color="secondary" variant="tonal">
+                    <v-chip size="x-small" color="secondary">
                       Source: {{ item.source || "-" }}
                     </v-chip>
                   </div>
@@ -182,30 +180,15 @@
           <template #item.layanan="{ item }">
             <div class="py-2">
               <div class="d-flex flex-wrap ga-1">
-                <v-chip
-                  v-if="item.kategori?.nama"
-                  size="small"
-                  color="primary"
-                  variant="tonal"
-                >
+                <v-chip v-if="item.kategori?.nama" size="small" color="primary">
                   {{ item.kategori.nama }}
                 </v-chip>
 
-                <v-chip
-                  v-if="item.dokter?.nama"
-                  size="small"
-                  color="success"
-                  variant="tonal"
-                >
+                <v-chip v-if="item.dokter?.nama" size="small" color="success">
                   Dokter: {{ item.dokter.nama }}
                 </v-chip>
 
-                <v-chip
-                  v-if="item.treatment?.nama"
-                  size="small"
-                  color="info"
-                  variant="tonal"
-                >
+                <v-chip v-if="item.treatment?.nama" size="small" color="info">
                   Treatment
                 </v-chip>
               </div>
@@ -235,7 +218,6 @@
               <v-chip
                 size="x-small"
                 :color="statusMeta(item.status).color"
-                variant="tonal"
                 :prepend-icon="statusMeta(item.status).icon"
               >
                 {{ statusMeta(item.status).text }}
@@ -269,7 +251,6 @@
               <v-btn
                 size="small"
                 color="primary"
-                variant="tonal"
                 prepend-icon="mdi-eye-outline"
                 @click="openDetail(item)"
               >
@@ -280,7 +261,6 @@
                 v-if="canMarkLate(item)"
                 size="small"
                 color="warning"
-                variant="tonal"
                 prepend-icon="mdi-clock-alert-outline"
                 :loading="isActionLoading(item, 'late')"
                 :disabled="actionLoadingId !== null"
@@ -293,7 +273,6 @@
                 v-if="canNoShow(item)"
                 size="small"
                 color="deep-orange"
-                variant="tonal"
                 prepend-icon="mdi-account-off-outline"
                 :loading="isActionLoading(item, 'no-show')"
                 :disabled="actionLoadingId !== null"
@@ -306,7 +285,6 @@
                 v-if="canCancel(item)"
                 size="small"
                 color="error"
-                variant="tonal"
                 prepend-icon="mdi-close-circle-outline"
                 :loading="isActionLoading(item, 'cancel')"
                 :disabled="actionLoadingId !== null"
@@ -424,7 +402,6 @@
                   <v-chip
                     size="small"
                     :color="statusMeta(detailDialog.item.status).color"
-                    variant="tonal"
                     :prepend-icon="statusMeta(detailDialog.item.status).icon"
                   >
                     {{ statusMeta(detailDialog.item.status).text }}
@@ -558,7 +535,7 @@
             {{ confirmMessage }}
           </div>
 
-          <v-alert type="warning" variant="tonal" density="compact">
+          <v-alert type="warning" density="compact">
             <div class="font-weight-bold">
               {{ confirmDialog.item?.booking_code || "-" }}
             </div>

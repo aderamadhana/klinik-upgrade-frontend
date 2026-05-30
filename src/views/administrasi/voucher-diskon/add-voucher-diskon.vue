@@ -219,7 +219,7 @@
                 </template>
 
                 <v-col cols="12" v-else>
-                  <v-alert type="info" variant="tonal" rounded="lg">
+                  <v-alert type="info" rounded="lg">
                     Voucher akan berlaku tanpa batas tanggal.
                   </v-alert>
                 </v-col>
@@ -315,7 +315,6 @@
                   <v-alert
                     v-if="form.is_unlimited_generate"
                     type="info"
-                    variant="tonal"
                     density="compact"
                     class="mt-2"
                   >
@@ -355,7 +354,7 @@
                 </v-col>
 
                 <v-col cols="12" md="8">
-                  <v-alert type="info" variant="tonal" rounded="lg">
+                  <v-alert type="info" rounded="lg">
                     Item voucher bisa dikonfigurasi setelah voucher dibuat
                     melalui tombol konfigurasi pada halaman daftar voucher.
                   </v-alert>
@@ -394,19 +393,15 @@
                 </div>
 
                 <div class="d-flex flex-wrap ga-2">
-                  <v-chip size="small" variant="tonal" color="primary">
+                  <v-chip size="small" color="primary">
                     {{ selectedKategoriLabel }}
                   </v-chip>
 
-                  <v-chip
-                    size="small"
-                    variant="tonal"
-                    :color="selectedJenisColor"
-                  >
+                  <v-chip size="small" :color="selectedJenisColor">
                     {{ selectedJenisLabel }}
                   </v-chip>
 
-                  <v-chip size="small" variant="tonal" color="warning">
+                  <v-chip size="small" color="warning">
                     {{ selectedTokoLabel }}
                   </v-chip>
                 </div>
@@ -462,11 +457,7 @@
 
                 <div>
                   <div class="text-caption text-medium-emphasis">Status</div>
-                  <v-chip
-                    size="small"
-                    :color="selectedStatusColor"
-                    variant="tonal"
-                  >
+                  <v-chip size="small" :color="selectedStatusColor">
                     {{ selectedStatusLabel }}
                   </v-chip>
                 </div>
@@ -500,7 +491,7 @@
                     </div>
                   </div>
 
-                  <v-chip color="primary" variant="tonal">
+                  <v-chip color="primary">
                     {{ selectedKategoriLabel }}
                   </v-chip>
                 </div>
@@ -508,7 +499,6 @@
                 <v-alert
                   v-if="isDirectMode"
                   type="success"
-                  variant="tonal"
                   density="compact"
                   class="mb-4"
                 >

@@ -55,7 +55,7 @@
       <v-divider />
 
       <v-card-text class="pa-4 pa-md-5">
-        <v-alert type="info" variant="tonal" density="comfortable" class="mb-5">
+        <v-alert type="info" density="comfortable" class="mb-5">
           Isi CPPT secara singkat, spesifik, dan fokus pada kondisi pasien saat
           ini. Gunakan template cepat untuk mempercepat input, lalu sesuaikan
           isinya.
@@ -126,7 +126,6 @@
                       ? 'success'
                       : 'default'
                   "
-                  variant="tonal"
                 >
                   {{
                     isFilled(["subyektif_kategori", "subyektif_catatan"])
@@ -193,7 +192,6 @@
                 <v-chip
                   size="small"
                   :color="isFilled(['obyektif']) ? 'success' : 'default'"
-                  variant="tonal"
                 >
                   {{ isFilled(["obyektif"]) ? "Terisi" : "Belum" }}
                 </v-chip>
@@ -247,7 +245,6 @@
                       ? 'success'
                       : 'default'
                   "
-                  variant="tonal"
                 >
                   {{
                     isFilled(["diagnosa", "assessment_catatan"])
@@ -314,7 +311,6 @@
                 <v-chip
                   size="small"
                   :color="isFilled(['plan']) ? 'success' : 'default'"
-                  variant="tonal"
                 >
                   {{ isFilled(["plan"]) ? "Terisi" : "Belum" }}
                 </v-chip>
@@ -364,7 +360,6 @@
                 <v-chip
                   size="small"
                   :color="isFilled(['tindakan']) ? 'success' : 'default'"
-                  variant="tonal"
                 >
                   {{ isFilled(["tindakan"]) ? "Terisi" : "Belum" }}
                 </v-chip>

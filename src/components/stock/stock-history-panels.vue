@@ -40,7 +40,6 @@
 
             <v-btn
               color="primary"
-              variant="tonal"
               prepend-icon="mdi-refresh"
               :loading="loadingPenerimaan"
               @click="$emit('refresh-penerimaan')"
@@ -70,11 +69,7 @@
           </template>
 
           <template #item.status="{ item }">
-            <v-chip
-              size="small"
-              :color="getStatusColor(item.status)"
-              variant="tonal"
-            >
+            <v-chip size="small" :color="getStatusColor(item.status)">
               {{ item.status }}
             </v-chip>
           </template>
@@ -92,7 +87,6 @@
               <v-btn
                 size="small"
                 color="primary"
-                variant="tonal"
                 icon="mdi-eye-outline"
                 @click="$emit('show-penerimaan-detail', item)"
               />
@@ -101,7 +95,6 @@
                 v-if="item.status === 'DRAFT'"
                 size="small"
                 color="success"
-                variant="tonal"
                 icon="mdi-check-circle-outline"
                 @click="$emit('post-penerimaan', item)"
               />
@@ -110,7 +103,6 @@
                 v-if="item.status === 'DRAFT'"
                 size="small"
                 color="error"
-                variant="tonal"
                 icon="mdi-close-circle-outline"
                 @click="$emit('cancel-penerimaan', item)"
               />
@@ -170,7 +162,6 @@
 
             <v-btn
               color="primary"
-              variant="tonal"
               prepend-icon="mdi-refresh"
               :loading="loadingPenyesuaian"
               @click="$emit('refresh-penyesuaian')"
@@ -196,17 +187,13 @@
           </template>
 
           <template #item.jenis_penyesuaian="{ item }">
-            <v-chip size="small" variant="tonal">
+            <v-chip size="small">
               {{ item.jenis_penyesuaian }}
             </v-chip>
           </template>
 
           <template #item.status="{ item }">
-            <v-chip
-              size="small"
-              :color="getStatusColor(item.status)"
-              variant="tonal"
-            >
+            <v-chip size="small" :color="getStatusColor(item.status)">
               {{ item.status }}
             </v-chip>
           </template>
@@ -216,7 +203,6 @@
               <v-btn
                 size="small"
                 color="primary"
-                variant="tonal"
                 icon="mdi-eye-outline"
                 @click="$emit('show-penyesuaian-detail', item)"
               />
@@ -225,7 +211,6 @@
                 v-if="item.status === 'DRAFT'"
                 size="small"
                 color="success"
-                variant="tonal"
                 icon="mdi-check-circle-outline"
                 @click="$emit('post-penyesuaian', item)"
               />
@@ -234,7 +219,6 @@
                 v-if="item.status === 'DRAFT'"
                 size="small"
                 color="error"
-                variant="tonal"
                 icon="mdi-close-circle-outline"
                 @click="$emit('cancel-penyesuaian', item)"
               />

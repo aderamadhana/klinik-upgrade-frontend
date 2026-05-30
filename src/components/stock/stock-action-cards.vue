@@ -3,7 +3,7 @@
     <v-col cols="12" md="4">
       <v-card class="stock-card" variant="flat">
         <v-card-text class="d-flex align-start ga-4">
-          <v-avatar color="primary" variant="tonal" rounded="lg">
+          <v-avatar color="primary" rounded="lg">
             <v-icon>mdi-clipboard-list-outline</v-icon>
           </v-avatar>
 
@@ -15,7 +15,6 @@
             <v-btn
               class="mt-3"
               color="primary"
-              variant="tonal"
               prepend-icon="mdi-refresh"
               :loading="loadingStock"
               @click="$emit('refresh-stock')"
@@ -30,7 +29,7 @@
     <v-col cols="12" md="4">
       <v-card class="stock-card" variant="flat">
         <v-card-text class="d-flex align-start ga-4">
-          <v-avatar color="success" variant="tonal" rounded="lg">
+          <v-avatar color="success" rounded="lg">
             <v-icon>mdi-truck-delivery-outline</v-icon>
           </v-avatar>
 
@@ -55,7 +54,7 @@
     <v-col cols="12" md="4">
       <v-card class="stock-card" variant="flat">
         <v-card-text class="d-flex align-start ga-4">
-          <v-avatar color="warning" variant="tonal" rounded="lg">
+          <v-avatar color="warning" rounded="lg">
             <v-icon>mdi-tune-variant</v-icon>
           </v-avatar>
 

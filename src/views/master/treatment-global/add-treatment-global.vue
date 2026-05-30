@@ -158,7 +158,6 @@
             <div class="d-flex ga-2 flex-wrap">
               <v-btn
                 color="primary"
-                variant="tonal"
                 prepend-icon="mdi-store-plus-outline"
                 :disabled="loadingMaster || !tokoOptions.length"
                 @click="addAllTokoConfig"
@@ -168,7 +167,6 @@
 
               <v-btn
                 color="primary"
-                variant="tonal"
                 prepend-icon="mdi-plus"
                 @click="addTokoConfig"
               >
@@ -177,12 +175,7 @@
             </div>
           </div>
 
-          <v-alert
-            type="info"
-            variant="tonal"
-            density="comfortable"
-            class="mb-4"
-          >
+          <v-alert type="info" density="comfortable" class="mb-4">
             Alur cepat: isi satu cabang sebagai patokan, klik
             <strong>Tambah Semua Cabang</strong>, lalu gunakan
             <strong>Samakan ke Cabang Lain</strong>. Setelah itu cabang tertentu
@@ -205,7 +198,7 @@
                 </div>
 
                 <div class="d-flex ga-2 flex-wrap">
-                  <v-chip color="primary" variant="tonal" size="small">
+                  <v-chip color="primary" size="small">
                     {{ form.toko_configs.length }} / {{ tokoOptions.length }}
                     cabang
                   </v-chip>
@@ -213,7 +206,6 @@
                   <v-chip
                     v-if="missingTokoCount > 0"
                     color="warning"
-                    variant="tonal"
                     size="small"
                   >
                     {{ missingTokoCount }} belum dikonfigurasi
@@ -222,7 +214,6 @@
                   <v-chip
                     v-else-if="tokoOptions.length"
                     color="success"
-                    variant="tonal"
                     size="small"
                   >
                     Semua cabang masuk
@@ -315,7 +306,6 @@
                 <v-chip
                   size="small"
                   :color="item.is_active ? 'success' : 'error'"
-                  variant="tonal"
                 >
                   {{ item.is_active ? "Aktif" : "Nonaktif" }}
                 </v-chip>
@@ -326,7 +316,6 @@
                   <v-btn
                     color="primary"
                     size="small"
-                    variant="tonal"
                     prepend-icon="mdi-cog"
                     @click="openTokoConfigDialog(index)"
                   >
@@ -336,7 +325,6 @@
                   <v-btn
                     color="error"
                     size="small"
-                    variant="tonal"
                     prepend-icon="mdi-delete"
                     @click="removeTokoConfig(index)"
                   >

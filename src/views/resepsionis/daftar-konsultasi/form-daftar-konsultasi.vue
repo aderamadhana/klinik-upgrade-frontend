@@ -23,20 +23,13 @@
         <v-alert
           v-if="showMemberWarning"
           type="warning"
-          variant="tonal"
           rounded="lg"
           class="mb-4"
         >
           Pasien ini terdaftar sebagai member.
         </v-alert>
 
-        <v-alert
-          v-if="showKtpWarning"
-          type="info"
-          variant="tonal"
-          rounded="lg"
-          class="mb-6"
-        >
+        <v-alert v-if="showKtpWarning" type="info" rounded="lg" class="mb-6">
           <div
             class="d-flex flex-column flex-md-row align-start align-md-center justify-space-between ga-3"
           >

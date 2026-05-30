@@ -199,7 +199,6 @@
 
             <v-btn
               color="primary"
-              variant="tonal"
               prepend-icon="mdi-plus"
               @click="addPenempatan"
             >
@@ -207,7 +206,7 @@
             </v-btn>
           </div>
 
-          <v-alert type="info" variant="tonal" class="mb-4">
+          <v-alert type="info" class="mb-4">
             Minimal harus ada 1 penempatan, dan hanya boleh ada 1 penempatan
             utama.
           </v-alert>

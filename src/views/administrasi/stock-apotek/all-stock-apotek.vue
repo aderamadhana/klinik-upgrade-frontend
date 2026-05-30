@@ -17,7 +17,6 @@
     <v-alert
       v-if="alert.show"
       :type="alert.type"
-      variant="tonal"
       density="compact"
       closable
       class="mb-4"

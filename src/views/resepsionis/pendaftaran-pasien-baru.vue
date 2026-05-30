@@ -15,14 +15,13 @@
       <v-divider />
 
       <v-card-text class="pa-6">
-        <v-alert type="info" variant="tonal" density="comfortable" class="mb-6">
+        <v-alert type="info" density="comfortable" class="mb-6">
           Isi data pasien terlebih dahulu. Kolom bertanda * wajib diisi.
         </v-alert>
 
         <v-alert
           v-if="successMessage"
           type="success"
-          variant="tonal"
           density="comfortable"
           class="mb-6"
           closable
@@ -34,7 +33,6 @@
         <v-alert
           v-if="errorMessage"
           type="error"
-          variant="tonal"
           density="comfortable"
           class="mb-6"
           closable
@@ -81,11 +79,19 @@
               <v-text-field
                 v-model="form.no_identitas"
                 label="KTP/SIM/Passport *"
-                placeholder="16 Digit Nomor Pengenal"
+                placeholder="Maksimal 16 digit nomor pengenal"
                 variant="outlined"
                 density="comfortable"
-                :rules="[required]"
+                inputmode="numeric"
+                maxlength="16"
+                counter="16"
+                :rules="[
+                  required,
+                  digitsOnly('KTP/SIM/Passport'),
+                  maxDigits(16, 'KTP/SIM/Passport'),
+                ]"
                 :error-messages="validationErrors.no_identitas"
+                @update:model-value="setDigits('no_identitas', $event, 16)"
               />
             </v-col>
           </v-row>
@@ -277,10 +283,18 @@
               <v-text-field
                 v-model="form.no_telp"
                 label="No. Telp"
-                placeholder="Optional / Isi jika ada nomor lain"
+                placeholder="Optional / maksimal 10 digit"
                 variant="outlined"
                 density="comfortable"
+                inputmode="numeric"
+                maxlength="10"
+                counter="10"
+                :rules="[
+                  optionalDigitsOnly('No. Telp'),
+                  optionalMaxDigits(10, 'No. Telp'),
+                ]"
                 :error-messages="validationErrors.no_telp"
+                @update:model-value="setDigits('no_telp', $event, 10)"
               />
             </v-col>
 
@@ -292,8 +306,12 @@
                 placeholder="81122334455"
                 variant="outlined"
                 density="comfortable"
-                :rules="[required]"
+                inputmode="numeric"
+                maxlength="11"
+                counter="11"
+                :rules="[required, phone62Max13('No. HP')]"
                 :error-messages="validationErrors.no_hp"
+                @update:model-value="setPhoneLocal('no_hp', $event)"
               />
             </v-col>
 
@@ -313,10 +331,15 @@
                 v-model="form.no_wa"
                 label="No. WA"
                 prefix="+62"
-                placeholder="8123456789"
+                placeholder="81234567890"
                 variant="outlined"
                 density="comfortable"
+                inputmode="numeric"
+                maxlength="11"
+                counter="11"
+                :rules="[optionalPhone62Max13('No. WA')]"
                 :error-messages="validationErrors.no_wa"
+                @update:model-value="setPhoneLocal('no_wa', $event)"
               />
             </v-col>
 
@@ -379,7 +402,6 @@
       <v-card-actions class="px-6 py-4 justify-end">
         <v-btn
           color="success"
-          variant="tonal"
           prepend-icon="mdi-account-key"
           :disabled="loadingSubmit"
           @click="buatTokenRegistrasi"
@@ -671,7 +693,7 @@ export default {
         tipe_pasien: this.form.tipe_pasien,
         toko_id: this.form.toko_id,
 
-        no_identitas: this.form.no_identitas,
+        no_identitas: this.normalizeDigits(this.form.no_identitas, 16),
 
         provinsi_kode: this.form.provinsi_kode,
         kota_kode: this.form.kota_kode,
@@ -687,10 +709,10 @@ export default {
         tempat_lahir: this.form.tempat_lahir,
         tanggal_lahir: this.form.tanggal_lahir,
 
-        no_telp: this.form.no_telp,
-        no_hp: this.form.no_hp,
+        no_telp: this.normalizeDigits(this.form.no_telp, 10),
+        no_hp: this.toFullPhone62(this.form.no_hp),
         email: this.form.email,
-        no_wa: this.form.no_wa,
+        no_wa: this.toFullPhone62(this.form.no_wa),
         sumber_info: this.form.sumber_info,
 
         alergi_obat: this.form.alergi_obat,
@@ -769,6 +791,118 @@ export default {
       }
 
       console.log("buat token registrasi mandiri", this.form);
+    },
+
+    normalizeDigits(value, maxLength = null) {
+      const digits = String(value || "").replace(/\D/g, "");
+
+      if (!maxLength) {
+        return digits;
+      }
+
+      return digits.slice(0, maxLength);
+    },
+
+    normalizePhoneLocal(value) {
+      let digits = String(value || "").replace(/\D/g, "");
+
+      if (digits.startsWith("62")) {
+        digits = digits.slice(2);
+      }
+
+      if (digits.startsWith("0")) {
+        digits = digits.slice(1);
+      }
+
+      return digits.slice(0, 11);
+    },
+
+    toFullPhone62(value) {
+      const localNumber = this.normalizePhoneLocal(value);
+
+      if (!localNumber) {
+        return "";
+      }
+
+      return `62${localNumber}`;
+    },
+
+    setDigits(field, value, maxLength) {
+      this.form[field] = this.normalizeDigits(value, maxLength);
+    },
+
+    setPhoneLocal(field, value) {
+      this.form[field] = this.normalizePhoneLocal(value);
+    },
+
+    digitsOnly(label) {
+      return (value) => {
+        if (!value) {
+          return true;
+        }
+
+        return /^\d+$/.test(String(value)) || `${label} hanya boleh angka`;
+      };
+    },
+
+    optionalDigitsOnly(label) {
+      return (value) => {
+        if (!value) {
+          return true;
+        }
+
+        return /^\d+$/.test(String(value)) || `${label} hanya boleh angka`;
+      };
+    },
+
+    maxDigits(max, label) {
+      return (value) => {
+        if (!value) {
+          return true;
+        }
+
+        return String(value).length <= max || `${label} maksimal ${max} digit`;
+      };
+    },
+
+    optionalMaxDigits(max, label) {
+      return (value) => {
+        if (!value) {
+          return true;
+        }
+
+        return String(value).length <= max || `${label} maksimal ${max} digit`;
+      };
+    },
+
+    phone62Max13(label) {
+      return (value) => {
+        if (!value) {
+          return true;
+        }
+
+        const fullNumber = this.toFullPhone62(value);
+
+        return (
+          fullNumber.length <= 13 ||
+          `${label} maksimal 13 digit termasuk kode negara 62`
+        );
+      };
+    },
+
+    optionalPhone62Max13(label) {
+      return (value) => {
+        if (!value) {
+          return true;
+        }
+
+        const fullNumber = this.toFullPhone62(value);
+
+        return (
+          fullNumber.length <= 13 ||
+          `${label} maksimal 13 digit termasuk kode negara 62`
+        );
+      };
     },
   },
 };

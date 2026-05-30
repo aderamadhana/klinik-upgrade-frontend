@@ -15,14 +15,13 @@
       <v-divider />
 
       <v-card-text class="pa-6">
-        <v-alert type="info" variant="tonal" density="comfortable" class="mb-6">
+        <v-alert type="info" density="comfortable" class="mb-6">
           Perbarui data pasien. No. RM dan cabang asal tidak dapat diubah.
         </v-alert>
 
         <v-alert
           v-if="successMessage"
           type="success"
-          variant="tonal"
           density="comfortable"
           class="mb-6"
           closable
@@ -34,7 +33,6 @@
         <v-alert
           v-if="errorMessage"
           type="error"
-          variant="tonal"
           density="comfortable"
           class="mb-6"
           closable
@@ -400,7 +398,6 @@
 
       <v-card-actions class="px-6 py-4 justify-end">
         <v-btn
-          variant="tonal"
           prepend-icon="mdi-arrow-left"
           :disabled="loadingSubmit"
           to="/master/pasien"

@@ -107,7 +107,6 @@
                 v-for="toko in getTokoList(item)"
                 :key="toko.id"
                 size="small"
-                variant="tonal"
                 color="primary"
               >
                 {{ toko.nama }}
@@ -122,7 +121,6 @@
               <v-btn
                 color="primary"
                 size="small"
-                variant="tonal"
                 prepend-icon="mdi-pencil"
                 :to="'/master/supplier/edit/' + item.id"
               >
@@ -132,7 +130,6 @@
               <v-btn
                 color="error"
                 size="small"
-                variant="tonal"
                 prepend-icon="mdi-delete"
                 @click="openDeleteDialog(item)"
               >
@@ -167,7 +164,7 @@
         <v-card-text>
           <p class="mb-2">Yakin ingin menghapus supplier ini?</p>
 
-          <v-alert type="warning" variant="tonal" rounded="lg">
+          <v-alert type="warning" rounded="lg">
             <strong>{{ selectedSupplier?.nama || "-" }}</strong>
             <br />
             Data akan dihapus secara soft delete.

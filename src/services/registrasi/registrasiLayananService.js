@@ -27,9 +27,7 @@ const hasFileValue = (value) => {
 };
 
 const appendFormData = (formData, data, parentKey = "") => {
-  if (data === null || data === undefined) {
-    return;
-  }
+  if (data === null || data === undefined) return;
 
   if (isFile(data) || isBlob(data)) {
     formData.append(parentKey, data);
@@ -52,15 +50,12 @@ const appendFormData = (formData, data, parentKey = "") => {
     Object.keys(data).forEach((key) => {
       const value = data[key];
 
-      if (value === null || value === undefined) {
-        return;
-      }
+      if (value === null || value === undefined) return;
 
       const nextKey = parentKey ? `${parentKey}[${key}]` : key;
 
       appendFormData(formData, value, nextKey);
     });
-
     return;
   }
 
@@ -69,7 +64,9 @@ const appendFormData = (formData, data, parentKey = "") => {
 
 const toFormData = (payload) => {
   const formData = new FormData();
+
   appendFormData(formData, payload);
+
   return formData;
 };
 
@@ -96,6 +93,12 @@ const getSelectedToko = () => {
   }
 };
 
+const isOnlineSource = (sourceCode) => {
+  return String(sourceCode || "")
+    .toUpperCase()
+    .includes("ONLINE");
+};
+
 const normalizeTreatmentItem = (item = {}) => {
   const treatmentId =
     item.treatment_id ||
@@ -119,7 +122,6 @@ const normalizeTreatmentItem = (item = {}) => {
     treatment_toko_id: treatmentTokoId,
     treatment_id: treatmentId,
     tindakan_id: treatmentId,
-
     nama_treatment:
       item.nama_treatment ||
       item.treatment_nama ||
@@ -127,7 +129,6 @@ const normalizeTreatmentItem = (item = {}) => {
       item.tindakan_nama ||
       item.nama ||
       "",
-
     treatment_nama:
       item.treatment_nama ||
       item.nama_treatment ||
@@ -135,22 +136,18 @@ const normalizeTreatmentItem = (item = {}) => {
       item.tindakan_nama ||
       item.nama ||
       "",
-
     harga,
     jumlah: jumlah <= 0 ? 1 : jumlah,
     total,
-
     perlu_tindakan_perawat: toBoolPayload(
       item.perlu_tindakan_perawat ||
         item.is_tindakan_perawat ||
         item.perlu_perawat ||
         item.route_treatment === "nurse_station",
     ),
-
     route_treatment:
       item.route_treatment ||
       (item.perlu_tindakan_perawat ? "nurse_station" : "dokter"),
-
     is_deposit_claim: toBoolPayload(item.is_deposit_claim),
     deposit_treatment_id: item.deposit_treatment_id || null,
     deposit_claim_id: item.deposit_claim_id || null,
@@ -181,7 +178,6 @@ const normalizePenjualanItem = (item = {}) => {
     produk_toko_id: produkTokoId,
     produk_id: produkId,
     obat_id: produkId,
-
     nama_produk:
       item.nama_produk ||
       item.produk_nama ||
@@ -189,7 +185,6 @@ const normalizePenjualanItem = (item = {}) => {
       item.obat_nama ||
       item.nama ||
       "",
-
     produk_nama:
       item.produk_nama ||
       item.nama_produk ||
@@ -197,16 +192,12 @@ const normalizePenjualanItem = (item = {}) => {
       item.obat_nama ||
       item.nama ||
       "",
-
     harga,
     jumlah: jumlah <= 0 ? 1 : jumlah,
-
     diskon_tipe: item.diskon_tipe || item.diskon_type || 0,
     diskon_nilai: toNumber(item.diskon_nilai || item.diskon_value || 0),
     diskon_referral: toNumber(item.diskon_referral || 0),
-
     subtotal,
-
     source_resep_id: item.source_resep_id || null,
     frekuensi: item.frekuensi || "",
     waktu_pakai: item.waktu_pakai || "",
@@ -223,6 +214,39 @@ const normalizePayload = (form = {}) => {
   const adaTreatment = Boolean(layanan.ada_treatment);
   const adaPenjualan = Boolean(layanan.ada_penjualan);
 
+  let konsultasiSourceCode =
+    layanan.konsultasi_source_code || form.konsultasi_source_code || null;
+
+  let channelKonsultasi = layanan.channel_konsultasi || "";
+
+  if (adaKonsultasi && !konsultasiSourceCode) {
+    konsultasiSourceCode =
+      channelKonsultasi === "online"
+        ? "KONSULTASI_ONLINE"
+        : "KONSULTASI_OFFLINE";
+  }
+
+  if (adaKonsultasi && !channelKonsultasi) {
+    channelKonsultasi = isOnlineSource(konsultasiSourceCode)
+      ? "online"
+      : "offline";
+  }
+
+  if (!adaKonsultasi) {
+    konsultasiSourceCode = null;
+    channelKonsultasi = "";
+  }
+
+  const isPembelianOnline =
+    adaPenjualan &&
+    Boolean(layanan.is_pembelian_online || form.is_pembelian_online);
+
+  const pembelianOnlineSourceCode = isPembelianOnline
+    ? layanan.pembelian_online_source_code ||
+      form.pembelian_online_source_code ||
+      "PEMBELIAN_ONLINE"
+    : null;
+
   const treatmentItems = Array.isArray(form.treatment?.items)
     ? form.treatment.items
         .map((item) => normalizeTreatmentItem(item))
@@ -238,25 +262,93 @@ const normalizePayload = (form = {}) => {
   return {
     toko_id: form.toko_id || form.tokoId || getSelectedTokoId(),
     toko_nama: form.toko_nama || toko?.nama_toko || toko?.nama || "",
-
     tanggal: form.tanggal,
     pasien_id: form.pasien_id || null,
     pasien_new_id: form.pasien_new_id || null,
-
     dokter_id: form.dokter_id || null,
     perawat_id: form.perawat_id || null,
-
     catatan_registrasi: form.catatan_registrasi || "",
 
     layanan: {
       ada_konsultasi: toBoolPayload(adaKonsultasi),
-      channel_konsultasi: adaKonsultasi
-        ? layanan.channel_konsultasi || "offline"
-        : "",
+      channel_konsultasi: adaKonsultasi ? channelKonsultasi || "offline" : "",
+
+      konsultasi_source_code: konsultasiSourceCode,
+      konsultasi_source_name:
+        layanan.konsultasi_source_name || form.konsultasi_source_name || null,
+      konsultasi_mapping_id:
+        layanan.konsultasi_mapping_id || form.konsultasi_mapping_id || null,
+      konsultasi_kode_accurate:
+        layanan.konsultasi_kode_accurate ||
+        form.konsultasi_kode_accurate ||
+        null,
+      konsultasi_nama_accurate:
+        layanan.konsultasi_nama_accurate ||
+        form.konsultasi_nama_accurate ||
+        null,
+
       ada_treatment: toBoolPayload(adaTreatment),
       ada_penjualan: toBoolPayload(adaPenjualan),
       route_treatment: layanan.route_treatment || "",
+
+      is_pembelian_online: toBoolPayload(isPembelianOnline),
+      pembelian_online_source_code: pembelianOnlineSourceCode,
+      pembelian_online_source_name: isPembelianOnline
+        ? layanan.pembelian_online_source_name ||
+          form.pembelian_online_source_name ||
+          "Pembelian Online"
+        : null,
+      pembelian_online_mapping_id: isPembelianOnline
+        ? layanan.pembelian_online_mapping_id ||
+          form.pembelian_online_mapping_id ||
+          null
+        : null,
+      pembelian_online_kode_accurate: isPembelianOnline
+        ? layanan.pembelian_online_kode_accurate ||
+          form.pembelian_online_kode_accurate ||
+          null
+        : null,
+      pembelian_online_nama_accurate: isPembelianOnline
+        ? layanan.pembelian_online_nama_accurate ||
+          form.pembelian_online_nama_accurate ||
+          null
+        : null,
     },
+
+    konsultasi_source_code: konsultasiSourceCode,
+    konsultasi_source_name:
+      layanan.konsultasi_source_name || form.konsultasi_source_name || null,
+    konsultasi_mapping_id:
+      layanan.konsultasi_mapping_id || form.konsultasi_mapping_id || null,
+    konsultasi_kode_accurate:
+      layanan.konsultasi_kode_accurate || form.konsultasi_kode_accurate || null,
+    konsultasi_nama_accurate:
+      layanan.konsultasi_nama_accurate || form.konsultasi_nama_accurate || null,
+    total_konsultasi: toNumber(form.total_konsultasi || 0),
+    rule_biaya_konsultasi: form.rule_biaya_konsultasi || null,
+
+    is_pembelian_online: toBoolPayload(isPembelianOnline),
+    pembelian_online_source_code: pembelianOnlineSourceCode,
+    pembelian_online_source_name: isPembelianOnline
+      ? layanan.pembelian_online_source_name ||
+        form.pembelian_online_source_name ||
+        "Pembelian Online"
+      : null,
+    pembelian_online_mapping_id: isPembelianOnline
+      ? layanan.pembelian_online_mapping_id ||
+        form.pembelian_online_mapping_id ||
+        null
+      : null,
+    pembelian_online_kode_accurate: isPembelianOnline
+      ? layanan.pembelian_online_kode_accurate ||
+        form.pembelian_online_kode_accurate ||
+        null
+      : null,
+    pembelian_online_nama_accurate: isPembelianOnline
+      ? layanan.pembelian_online_nama_accurate ||
+        form.pembelian_online_nama_accurate ||
+        null
+      : null,
 
     konsultasi_offline: {
       keluhan_awal: form.konsultasi_offline?.keluhan_awal || "",
@@ -270,11 +362,9 @@ const normalizePayload = (form = {}) => {
       produk_sebelumnya: form.konsultasi_online?.produk_sebelumnya || "",
       sedang_hamil: form.konsultasi_online?.sedang_hamil || "",
       sedang_menyusui: form.konsultasi_online?.sedang_menyusui || "",
-
       bukti_foto_kiri: form.konsultasi_online?.bukti_foto_kiri || "",
       bukti_foto_depan: form.konsultasi_online?.bukti_foto_depan || "",
       bukti_foto_kanan: form.konsultasi_online?.bukti_foto_kanan || "",
-
       file_name_1: form.konsultasi_online?.file_name_1 || "",
       file_name_2: form.konsultasi_online?.file_name_2 || "",
       file_name_3: form.konsultasi_online?.file_name_3 || "",
@@ -307,6 +397,7 @@ const requestPayload = async (method, url, payload = null, config = {}) => {
 
   if (hasFileValue(normalizedPayload)) {
     const formData = toFormData(normalizedPayload);
+
     const response = await api[method](url, formData, {
       ...config,
       headers: {
@@ -319,6 +410,7 @@ const requestPayload = async (method, url, payload = null, config = {}) => {
   }
 
   const response = await api[method](url, normalizedPayload, config);
+
   return response.data;
 };
 
@@ -348,6 +440,7 @@ const registrasiLayananService = {
       .post(`${BASE_URL}/${id}/cancel`)
       .then((response) => response.data);
   },
+
   startCurrentTask(id) {
     return api
       .post(`${BASE_URL}/${id}/start-current-task`)

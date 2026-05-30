@@ -129,7 +129,7 @@
             </v-col>
           </v-row>
 
-          <v-alert type="info" variant="tonal" density="compact" class="mt-2">
+          <v-alert type="info" density="compact" class="mt-2">
             Rule aktif sebaiknya tidak dibuat tumpang tindih pada periode yang
             sama agar perhitungan poin tidak ambigu.
           </v-alert>
@@ -137,11 +137,7 @@
           <v-divider class="my-5" />
 
           <div class="d-flex justify-end ga-2">
-            <v-btn
-              variant="tonal"
-              color="grey"
-              @click="$router.push('/master/poin-rule')"
-            >
+            <v-btn color="grey" @click="$router.push('/master/poin-rule')">
               Kembali
             </v-btn>
 

@@ -12,7 +12,7 @@
           </div>
         </div>
 
-        <v-avatar color="primary" variant="tonal" size="42">
+        <v-avatar color="primary" size="42">
           <v-icon icon="mdi-file-document-outline" size="22" />
         </v-avatar>
       </div>
@@ -21,7 +21,7 @@
       <v-card variant="outlined" class="mb-4">
         <v-card-item class="px-4 py-3">
           <template #prepend>
-            <v-avatar color="primary" variant="tonal" size="34">
+            <v-avatar color="primary" size="34">
               <v-icon icon="mdi-account-circle-outline" size="18" />
             </v-avatar>
           </template>
@@ -162,7 +162,7 @@
       </v-card>
 
       <!-- AKSI PASIEN -->
-      <v-card variant="tonal" color="primary" class="mb-4">
+      <v-card color="primary" class="mb-4">
         <v-card-text class="pa-4">
           <div class="d-flex align-center justify-space-between ga-4">
             <div class="d-flex align-center ga-3">

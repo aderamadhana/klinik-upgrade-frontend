@@ -1,12 +1,6 @@
 <template>
   <div class="mt-3">
-    <v-alert
-      type="info"
-      variant="tonal"
-      density="comfortable"
-      border="start"
-      class="mb-4"
-    >
+    <v-alert type="info" density="comfortable" border="start" class="mb-4">
       Bagian ini hanya muncul jika layanan konsultasi dipilih dan channel
       konsultasi adalah online.
     </v-alert>
@@ -17,7 +11,7 @@
           class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
         >
           <div class="d-flex align-center ga-3">
-            <v-avatar color="primary" variant="tonal" size="42">
+            <v-avatar color="primary" size="42">
               <v-icon size="22">mdi-file-document-edit-outline</v-icon>
             </v-avatar>
 
@@ -32,12 +26,7 @@
             </div>
           </div>
 
-          <v-chip
-            color="primary"
-            variant="tonal"
-            size="small"
-            class="font-weight-medium"
-          >
+          <v-chip color="primary" size="small" class="font-weight-medium">
             Konsultasi Online
           </v-chip>
         </div>
@@ -177,7 +166,7 @@
           class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
         >
           <div class="d-flex align-center ga-3">
-            <v-avatar color="info" variant="tonal" size="42">
+            <v-avatar color="info" size="42">
               <v-icon size="22">mdi-image-multiple-outline</v-icon>
             </v-avatar>
 
@@ -192,7 +181,7 @@
             </div>
           </div>
 
-          <v-chip color="info" variant="tonal" size="small">
+          <v-chip color="info" size="small">
             {{
               photoCards && photoCards.length
                 ? `${photoCards.length} slot foto`
@@ -261,7 +250,6 @@
 
                   <v-card
                     v-else
-                    variant="tonal"
                     color="grey"
                     height="210"
                     class="mt-3 d-flex align-center justify-center"
@@ -286,7 +274,6 @@
                     <v-btn
                       v-if="ko[photo.fileNameKey]"
                       size="small"
-                      variant="tonal"
                       color="error"
                       prepend-icon="mdi-delete-outline"
                       @click.stop="$emit('remove-image', photo.key)"
@@ -301,7 +288,7 @@
         </template>
 
         <template v-else>
-          <v-card variant="tonal" color="grey">
+          <v-card color="grey">
             <v-card-text class="pa-5 text-center">
               <v-icon size="40" color="grey">mdi-image-off-outline</v-icon>
               <div class="text-subtitle-2 font-weight-bold mt-2">
@@ -323,7 +310,7 @@
           class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
         >
           <div class="d-flex align-center ga-3">
-            <v-avatar color="success" variant="tonal" size="42">
+            <v-avatar color="success" size="42">
               <v-icon size="22">mdi-history</v-icon>
             </v-avatar>
 
@@ -337,7 +324,7 @@
             </div>
           </div>
 
-          <v-chip color="success" variant="tonal" size="small">
+          <v-chip color="success" size="small">
             {{
               consultationHistory && consultationHistory.length
                 ? `${consultationHistory.length} riwayat`
@@ -370,7 +357,7 @@
         </template>
 
         <template v-else>
-          <v-card variant="tonal" color="grey">
+          <v-card color="grey">
             <v-card-text class="pa-5 text-center">
               <v-icon size="40" color="grey">mdi-history</v-icon>
               <div class="text-subtitle-2 font-weight-bold mt-2">

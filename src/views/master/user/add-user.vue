@@ -54,7 +54,6 @@
           <v-alert
             v-if="form.role_id && isJabatanBasedRole"
             type="info"
-            variant="tonal"
             class="mb-4"
             rounded="lg"
           >
@@ -65,7 +64,6 @@
           <v-alert
             v-if="form.role_id && !isJabatanBasedRole"
             type="warning"
-            variant="tonal"
             class="mb-4"
             rounded="lg"
           >
@@ -149,7 +147,7 @@
               cols="12"
               v-if="form.role_id && filteredKaryawanOptions.length === 0"
             >
-              <v-alert type="warning" variant="tonal" rounded="lg">
+              <v-alert type="warning" rounded="lg">
                 Tidak ada data karyawan untuk role / jabatan ini.
               </v-alert>
             </v-col>

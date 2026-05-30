@@ -4,7 +4,7 @@
       <v-card-text class="pa-4">
         <div class="d-flex align-center justify-space-between flex-wrap ga-3">
           <div class="d-flex align-center ga-3">
-            <v-avatar color="info" variant="tonal" size="42">
+            <v-avatar color="info" size="42">
               <v-icon size="22">mdi-cart-outline</v-icon>
             </v-avatar>
 
@@ -32,7 +32,6 @@
     <v-alert
       v-if="!activeTokoId"
       type="warning"
-      variant="tonal"
       density="comfortable"
       border="start"
       class="mb-4"
@@ -44,7 +43,6 @@
     <v-alert
       v-if="errorMessage"
       type="error"
-      variant="tonal"
       density="comfortable"
       border="start"
       class="mb-4"
@@ -65,19 +63,13 @@
           class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3"
         >
           <div class="d-flex align-center ga-2">
-            <v-chip
-              color="info"
-              variant="tonal"
-              size="small"
-              class="font-weight-medium"
-            >
+            <v-chip color="info" size="small" class="font-weight-medium">
               Produk {{ index + 1 }}
             </v-chip>
 
             <v-chip
               v-if="item.produk_toko_id"
               :color="Number(item.stok_tersedia || 0) > 0 ? 'success' : 'error'"
-              variant="tonal"
               size="small"
             >
               Stok: {{ formatStock(item.stok_tersedia) }}
@@ -86,7 +78,6 @@
 
           <v-btn
             color="error"
-            variant="tonal"
             size="small"
             prepend-icon="mdi-delete-outline"
             :disabled="penjualanItems.length === 1"
@@ -187,7 +178,7 @@
       </v-card-text>
     </v-card>
 
-    <v-card color="primary" variant="tonal" class="mt-4">
+    <v-card color="primary" class="mt-4">
       <v-card-text class="pa-4">
         <div class="d-flex align-center justify-space-between flex-wrap ga-3">
           <div class="d-flex align-center ga-3">
@@ -199,7 +190,7 @@
               <div class="text-subtitle-1 font-weight-bold">
                 Total Penjualan
               </div>
-              <div class="text-caption text-medium-emphasis">
+              <div class="text-caption text-medium-emphasis text-white">
                 Total dari seluruh produk yang dipilih
               </div>
             </div>

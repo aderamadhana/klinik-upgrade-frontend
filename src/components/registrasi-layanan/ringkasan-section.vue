@@ -4,7 +4,7 @@
       <v-card-text class="pa-4">
         <div class="d-flex align-center justify-space-between flex-wrap ga-3">
           <div class="d-flex align-center ga-3">
-            <v-avatar color="white" variant="tonal" size="44">
+            <v-avatar color="white" size="44">
               <v-icon size="24">mdi-clipboard-check-outline</v-icon>
             </v-avatar>
 
@@ -48,7 +48,7 @@
         <v-card variant="outlined" class="h-100">
           <v-card-text class="pa-4">
             <div class="d-flex align-center ga-3 mb-3">
-              <v-avatar color="primary" variant="tonal" size="38">
+              <v-avatar color="primary" size="38">
                 <v-icon size="20">mdi-account-card-outline</v-icon>
               </v-avatar>
 
@@ -103,7 +103,7 @@
         <v-card variant="outlined" class="h-100">
           <v-card-text class="pa-4">
             <div class="d-flex align-center ga-3 mb-3">
-              <v-avatar color="primary" variant="tonal" size="38">
+              <v-avatar color="primary" size="38">
                 <v-icon size="20">mdi-format-list-checks</v-icon>
               </v-avatar>
 
@@ -123,7 +123,6 @@
               <v-chip
                 v-if="layananState.ada_konsultasi"
                 color="primary"
-                variant="tonal"
                 size="small"
               >
                 <v-icon start size="16">mdi-stethoscope</v-icon>
@@ -133,7 +132,6 @@
               <v-chip
                 v-if="layananState.ada_treatment"
                 color="success"
-                variant="tonal"
                 size="small"
               >
                 <v-icon start size="16">mdi-face-woman-shimmer-outline</v-icon>
@@ -143,19 +141,13 @@
               <v-chip
                 v-if="layananState.ada_penjualan"
                 color="info"
-                variant="tonal"
                 size="small"
               >
                 <v-icon start size="16">mdi-cart-outline</v-icon>
                 Penjualan
               </v-chip>
 
-              <v-chip
-                v-if="!hasSelectedLayanan"
-                color="warning"
-                variant="tonal"
-                size="small"
-              >
+              <v-chip v-if="!hasSelectedLayanan" color="warning" size="small">
                 Belum ada layanan
               </v-chip>
             </div>
@@ -206,7 +198,7 @@
               class="d-flex align-center justify-space-between flex-wrap ga-3 mb-3"
             >
               <div class="d-flex align-center ga-3">
-                <v-avatar color="primary" variant="tonal" size="38">
+                <v-avatar color="primary" size="38">
                   <v-icon size="20">
                     {{
                       isConsultationOnline
@@ -230,7 +222,7 @@
                 </div>
               </div>
 
-              <v-chip color="primary" variant="tonal" size="small">
+              <v-chip color="primary" size="small">
                 {{ isConsultationOnline ? "Online" : "Offline" }}
               </v-chip>
             </div>
@@ -313,7 +305,7 @@
           <v-card-text class="pa-4">
             <div class="d-flex align-center justify-space-between ga-3 mb-3">
               <div class="d-flex align-center ga-3">
-                <v-avatar color="success" variant="tonal" size="38">
+                <v-avatar color="success" size="38">
                   <v-icon size="20">mdi-face-woman-shimmer-outline</v-icon>
                 </v-avatar>
 
@@ -325,7 +317,7 @@
                 </div>
               </div>
 
-              <v-chip color="success" variant="tonal" size="small">
+              <v-chip color="success" size="small">
                 Rp {{ formatNumber(calculatedTreatmentTotal) }}
               </v-chip>
             </div>
@@ -356,7 +348,7 @@
               </div>
             </div>
 
-            <v-alert v-else type="warning" variant="tonal" density="compact">
+            <v-alert v-else type="warning" density="compact">
               Item treatment belum dipilih.
             </v-alert>
           </v-card-text>
@@ -368,7 +360,7 @@
           <v-card-text class="pa-4">
             <div class="d-flex align-center justify-space-between ga-3 mb-3">
               <div class="d-flex align-center ga-3">
-                <v-avatar color="info" variant="tonal" size="38">
+                <v-avatar color="info" size="38">
                   <v-icon size="20">mdi-pill</v-icon>
                 </v-avatar>
 
@@ -382,7 +374,7 @@
                 </div>
               </div>
 
-              <v-chip color="info" variant="tonal" size="small">
+              <v-chip color="info" size="small">
                 Rp {{ formatNumber(calculatedPenjualanTotal) }}
               </v-chip>
             </div>
@@ -413,7 +405,7 @@
               </div>
             </div>
 
-            <v-alert v-else type="warning" variant="tonal" density="compact">
+            <v-alert v-else type="warning" density="compact">
               Produk belum dipilih.
             </v-alert>
           </v-card-text>
@@ -426,7 +418,6 @@
             <div class="d-flex align-center ga-3 mb-3">
               <v-avatar
                 :color="validationIssues.length ? 'warning' : 'success'"
-                variant="tonal"
                 size="38"
               >
                 <v-icon size="20">
@@ -456,7 +447,6 @@
                   v-for="(issue, index) in validationIssues"
                   :key="index"
                   color="warning"
-                  variant="tonal"
                   density="compact"
                   border="start"
                 >
@@ -466,7 +456,7 @@
             </template>
 
             <template v-else>
-              <v-alert color="success" variant="tonal" density="compact">
+              <v-alert color="success" density="compact">
                 Semua data minimum untuk registrasi sudah lengkap.
               </v-alert>
             </template>
@@ -475,7 +465,7 @@
       </v-col>
 
       <v-col v-if="Number(grandTotal || 0) > 0" cols="12">
-        <v-card color="primary" variant="tonal">
+        <v-card color="primary">
           <v-card-text
             class="pa-4 d-flex align-center justify-space-between ga-3 flex-wrap"
           >
@@ -488,7 +478,7 @@
                 <div class="text-subtitle-1 font-weight-bold">
                   Grand Total Estimasi
                 </div>
-                <div class="text-caption text-medium-emphasis">
+                <div class="text-caption text-medium-emphasis text-white">
                   Total dari konsultasi, treatment, dan penjualan produk.
                 </div>
               </div>

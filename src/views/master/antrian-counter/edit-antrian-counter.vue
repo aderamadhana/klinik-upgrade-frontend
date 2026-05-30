@@ -22,7 +22,7 @@
         <v-divider />
 
         <v-card-text class="pt-6">
-          <v-alert type="info" variant="tonal" class="mb-6" rounded="lg">
+          <v-alert type="info" class="mb-6" rounded="lg">
             Perubahan utama akan disimpan ke counter ini. Aktifkan opsi terapkan
             ke cabang lain jika counter dengan kode yang sama juga ingin dibuat
             atau diperbarui di cabang lain.
@@ -146,7 +146,7 @@
               </v-col>
 
               <v-col v-if="applyToOtherBranches" cols="12">
-                <v-alert type="warning" variant="tonal" rounded="lg">
+                <v-alert type="warning" rounded="lg">
                   Sistem akan menerapkan data counter ini ke cabang tujuan. Jika
                   kode sudah ada, data akan diperbarui. Jika belum ada, data
                   akan dibuat baru.

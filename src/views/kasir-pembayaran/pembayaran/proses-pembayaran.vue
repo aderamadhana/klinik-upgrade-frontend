@@ -22,7 +22,6 @@
     <v-alert
       v-if="errorMessage"
       type="error"
-      variant="tonal"
       class="mb-4"
       density="comfortable"
     >

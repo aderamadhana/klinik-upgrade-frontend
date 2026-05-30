@@ -62,7 +62,7 @@
           </template>
 
           <template #item.cabang="{ item }">
-            <v-chip size="small" color="primary" variant="tonal">
+            <v-chip size="small" color="primary">
               {{ item.cabang || "-" }}
             </v-chip>
           </template>
@@ -110,7 +110,6 @@
               <v-btn
                 color="primary"
                 size="small"
-                variant="tonal"
                 prepend-icon="mdi-pencil"
                 :to="'/master/brand-ambassador/edit/' + item.id"
               >
@@ -120,7 +119,6 @@
               <v-btn
                 color="info"
                 size="small"
-                variant="tonal"
                 prepend-icon="mdi-eye"
                 @click="detailBrandAmbassador(item)"
               >
@@ -130,7 +128,6 @@
               <v-btn
                 color="error"
                 size="small"
-                variant="tonal"
                 prepend-icon="mdi-delete"
                 @click="openDeleteDialog(item)"
               >
@@ -233,7 +230,7 @@
         <v-card-text>
           <p class="mb-2">Yakin ingin menghapus data brand ambassador ini?</p>
 
-          <v-alert type="warning" variant="tonal" rounded="lg">
+          <v-alert type="warning" rounded="lg">
             <strong>{{ selectedItem?.nama || "-" }}</strong>
             <br />
             Data akan dihapus secara soft delete.

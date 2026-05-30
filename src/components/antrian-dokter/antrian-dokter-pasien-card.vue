@@ -3,7 +3,7 @@
     <v-card-text class="pa-4">
       <div class="d-flex align-start justify-space-between flex-wrap ga-4">
         <div class="d-flex align-start ga-3">
-          <v-avatar size="48" color="primary" variant="tonal">
+          <v-avatar size="48" color="primary">
             <v-icon size="26">mdi-account-heart-outline</v-icon>
           </v-avatar>
 
@@ -16,7 +16,6 @@
               <v-chip
                 size="x-small"
                 color="primary"
-                variant="tonal"
                 prepend-icon="mdi-card-account-details-outline"
               >
                 {{ patient.no_rm || "-" }}
@@ -37,7 +36,6 @@
                 :color="chip.color"
                 :prepend-icon="chip.icon"
                 size="small"
-                variant="tonal"
               >
                 {{ chip.label }}
               </v-chip>
@@ -50,7 +48,6 @@
             size="small"
             :color="channelChip.color"
             :prepend-icon="channelChip.icon"
-            variant="tonal"
           >
             {{ channelChip.label }}
           </v-chip>
@@ -172,7 +169,6 @@
 
             <v-btn
               color="info"
-              variant="tonal"
               size="small"
               prepend-icon="mdi-face-recognition"
               @click="$emit('skin-analyzer')"

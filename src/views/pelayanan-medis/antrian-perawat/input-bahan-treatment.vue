@@ -57,7 +57,7 @@
       <v-divider />
 
       <v-card-text class="pa-4 pa-md-5">
-        <v-alert type="info" variant="tonal" density="comfortable" class="mb-5">
+        <v-alert type="info" density="comfortable" class="mb-5">
           Isi jumlah bahan yang digunakan pada setiap treatment untuk proses
           pencatatan stok otomatis. Fokus hanya pada treatment yang benar-benar
           dikerjakan.
@@ -98,7 +98,6 @@
                 <div class="right-info">
                   <v-chip
                     size="small"
-                    variant="tonal"
                     :color="
                       getTreatmentFilledCount(treatment) > 0
                         ? 'success'

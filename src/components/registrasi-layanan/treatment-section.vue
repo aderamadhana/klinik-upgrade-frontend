@@ -1,12 +1,6 @@
 <template>
   <div class="mt-3">
-    <v-alert
-      type="info"
-      variant="tonal"
-      density="comfortable"
-      border="start"
-      class="mb-4"
-    >
+    <v-alert type="info" density="comfortable" border="start" class="mb-4">
       FO menentukan detail treatment pada tahap ini. Routing ke dokter atau
       nurse station ditentukan otomatis berdasarkan item treatment yang dipilih.
     </v-alert>
@@ -19,7 +13,7 @@
       >
         <v-card-text class="pa-4">
           <div class="d-flex align-center ga-3">
-            <v-avatar color="warning" variant="tonal" size="42">
+            <v-avatar color="warning" size="42">
               <v-icon size="22">mdi-alert-outline</v-icon>
             </v-avatar>
 
@@ -42,7 +36,7 @@
         <v-card-text class="pa-4">
           <div class="d-flex align-center justify-space-between flex-wrap ga-3">
             <div class="d-flex align-center ga-3">
-              <v-avatar color="success" variant="tonal" size="42">
+              <v-avatar color="success" size="42">
                 <v-icon size="22">mdi-spa</v-icon>
               </v-avatar>
 
@@ -72,7 +66,6 @@
       <v-alert
         v-if="!activeTokoId"
         type="warning"
-        variant="tonal"
         density="comfortable"
         border="start"
         class="mb-4"
@@ -84,7 +77,6 @@
       <v-alert
         v-if="errorMessage"
         type="error"
-        variant="tonal"
         density="comfortable"
         border="start"
         class="mb-4"
@@ -105,19 +97,13 @@
             class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3"
           >
             <div class="d-flex align-center ga-2">
-              <v-chip
-                color="success"
-                variant="tonal"
-                size="small"
-                class="font-weight-medium"
-              >
+              <v-chip color="success" size="small" class="font-weight-medium">
                 Treatment {{ index + 1 }}
               </v-chip>
 
               <v-chip
                 v-if="item.treatment_toko_id || item.tindakan_id"
                 color="primary"
-                variant="tonal"
                 size="small"
               >
                 Rp {{ formatCurrency(item.total || 0) }}
@@ -126,7 +112,6 @@
 
             <v-btn
               color="error"
-              variant="tonal"
               size="small"
               prepend-icon="mdi-delete-outline"
               :disabled="localTreatment.items.length === 1"
@@ -212,7 +197,7 @@
         </v-card-text>
       </v-card>
 
-      <v-card color="success" variant="tonal" class="mt-4">
+      <v-card color="success" class="mt-4">
         <v-card-text class="pa-4">
           <div class="d-flex align-center justify-space-between flex-wrap ga-3">
             <div class="d-flex align-center ga-3">
@@ -245,7 +230,7 @@
         >
           <v-card-text class="pa-4">
             <div class="d-flex align-center ga-3 mb-3">
-              <v-avatar color="error" variant="tonal" size="38">
+              <v-avatar color="error" size="38">
                 <v-icon size="20">mdi-alert-circle-outline</v-icon>
               </v-avatar>
 
@@ -264,7 +249,6 @@
                 v-for="(message, index) in validationMessages"
                 :key="index"
                 type="warning"
-                variant="tonal"
                 density="compact"
                 border="start"
               >

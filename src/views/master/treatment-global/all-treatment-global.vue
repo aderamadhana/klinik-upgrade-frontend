@@ -82,7 +82,6 @@
             <v-chip
               size="small"
               :color="getKategoriSalesColor(item.kategori_sales)"
-              variant="tonal"
             >
               {{ item.kategori_sales || "-" }}
             </v-chip>
@@ -96,14 +95,13 @@
             <v-chip
               size="small"
               :color="Number(item.is_ppn || 0) === 1 ? 'success' : 'grey'"
-              variant="tonal"
             >
               {{ item.is_ppn_label }}
             </v-chip>
           </template>
 
           <template #item.jumlah_cabang="{ item }">
-            <v-chip size="small" color="info" variant="tonal">
+            <v-chip size="small" color="info">
               {{ item.jumlah_cabang }}
             </v-chip>
           </template>
@@ -116,7 +114,6 @@
             <v-chip
               size="small"
               :color="Number(item.is_delete || 0) === 1 ? 'error' : 'success'"
-              variant="tonal"
             >
               {{ Number(item.is_delete || 0) === 1 ? "Deleted" : "Aktif" }}
             </v-chip>
@@ -127,7 +124,6 @@
               <v-btn
                 color="primary"
                 size="small"
-                variant="tonal"
                 prepend-icon="mdi-pencil"
                 :to="'/master/treatment-global/edit/' + item.id"
               >
@@ -137,7 +133,6 @@
               <v-btn
                 color="info"
                 size="small"
-                variant="tonal"
                 prepend-icon="mdi-eye"
                 @click="detailTreatment(item)"
               >
@@ -147,7 +142,6 @@
               <v-btn
                 color="error"
                 size="small"
-                variant="tonal"
                 prepend-icon="mdi-delete"
                 @click="openDeleteDialog(item)"
               >
@@ -197,7 +191,6 @@
               "
               size="small"
               color="indigo"
-              variant="tonal"
             >
               Kode Accurate: {{ selectedItem.kode_accurate }}
             </v-chip>
@@ -274,7 +267,7 @@
               </div>
             </div>
 
-            <v-chip color="blue" variant="tonal" size="small">
+            <v-chip color="blue" size="small">
               {{ selectedItem?.toko_configs?.length || 0 }} cabang
             </v-chip>
           </div>
@@ -316,7 +309,7 @@
               </template>
 
               <template #item.insentif_use="{ item }">
-                <v-chip size="small" color="teal" variant="tonal">
+                <v-chip size="small" color="teal">
                   {{ item.insentif_use || "-" }}
                 </v-chip>
               </template>
@@ -327,7 +320,6 @@
                   :color="
                     Number(item.is_active || 0) === 1 ? 'success' : 'error'
                   "
-                  variant="tonal"
                 >
                   {{ Number(item.is_active || 0) === 1 ? "Aktif" : "Nonaktif" }}
                 </v-chip>
@@ -362,7 +354,7 @@
         <v-card-text>
           <p class="mb-2">Yakin ingin menghapus treatment ini?</p>
 
-          <v-alert type="warning" variant="tonal" rounded="lg">
+          <v-alert type="warning" rounded="lg">
             <strong>{{ selectedItem?.nama || "-" }}</strong>
             <br />
             Data akan dihapus secara soft delete.

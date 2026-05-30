@@ -10,13 +10,7 @@
     </div>
     <div class="card">
       <div class="card-body">
-        <v-alert
-          v-if="errorMessage"
-          type="error"
-          variant="tonal"
-          class="mb-4"
-          closable
-        >
+        <v-alert v-if="errorMessage" type="error" class="mb-4" closable>
           {{ errorMessage }}
         </v-alert>
         <v-form @submit.prevent="submitForm">
