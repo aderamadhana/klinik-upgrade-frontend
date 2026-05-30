@@ -4,8 +4,8 @@
       <div>
         <div class="text-h6 font-weight-bold">Proses Antrian Dokter</div>
         <div class="text-body-2 text-medium-emphasis">
-          Pemeriksaan dokter, SOAP, obat / produk, treatment, dan tindakan
-          lanjutan pasien.
+          Pemeriksaan dokter, SOAP, obat / produk, treatment, resep, dan
+          tindakan lanjutan pasien.
         </div>
 
         <v-breadcrumbs :items="breadcrumbs" density="compact" class="pa-0 mt-2">
@@ -200,7 +200,7 @@
                     Konsultasi Tambahan
                   </div>
 
-                  <div class="text-body-2 text-medium-emphasis">
+                  <div class="text-caption text-medium-emphasis">
                     Aktifkan jika pasien treatment juga perlu konsultasi dokter.
                   </div>
                 </div>
@@ -232,9 +232,14 @@
             rounded="lg"
             class="mb-5"
           >
-            <v-card-title class="text-subtitle-1 font-weight-bold">
-              Informasi Medis Pendaftaran
-            </v-card-title>
+            <v-card-text class="pa-4 pb-2">
+              <div class="text-subtitle-1 font-weight-bold">
+                Informasi Medis Pendaftaran
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                Data awal dari pendaftaran konsultasi online.
+              </div>
+            </v-card-text>
 
             <v-divider />
 
@@ -292,63 +297,173 @@
             rounded="lg"
             class="mb-5"
           >
-            <v-card-title class="text-subtitle-1 font-weight-bold">
-              SOAP Dokter
-            </v-card-title>
+            <v-card-text class="pa-4 pb-2">
+              <div class="text-subtitle-1 font-weight-bold">SOAP Dokter</div>
+              <div class="text-caption text-medium-emphasis">
+                Nama Pasien : {{ patient.nama_pasien || "-" }}
+              </div>
+            </v-card-text>
 
             <v-divider />
 
-            <v-card-text class="pa-4">
+            <v-sheet color="red-lighten-5" class="pa-4">
               <v-row dense>
                 <v-col cols="12" md="6">
-                  <v-textarea
-                    v-model="form.soap.subjective"
-                    label="Subjective"
-                    variant="outlined"
-                    density="compact"
-                    rows="3"
-                    auto-grow
-                    hide-details
-                  />
+                  <v-card variant="flat" rounded="lg" class="bg-white h-100">
+                    <v-card-text class="pa-4">
+                      <v-divider class="mb-4" />
+
+                      <div class="text-subtitle-2 font-weight-bold mb-4">
+                        Subjective (S)
+                      </div>
+
+                      <v-divider class="mb-3" />
+
+                      <v-autocomplete
+                        v-model="form.soap.subjective_items"
+                        :items="subjectiveOptions"
+                        item-title="label"
+                        item-value="value"
+                        label="Subjective"
+                        placeholder="Pilih subjective"
+                        variant="outlined"
+                        density="compact"
+                        multiple
+                        chips
+                        closable-chips
+                        hide-details
+                        clearable
+                        :loading="loadingReference"
+                      />
+
+                      <v-divider class="my-4" />
+
+                      <v-textarea
+                        v-model="form.soap.subjective_other"
+                        label="Lainnya Subjective"
+                        variant="outlined"
+                        density="compact"
+                        rows="2"
+                        auto-grow
+                        hide-details
+                      />
+                    </v-card-text>
+                  </v-card>
                 </v-col>
 
                 <v-col cols="12" md="6">
-                  <v-textarea
-                    v-model="form.soap.objective"
-                    label="Objective"
-                    variant="outlined"
-                    density="compact"
-                    rows="3"
-                    auto-grow
-                    hide-details
-                  />
+                  <v-card variant="flat" rounded="lg" class="bg-white h-100">
+                    <v-card-text class="pa-4">
+                      <v-divider class="mb-4" />
+
+                      <div class="text-subtitle-2 font-weight-bold mb-4">
+                        Objectif (O)
+                      </div>
+
+                      <v-divider class="mb-3" />
+
+                      <v-textarea
+                        v-model="form.soap.objective"
+                        label="Objective"
+                        variant="outlined"
+                        density="compact"
+                        rows="6"
+                        auto-grow
+                        hide-details
+                      />
+                    </v-card-text>
+                  </v-card>
                 </v-col>
 
-                <v-col cols="12" md="6">
-                  <v-textarea
-                    v-model="form.soap.assessment"
-                    label="Assessment"
-                    variant="outlined"
-                    density="compact"
-                    rows="3"
-                    auto-grow
-                    hide-details
-                  />
+                <v-col cols="12">
+                  <v-card variant="flat" rounded="lg" class="bg-white">
+                    <v-card-text class="pa-4">
+                      <v-divider class="mb-4" />
+
+                      <div class="text-subtitle-2 font-weight-bold mb-4">
+                        Assesment (A)
+                      </div>
+
+                      <v-divider class="mb-3" />
+
+                      <v-autocomplete
+                        v-model="form.soap.assessment_items"
+                        :items="assessmentOptions"
+                        item-title="label"
+                        item-value="value"
+                        label="Assesment"
+                        placeholder="Pilih assesment"
+                        variant="outlined"
+                        density="compact"
+                        multiple
+                        chips
+                        closable-chips
+                        hide-details
+                        clearable
+                        :loading="loadingReference"
+                      />
+
+                      <v-divider class="my-4" />
+
+                      <v-textarea
+                        v-model="form.soap.assessment_other"
+                        label="Lainnya Assesment"
+                        variant="outlined"
+                        density="compact"
+                        rows="2"
+                        auto-grow
+                        hide-details
+                      />
+                    </v-card-text>
+                  </v-card>
                 </v-col>
 
-                <v-col cols="12" md="6">
-                  <v-textarea
-                    v-model="form.soap.planning"
-                    label="Planning"
-                    variant="outlined"
-                    density="compact"
-                    rows="3"
-                    auto-grow
-                    hide-details
-                  />
+                <v-col cols="12">
+                  <v-card variant="flat" rounded="lg" class="bg-white">
+                    <v-card-text class="pa-4">
+                      <div class="text-subtitle-1 font-weight-bold mb-4">
+                        Resep
+                      </div>
+
+                      <v-divider class="mb-4" />
+
+                      <div class="text-subtitle-2 font-weight-bold mb-4">
+                        Plan (P)
+                      </div>
+
+                      <v-divider class="mb-3" />
+
+                      <v-textarea
+                        v-model="form.soap.planning"
+                        label="Plan"
+                        variant="outlined"
+                        density="compact"
+                        rows="3"
+                        auto-grow
+                        hide-details
+                      />
+
+                      <div class="text-subtitle-2 font-weight-bold mt-5 mb-2">
+                        Next Date Konsultasi
+                      </div>
+
+                      <v-row dense>
+                        <v-col cols="12" md="4">
+                          <v-text-field
+                            v-model="form.soap.next_date_konsultasi"
+                            label="Next Date Konsultasi"
+                            type="date"
+                            variant="outlined"
+                            density="compact"
+                            hide-details
+                          />
+                        </v-col>
+                      </v-row>
+                    </v-card-text>
+                  </v-card>
                 </v-col>
               </v-row>
-            </v-card-text>
+            </v-sheet>
           </v-card>
 
           <div class="mb-6">
@@ -518,8 +633,10 @@
                   <div class="text-subtitle-1 font-weight-bold">
                     Obat / Produk
                   </div>
+
                   <div class="text-caption text-medium-emphasis">
-                    Pilihan produk diambil dari reference produk cabang aktif.
+                    Pilihan produk diambil dari reference produk cabang aktif
+                    dan qty tidak boleh melebihi stok.
                   </div>
                 </div>
 
@@ -548,6 +665,16 @@
                 Reference obat / produk belum tersedia untuk cabang ini.
               </v-alert>
 
+              <v-alert
+                v-if="hasInvalidObatStock"
+                type="error"
+                variant="tonal"
+                density="compact"
+                class="mb-3"
+              >
+                {{ obatStockValidation.message }}
+              </v-alert>
+
               <v-row
                 v-for="(item, index) in obatItems"
                 :key="`obat-${index}`"
@@ -559,7 +686,7 @@
                   <v-autocomplete
                     v-model="item.produk_toko_id"
                     :items="obatOptions"
-                    item-title="label"
+                    item-title="display_label"
                     item-value="value"
                     label="Obat / Produk"
                     placeholder="Pilih obat / produk"
@@ -578,9 +705,10 @@
                     label="Qty"
                     type="number"
                     min="1"
+                    :max="item.stok_terbaca ? item.stok_tersedia : undefined"
                     variant="outlined"
                     density="compact"
-                    hide-details
+                    :error-messages="getObatStockError(item)"
                     @update:model-value="recalculateObat(index)"
                   />
                 </v-col>
@@ -620,13 +748,44 @@
                   />
                 </v-col>
 
-                <v-col cols="12">
-                  <v-text-field
-                    v-model="item.aturan_pakai"
-                    label="Aturan Pakai / Catatan"
+                <v-col cols="12" md="4">
+                  <v-select
+                    v-model="item.frekuensi_penggunaan"
+                    :items="frekuensiPenggunaanOptions"
+                    item-title="title"
+                    item-value="value"
+                    label="Frekuensi Penggunaan"
+                    placeholder="Pilih frekuensi"
                     variant="outlined"
                     density="compact"
                     hide-details
+                    clearable
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-select
+                    v-model="item.waktu_penggunaan"
+                    :items="waktuPenggunaanOptions"
+                    item-title="title"
+                    item-value="value"
+                    label="Penggunaan"
+                    placeholder="Pilih waktu penggunaan"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    clearable
+                  />
+                </v-col>
+
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    :model-value="getStokText(item)"
+                    label="Stok Tersedia"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    readonly
                   />
                 </v-col>
               </v-row>
@@ -640,6 +799,7 @@
               >
                 <div>
                   <div class="text-subtitle-1 font-weight-bold">Treatment</div>
+
                   <div class="text-caption text-medium-emphasis">
                     Pilihan treatment diambil dari reference treatment cabang
                     aktif.
@@ -759,9 +919,12 @@
 
         <v-col cols="12" lg="4">
           <v-card variant="outlined" rounded="lg" class="mb-5">
-            <v-card-title class="text-subtitle-1 font-weight-bold">
-              Ringkasan
-            </v-card-title>
+            <v-card-text class="pa-4 pb-2">
+              <div class="text-subtitle-1 font-weight-bold">Ringkasan</div>
+              <div class="text-caption text-medium-emphasis">
+                Ringkasan biaya layanan pasien.
+              </div>
+            </v-card-text>
 
             <v-divider />
 
@@ -815,6 +978,7 @@
                 block
                 prepend-icon="mdi-content-save-outline"
                 :loading="submitLoading"
+                :disabled="hasInvalidObatStock"
                 @click="submitForm"
               >
                 Simpan Proses Dokter
@@ -895,63 +1059,69 @@ export default {
       form: {
         add_consultation: false,
         soap: {
-          subjective: "",
+          subjective_items: [],
+          subjective_other: "",
           objective: "",
-          assessment: "",
+          assessment_items: [],
+          assessment_other: "",
           planning: "",
+          next_date_konsultasi: "",
         },
       },
 
+      subjectiveOptions: [],
+      assessmentOptions: [],
+      obatOptions: [],
+      treatmentOptions: [],
+
+      frekuensiPenggunaanOptions: [
+        { title: "1 x sehari", value: "1 x sehari" },
+        { title: "2 x sehari", value: "2 x sehari" },
+        { title: "3 x sehari", value: "3 x sehari" },
+        { title: "4 x sehari", value: "4 x sehari" },
+      ],
+
+      waktuPenggunaanOptions: [
+        { title: "Pagi", value: "pagi" },
+        { title: "Siang", value: "siang" },
+        { title: "Sore", value: "sore" },
+        { title: "Malam", value: "malam" },
+        { title: "Pagi - Siang", value: "pagi - siang" },
+        { title: "Pagi - Sore", value: "pagi - sore" },
+        { title: "Pagi - Malam", value: "pagi - malam" },
+        { title: "Siang - Sore", value: "siang - sore" },
+        { title: "Siang - Malam", value: "siang - malam" },
+        { title: "Sore - Malam", value: "sore - malam" },
+        { title: "Pagi - Siang - Malam", value: "pagi - siang - malam" },
+        { title: "Pagi - Sore - Malam", value: "pagi - sore - malam" },
+        { title: "Siang - Sore - Malam", value: "siang - sore - malam" },
+        {
+          title: "Pagi - Siang - Sore - Malam",
+          value: "pagi - siang - sore - malam",
+        },
+      ],
+
       riwayatHeaders: [
-        {
-          title: "TGL",
-          key: "tgl",
-          sortable: false,
-          minWidth: 120,
-        },
-        {
-          title: "DOKTER",
-          key: "dokter",
-          sortable: false,
-          minWidth: 160,
-        },
+        { title: "TGL", key: "tgl", sortable: false, minWidth: 120 },
+        { title: "DOKTER", key: "dokter", sortable: false, minWidth: 160 },
         {
           title: "TINDAKAN & PERAWAT",
           key: "tindakan_perawat",
           sortable: false,
           minWidth: 240,
         },
-        {
-          title: "OBAT",
-          key: "obat",
-          sortable: false,
-          minWidth: 220,
-        },
-        {
-          title: "CATATAN",
-          key: "catatan",
-          sortable: false,
-          minWidth: 240,
-        },
+        { title: "OBAT", key: "obat", sortable: false, minWidth: 220 },
+        { title: "CATATAN", key: "catatan", sortable: false, minWidth: 240 },
         {
           title: "TRANSAKSI",
           key: "transaksi",
           sortable: false,
           minWidth: 160,
         },
-        {
-          title: "KLINIK",
-          key: "klinik",
-          sortable: false,
-          minWidth: 140,
-        },
+        { title: "KLINIK", key: "klinik", sortable: false, minWidth: 140 },
       ],
 
       riwayatTransaksi: [],
-
-      obatOptions: [],
-      treatmentOptions: [],
-
       obatItems: [],
       treatmentItems: [],
 
@@ -1015,16 +1185,6 @@ export default {
       return this.consultationChannel.includes("online");
     },
 
-    isOfflineConsultation() {
-      return (
-        this.consultationChannel === "offline" ||
-        this.consultationChannel === "dokter" ||
-        this.consultationChannel === "sppg" ||
-        this.consultationChannel === "spkk" ||
-        this.consultationChannel === ""
-      );
-    },
-
     showOnlineMedicalInfo() {
       return this.hasOriginalConsultation && this.isOnlineConsultation;
     },
@@ -1058,54 +1218,49 @@ export default {
     },
 
     totalObat() {
-      return this.obatItems.reduce((total, item) => {
-        return total + this.toNumber(item.subtotal);
-      }, 0);
+      return this.obatItems.reduce(
+        (total, item) => total + this.toNumber(item.subtotal),
+        0,
+      );
     },
 
     totalTreatment() {
-      return this.treatmentItems.reduce((total, item) => {
-        return total + this.toNumber(item.total);
-      }, 0);
+      return this.treatmentItems.reduce(
+        (total, item) => total + this.toNumber(item.total),
+        0,
+      );
     },
 
     grandTotal() {
       return this.totalObat + this.totalTreatment + this.consultationFee;
     },
 
+    obatStockValidation() {
+      return this.getObatStockValidation();
+    },
+
+    hasInvalidObatStock() {
+      return this.obatStockValidation.invalid;
+    },
+
     channelChip() {
       if (this.isOnlineConsultation) {
-        return {
-          label: "Konsultasi Online",
-          color: "primary",
-        };
+        return { label: "Konsultasi Online", color: "primary" };
       }
 
       if (this.consultationChannel === "sppg") {
-        return {
-          label: "Konsultasi SPPG",
-          color: "deep-purple",
-        };
+        return { label: "Konsultasi SPPG", color: "deep-purple" };
       }
 
       if (this.consultationChannel === "spkk") {
-        return {
-          label: "Konsultasi SPKK",
-          color: "indigo",
-        };
+        return { label: "Konsultasi SPKK", color: "indigo" };
       }
 
       if (this.hasOriginalConsultation) {
-        return {
-          label: "Konsultasi Offline",
-          color: "success",
-        };
+        return { label: "Konsultasi Offline", color: "success" };
       }
 
-      return {
-        label: "Tanpa Konsultasi Awal",
-        color: "grey",
-      };
+      return { label: "Tanpa Konsultasi Awal", color: "grey" };
     },
 
     serviceChips() {
@@ -1213,6 +1368,7 @@ export default {
         this.mapRegistration(data);
 
         await this.loadReferenceOptions(data);
+        this.syncSelectedSoapOptions();
       } catch (error) {
         this.errorMessage = this.getErrorMessage(
           error,
@@ -1231,20 +1387,28 @@ export default {
           "Toko aktif tidak ditemukan. Reference produk dan treatment tidak bisa dimuat.",
           "warning",
         );
-        return;
       }
 
       this.loadingReference = true;
 
       try {
         const params = {
-          toko_id: tokoId,
+          toko_id: tokoId || undefined,
           limit: 100,
         };
 
-        const [produkResult, treatmentResult] = await Promise.allSettled([
-          referenceService.produkByToko(params),
-          referenceService.treatmentByToko(params),
+        const [
+          produkResult,
+          treatmentResult,
+          subjectiveResult,
+          assessmentResult,
+        ] = await Promise.allSettled([
+          tokoId ? referenceService.produkByToko(params) : Promise.resolve([]),
+          tokoId
+            ? referenceService.treatmentByToko(params)
+            : Promise.resolve([]),
+          referenceService.subjective({ limit: 200 }),
+          referenceService.assessment({ limit: 200 }),
         ]);
 
         if (produkResult.status === "fulfilled") {
@@ -1264,11 +1428,29 @@ export default {
             ),
           ]);
         }
+
+        if (subjectiveResult.status === "fulfilled") {
+          this.subjectiveOptions = this.uniqueOptions([
+            ...this.subjectiveOptions,
+            ...this.normalizeSubjectiveOptions(
+              this.extractRows(subjectiveResult.value),
+            ),
+          ]);
+        }
+
+        if (assessmentResult.status === "fulfilled") {
+          this.assessmentOptions = this.uniqueOptions([
+            ...this.assessmentOptions,
+            ...this.normalizeAssessmentOptions(
+              this.extractRows(assessmentResult.value),
+            ),
+          ]);
+        }
       } catch (error) {
         this.showSnackbar(
           this.getErrorMessage(
             error,
-            "Gagal memuat reference produk dan treatment.",
+            "Gagal memuat reference SOAP, produk, dan treatment.",
           ),
           "warning",
         );
@@ -1365,10 +1547,36 @@ export default {
 
     mapSoap(soap = {}) {
       this.form.soap = {
-        subjective: soap?.subjective || soap?.s || "",
+        subjective_items: this.toMultiArray(
+          soap?.subjective_items ||
+            soap?.subjective_options ||
+            soap?.subjective_list ||
+            soap?.subjective,
+        ),
+        subjective_other:
+          soap?.subjective_other ||
+          soap?.subjective_lainnya ||
+          soap?.lainnya_subjective ||
+          "",
         objective: soap?.objective || soap?.o || "",
-        assessment: soap?.assessment || soap?.a || "",
-        planning: soap?.planning || soap?.p || "",
+        assessment_items: this.toMultiArray(
+          soap?.assessment_items ||
+            soap?.assessment_options ||
+            soap?.assessment_list ||
+            soap?.assessment,
+        ),
+        assessment_other:
+          soap?.assessment_other ||
+          soap?.assessment_lainnya ||
+          soap?.lainnya_assessment ||
+          "",
+        planning: soap?.planning || soap?.plan || soap?.p || "",
+        next_date_konsultasi: this.toDateInput(
+          soap?.next_date_konsultasi ||
+            soap?.next_konsultasi ||
+            soap?.next_date ||
+            "",
+        ),
       };
     },
 
@@ -1430,7 +1638,16 @@ export default {
                 0,
             );
 
-            const jumlah = this.toNumber(item?.jumlah || item?.qty || 1);
+            const stockRaw = this.resolveStockValue(item, produkToko, produk);
+            const stokTerbaca = stockRaw !== null;
+            const stokTersedia = stokTerbaca ? this.toNumber(stockRaw) : null;
+
+            const jumlah = this.normalizeQtyByStock(
+              this.toNumber(item?.jumlah || item?.qty || 1),
+              stokTersedia,
+              stokTerbaca,
+            );
+
             const subtotal = this.toNumber(
               item?.subtotal ||
                 item?.total ||
@@ -1445,7 +1662,18 @@ export default {
               jumlah,
               harga,
               subtotal,
-              aturan_pakai: item?.aturan_pakai || item?.catatan || "",
+              stok_tersedia: stokTersedia,
+              stok_terbaca: stokTerbaca,
+              frekuensi_penggunaan:
+                item?.frekuensi_penggunaan ||
+                item?.frekuensi ||
+                item?.aturan_pakai ||
+                "",
+              waktu_penggunaan:
+                item?.waktu_penggunaan ||
+                item?.waktu_pakai ||
+                item?.penggunaan ||
+                "",
             };
           })
         : [this.createEmptyObatRow()];
@@ -1545,7 +1773,10 @@ export default {
         jumlah: 1,
         harga: 0,
         subtotal: 0,
-        aturan_pakai: "",
+        stok_tersedia: null,
+        stok_terbaca: false,
+        frekuensi_penggunaan: "",
+        waktu_penggunaan: "",
       };
     },
 
@@ -1603,6 +1834,8 @@ export default {
         row.nama = "";
         row.harga = 0;
         row.subtotal = 0;
+        row.stok_tersedia = null;
+        row.stok_terbaca = false;
         return;
       }
 
@@ -1610,6 +1843,9 @@ export default {
       row.produk_id = option.produk_id || null;
       row.nama = option.label || "";
       row.harga = this.toNumber(option.harga);
+      row.stok_tersedia = option.stok_tersedia;
+      row.stok_terbaca = option.stok_terbaca;
+
       this.recalculateObat(index);
     },
 
@@ -1620,7 +1856,16 @@ export default {
         return;
       }
 
-      const jumlah = Math.max(this.toNumber(row.jumlah), 1);
+      let jumlah = Math.max(this.toNumber(row.jumlah), 1);
+
+      if (row.stok_terbaca && jumlah > this.toNumber(row.stok_tersedia)) {
+        jumlah = this.toNumber(row.stok_tersedia);
+      }
+
+      if (jumlah < 1) {
+        jumlah = 1;
+      }
+
       const harga = this.toNumber(row.harga);
 
       row.jumlah = jumlah;
@@ -1668,6 +1913,77 @@ export default {
       row.total = jumlah * harga;
     },
 
+    normalizeSubjectiveOptions(rows = []) {
+      return rows
+        .map((item) => {
+          const label =
+            item?.label ||
+            item?.nama ||
+            item?.nama_subjective ||
+            item?.subjective ||
+            item?.keluhan ||
+            item?.title ||
+            item?.text ||
+            item?.value ||
+            "-";
+
+          const value =
+            item?.id ||
+            item?.subjective_id ||
+            item?.kode ||
+            item?.value ||
+            label;
+
+          return {
+            label,
+            value,
+            id: item?.id || item?.subjective_id || null,
+          };
+        })
+        .filter((item) => item.value && item.label && item.label !== "-");
+    },
+
+    normalizeAssessmentOptions(rows = []) {
+      return rows
+        .map((item) => {
+          const kode =
+            item?.kode || item?.kode_icd || item?.icd_code || item?.code || "";
+
+          const nama =
+            item?.nama ||
+            item?.nama_assessment ||
+            item?.nama_diagnosa ||
+            item?.diagnosa ||
+            item?.description ||
+            item?.title ||
+            item?.text ||
+            item?.value ||
+            "";
+
+          const label =
+            kode && nama && !String(nama).startsWith(String(kode))
+              ? `${kode} - ${nama}`
+              : nama || kode || "-";
+
+          const value =
+            item?.id ||
+            item?.assessment_id ||
+            item?.diagnosa_id ||
+            item?.kode ||
+            item?.kode_icd ||
+            item?.value ||
+            label;
+
+          return {
+            label,
+            value,
+            id: item?.id || item?.assessment_id || item?.diagnosa_id || null,
+            kode,
+          };
+        })
+        .filter((item) => item.value && item.label && item.label !== "-");
+    },
+
     normalizeProdukOptions(rows = []) {
       return rows
         .map((item) => {
@@ -1713,11 +2029,22 @@ export default {
               0,
           );
 
+          const stockRaw = this.resolveStockValue(item, produkToko, produk);
+          const stokTerbaca = stockRaw !== null;
+          const stokTersedia = stokTerbaca ? this.toNumber(stockRaw) : null;
+
+          const displayLabel = stokTerbaca
+            ? `${label} - Stok: ${this.formatNumber(stokTersedia)}`
+            : `${label} - Stok: tidak terbaca`;
+
           return {
             label,
+            display_label: displayLabel,
             value: produkTokoId || produkId,
             produk_id: produkId,
             harga,
+            stok_tersedia: stokTersedia,
+            stok_terbaca: stokTerbaca,
           };
         })
         .filter((item) => item.value);
@@ -1794,7 +2121,209 @@ export default {
       return Array.from(map.values());
     },
 
+    syncSelectedSoapOptions() {
+      this.form.soap.subjective_items.forEach((value) => {
+        if (
+          !this.subjectiveOptions.some(
+            (item) => String(item.value) === String(value),
+          )
+        ) {
+          this.subjectiveOptions.push({
+            label: this.displayText(value),
+            value,
+            id: null,
+          });
+        }
+      });
+
+      this.form.soap.assessment_items.forEach((value) => {
+        if (
+          !this.assessmentOptions.some(
+            (item) => String(item.value) === String(value),
+          )
+        ) {
+          this.assessmentOptions.push({
+            label: this.displayText(value),
+            value,
+            id: null,
+            kode: "",
+          });
+        }
+      });
+    },
+
+    getObatStockValidation() {
+      const selectedRows = this.obatItems.filter(
+        (item) => item.produk_toko_id || item.produk_id,
+      );
+
+      for (const item of selectedRows) {
+        if (!item.stok_terbaca) {
+          return {
+            invalid: true,
+            message: `Stok produk "${item.nama || "-"}" tidak terbaca. Data tidak bisa disimpan.`,
+          };
+        }
+
+        if (this.toNumber(item.stok_tersedia) <= 0) {
+          return {
+            invalid: true,
+            message: `Stok produk "${item.nama || "-"}" kosong.`,
+          };
+        }
+
+        if (this.toNumber(item.jumlah) > this.toNumber(item.stok_tersedia)) {
+          return {
+            invalid: true,
+            message: `Qty produk "${item.nama || "-"}" melebihi stok tersedia (${this.formatNumber(item.stok_tersedia)}).`,
+          };
+        }
+      }
+
+      const grouped = new Map();
+
+      selectedRows.forEach((item) => {
+        const key = item.produk_toko_id
+          ? `pt-${item.produk_toko_id}`
+          : `p-${item.produk_id}`;
+
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            nama: item.nama,
+            qty: 0,
+            stok: this.toNumber(item.stok_tersedia),
+          });
+        }
+
+        const group = grouped.get(key);
+        group.qty += this.toNumber(item.jumlah);
+      });
+
+      for (const group of grouped.values()) {
+        if (group.qty > group.stok) {
+          return {
+            invalid: true,
+            message: `Total qty produk "${group.nama || "-"}" melebihi stok tersedia (${this.formatNumber(group.stok)}).`,
+          };
+        }
+      }
+
+      return {
+        invalid: false,
+        message: "",
+      };
+    },
+
+    getObatStockError(item) {
+      if (!item?.produk_toko_id && !item?.produk_id) {
+        return "";
+      }
+
+      if (!item.stok_terbaca) {
+        return "Stok tidak terbaca";
+      }
+
+      if (this.toNumber(item.stok_tersedia) <= 0) {
+        return "Stok kosong";
+      }
+
+      if (this.toNumber(item.jumlah) > this.toNumber(item.stok_tersedia)) {
+        return `Maksimal ${this.formatNumber(item.stok_tersedia)}`;
+      }
+
+      return "";
+    },
+
+    getStokText(item) {
+      if (!item?.produk_toko_id && !item?.produk_id) {
+        return "-";
+      }
+
+      if (!item.stok_terbaca) {
+        return "Tidak terbaca";
+      }
+
+      return this.formatNumber(item.stok_tersedia);
+    },
+
+    resolveStockValue(item = {}, produkToko = {}, produk = {}) {
+      const candidates = [
+        item?.stok_tersedia,
+        item?.stok_available,
+        item?.stok_akhir,
+        item?.sisa_stok,
+        item?.stock_available,
+        item?.stock,
+        item?.stok,
+        item?.qty_available,
+        produkToko?.stok_tersedia,
+        produkToko?.stok_available,
+        produkToko?.stok_akhir,
+        produkToko?.sisa_stok,
+        produkToko?.stock_available,
+        produkToko?.stock,
+        produkToko?.stok,
+        produkToko?.qty_available,
+        produk?.stok_tersedia,
+        produk?.stok_available,
+        produk?.stok_akhir,
+        produk?.sisa_stok,
+        produk?.stock,
+        produk?.stok,
+      ];
+
+      const found = candidates.find(
+        (value) => value !== null && value !== undefined && value !== "",
+      );
+
+      return found === undefined ? null : found;
+    },
+
+    normalizeQtyByStock(qty, stokTersedia, stokTerbaca) {
+      let jumlah = Math.max(this.toNumber(qty), 1);
+
+      if (stokTerbaca) {
+        const stok = this.toNumber(stokTersedia);
+
+        if (stok <= 0) {
+          return 1;
+        }
+
+        if (jumlah > stok) {
+          jumlah = stok;
+        }
+      }
+
+      return jumlah;
+    },
+
     buildPayload() {
+      const stockValidation = this.getObatStockValidation();
+
+      if (stockValidation.invalid) {
+        throw new Error(stockValidation.message);
+      }
+
+      const subjectiveItems = this.resolveSelectedLabels(
+        this.form.soap.subjective_items,
+        this.subjectiveOptions,
+      );
+
+      const assessmentItems = this.resolveSelectedLabels(
+        this.form.soap.assessment_items,
+        this.assessmentOptions,
+      );
+
+      const subjectiveText = this.joinSoapText(
+        subjectiveItems,
+        this.form.soap.subjective_other,
+      );
+
+      const assessmentText = this.joinSoapText(
+        assessmentItems,
+        this.form.soap.assessment_other,
+      );
+
       return {
         antrian_dokter_id: this.antrianId,
         registrasi_layanan_id:
@@ -1809,22 +2338,48 @@ export default {
         total_treatment: this.totalTreatment,
         grand_total: this.grandTotal,
         soap: {
-          subjective: this.form.soap.subjective,
-          objective: this.form.soap.objective,
-          assessment: this.form.soap.assessment,
-          planning: this.form.soap.planning,
+          subjective: subjectiveText,
+          subjective_items: subjectiveItems,
+          subjective_ids: this.resolveSelectedIds(
+            this.form.soap.subjective_items,
+            this.subjectiveOptions,
+          ),
+          subjective_other: this.form.soap.subjective_other || null,
+          objective: this.form.soap.objective || null,
+          assessment: assessmentText,
+          assessment_items: assessmentItems,
+          assessment_ids: this.resolveSelectedIds(
+            this.form.soap.assessment_items,
+            this.assessmentOptions,
+          ),
+          assessment_other: this.form.soap.assessment_other || null,
+          planning: this.form.soap.planning || null,
+          plan: this.form.soap.planning || null,
+          next_date_konsultasi: this.form.soap.next_date_konsultasi || null,
         },
         obat_items: this.obatItems
           .filter((item) => item.produk_toko_id || item.produk_id)
-          .map((item) => ({
-            produk_toko_id: item.produk_toko_id,
-            produk_id: item.produk_id,
-            nama: item.nama,
-            jumlah: this.toNumber(item.jumlah),
-            harga: this.toNumber(item.harga),
-            subtotal: this.toNumber(item.subtotal),
-            aturan_pakai: item.aturan_pakai || null,
-          })),
+          .map((item) => {
+            const instruksiPemakaian =
+              [item.frekuensi_penggunaan, item.waktu_penggunaan]
+                .filter(Boolean)
+                .join(" - ") || null;
+
+            return {
+              produk_toko_id: item.produk_toko_id,
+              produk_id: item.produk_id,
+              nama: item.nama,
+              jumlah: this.toNumber(item.jumlah),
+              harga: this.toNumber(item.harga),
+              subtotal: this.toNumber(item.subtotal),
+              stok_tersedia: item.stok_tersedia,
+              frekuensi_penggunaan: item.frekuensi_penggunaan || null,
+              waktu_penggunaan: item.waktu_penggunaan || null,
+              frekuensi: item.frekuensi_penggunaan || null,
+              waktu_pakai: item.waktu_penggunaan || null,
+              instruksi_pemakaian: instruksiPemakaian,
+            };
+          }),
         treatment_items: this.treatmentItems
           .filter((item) => item.treatment_toko_id || item.treatment_id)
           .map((item) => ({
@@ -1856,17 +2411,38 @@ export default {
       this.submitLoading = true;
 
       try {
+        const stockValidation = this.getObatStockValidation();
+
+        if (stockValidation.invalid) {
+          this.showSnackbar(stockValidation.message, "error");
+          return;
+        }
+
         const payload = this.buildPayload();
 
-        await api.post(
+        const response = await api.post(
           `/pelayanan-medis/antrian-dokter/${this.antrianId}/finish`,
           payload,
         );
 
+        const result = response?.data || {};
+        const invoiceId =
+          result?.invoice?.id ||
+          result?.data?.pembayaran_invoice_id ||
+          result?.data?.invoice_id ||
+          null;
+
         this.showSnackbar("Proses dokter berhasil disimpan.", "success");
 
         setTimeout(() => {
-          this.$router.push("/pelayanan-medis/antrian-dokter");
+          if (invoiceId) {
+            this.$router.push(
+              `/kasir/daftar-pembayaran/${invoiceId}/proses-pembayaran`,
+            );
+            return;
+          }
+
+          this.$router.push("/kasir/daftar-pembayaran");
         }, 500);
       } catch (error) {
         this.showSnackbar(
@@ -1892,6 +2468,38 @@ export default {
         localStorage.getItem("selected_toko_id") ||
         null
       );
+    },
+
+    resolveSelectedLabels(values = [], options = []) {
+      if (!Array.isArray(values)) {
+        return [];
+      }
+
+      return values
+        .map((value) => {
+          const option = options.find(
+            (item) => String(item.value) === String(value),
+          );
+
+          return option?.label || this.displayText(value);
+        })
+        .filter((item) => item && item !== "-");
+    },
+
+    resolveSelectedIds(values = [], options = []) {
+      if (!Array.isArray(values)) {
+        return [];
+      }
+
+      return values
+        .map((value) => {
+          const option = options.find(
+            (item) => String(item.value) === String(value),
+          );
+
+          return option?.id || null;
+        })
+        .filter(Boolean);
     },
 
     extractRows(payload) {
@@ -1974,6 +2582,58 @@ export default {
       return [value];
     },
 
+    toMultiArray(value) {
+      if (!value) {
+        return [];
+      }
+
+      if (Array.isArray(value)) {
+        return value
+          .map((item) => this.extractValue(item))
+          .filter((item) => item !== null && item !== undefined && item !== "");
+      }
+
+      if (typeof value === "string") {
+        return value
+          .split(/[|,;]/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
+      return [this.extractValue(value)].filter(
+        (item) => item !== null && item !== undefined && item !== "",
+      );
+    },
+
+    extractValue(value) {
+      if (value === null || value === undefined || value === "") {
+        return "";
+      }
+
+      if (typeof value === "string" || typeof value === "number") {
+        return value;
+      }
+
+      if (typeof value === "object") {
+        return (
+          value.id ||
+          value.value ||
+          value.subjective_id ||
+          value.assessment_id ||
+          value.diagnosa_id ||
+          value.kode ||
+          value.kode_icd ||
+          value.nama ||
+          value.label ||
+          value.title ||
+          value.text ||
+          ""
+        );
+      }
+
+      return String(value);
+    },
+
     displayText(value) {
       if (value === null || value === undefined || value === "") {
         return "-";
@@ -1995,8 +2655,14 @@ export default {
           value.nama_obat ||
           value.nama_perawat ||
           value.nama_dokter ||
+          value.nama_subjective ||
+          value.nama_assessment ||
+          value.nama_diagnosa ||
+          value.diagnosa ||
+          value.description ||
           value.label ||
           value.title ||
+          value.value ||
           value.faktur ||
           value.kode ||
           "-"
@@ -2004,6 +2670,16 @@ export default {
       }
 
       return String(value);
+    },
+
+    joinSoapText(items = [], other = "") {
+      const values = Array.isArray(items) ? [...items] : [];
+
+      if (other) {
+        values.push(other);
+      }
+
+      return values.filter(Boolean).join(", ");
     },
 
     isTrue(value) {
@@ -2105,6 +2781,30 @@ export default {
       }
 
       return `${dateText}, Jam ${timeText}`;
+    },
+
+    toDateInput(value) {
+      if (!value) {
+        return "";
+      }
+
+      const raw = String(value);
+
+      if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+        return raw.substring(0, 10);
+      }
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return "";
+      }
+
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
     },
 
     getErrorMessage(error, fallback) {
