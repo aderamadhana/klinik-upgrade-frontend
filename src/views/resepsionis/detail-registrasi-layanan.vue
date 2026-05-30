@@ -26,6 +26,7 @@
 
         <v-btn
           color="primary"
+          variant="tonal"
           prepend-icon="mdi-refresh"
           :loading="loading"
           @click="fetchData"
@@ -38,6 +39,7 @@
     <v-alert
       v-if="errorMessage"
       type="error"
+      variant="tonal"
       border="start"
       class="mb-4"
       closable
@@ -49,7 +51,7 @@
     <v-skeleton-loader v-if="loading" type="article, table-row@4, actions" />
 
     <template v-else-if="detail">
-      <v-card color="primary" class="mb-4">
+      <v-card variant="tonal" color="primary" class="mb-4">
         <v-card-text class="pa-5">
           <v-row dense align="center">
             <v-col cols="12" md="6">
@@ -176,6 +178,7 @@
             <v-btn
               v-if="canCancel"
               color="error"
+              variant="tonal"
               prepend-icon="mdi-close-circle-outline"
               :disabled="actionLoading"
               @click="confirmCancel"
@@ -191,7 +194,7 @@
           <v-card variant="outlined">
             <v-card-text class="pa-4">
               <div class="d-flex align-center ga-3">
-                <v-avatar color="primary">
+                <v-avatar color="primary" variant="tonal">
                   <v-icon>mdi-store-outline</v-icon>
                 </v-avatar>
 
@@ -210,7 +213,7 @@
           <v-card variant="outlined">
             <v-card-text class="pa-4">
               <div class="d-flex align-center ga-3">
-                <v-avatar color="primary">
+                <v-avatar color="primary" variant="tonal">
                   <v-icon>mdi-doctor</v-icon>
                 </v-avatar>
 
@@ -229,7 +232,7 @@
           <v-card variant="outlined">
             <v-card-text class="pa-4">
               <div class="d-flex align-center ga-3">
-                <v-avatar color="success">
+                <v-avatar color="success" variant="tonal">
                   <v-icon>mdi-account-heart-outline</v-icon>
                 </v-avatar>
 
@@ -248,7 +251,7 @@
           <v-card variant="outlined">
             <v-card-text class="pa-4">
               <div class="d-flex align-center ga-3">
-                <v-avatar color="info">
+                <v-avatar color="info" variant="tonal">
                   <v-icon>mdi-cash-multiple</v-icon>
                 </v-avatar>
 
@@ -301,7 +304,7 @@
             <v-card-text class="pa-4">
               <v-row dense>
                 <v-col cols="12" md="5">
-                  <v-card>
+                  <v-card variant="tonal">
                     <v-card-title class="text-subtitle-2 font-weight-bold">
                       Data Pasien & Registrasi
                     </v-card-title>
@@ -353,7 +356,7 @@
                 </v-col>
 
                 <v-col cols="12" md="4">
-                  <v-card>
+                  <v-card variant="tonal">
                     <v-card-title class="text-subtitle-2 font-weight-bold">
                       Ringkasan Biaya
                     </v-card-title>
@@ -402,7 +405,7 @@
                 </v-col>
 
                 <v-col cols="12" md="3">
-                  <v-card>
+                  <v-card variant="tonal">
                     <v-card-title class="text-subtitle-2 font-weight-bold">
                       Accurate Mapping
                     </v-card-title>
@@ -416,7 +419,11 @@
                         </div>
 
                         <div class="d-flex flex-wrap ga-2 mb-2">
-                          <v-chip size="x-small" color="primary">
+                          <v-chip
+                            size="x-small"
+                            color="primary"
+                            variant="tonal"
+                          >
                             {{ consultationMapping.source_code || "-" }}
                           </v-chip>
 
@@ -427,6 +434,7 @@
                                 ? 'success'
                                 : 'warning'
                             "
+                            variant="tonal"
                           >
                             {{
                               consultationMapping.kode_accurate ||
@@ -449,7 +457,11 @@
                         </div>
 
                         <div class="d-flex flex-wrap ga-2 mb-2">
-                          <v-chip size="x-small" color="deep-purple">
+                          <v-chip
+                            size="x-small"
+                            color="deep-purple"
+                            variant="tonal"
+                          >
                             {{
                               pembelianOnlineMapping.source_code ||
                               "PEMBELIAN_ONLINE"
@@ -463,6 +475,7 @@
                                 ? 'success'
                                 : 'warning'
                             "
+                            variant="tonal"
                           >
                             {{
                               pembelianOnlineMapping.kode_accurate ||
@@ -482,6 +495,7 @@
                       <v-alert
                         v-if="!hasConsultation && !isPembelianOnline"
                         type="info"
+                        variant="tonal"
                         density="compact"
                       >
                         Tidak ada mapping tambahan.
@@ -495,7 +509,7 @@
 
           <v-window-item value="clinical">
             <v-card-text class="pa-4">
-              <v-card>
+              <v-card variant="tonal">
                 <v-card-title class="d-flex align-center ga-3">
                   <v-avatar color="primary" variant="flat">
                     <v-icon>
@@ -602,7 +616,7 @@
                     </v-row>
                   </template>
 
-                  <v-alert v-else type="info">
+                  <v-alert v-else type="info" variant="tonal">
                     Tidak ada data konsultasi.
                   </v-alert>
                 </v-card-text>
@@ -616,7 +630,7 @@
                 <v-col cols="12">
                   <v-card variant="outlined">
                     <v-card-title class="d-flex align-center ga-3">
-                      <v-avatar color="success">
+                      <v-avatar color="success" variant="tonal">
                         <v-icon>mdi-face-woman-shimmer-outline</v-icon>
                       </v-avatar>
 
@@ -663,7 +677,7 @@
                       </v-table>
 
                       <div v-else class="pa-4">
-                        <v-alert type="info" density="compact">
+                        <v-alert type="info" variant="tonal" density="compact">
                           Detail treatment belum tersedia.
                         </v-alert>
                       </div>
@@ -674,7 +688,7 @@
                 <v-col cols="12">
                   <v-card variant="outlined">
                     <v-card-title class="d-flex align-center ga-3">
-                      <v-avatar color="info">
+                      <v-avatar color="info" variant="tonal">
                         <v-icon>mdi-cart-outline</v-icon>
                       </v-avatar>
 
@@ -725,7 +739,7 @@
                       </v-table>
 
                       <div v-else class="pa-4">
-                        <v-alert type="info" density="compact">
+                        <v-alert type="info" variant="tonal" density="compact">
                           Detail penjualan belum tersedia.
                         </v-alert>
                       </div>
@@ -740,7 +754,7 @@
             <v-card-text class="pa-4">
               <v-card variant="outlined">
                 <v-card-title class="d-flex align-center ga-3">
-                  <v-avatar color="primary">
+                  <v-avatar color="primary" variant="tonal">
                     <v-icon>mdi-timeline-clock-outline</v-icon>
                   </v-avatar>
 
@@ -791,7 +805,7 @@
                   </v-table>
 
                   <div v-else class="pa-4">
-                    <v-alert type="info" density="compact">
+                    <v-alert type="info" variant="tonal" density="compact">
                       Task belum tersedia.
                     </v-alert>
                   </div>
@@ -803,7 +817,7 @@
       </v-card>
     </template>
 
-    <v-alert v-else type="warning" border="start">
+    <v-alert v-else type="warning" variant="tonal" border="start">
       Data registrasi tidak ditemukan.
     </v-alert>
 
@@ -824,7 +838,7 @@
             akan dibatalkan.
           </div>
 
-          <v-alert type="warning" density="compact">
+          <v-alert type="warning" variant="tonal" density="compact">
             Pastikan registrasi memang tidak dilanjutkan sebelum membatalkan.
           </v-alert>
         </v-card-text>

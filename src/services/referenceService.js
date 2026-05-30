@@ -147,6 +147,16 @@ const referenceService = {
     });
     return response.data.data;
   },
+
+  async subjective(params = {}) {
+    const response = await api.get("/reference/subjective", { params });
+    return response.data.data;
+  },
+
+  async assessment(params = {}) {
+    const response = await api.get("/reference/assessment", { params });
+    return response.data.data;
+  },
 };
 
 export default referenceService;

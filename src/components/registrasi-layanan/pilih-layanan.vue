@@ -234,10 +234,6 @@
                         {{ getMappingTitle(mapping) }}
                       </div>
 
-                      <div class="text-caption text-medium-emphasis mt-1">
-                        {{ mapping.source_code || "-" }}
-                      </div>
-
                       <div class="text-body-2 font-weight-bold mt-2">
                         Rp {{ formatNumber(mapping.default_harga || 0) }}
                       </div>
