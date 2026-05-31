@@ -217,23 +217,6 @@
             </div>
           </template>
 
-          <template #item.dokter="{ item }">
-            <div class="py-3">
-              <div class="text-body-2 font-weight-bold">
-                {{ getDokterName(item) }}
-              </div>
-
-              <v-chip
-                size="small"
-                :color="getChannelColor(item.channel_konsultasi)"
-                :prepend-icon="getChannelIcon(item.channel_konsultasi)"
-                class="mt-2"
-              >
-                {{ formatChannel(item.channel_konsultasi) }}
-              </v-chip>
-            </div>
-          </template>
-
           <template #item.status="{ item }">
             <v-chip
               size="default"
@@ -485,13 +468,7 @@ export default {
           title: "Layanan",
           key: "layanan",
           sortable: false,
-          minWidth: 260,
-        },
-        {
-          title: "Dokter / Channel",
-          key: "dokter",
-          sortable: false,
-          minWidth: 220,
+          minWidth: 150,
         },
         {
           title: "Status",
@@ -504,7 +481,7 @@ export default {
           key: "aksi",
           sortable: false,
           align: "end",
-          width: 250,
+          width: 350,
         },
       ],
     };
@@ -886,17 +863,77 @@ export default {
       return map[status] || "mdi-help-circle-outline";
     },
 
-    formatChannel(channel) {
-      const value = String(channel || "").toLowerCase();
+    getKonsultasiSourceCode(item) {
+      return (
+        item?.konsultasi_source_code ||
+        item?.registrasi?.konsultasi_source_code ||
+        item?.layanan?.konsultasi_source_code ||
+        item?.konsultasi?.source_code ||
+        ""
+      );
+    },
 
-      if (value === "1" || value === "offline") return "Konsultasi Offline";
+    getKonsultasiSourceName(item) {
+      return (
+        item?.jenis_konsultasi_label ||
+        item?.registrasi?.jenis_konsultasi_label ||
+        item?.layanan?.jenis_konsultasi_label ||
+        item?.konsultasi_source_name ||
+        item?.registrasi?.konsultasi_source_name ||
+        item?.layanan?.konsultasi_source_name ||
+        item?.konsultasi?.source_name ||
+        ""
+      );
+    },
+
+    getKonsultasiChannelValue(item) {
+      return String(
+        item?.channel_konsultasi ??
+          item?.registrasi?.channel_konsultasi ??
+          item?.layanan?.channel_konsultasi ??
+          "",
+      ).toLowerCase();
+    },
+
+    formatChannel(item) {
+      const sourceName = this.getKonsultasiSourceName(item);
+
+      if (sourceName) {
+        return sourceName;
+      }
+
+      const sourceCode = String(
+        this.getKonsultasiSourceCode(item) || "",
+      ).toUpperCase();
+
+      if (sourceCode.includes("ONLINE")) return "Konsultasi Online";
+      if (sourceCode.includes("SPPG")) return "Konsultasi SPPG";
+      if (sourceCode.includes("SPKK")) return "Konsultasi SPKK";
+      if (sourceCode.includes("OFFLINE") || sourceCode.includes("DOKTER")) {
+        return "Konsultasi Dokter";
+      }
+
+      const value = this.getKonsultasiChannelValue(item);
+
+      if (value === "1" || value === "offline") return "Konsultasi Dokter";
       if (value === "2" || value === "online") return "Konsultasi Online";
 
       return "Tanpa Konsultasi";
     },
 
-    getChannelColor(channel) {
-      const value = String(channel || "").toLowerCase();
+    getChannelColor(item) {
+      const sourceCode = String(
+        this.getKonsultasiSourceCode(item) || "",
+      ).toUpperCase();
+
+      if (sourceCode.includes("ONLINE")) return "info";
+      if (sourceCode.includes("SPPG")) return "success";
+      if (sourceCode.includes("SPKK")) return "deep-purple";
+      if (sourceCode.includes("OFFLINE") || sourceCode.includes("DOKTER")) {
+        return "primary";
+      }
+
+      const value = this.getKonsultasiChannelValue(item);
 
       if (value === "1" || value === "offline") return "primary";
       if (value === "2" || value === "online") return "info";
@@ -904,8 +941,19 @@ export default {
       return "secondary";
     },
 
-    getChannelIcon(channel) {
-      const value = String(channel || "").toLowerCase();
+    getChannelIcon(item) {
+      const sourceCode = String(
+        this.getKonsultasiSourceCode(item) || "",
+      ).toUpperCase();
+
+      if (sourceCode.includes("ONLINE")) return "mdi-monitor-account";
+      if (sourceCode.includes("SPPG")) return "mdi-account-heart-outline";
+      if (sourceCode.includes("SPKK")) return "mdi-doctor";
+      if (sourceCode.includes("OFFLINE") || sourceCode.includes("DOKTER")) {
+        return "mdi-hospital-building";
+      }
+
+      const value = this.getKonsultasiChannelValue(item);
 
       if (value === "1" || value === "offline") {
         return "mdi-hospital-building";
@@ -947,9 +995,9 @@ export default {
 
       if (this.hasKonsultasi(item)) {
         chips.push({
-          label: "Konsultasi",
-          color: "primary",
-          icon: "mdi-stethoscope",
+          label: this.formatChannel(item),
+          color: this.getChannelColor(item),
+          icon: this.getChannelIcon(item),
         });
       }
 
@@ -983,7 +1031,11 @@ export default {
     hasKonsultasi(item) {
       return (
         this.isTrue(item?.ada_konsultasi) ||
-        Number(item?.channel_konsultasi || 0) > 0
+        this.isTrue(item?.layanan?.ada_konsultasi) ||
+        Boolean(this.getKonsultasiSourceCode(item)) ||
+        Number(
+          item?.channel_konsultasi ?? item?.layanan?.channel_konsultasi ?? 0,
+        ) > 0
       );
     },
 

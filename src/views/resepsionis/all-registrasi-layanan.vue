@@ -802,29 +802,53 @@ export default {
       );
     },
 
-    getConsultationLabel(item) {
-      const channel =
-        item?.channel_konsultasi ||
-        item?.layanan?.channel_konsultasi ||
+    getConsultationSourceCode(item) {
+      return (
         item?.konsultasi_source_code ||
+        item?.layanan?.konsultasi_source_code ||
+        item?.konsultasi?.source_code ||
         item?.source_konsultasi ||
-        "";
+        ""
+      );
+    },
 
-      const normalized = String(channel).toLowerCase();
+    getConsultationSourceName(item) {
+      return (
+        item?.jenis_konsultasi_label ||
+        item?.layanan?.jenis_konsultasi_label ||
+        item?.konsultasi_source_name ||
+        item?.layanan?.konsultasi_source_name ||
+        item?.konsultasi?.source_name ||
+        ""
+      );
+    },
 
-      if (normalized.includes("online")) {
-        return "Konsultasi Online";
+    getConsultationLabel(item) {
+      const sourceName = this.getConsultationSourceName(item);
+
+      if (sourceName) {
+        return sourceName;
       }
 
-      if (normalized.includes("sppg")) {
-        return "Konsultasi SPPG";
+      const sourceCode = String(
+        this.getConsultationSourceCode(item) || "",
+      ).toUpperCase();
+
+      if (sourceCode.includes("ONLINE")) return "Konsultasi Online";
+      if (sourceCode.includes("SPPG")) return "Konsultasi SPPG";
+      if (sourceCode.includes("SPKK")) return "Konsultasi SPKK";
+      if (sourceCode.includes("OFFLINE") || sourceCode.includes("DOKTER")) {
+        return "Konsultasi Dokter";
       }
 
-      if (normalized.includes("spkk")) {
-        return "Konsultasi SPKK";
-      }
+      const channel = String(
+        item?.channel_konsultasi ?? item?.layanan?.channel_konsultasi ?? "",
+      ).toLowerCase();
 
-      return "Konsultasi Dokter";
+      if (channel === "2" || channel === "online") return "Konsultasi Online";
+      if (channel === "1" || channel === "offline") return "Konsultasi Dokter";
+
+      return "Tanpa Konsultasi";
     },
 
     getPasienName(item) {
@@ -889,13 +913,16 @@ export default {
     },
 
     getConsultationAmount(item) {
-      return (
-        item?.biaya_konsultasi ||
-        item?.total_konsultasi ||
-        item?.konsultasi_total ||
-        item?.konsultasi?.total_harga ||
-        0
-      );
+      const value =
+        item?.total_konsultasi ??
+        item?.layanan?.total_konsultasi ??
+        item?.biaya_konsultasi ??
+        item?.konsultasi_total ??
+        item?.konsultasi?.total_harga ??
+        0;
+
+      const number = Number(value);
+      return Number.isFinite(number) ? number : 0;
     },
 
     getStatusValue(item) {

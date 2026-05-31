@@ -157,6 +157,22 @@ const referenceService = {
     const response = await api.get("/reference/assessment", { params });
     return response.data.data;
   },
+
+  async jenisTransaksi(params = {}) {
+    const response = await api.get("/reference/jenis-transaksi", {
+      params,
+    });
+
+    return response.data.data;
+  },
+
+  async sumberInformasi(params = {}) {
+    const response = await api.get("/reference/sumber-informasi", {
+      params,
+    });
+
+    return response.data.data;
+  },
 };
 
 export default referenceService;

@@ -946,7 +946,9 @@
               </div>
 
               <div class="d-flex justify-space-between align-center mb-2">
-                <div class="text-body-2 text-medium-emphasis">Konsultasi</div>
+                <div class="text-body-2 text-medium-emphasis">
+                  {{ consultationLabel }}
+                </div>
                 <div class="text-body-2 font-weight-bold">
                   Rp {{ formatNumber(consultationFee) }}
                 </div>
@@ -1138,13 +1140,79 @@ export default {
       return this.$route.params.id;
     },
 
+    consultationSourceCode() {
+      return String(
+        this.registration?.konsultasi_source_code ||
+          this.registration?.layanan?.konsultasi_source_code ||
+          this.registration?.konsultasi?.source_code ||
+          "",
+      ).trim();
+    },
+
+    consultationSourceName() {
+      return String(
+        this.registration?.jenis_konsultasi_label ||
+          this.registration?.layanan?.jenis_konsultasi_label ||
+          this.registration?.konsultasi_source_name ||
+          this.registration?.layanan?.konsultasi_source_name ||
+          this.registration?.konsultasi?.source_name ||
+          "",
+      ).trim();
+    },
+
     consultationChannel() {
       return this.normalizeText(
-        this.registration?.channel_konsultasi ||
-          this.registration?.layanan?.channel_konsultasi ||
-          this.registration?.konsultasi?.channel_konsultasi ||
+        this.registration?.channel_konsultasi ??
+          this.registration?.layanan?.channel_konsultasi ??
+          this.registration?.konsultasi?.channel_konsultasi ??
           this.registration?.konsultasi_channel,
       );
+    },
+
+    consultationLabel() {
+      if (this.consultationSourceName) {
+        return this.consultationSourceName;
+      }
+
+      const sourceCode = this.consultationSourceCode.toUpperCase();
+
+      if (sourceCode.includes("ONLINE")) return "Konsultasi Online";
+      if (sourceCode.includes("SPPG")) return "Konsultasi SPPG";
+      if (sourceCode.includes("SPKK")) return "Konsultasi SPKK";
+      if (sourceCode.includes("OFFLINE") || sourceCode.includes("DOKTER")) {
+        return "Konsultasi Dokter";
+      }
+
+      if (
+        this.consultationChannel === "2" ||
+        this.consultationChannel === "online"
+      ) {
+        return "Konsultasi Online";
+      }
+
+      if (
+        this.consultationChannel === "1" ||
+        this.consultationChannel === "offline"
+      ) {
+        return "Konsultasi Dokter";
+      }
+
+      return this.form.add_consultation
+        ? "Konsultasi Dokter"
+        : "Tanpa Konsultasi Awal";
+    },
+
+    consultationOriginalAmount() {
+      const value =
+        this.registration?.total_konsultasi ??
+        this.registration?.layanan?.total_konsultasi ??
+        this.registration?.biaya_konsultasi ??
+        this.registration?.konsultasi_total ??
+        this.registration?.konsultasi?.total_harga ??
+        0;
+
+      const number = Number(value);
+      return Number.isFinite(number) ? number : 0;
     },
 
     hasOriginalConsultation() {
@@ -1152,6 +1220,12 @@ export default {
         this.isTrue(this.registration?.ada_konsultasi) ||
         this.isTrue(this.registration?.is_konsultasi) ||
         this.isTrue(this.registration?.layanan?.ada_konsultasi) ||
+        Boolean(this.consultationSourceCode) ||
+        Number(
+          this.registration?.channel_konsultasi ??
+            this.registration?.layanan?.channel_konsultasi ??
+            0,
+        ) > 0 ||
         Boolean(this.registration?.konsultasi_id) ||
         Boolean(this.registration?.konsultasi)
       );
@@ -1182,7 +1256,15 @@ export default {
     },
 
     isOnlineConsultation() {
-      return this.consultationChannel.includes("online");
+      const sourceCode = this.consultationSourceCode.toUpperCase();
+      const sourceName = this.consultationSourceName.toUpperCase();
+
+      return (
+        sourceCode.includes("ONLINE") ||
+        sourceName.includes("ONLINE") ||
+        this.consultationChannel === "2" ||
+        this.consultationChannel.includes("online")
+      );
     },
 
     showOnlineMedicalInfo() {
@@ -1206,7 +1288,11 @@ export default {
     },
 
     consultationFee() {
-      if (!this.hasOriginalConsultation && !this.form.add_consultation) {
+      if (this.hasOriginalConsultation) {
+        return this.consultationOriginalAmount;
+      }
+
+      if (!this.form.add_consultation) {
         return 0;
       }
 
@@ -1244,20 +1330,22 @@ export default {
     },
 
     channelChip() {
+      const sourceCode = this.consultationSourceCode.toUpperCase();
+
       if (this.isOnlineConsultation) {
-        return { label: "Konsultasi Online", color: "primary" };
+        return { label: this.consultationLabel, color: "primary" };
       }
 
-      if (this.consultationChannel === "sppg") {
-        return { label: "Konsultasi SPPG", color: "deep-purple" };
+      if (sourceCode.includes("SPPG")) {
+        return { label: this.consultationLabel, color: "deep-purple" };
       }
 
-      if (this.consultationChannel === "spkk") {
-        return { label: "Konsultasi SPKK", color: "indigo" };
+      if (sourceCode.includes("SPKK")) {
+        return { label: this.consultationLabel, color: "indigo" };
       }
 
       if (this.hasOriginalConsultation) {
-        return { label: "Konsultasi Offline", color: "success" };
+        return { label: this.consultationLabel, color: "success" };
       }
 
       return { label: "Tanpa Konsultasi Awal", color: "grey" };
@@ -2333,7 +2421,23 @@ export default {
           null,
         add_consultation: this.form.add_consultation ? 1 : 0,
         channel_konsultasi: this.getEffectiveChannelPayload(),
+        konsultasi_source_code: this.hasOriginalConsultation
+          ? this.consultationSourceCode || null
+          : this.form.add_consultation
+            ? "KONSULTASI_OFFLINE"
+            : null,
+        konsultasi_source_name: this.hasOriginalConsultation
+          ? this.consultationLabel || null
+          : this.form.add_consultation
+            ? "Konsultasi Dokter"
+            : null,
+        jenis_konsultasi_label: this.hasOriginalConsultation
+          ? this.consultationLabel || null
+          : this.form.add_consultation
+            ? "Konsultasi Dokter"
+            : null,
         biaya_konsultasi: this.consultationFee,
+        total_konsultasi: this.consultationFee,
         total_obat: this.totalObat,
         total_treatment: this.totalTreatment,
         grand_total: this.grandTotal,
@@ -2407,6 +2511,24 @@ export default {
       return null;
     },
 
+    resolveKasirProcessRouteId(result = {}) {
+      const routeId =
+        this.antrianId ||
+        this.registration?.registrasi_layanan_id ||
+        this.registration?.registrasi_id ||
+        this.registration?.registrasi_kunjungan_id ||
+        this.registration?.id ||
+        result?.data?.registrasi_layanan_id ||
+        result?.data?.registrasi_id ||
+        result?.data?.registrasi_kunjungan_id ||
+        result?.registrasi_layanan_id ||
+        result?.registrasi_id ||
+        result?.registrasi_kunjungan_id ||
+        null;
+
+      return routeId ? String(routeId) : null;
+    },
+
     async submitForm() {
       this.submitLoading = true;
 
@@ -2425,23 +2547,9 @@ export default {
           payload,
         );
 
-        const result = response?.data || {};
-        const invoiceId =
-          result?.invoice?.id ||
-          result?.data?.pembayaran_invoice_id ||
-          result?.data?.invoice_id ||
-          null;
-
         this.showSnackbar("Proses dokter berhasil disimpan.", "success");
 
         setTimeout(() => {
-          if (invoiceId) {
-            this.$router.push(
-              `/kasir/daftar-pembayaran/${invoiceId}/proses-pembayaran`,
-            );
-            return;
-          }
-
           this.$router.push("/kasir/daftar-pembayaran");
         }, 500);
       } catch (error) {

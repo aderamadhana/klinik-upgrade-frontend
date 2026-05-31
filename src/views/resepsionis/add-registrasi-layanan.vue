@@ -471,21 +471,17 @@ export default {
       ];
 
       if (layanan.ada_konsultasi) {
+        const jenisKonsultasiLabel = this.getJenisKonsultasiLabel(layanan);
+
         steps.push({
           key: "konsultasi",
-          title:
-            layanan.channel_konsultasi === "online"
-              ? "Konsultasi Online"
-              : "Konsultasi Offline",
+          title: jenisKonsultasiLabel,
           shortTitle: "Konsultasi",
           subtitle:
             layanan.channel_konsultasi === "online"
               ? "Lengkapi data konsultasi online"
-              : "Lengkapi keluhan awal pasien",
-          icon:
-            layanan.channel_konsultasi === "online"
-              ? "mdi-video-outline"
-              : "mdi-stethoscope",
+              : `Lengkapi data ${jenisKonsultasiLabel}`,
+          icon: this.getJenisKonsultasiIcon(layanan),
         });
       }
 
@@ -822,6 +818,40 @@ export default {
           );
         }) || null
       );
+    },
+
+    getJenisKonsultasiLabel(layanan = {}) {
+      if (!layanan?.ada_konsultasi) {
+        return "Konsultasi";
+      }
+
+      const sourceCode =
+        layanan.konsultasi_source_code || this.getKonsultasiSourceCode();
+      const mapping = this.getAccurateMappingBySourceCode(sourceCode);
+
+      return (
+        mapping?.source_name ||
+        layanan.konsultasi_source_name ||
+        mapping?.nama_accurate ||
+        (sourceCode ? String(sourceCode).replaceAll("_", " ") : null) ||
+        (layanan.channel_konsultasi === "online"
+          ? "Konsultasi Online"
+          : "Konsultasi Offline")
+      );
+    },
+
+    getJenisKonsultasiIcon(layanan = {}) {
+      const sourceCode = String(
+        layanan.konsultasi_source_code || this.getKonsultasiSourceCode() || "",
+      ).toUpperCase();
+
+      if (sourceCode.includes("ONLINE")) return "mdi-video-outline";
+      if (sourceCode.includes("SPPG")) return "mdi-account-heart-outline";
+      if (sourceCode.includes("SPKK")) return "mdi-doctor";
+
+      return layanan.channel_konsultasi === "online"
+        ? "mdi-video-outline"
+        : "mdi-stethoscope";
     },
 
     getKonsultasiSourceCode() {
@@ -1314,12 +1344,16 @@ export default {
         return false;
       }
 
-      if (
-        this.form.layanan.ada_konsultasi &&
-        !this.form.layanan.channel_konsultasi
-      ) {
-        this.showSnackbar("Pilih channel konsultasi", "error");
-        return false;
+      if (this.form.layanan.ada_konsultasi) {
+        if (!this.form.layanan.channel_konsultasi) {
+          this.showSnackbar("Pilih channel konsultasi", "error");
+          return false;
+        }
+
+        if (!this.form.layanan.konsultasi_source_code) {
+          this.showSnackbar("Pilih jenis konsultasi", "error");
+          return false;
+        }
       }
 
       return true;
@@ -1443,6 +1477,129 @@ export default {
       }
     },
 
+    buildSubmitPayload() {
+      this.syncRegistrasiAccurateMapping();
+
+      const layanan = this.normalizeLayanan(this.form.layanan || {});
+      const konsultasiSourceCode = layanan.ada_konsultasi
+        ? layanan.konsultasi_source_code || this.form.konsultasi_source_code
+        : null;
+      const konsultasiMapping = konsultasiSourceCode
+        ? this.getAccurateMappingBySourceCode(konsultasiSourceCode)
+        : null;
+
+      const isPembelianOnline = Boolean(
+        layanan.ada_penjualan && layanan.is_pembelian_online,
+      );
+      const pembelianOnlineMapping = isPembelianOnline
+        ? this.getPembelianOnlineMapping()
+        : null;
+
+      return {
+        ...this.form,
+        layanan: {
+          ...layanan,
+          konsultasi_source_code: layanan.ada_konsultasi
+            ? konsultasiMapping?.source_code || konsultasiSourceCode
+            : null,
+          konsultasi_source_name: layanan.ada_konsultasi
+            ? konsultasiMapping?.source_name ||
+              layanan.konsultasi_source_name ||
+              konsultasiMapping?.nama_accurate ||
+              null
+            : null,
+          konsultasi_mapping_id: layanan.ada_konsultasi
+            ? konsultasiMapping?.id || layanan.konsultasi_mapping_id || null
+            : null,
+          konsultasi_kode_accurate: layanan.ada_konsultasi
+            ? konsultasiMapping?.kode_accurate ||
+              layanan.konsultasi_kode_accurate ||
+              null
+            : null,
+          konsultasi_nama_accurate: layanan.ada_konsultasi
+            ? konsultasiMapping?.nama_accurate ||
+              layanan.konsultasi_nama_accurate ||
+              null
+            : null,
+          is_pembelian_online: isPembelianOnline,
+          pembelian_online_source_code: isPembelianOnline
+            ? pembelianOnlineMapping?.source_code ||
+              layanan.pembelian_online_source_code ||
+              "PEMBELIAN_ONLINE"
+            : null,
+          pembelian_online_source_name: isPembelianOnline
+            ? pembelianOnlineMapping?.source_name ||
+              layanan.pembelian_online_source_name ||
+              "Pembelian Online"
+            : null,
+          pembelian_online_mapping_id: isPembelianOnline
+            ? pembelianOnlineMapping?.id ||
+              layanan.pembelian_online_mapping_id ||
+              null
+            : null,
+          pembelian_online_kode_accurate: isPembelianOnline
+            ? pembelianOnlineMapping?.kode_accurate ||
+              layanan.pembelian_online_kode_accurate ||
+              null
+            : null,
+          pembelian_online_nama_accurate: isPembelianOnline
+            ? pembelianOnlineMapping?.nama_accurate ||
+              layanan.pembelian_online_nama_accurate ||
+              null
+            : null,
+        },
+        konsultasi_source_code: layanan.ada_konsultasi
+          ? konsultasiMapping?.source_code || konsultasiSourceCode
+          : null,
+        konsultasi_source_name: layanan.ada_konsultasi
+          ? konsultasiMapping?.source_name ||
+            layanan.konsultasi_source_name ||
+            konsultasiMapping?.nama_accurate ||
+            null
+          : null,
+        konsultasi_mapping_id: layanan.ada_konsultasi
+          ? konsultasiMapping?.id || layanan.konsultasi_mapping_id || null
+          : null,
+        konsultasi_kode_accurate: layanan.ada_konsultasi
+          ? konsultasiMapping?.kode_accurate ||
+            layanan.konsultasi_kode_accurate ||
+            null
+          : null,
+        konsultasi_nama_accurate: layanan.ada_konsultasi
+          ? konsultasiMapping?.nama_accurate ||
+            layanan.konsultasi_nama_accurate ||
+            null
+          : null,
+        total_konsultasi: this.totalKonsultasi,
+        is_pembelian_online: isPembelianOnline,
+        pembelian_online_source_code: isPembelianOnline
+          ? pembelianOnlineMapping?.source_code ||
+            layanan.pembelian_online_source_code ||
+            "PEMBELIAN_ONLINE"
+          : null,
+        pembelian_online_source_name: isPembelianOnline
+          ? pembelianOnlineMapping?.source_name ||
+            layanan.pembelian_online_source_name ||
+            "Pembelian Online"
+          : null,
+        pembelian_online_mapping_id: isPembelianOnline
+          ? pembelianOnlineMapping?.id ||
+            layanan.pembelian_online_mapping_id ||
+            null
+          : null,
+        pembelian_online_kode_accurate: isPembelianOnline
+          ? pembelianOnlineMapping?.kode_accurate ||
+            layanan.pembelian_online_kode_accurate ||
+            null
+          : null,
+        pembelian_online_nama_accurate: isPembelianOnline
+          ? pembelianOnlineMapping?.nama_accurate ||
+            layanan.pembelian_online_nama_accurate ||
+            null
+          : null,
+      };
+    },
+
     async handleSubmit() {
       if (!this.validateAllBeforeSubmit()) return;
 
@@ -1458,7 +1615,8 @@ export default {
           return;
         }
 
-        const response = await registrasiLayananService.create(this.form);
+        const payload = this.buildSubmitPayload();
+        const response = await registrasiLayananService.create(payload);
 
         if (response?.status === false) {
           this.showSnackbar(
