@@ -1,7 +1,6 @@
 <template>
   <v-card variant="flat" class="mb-4 border">
     <v-card-text class="pa-5">
-      <!-- HEADER -->
       <div class="d-flex align-center justify-space-between mb-4">
         <div>
           <div class="text-subtitle-1 font-weight-bold">Treatment</div>
@@ -20,7 +19,6 @@
         </v-btn>
       </div>
 
-      <!-- EMPTY STATE -->
       <div
         v-if="!items || items.length === 0"
         class="d-flex flex-column align-center justify-center text-center pa-8"
@@ -34,14 +32,12 @@
         <div class="text-subtitle-2 font-weight-bold mb-1">
           Belum ada treatment
         </div>
-
         <div class="text-body-2 text-medium-emphasis">
           Treatment dari registrasi layanan atau saran dokter akan muncul di
           sini.
         </div>
       </div>
 
-      <!-- ITEM LIST -->
       <v-card
         v-for="(item, index) in items"
         :key="item.registrasi_treatment_detail_id || `treatment-${index}`"
@@ -50,18 +46,17 @@
       >
         <v-card-item class="px-4 py-3">
           <template #prepend>
-            <v-avatar color="primary" size="36">
-              <v-icon icon="mdi-medical-bag" size="20" />
+            <v-avatar color="primary" variant="tonal" size="34">
+              <v-icon icon="mdi-medical-bag" size="18" />
             </v-avatar>
           </template>
 
-          <v-card-title class="text-body-2 font-weight-bold pa-0">
+          <div class="text-body-2 font-weight-bold">
             Treatment #{{ index + 1 }}
-          </v-card-title>
-
-          <v-card-subtitle class="text-caption pa-0 mt-1">
+          </div>
+          <div class="text-caption text-medium-emphasis mt-1">
             Detail treatment, beautician, qty, diskon, dan subtotal
-          </v-card-subtitle>
+          </div>
 
           <template #append>
             <v-btn

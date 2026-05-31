@@ -1,7 +1,6 @@
 <template>
   <v-card variant="flat" class="mb-4 border">
     <v-card-text class="pa-5">
-      <!-- HEADER -->
       <div class="d-flex align-center justify-space-between mb-4">
         <div>
           <div class="text-subtitle-1 font-weight-bold">Obat</div>
@@ -20,25 +19,22 @@
         </v-btn>
       </div>
 
-      <!-- EMPTY STATE -->
       <div
         v-if="!items || items.length === 0"
         class="d-flex flex-column align-center justify-center text-center pa-8"
       >
         <v-avatar color="grey-lighten-3" size="56" class="mb-3">
-          <v-icon size="30" color="grey"> mdi-pill-off </v-icon>
+          <v-icon size="30" color="grey">mdi-pill-off</v-icon>
         </v-avatar>
 
         <div class="text-subtitle-2 font-weight-bold mb-1">
           Belum ada produk
         </div>
-
         <div class="text-body-2 text-medium-emphasis">
           Produk dari registrasi layanan atau resep dokter akan muncul di sini.
         </div>
       </div>
 
-      <!-- ITEM LIST -->
       <v-card
         v-for="(item, index) in items"
         :key="item.registrasi_penjualan_detail_id || `obat-${index}`"
@@ -47,18 +43,15 @@
       >
         <v-card-item class="px-4 py-3">
           <template #prepend>
-            <v-avatar color="primary" size="36">
-              <v-icon icon="mdi-pill" size="20" />
+            <v-avatar color="primary" variant="tonal" size="34">
+              <v-icon icon="mdi-pill" size="18" />
             </v-avatar>
           </template>
 
-          <v-card-title class="text-body-2 font-weight-bold pa-0">
-            Obat #{{ index + 1 }}
-          </v-card-title>
-
-          <v-card-subtitle class="text-caption pa-0 mt-1">
+          <div class="text-body-2 font-weight-bold">Obat #{{ index + 1 }}</div>
+          <div class="text-caption text-medium-emphasis mt-1">
             Detail produk, qty, diskon, dan instruksi pemakaian
-          </v-card-subtitle>
+          </div>
 
           <template #append>
             <v-btn
@@ -180,6 +173,8 @@
               <v-select
                 :model-value="item.frekuensi"
                 :items="frekuensiList"
+                item-title="title"
+                item-value="value"
                 label="Frekuensi"
                 variant="outlined"
                 density="comfortable"
@@ -193,6 +188,8 @@
               <v-select
                 :model-value="item.waktu_pakai"
                 :items="waktuPakaiList"
+                item-title="title"
+                item-value="value"
                 label="Waktu Pakai"
                 variant="outlined"
                 density="comfortable"
