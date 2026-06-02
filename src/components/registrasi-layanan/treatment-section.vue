@@ -209,7 +209,7 @@
                 <div class="text-subtitle-1 font-weight-bold">
                   Total Treatment
                 </div>
-                <div class="text-caption text-medium-emphasis">
+                <div class="text-caption text-medium-emphasis text-white">
                   Total dari seluruh treatment yang dipilih
                 </div>
               </div>

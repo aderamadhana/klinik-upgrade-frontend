@@ -1,99 +1,134 @@
 <template>
-  <v-card variant="outlined" class="mb-4">
+  <v-card variant="flat" class="border">
     <v-card-text class="pa-5">
-      <div class="d-flex align-start justify-space-between ga-4 mb-4">
+      <div class="d-flex align-center justify-space-between mb-4">
         <div>
           <div class="text-subtitle-1 font-weight-bold">
             Ringkasan Pembayaran
           </div>
           <div class="text-body-2 text-medium-emphasis mt-1">
-            Total transaksi, diskon, metode bayar, dan status tagihan
+            Total tagihan dan metode bayar
           </div>
         </div>
-
-        <v-avatar color="primary" variant="tonal" size="42">
-          <v-icon icon="mdi-receipt-text-check-outline" size="22" />
-        </v-avatar>
-      </div>
-
-      <v-card variant="outlined" class="mb-4">
-        <v-card-text class="pa-4">
-          <div class="d-flex justify-space-between align-center mb-3">
-            <span class="text-body-2 text-medium-emphasis">Subtotal Obat</span>
-            <strong class="text-body-2">{{
-              formatMoney(safeTotalPenjualan)
-            }}</strong>
-          </div>
-
-          <div class="d-flex justify-space-between align-center mb-3">
-            <span class="text-body-2 text-medium-emphasis"
-              >Subtotal Treatment</span
-            >
-            <strong class="text-body-2">{{
-              formatMoney(safeTotalTreatment)
-            }}</strong>
-          </div>
-
-          <v-divider class="my-3" />
-
-          <div class="d-flex justify-space-between align-center mb-3">
-            <span class="text-body-2 font-weight-medium">Subtotal</span>
-            <strong class="text-body-2">{{ formatMoney(safeSubtotal) }}</strong>
-          </div>
-
-          <div
-            v-if="safeSubtotalDiscountAmount > 0"
-            class="d-flex justify-space-between align-center mb-3"
-          >
-            <span class="text-body-2 text-medium-emphasis">Diskon Manual</span>
-            <strong class="text-body-2 text-error">
-              - {{ formatMoney(safeSubtotalDiscountAmount) }}
-            </strong>
-          </div>
-
-          <div
-            v-if="safePromoDiscountAmount > 0"
-            class="d-flex justify-space-between align-center"
-          >
-            <span class="text-body-2 text-medium-emphasis"
-              >Diskon Voucher / Promo</span
-            >
-            <strong class="text-body-2 text-error">
-              - {{ formatMoney(safePromoDiscountAmount) }}
-            </strong>
-          </div>
-        </v-card-text>
-      </v-card>
-
-      <v-card color="primary" variant="flat" class="mb-5">
-        <v-card-text class="pa-4">
-          <div class="d-flex align-center justify-space-between ga-4">
-            <div>
-              <div class="text-body-2 font-weight-bold">Grand Total</div>
-              <div class="text-caption">Total yang harus dibayar customer</div>
-            </div>
-
-            <div class="text-h6 font-weight-bold text-right">
-              {{ formatMoney(safeGrandTotal) }}
-            </div>
-          </div>
-        </v-card-text>
-      </v-card>
-
-      <div class="d-flex align-start justify-space-between ga-3 mb-3 flex-wrap">
-        <div>
-          <div class="text-subtitle-2 font-weight-bold">Pembayaran</div>
-          <div class="text-caption text-medium-emphasis">
-            Atur satu atau beberapa metode pembayaran
-          </div>
-        </div>
-
         <v-chip
           :color="paymentCoverageStatus.color"
           variant="tonal"
           size="small"
         >
           {{ paymentCoverageStatus.text }}
+        </v-chip>
+      </div>
+
+      <v-card color="primary" variant="flat" class="mb-4">
+        <v-card-text class="pa-5">
+          <div class="d-flex align-start justify-space-between ga-4">
+            <div>
+              <div
+                class="text-caption text-white text-uppercase font-weight-bold mb-2"
+              >
+                Grand Total Dibayar
+              </div>
+              <div class="text-h4 font-weight-black text-white">
+                {{ formatMoney(safeGrandTotal) }}
+              </div>
+              <div class="text-body-2 text-white mt-2">
+                Nominal akhir setelah diskon subtotal dan voucher/promo.
+              </div>
+            </div>
+            <v-avatar color="white" variant="tonal" size="48">
+              <v-icon icon="mdi-cash-multiple" color="white" size="28" />
+            </v-avatar>
+          </div>
+        </v-card-text>
+      </v-card>
+
+      <v-card variant="outlined" class="mb-4">
+        <v-card-text class="pa-4">
+          <div class="d-flex justify-space-between align-center mb-2">
+            <span class="text-body-2 text-medium-emphasis">Produk / Obat</span>
+            <strong class="text-body-2">{{
+              formatMoney(safeTotalPenjualan)
+            }}</strong>
+          </div>
+          <div class="d-flex justify-space-between align-center mb-2">
+            <span class="text-body-2 text-medium-emphasis">Treatment</span>
+            <strong class="text-body-2">{{
+              formatMoney(safeTotalTreatment)
+            }}</strong>
+          </div>
+          <v-divider class="my-3" />
+          <div class="d-flex justify-space-between align-center mb-2">
+            <span class="text-body-2 text-medium-emphasis">Subtotal</span>
+            <strong class="text-body-2">{{ formatMoney(safeSubtotal) }}</strong>
+          </div>
+          <div class="d-flex justify-space-between align-center mb-2">
+            <span class="text-body-2 text-medium-emphasis"
+              >Diskon Subtotal</span
+            >
+            <strong class="text-body-2 text-error">
+              - {{ formatMoney(safeSubtotalDiscountAmount) }}
+            </strong>
+          </div>
+          <div class="d-flex justify-space-between align-center mb-3">
+            <span class="text-body-2 text-medium-emphasis"
+              >Voucher / Promo</span
+            >
+            <strong class="text-body-2 text-error">
+              - {{ formatMoney(safePromoDiscountAmount) }}
+            </strong>
+          </div>
+          <v-divider class="my-3" />
+          <div class="d-flex justify-space-between align-center">
+            <div>
+              <div class="text-body-2 font-weight-bold">Grand Total</div>
+              <div class="text-caption text-medium-emphasis">
+                Subtotal dikurangi diskon dan promo
+              </div>
+            </div>
+            <strong class="text-h6 font-weight-black text-primary">
+              {{ formatMoney(safeGrandTotal) }}
+            </strong>
+          </div>
+        </v-card-text>
+      </v-card>
+
+      <v-alert
+        v-if="safeGrandTotal > 0"
+        color="primary"
+        variant="tonal"
+        density="comfortable"
+        class="mb-4"
+        icon="mdi-information-outline"
+      >
+        <div class="d-flex justify-space-between align-center ga-3 flex-wrap">
+          <div>
+            <div class="text-body-2 font-weight-bold">
+              Nominal yang harus dibayar
+            </div>
+            <div class="text-caption text-medium-emphasis">
+              Gunakan Bayar Pas atau Cash Pas untuk mengisi nominal otomatis.
+            </div>
+          </div>
+          <div class="text-h6 font-weight-black text-primary">
+            {{ formatMoney(safeGrandTotal) }}
+          </div>
+        </div>
+      </v-alert>
+
+      <div class="d-flex align-center justify-space-between mb-2">
+        <div>
+          <div class="text-subtitle-2 font-weight-bold">Pembayaran</div>
+          <div class="text-body-2 text-medium-emphasis">
+            Atur satu atau beberapa metode pembayaran
+          </div>
+        </div>
+        <v-chip
+          v-if="overPaymentAmount > 0"
+          color="warning"
+          variant="tonal"
+          size="small"
+        >
+          Lebih Input
         </v-chip>
       </div>
 
@@ -121,12 +156,11 @@
         </v-btn>
 
         <v-btn
-          v-if="hasCashMethod"
           color="primary"
           variant="outlined"
           size="small"
           prepend-icon="mdi-cash-sync"
-          :disabled="cashAllocated <= 0"
+          :disabled="safeGrandTotal <= 0"
           @click="$emit('sync-cash-received')"
         >
           Cash Pas
@@ -266,7 +300,6 @@
             <v-avatar color="primary" variant="tonal" size="36">
               <v-icon icon="mdi-cash-register" size="20" />
             </v-avatar>
-
             <div>
               <div class="text-subtitle-2 font-weight-bold">
                 Input Cash Diterima
@@ -333,7 +366,6 @@
 <script>
 export default {
   name: "PembayaranSummaryCard",
-
   props: {
     totalPenjualan: { type: Number, default: 0 },
     totalTreatment: { type: Number, default: 0 },
@@ -356,7 +388,6 @@ export default {
     loadingSubmit: { type: Boolean, default: false },
     formatCurrency: { type: Function, default: null },
   },
-
   emits: [
     "add-pay",
     "remove-pay",
@@ -367,7 +398,6 @@ export default {
     "update-cash-received",
     "submit",
   ],
-
   computed: {
     normalizedMetodeList() {
       return this.metodeList.map((item) => ({
@@ -381,51 +411,44 @@ export default {
           "-",
       }));
     },
-
     safeTotalPenjualan() {
       return Number(this.totalPenjualan || 0);
     },
-
     safeTotalTreatment() {
       return Number(this.totalTreatment || 0);
     },
-
     safeSubtotal() {
       return Number(this.subtotal || 0);
     },
-
     safeSubtotalDiscountAmount() {
       return Number(this.subtotalDiscountAmount || 0);
     },
-
     safePromoDiscountAmount() {
       return Number(this.promoDiscountAmount || 0);
     },
-
     safeGrandTotal() {
       return Number(this.grandTotal || 0);
     },
-
     safeTotalBayar() {
       return Number(this.totalBayar || 0);
     },
-
     safeSisaTagihan() {
       return Number(this.sisaTagihan || 0);
     },
-
     overPaymentAmount() {
       return Math.max(this.safeTotalBayar - this.safeGrandTotal, 0);
     },
   },
-
   methods: {
     formatMoney(value) {
-      if (typeof this.formatCurrency === "function") {
-        return this.formatCurrency(value);
+      if (this.formatCurrency) {
+        return this.formatCurrency(Number(value || 0));
       }
-
-      return `Rp ${Number(value || 0).toLocaleString("id-ID")}`;
+      return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        maximumFractionDigits: 0,
+      }).format(Number(value || 0));
     },
   },
 };

@@ -8,18 +8,19 @@
     @update:model-value="$emit('update:modelValue', $event)"
   >
     <v-card flat rounded="0" class="h-100 d-flex flex-column">
-      <v-card-item class="px-5 py-4 border-b">
+      <v-card-item class="px-5 py-4 border-b bg-white">
         <template #prepend>
           <v-avatar color="success" size="42">
             <v-icon icon="mdi-ticket-percent-outline" />
           </v-avatar>
         </template>
 
-        <v-card-title class="text-subtitle-1 font-weight-bold pa-0">
+        <v-card-title
+          class="text-subtitle-1 font-weight-bold pa-0 text-grey-darken-4"
+        >
           Pilih Voucher / Promo
         </v-card-title>
-
-        <v-card-subtitle class="text-body-2 pa-0 mt-1">
+        <v-card-subtitle class="text-body-2 pa-0 mt-1 text-grey-darken-1">
           Voucher yang muncul sudah sesuai item transaksi
         </v-card-subtitle>
 
@@ -34,7 +35,7 @@
       </v-card-item>
 
       <v-card-text class="pa-5 flex-grow-1 overflow-y-auto bg-grey-lighten-5">
-        <v-card flat class="pa-4 mb-4 border">
+        <v-card flat class="pa-4 mb-4 border bg-white">
           <div class="d-flex align-center ga-3">
             <v-text-field
               :model-value="promoCode"
@@ -52,6 +53,7 @@
               variant="flat"
               height="48"
               prepend-icon="mdi-check"
+              class="text-none font-weight-bold"
               @click="$emit('apply-promo-code')"
             >
               Terapkan
@@ -63,7 +65,9 @@
           <v-chip
             size="small"
             color="primary"
+            variant="tonal"
             prepend-icon="mdi-ticket-confirmation-outline"
+            class="font-weight-medium"
           >
             {{ totalVoucher }} Voucher tersedia
           </v-chip>
@@ -73,6 +77,7 @@
             variant="text"
             color="error"
             prepend-icon="mdi-refresh"
+            class="text-none"
             @click="$emit('reset-promo')"
           >
             Reset Semua
@@ -80,20 +85,21 @@
         </div>
 
         <template v-if="keyword">
-          <v-card flat class="border mb-4">
+          <v-card flat class="border mb-4 bg-white">
             <v-card-item class="px-4 py-3 border-b bg-white">
               <div class="d-flex align-center justify-space-between w-100">
                 <div>
-                  <div class="text-subtitle-2 font-weight-bold">
+                  <div
+                    class="text-subtitle-2 font-weight-bold text-grey-darken-4"
+                  >
                     Hasil Pencarian Voucher
                   </div>
-
-                  <div class="text-caption text-medium-emphasis">
+                  <div class="text-caption text-grey-darken-1">
                     Voucher yang sesuai dengan kata kunci pencarian
                   </div>
                 </div>
 
-                <v-chip size="x-small">
+                <v-chip size="x-small" variant="tonal">
                   {{ filteredAllPromoList.length }}
                 </v-chip>
               </div>
@@ -109,12 +115,12 @@
                     mdi-ticket-percent-outline
                   </v-icon>
                 </v-avatar>
-
-                <div class="text-subtitle-2 font-weight-bold mb-1">
+                <div
+                  class="text-subtitle-2 font-weight-bold mb-1 text-grey-darken-4"
+                >
                   Voucher tidak ditemukan
                 </div>
-
-                <div class="text-body-2 text-medium-emphasis">
+                <div class="text-body-2 text-grey-darken-1">
                   Coba gunakan kata kunci lain atau pilih voucher dari daftar
                   promo.
                 </div>
@@ -123,36 +129,44 @@
               <template v-else>
                 <v-card
                   v-for="promo in filteredAllPromoList"
-                  :key="`search-${promo.jenis_voucher_id}-${promo.id}`"
+                  :key="`search-${promo.jenis_voucher_id || promo.jenis_id || 'promo'}-${promo.id}`"
                   flat
                   class="pa-4 mb-3 border"
-                  :class="
-                    isPromoSelected(promo) ? 'bg-green-lighten-5' : 'bg-white'
-                  "
+                  :class="promoCardClass(promo)"
                 >
                   <div class="d-flex align-start justify-space-between ga-3">
                     <div class="flex-grow-1">
-                      <div class="text-subtitle-2 font-weight-bold mb-1">
+                      <div :class="promoTitleClass(promo)">
                         {{ getPromoTitle(promo) }}
                       </div>
 
-                      <div class="text-body-2 text-medium-emphasis mb-3">
+                      <div :class="promoDescriptionClass(promo)">
                         {{ getPromoDescription(promo) }}
                       </div>
 
                       <div class="d-flex flex-wrap ga-2">
-                        <v-chip size="x-small" color="primary">
+                        <v-chip
+                          size="x-small"
+                          color="success"
+                          variant="tonal"
+                          class="font-weight-medium"
+                        >
                           {{ getPromoTypeLabel(promo) }}
                         </v-chip>
-
-                        <v-chip size="x-small">
+                        <v-chip
+                          size="x-small"
+                          color="grey"
+                          variant="tonal"
+                          class="font-weight-medium"
+                        >
                           Kuota: {{ getPromoKuota(promo) }}
                         </v-chip>
-
                         <v-chip
                           v-if="promo.is_bisa_digabung_promo"
                           size="x-small"
                           color="success"
+                          variant="flat"
+                          class="font-weight-medium"
                         >
                           Bisa digabung
                         </v-chip>
@@ -164,6 +178,7 @@
                       :variant="isPromoSelected(promo) ? 'tonal' : 'flat'"
                       size="small"
                       min-width="84"
+                      class="text-none font-weight-bold"
                       @click="$emit('toggle-promo', promo)"
                     >
                       {{ isPromoSelected(promo) ? "Batal" : "Pilih" }}
@@ -180,21 +195,26 @@
             v-for="group in promoGroups"
             :key="group.key"
             flat
-            class="border mb-4"
+            class="border mb-4 bg-white"
           >
             <v-card-item class="px-4 py-3 border-b bg-white">
               <div class="d-flex align-center justify-space-between w-100">
                 <div>
-                  <div class="text-subtitle-2 font-weight-bold">
+                  <div
+                    class="text-subtitle-2 font-weight-bold text-grey-darken-4"
+                  >
                     {{ group.title }}
                   </div>
-
-                  <div class="text-caption text-medium-emphasis">
+                  <div class="text-caption text-grey-darken-1">
                     Pilih voucher yang sesuai kebutuhan transaksi
                   </div>
                 </div>
 
-                <v-chip size="x-small">
+                <v-chip
+                  size="x-small"
+                  :color="group.items.length ? 'success' : 'grey'"
+                  variant="tonal"
+                >
                   {{ group.items.length }}
                 </v-chip>
               </div>
@@ -210,12 +230,12 @@
                     {{ group.emptyIcon }}
                   </v-icon>
                 </v-avatar>
-
-                <div class="text-subtitle-2 font-weight-bold mb-1">
+                <div
+                  class="text-subtitle-2 font-weight-bold mb-1 text-grey-darken-4"
+                >
                   {{ group.emptyTitle }}
                 </div>
-
-                <div class="text-body-2 text-medium-emphasis">
+                <div class="text-body-2 text-grey-darken-1">
                   {{ group.emptySubtitle }}
                 </div>
               </div>
@@ -226,33 +246,41 @@
                   :key="`${group.key}-${promo.id}`"
                   flat
                   class="pa-4 mb-3 border"
-                  :class="
-                    isPromoSelected(promo) ? 'bg-green-lighten-5' : 'bg-white'
-                  "
+                  :class="promoCardClass(promo)"
                 >
                   <div class="d-flex align-start justify-space-between ga-3">
                     <div class="flex-grow-1">
-                      <div class="text-subtitle-2 font-weight-bold mb-1">
+                      <div :class="promoTitleClass(promo)">
                         {{ getPromoTitle(promo) }}
                       </div>
 
-                      <div class="text-body-2 text-medium-emphasis mb-3">
+                      <div :class="promoDescriptionClass(promo)">
                         {{ getPromoDescription(promo) }}
                       </div>
 
                       <div class="d-flex flex-wrap ga-2">
-                        <v-chip size="x-small" color="primary">
+                        <v-chip
+                          size="x-small"
+                          color="success"
+                          variant="tonal"
+                          class="font-weight-medium"
+                        >
                           {{ getPromoTypeLabel(promo) }}
                         </v-chip>
-
-                        <v-chip size="x-small">
+                        <v-chip
+                          size="x-small"
+                          color="grey"
+                          variant="tonal"
+                          class="font-weight-medium"
+                        >
                           Kuota: {{ getPromoKuota(promo) }}
                         </v-chip>
-
                         <v-chip
                           v-if="promo.is_bisa_digabung_promo"
                           size="x-small"
                           color="success"
+                          variant="flat"
+                          class="font-weight-medium"
                         >
                           Bisa digabung
                         </v-chip>
@@ -264,6 +292,7 @@
                       :variant="isPromoSelected(promo) ? 'tonal' : 'flat'"
                       size="small"
                       min-width="84"
+                      class="text-none font-weight-bold"
                       @click="$emit('toggle-promo', promo)"
                     >
                       {{ isPromoSelected(promo) ? "Batal" : "Pilih" }}
@@ -282,7 +311,6 @@
 <script>
 export default {
   name: "PembayaranPromoDrawer",
-
   props: {
     modelValue: {
       type: Boolean,
@@ -313,7 +341,6 @@ export default {
       required: true,
     },
   },
-
   emits: [
     "update:modelValue",
     "update-promo-code",
@@ -321,18 +348,15 @@ export default {
     "toggle-promo",
     "reset-promo",
   ],
-
   computed: {
     totalVoucher() {
       return this.allPromoList.length;
     },
-
     keyword() {
       return String(this.promoCode || "")
         .trim()
         .toLowerCase();
     },
-
     allPromoList() {
       return [
         ...this.promoProductList,
@@ -341,11 +365,9 @@ export default {
         ...this.promoValueList,
       ];
     },
-
     filteredAllPromoList() {
       return this.filterPromo(this.allPromoList);
     },
-
     promoGroups() {
       return [
         {
@@ -387,7 +409,6 @@ export default {
       ];
     },
   },
-
   methods: {
     filterPromo(list) {
       if (!this.keyword) {
@@ -410,11 +431,26 @@ export default {
         return text.includes(this.keyword);
       });
     },
+    promoCardClass(promo) {
+      if (this.isPromoSelected(promo)) {
+        return "bg-green-lighten-4 border-success";
+      }
 
+      return "bg-green-lighten-5 border-success";
+    },
+    promoTitleClass(promo) {
+      return this.isPromoSelected(promo)
+        ? "text-subtitle-2 font-weight-bold mb-1 text-green-darken-4"
+        : "text-subtitle-2 font-weight-bold mb-1 text-green-darken-3";
+    },
+    promoDescriptionClass(promo) {
+      return this.isPromoSelected(promo)
+        ? "text-body-2 text-green-darken-3 mb-3"
+        : "text-body-2 text-green-darken-2 mb-3";
+    },
     getPromoTitle(promo) {
       return promo.nama || promo.nama_voucher || promo.kode_voucher || "-";
     },
-
     getPromoDescription(promo) {
       if (promo.desc) {
         return promo.desc;
@@ -428,7 +464,6 @@ export default {
         promo.mode ||
         promo.tipe_diskon_kode ||
         (promo.tipe_diskon === "nominal" ? "Rp" : "%");
-
       const value = Number(promo.value || promo.total_diskon || 0);
 
       if (mode === "Rp" || promo.tipe_diskon === "nominal") {
@@ -437,7 +472,6 @@ export default {
 
       return `Diskon ${value}%`;
     },
-
     getPromoKuota(promo) {
       if (
         promo.is_unlimited_generate === 1 ||
@@ -448,10 +482,8 @@ export default {
 
       return promo.kuota || promo.qty_generate || "Tidak Terbatas";
     },
-
     getPromoTypeLabel(promo) {
       const id = Number(promo.jenis_voucher_id || promo.jenis_id || 0);
-
       const map = {
         1: "Treatment",
         2: "Produk",

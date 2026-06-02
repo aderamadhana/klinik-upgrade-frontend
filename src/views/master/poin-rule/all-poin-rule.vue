@@ -1,72 +1,110 @@
 <template>
   <div>
-    <div class="page-header mb-4">
+    <div class="page-header">
       <div>
         <h1 class="page-title">Master Poin Rule</h1>
-        <div class="page-subtitle">
+        <p class="page-subtitle">
           Kelola aturan perhitungan poin dari transaksi pelanggan.
-        </div>
+        </p>
       </div>
 
-      <v-breadcrumbs :items="breadcrumbs" density="compact" class="pa-0 mt-2" />
+      <v-breadcrumbs :items="breadcrumbs" divider="/" />
     </div>
 
-    <v-card class="master-card" elevation="1">
-      <v-card-text>
-        <div
-          class="d-flex flex-wrap align-center justify-space-between ga-3 mb-4"
-        >
-          <v-text-field
-            v-model="search"
-            prepend-inner-icon="mdi-magnify"
-            label="Cari rule"
-            placeholder="Nama rule / keterangan"
-            variant="outlined"
-            density="compact"
-            hide-details
-            clearable
-            style="max-width: 280px"
-            @update:model-value="handleSearch"
-          />
-
+    <v-card elevation="1">
+      <v-card-title
+        class="d-flex justify-space-between align-center flex-wrap ga-3"
+      >
+        <div class="d-flex ga-2 flex-wrap">
           <v-btn
-            color="success"
             prepend-icon="mdi-plus"
-            @click="$router.push('/master/poin-rule/add')"
+            color="success"
+            :to="'/master/poin-rule/add'"
           >
             Entry Data
           </v-btn>
         </div>
 
-        <v-data-table
+        <v-text-field
+          v-model="search"
+          placeholder="Cari nama rule atau keterangan..."
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+          density="compact"
+          hide-details
+          clearable
+          style="max-width: 300px"
+          @keyup.enter="handleSearch"
+          @click:clear="handleClearSearch"
+        />
+      </v-card-title>
+
+      <v-card-text>
+        <v-data-table-server
+          :page="page"
+          :items-per-page="itemsPerPage"
           :headers="headers"
           :items="items"
+          :items-length="totalItems"
           :loading="loading"
-          density="compact"
+          :items-per-page-options="itemsPerPageOptions"
           item-value="id"
-          class="master-table"
-          :items-per-page="pagination.per_page"
-          hide-default-footer
+          density="compact"
+          loading-text="Memuat data poin rule..."
+          no-data-text="Data poin rule belum tersedia"
+          @update:page="handlePageChange"
+          @update:items-per-page="handleItemsPerPageChange"
         >
+          <template #loading>
+            <v-skeleton-loader type="table-row@6" />
+          </template>
+
           <template #item.no="{ index }">
             {{ rowNumber(index) }}
           </template>
 
+          <template #item.nama_rule="{ item }">
+            <div>
+              <div class="font-weight-medium">
+                {{ item.nama_rule || "-" }}
+              </div>
+
+              <div
+                v-if="item.keterangan"
+                class="text-caption text-medium-emphasis"
+              >
+                {{ item.keterangan }}
+              </div>
+            </div>
+          </template>
+
           <template #item.nominal_per_poin="{ item }">
-            {{ formatCurrency(item.nominal_per_poin) }}
+            <div class="text-right font-weight-medium">
+              {{ formatCurrency(item.nominal_per_poin) }}
+            </div>
           </template>
 
           <template #item.minimal_transaksi="{ item }">
-            {{ formatCurrency(item.minimal_transaksi) }}
+            <div class="text-right font-weight-medium">
+              {{ formatCurrency(item.minimal_transaksi) }}
+            </div>
           </template>
 
           <template #item.periode="{ item }">
-            {{ formatDate(item.berlaku_mulai) }} -
-            {{
-              item.berlaku_sampai
-                ? formatDate(item.berlaku_sampai)
-                : "Seterusnya"
-            }}
+            <div>
+              <div class="font-weight-medium">
+                {{ formatDate(item.berlaku_mulai) }}
+              </div>
+
+              <div class="text-caption text-medium-emphasis">
+                sampai
+                {{
+                  item.berlaku_sampai
+                    ? formatDate(item.berlaku_sampai)
+                    : "Seterusnya"
+                }}
+              </div>
+            </div>
           </template>
 
           <template #item.is_berlaku_kelipatan="{ item }">
@@ -91,22 +129,22 @@
             </v-chip>
           </template>
 
-          <template #item.actions="{ item }">
-            <div class="d-flex align-center justify-center ga-2">
+          <template #item.action="{ item }">
+            <div class="d-flex ga-2 justify-end">
               <v-btn
-                size="small"
                 color="primary"
+                size="small"
                 prepend-icon="mdi-pencil"
-                @click="$router.push(`/master/poin-rule/edit/${item.id}`)"
+                :to="'/master/poin-rule/edit/' + item.id"
               >
                 Edit
               </v-btn>
 
               <v-btn
-                size="small"
                 color="error"
+                size="small"
                 prepend-icon="mdi-delete"
-                @click="confirmDelete(item)"
+                @click="openDeleteDialog(item)"
               >
                 Hapus
               </v-btn>
@@ -114,50 +152,64 @@
           </template>
 
           <template #no-data>
-            <div class="py-6 text-center text-medium-emphasis">
-              Data poin rule belum tersedia.
+            <div class="text-center py-6">
+              <div class="text-subtitle-2 mb-1">
+                Data poin rule belum tersedia
+              </div>
+
+              <div class="text-body-2 text-medium-emphasis">
+                Klik Entry Data untuk menambahkan poin rule baru.
+              </div>
             </div>
           </template>
-        </v-data-table>
-
-        <div
-          class="d-flex flex-wrap align-center justify-space-between ga-3 mt-4"
-        >
-          <div class="text-caption text-medium-emphasis">
-            Total data: {{ pagination.total }}
-          </div>
-
-          <v-pagination
-            v-model="pagination.page"
-            :length="pagination.last_page"
-            density="comfortable"
-            total-visible="5"
-            @update:model-value="fetchData"
-          />
-        </div>
+        </v-data-table-server>
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="deleteDialog" max-width="420">
-      <v-card>
-        <v-card-title class="text-h6">Hapus Poin Rule</v-card-title>
+    <v-dialog v-model="deleteDialog" max-width="480">
+      <v-card rounded="lg">
+        <v-card-title class="text-h6 font-weight-bold">
+          Hapus Poin Rule
+        </v-card-title>
+
+        <v-divider />
+
         <v-card-text>
-          Yakin ingin menghapus rule
-          <strong>{{ selectedItem?.nama_rule }}</strong
-          >?
+          <p class="mb-2">Yakin ingin menghapus data poin rule ini?</p>
+
+          <v-alert type="warning" rounded="lg">
+            <strong>{{ selectedItem?.nama_rule || "-" }}</strong>
+            <br />
+            Data akan dihapus secara soft delete.
+          </v-alert>
         </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn variant="text" @click="deleteDialog = false">Batal</v-btn>
-          <v-btn color="error" :loading="deleting" @click="deleteData">
+
+        <v-divider />
+
+        <v-card-actions class="justify-end">
+          <v-btn
+            variant="outlined"
+            color="secondary"
+            :disabled="loadingDelete"
+            @click="deleteDialog = false"
+          >
+            Batal
+          </v-btn>
+
+          <v-btn
+            color="error"
+            variant="flat"
+            :loading="loadingDelete"
+            @click="confirmDelete"
+          >
             Hapus
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000">
-      {{ snackbar.message }}
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">
+      {{ snackbar.text }}
     </v-snackbar>
   </div>
 </template>
@@ -170,52 +222,81 @@ export default {
 
   data() {
     return {
+      search: "",
       loading: false,
-      deleting: false,
+      loadingDelete: false,
+      dialogDetail: false,
       deleteDialog: false,
       selectedItem: null,
-      search: "",
-      searchTimer: null,
+
+      page: 1,
+      itemsPerPage: 10,
+      totalItems: 0,
+      fetchTimer: null,
+
+      itemsPerPageOptions: [
+        { value: 10, title: "10" },
+        { value: 25, title: "25" },
+        { value: 50, title: "50" },
+        { value: 100, title: "100" },
+      ],
 
       breadcrumbs: [
         { title: "Master", disabled: true },
-        { title: "Member Poin Rule", disabled: false, to: "/master/poin-rule" },
+        {
+          title: "Poin Rule",
+          disabled: false,
+          to: "/master/poin-rule",
+        },
       ],
 
       headers: [
-        { title: "No", key: "no", width: 70, sortable: false },
-        { title: "Nama Rule", key: "nama_rule" },
-        { title: "Nominal / Poin", key: "nominal_per_poin", align: "end" },
-        { title: "Minimal Transaksi", key: "minimal_transaksi", align: "end" },
-        { title: "Periode", key: "periode", width: 220, sortable: false },
+        { title: "NO", key: "no", sortable: false, width: "70px" },
+        { title: "NAMA RULE", key: "nama_rule" },
         {
-          title: "Kelipatan",
+          title: "NOMINAL / POIN",
+          key: "nominal_per_poin",
+          align: "end",
+          width: "170px",
+        },
+        {
+          title: "MINIMAL TRANSAKSI",
+          key: "minimal_transaksi",
+          align: "end",
+          width: "180px",
+        },
+        {
+          title: "PERIODE",
+          key: "periode",
+          sortable: false,
+          width: "220px",
+        },
+        {
+          title: "KELIPATAN",
           key: "is_berlaku_kelipatan",
           align: "center",
-          width: 120,
+          width: "130px",
         },
-        { title: "Status", key: "is_active", align: "center", width: 120 },
         {
-          title: "Aksi",
-          key: "actions",
-          align: "end",
+          title: "STATUS",
+          key: "is_active",
+          align: "center",
+          width: "120px",
+        },
+        {
+          title: "ACTION",
+          key: "action",
           sortable: false,
-          width: 110,
+          align: "end",
+          width: "240px",
         },
       ],
 
       items: [],
 
-      pagination: {
-        page: 1,
-        per_page: 15,
-        total: 0,
-        last_page: 1,
-      },
-
       snackbar: {
         show: false,
-        message: "",
+        text: "",
         color: "success",
       },
     };
@@ -225,27 +306,44 @@ export default {
     this.fetchData();
   },
 
+  beforeUnmount() {
+    if (this.fetchTimer) {
+      clearTimeout(this.fetchTimer);
+    }
+  },
+
   methods: {
     async fetchData() {
       this.loading = true;
 
       try {
         const response = await poinRuleService.getAll({
-          page: this.pagination.page,
-          per_page: this.pagination.per_page,
           search: this.search || "",
+          page: this.page,
+          per_page: this.itemsPerPage,
         });
 
-        const paginator = response.data;
+        const rows = this.extractRows(response);
+        const meta = this.extractMeta(response);
 
-        this.items = paginator.data || [];
-        this.pagination.total = paginator.total || 0;
-        this.pagination.last_page = paginator.last_page || 1;
-        this.pagination.page = paginator.current_page || 1;
-        this.pagination.per_page = paginator.per_page || 15;
+        this.items = rows;
+        this.totalItems = Number(meta.total || rows.length || 0);
+
+        if (meta.current_page) {
+          this.page = Number(meta.current_page);
+        }
+
+        if (meta.per_page) {
+          this.itemsPerPage = Number(meta.per_page);
+        }
       } catch (error) {
+        console.error(error);
+
+        this.items = [];
+        this.totalItems = 0;
+
         this.showSnackbar(
-          error?.response?.data?.message || "Gagal mengambil data poin rule",
+          this.getErrorMessage(error, "Gagal memuat data poin rule"),
           "error",
         );
       } finally {
@@ -253,17 +351,105 @@ export default {
       }
     },
 
-    handleSearch() {
-      clearTimeout(this.searchTimer);
+    queueFetchData() {
+      if (this.fetchTimer) {
+        clearTimeout(this.fetchTimer);
+      }
 
-      this.searchTimer = setTimeout(() => {
-        this.pagination.page = 1;
+      this.fetchTimer = setTimeout(() => {
         this.fetchData();
-      }, 400);
+      }, 100);
+    },
+
+    handlePageChange(value) {
+      this.page = Number(value || 1);
+      this.queueFetchData();
+    },
+
+    handleItemsPerPageChange(value) {
+      this.itemsPerPage = Number(value || 10);
+      this.page = 1;
+      this.queueFetchData();
+    },
+
+    handleSearch() {
+      this.page = 1;
+      this.fetchData();
+    },
+
+    handleClearSearch() {
+      this.search = "";
+      this.page = 1;
+      this.fetchData();
+    },
+
+    extractRows(response) {
+      if (Array.isArray(response)) {
+        return response;
+      }
+
+      if (Array.isArray(response?.data)) {
+        return response.data;
+      }
+
+      if (Array.isArray(response?.data?.data)) {
+        return response.data.data;
+      }
+
+      if (Array.isArray(response?.items)) {
+        return response.items;
+      }
+
+      return [];
+    },
+
+    extractMeta(response) {
+      if (response?.meta) {
+        return response.meta;
+      }
+
+      if (response?.data?.meta) {
+        return response.data.meta;
+      }
+
+      if (
+        response?.current_page ||
+        response?.per_page ||
+        response?.total ||
+        response?.last_page
+      ) {
+        return {
+          current_page: response.current_page,
+          per_page: response.per_page,
+          total: response.total,
+          last_page: response.last_page,
+        };
+      }
+
+      if (
+        response?.data?.current_page ||
+        response?.data?.per_page ||
+        response?.data?.total ||
+        response?.data?.last_page
+      ) {
+        return {
+          current_page: response.data.current_page,
+          per_page: response.data.per_page,
+          total: response.data.total,
+          last_page: response.data.last_page,
+        };
+      }
+
+      return {
+        current_page: this.page,
+        per_page: this.itemsPerPage,
+        total: 0,
+        last_page: 1,
+      };
     },
 
     rowNumber(index) {
-      return (this.pagination.page - 1) * this.pagination.per_page + index + 1;
+      return (Number(this.page) - 1) * Number(this.itemsPerPage) + index + 1;
     },
 
     formatCurrency(value) {
@@ -271,50 +457,102 @@ export default {
         style: "currency",
         currency: "IDR",
         minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
       }).format(Number(value || 0));
     },
 
     formatDate(value) {
       if (!value) return "-";
 
+      const dateValue = String(value).slice(0, 10);
+      const parts = dateValue.split("-");
+
+      if (parts.length === 3) {
+        const [year, month, day] = parts.map(Number);
+
+        if (year && month && day) {
+          return new Intl.DateTimeFormat("id-ID", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }).format(new Date(year, month - 1, day));
+        }
+      }
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return "-";
+      }
+
       return new Intl.DateTimeFormat("id-ID", {
         day: "2-digit",
         month: "short",
         year: "numeric",
-      }).format(new Date(value));
+      }).format(date);
     },
 
-    confirmDelete(item) {
+    openDeleteDialog(item) {
       this.selectedItem = item;
       this.deleteDialog = true;
     },
 
-    async deleteData() {
-      if (!this.selectedItem?.id) return;
+    async confirmDelete() {
+      if (!this.selectedItem?.id) {
+        this.showSnackbar("Data poin rule tidak valid", "error");
+        return;
+      }
 
-      this.deleting = true;
+      this.loadingDelete = true;
 
       try {
         const response = await poinRuleService.delete(this.selectedItem.id);
 
-        this.showSnackbar(response.message || "Poin rule berhasil dihapus");
+        this.showSnackbar(
+          response?.message || "Data poin rule berhasil dihapus",
+          "success",
+        );
+
         this.deleteDialog = false;
         this.selectedItem = null;
-        this.fetchData();
+
+        await this.fetchData();
       } catch (error) {
+        console.error(error);
+
         this.showSnackbar(
-          error?.response?.data?.message || "Gagal menghapus poin rule",
+          this.getErrorMessage(error, "Gagal menghapus data poin rule"),
           "error",
         );
       } finally {
-        this.deleting = false;
+        this.loadingDelete = false;
       }
     },
 
-    showSnackbar(message, color = "success") {
-      this.snackbar.message = message;
-      this.snackbar.color = color;
-      this.snackbar.show = true;
+    showSnackbar(text, color = "success") {
+      this.snackbar = {
+        show: true,
+        text,
+        color,
+      };
+    },
+
+    getErrorMessage(error, fallbackMessage) {
+      const response = error?.response?.data;
+
+      if (response?.message) return response.message;
+
+      if (response?.error) return response.error;
+
+      if (response?.errors) {
+        const firstKey = Object.keys(response.errors)[0];
+
+        if (firstKey && Array.isArray(response.errors[firstKey])) {
+          return response.errors[firstKey][0];
+        }
+      }
+
+      return fallbackMessage;
     },
   },
 };
