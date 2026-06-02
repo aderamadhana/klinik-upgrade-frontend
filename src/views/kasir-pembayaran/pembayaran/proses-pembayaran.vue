@@ -87,6 +87,8 @@
           <PembayaranSummaryCard
             :total-penjualan="totalPenjualan"
             :total-treatment="totalTreatment"
+            :total-konsultasi="totalKonsultasi"
+            :has-konsultasi="hasKonsultasi"
             :subtotal="subtotal"
             :subtotal-discount-amount="subtotalDiscountAmount"
             :promo-discount-amount="promoDiscountAmount"
@@ -475,6 +477,8 @@ export default {
         referensi_dokter_id: null,
         deposit_expired_option_id: null,
         deposit_expired_at: null,
+        has_konsultasi: false,
+        subtotal_konsultasi: 0,
       },
       jenisTransaksiList: [],
       sumberInformasiList: [],
@@ -546,8 +550,21 @@ export default {
         0,
       );
     },
+    hasKonsultasi() {
+      return Boolean(this.header.has_konsultasi) || this.rawTotalKonsultasi > 0;
+    },
+    rawTotalKonsultasi() {
+      return Number(this.header.subtotal_konsultasi || 0);
+    },
+    totalKonsultasi() {
+      if (this.treatmentItems.length > 0 || this.totalTreatment > 0) {
+        return 0;
+      }
+
+      return this.rawTotalKonsultasi;
+    },
     subtotal() {
-      return this.totalPenjualan + this.totalTreatment;
+      return this.totalPenjualan + this.totalTreatment + this.totalKonsultasi;
     },
     subtotalDiscountAmount() {
       const value = Number(this.diskonSubtotal.value || 0);
@@ -1096,6 +1113,49 @@ export default {
         raw: item,
       };
     },
+    resolveConsultationSubtotal(data = {}, invoice = {}) {
+      const items = this.extractInvoiceItems(data);
+      const itemTotal = items
+        .filter(
+          (item) =>
+            Number(item.item_type || 0) === 1 &&
+            Number(item.is_delete || 0) !== 1,
+        )
+        .reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
+
+      const candidates = [
+        invoice.subtotal_konsultasi,
+        data.subtotal_konsultasi,
+        data.total_konsultasi,
+        itemTotal,
+      ];
+
+      for (const value of candidates) {
+        const amount = Number(value || 0);
+        if (amount > 0) return amount;
+      }
+
+      return 0;
+    },
+    resolveHasKonsultasi(data = {}, invoice = {}) {
+      const channel = String(
+        data.channel_konsultasi ||
+          data.konsultasi_source_code ||
+          invoice.konsultasi_source_code ||
+          "",
+      ).toLowerCase();
+
+      return (
+        Number(data.ada_konsultasi || data.layanan?.ada_konsultasi || 0) ===
+          1 ||
+        Number(data.is_konsultasi || invoice.is_konsultasi || 0) === 1 ||
+        Number(
+          data.is_konsultasi_online || invoice.is_konsultasi_online || 0,
+        ) === 1 ||
+        ["offline", "online", "sppg", "spkk", "konsultasi"].includes(channel) ||
+        this.resolveConsultationSubtotal(data, invoice) > 0
+      );
+    },
     mapHeaderFromRegistrasi(data) {
       const invoice = data.invoice || data.pembayaran_invoice || {};
       const jenisTransaksiId = Number(
@@ -1176,6 +1236,8 @@ export default {
         referensi_dokter_id: invoice.referensi_dokter_id || null,
         deposit_expired_option_id: invoice.deposit_expired_option_id || null,
         deposit_expired_at: invoice.deposit_expired_at || null,
+        has_konsultasi: this.resolveHasKonsultasi(data, invoice),
+        subtotal_konsultasi: this.resolveConsultationSubtotal(data, invoice),
       };
     },
     mapPenjualanFromRegistrasi(data) {

@@ -56,6 +56,18 @@
               formatMoney(safeTotalTreatment)
             }}</strong>
           </div>
+          <div
+            v-if="hasKonsultasi || safeTotalKonsultasi > 0"
+            class="d-flex justify-space-between align-center mb-2"
+          >
+            <span class="text-body-2 text-medium-emphasis">Konsultasi</span>
+            <strong
+              class="text-body-2"
+              :class="safeTotalKonsultasi <= 0 ? 'text-success' : ''"
+            >
+              {{ formatMoney(safeTotalKonsultasi) }}
+            </strong>
+          </div>
           <v-divider class="my-3" />
           <div class="d-flex justify-space-between align-center mb-2">
             <span class="text-body-2 text-medium-emphasis">Subtotal</span>
@@ -399,6 +411,8 @@ export default {
   props: {
     totalPenjualan: { type: Number, default: 0 },
     totalTreatment: { type: Number, default: 0 },
+    totalKonsultasi: { type: Number, default: 0 },
+    hasKonsultasi: { type: Boolean, default: false },
     subtotal: { type: Number, default: 0 },
     subtotalDiscountAmount: { type: Number, default: 0 },
     promoDiscountAmount: { type: Number, default: 0 },
@@ -446,6 +460,9 @@ export default {
     },
     safeTotalTreatment() {
       return Number(this.totalTreatment || 0);
+    },
+    safeTotalKonsultasi() {
+      return Number(this.totalKonsultasi || 0);
     },
     safeSubtotal() {
       return Number(this.subtotal || 0);
