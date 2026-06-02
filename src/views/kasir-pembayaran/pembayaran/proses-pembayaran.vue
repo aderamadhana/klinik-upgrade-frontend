@@ -2282,6 +2282,7 @@ export default {
       };
     },
     async submit() {
+      if (this.loadingSubmit) return;
       if (!this.validateBeforeSubmit()) return;
 
       if (this.isDepositTransaction && !this.depositSelectionConfirmed) {
@@ -2306,6 +2307,9 @@ export default {
         const response = await api.post(
           `/kasir/pembayaran/${invoiceId}/finish`,
           payload,
+          {
+            timeout: 180000,
+          },
         );
 
         if (!response?.data?.status) {
@@ -2316,12 +2320,30 @@ export default {
           return;
         }
 
-        this.showSnackbar(
-          response.data.message || "Pembayaran berhasil diselesaikan.",
-          "success",
-        );
+        this.handleFinishSuccessResponse(response.data);
       } catch (error) {
         console.error("SUBMIT PEMBAYARAN ERROR:", error);
+
+        if (this.isFinishTransportCanceled(error)) {
+          this.showSnackbar(
+            "Response pembayaran terputus. Mengecek status invoice...",
+            "warning",
+          );
+
+          const resolved =
+            await this.resolveFinishAfterTransportFailure(invoiceId);
+          if (resolved) {
+            this.handleFinishSuccessResponse(resolved);
+            return;
+          }
+
+          this.showSnackbar(
+            "Pembayaran mungkin masih diproses. Refresh daftar pembayaran sebelum submit ulang.",
+            "warning",
+          );
+          return;
+        }
+
         const message =
           error?.response?.data?.message ||
           Object.values(error?.response?.data?.errors || {})?.flat?.()?.[0] ||
@@ -2330,6 +2352,75 @@ export default {
       } finally {
         this.loadingSubmit = false;
       }
+    },
+    handleFinishSuccessResponse(data) {
+      this.showSnackbar(
+        data?.message || "Pembayaran berhasil diselesaikan.",
+        "success",
+      );
+    },
+    isFinishTransportCanceled(error) {
+      const code = String(error?.code || "").toUpperCase();
+      const name = String(error?.name || "").toLowerCase();
+      const message = String(error?.message || "").toLowerCase();
+
+      return (
+        code === "ERR_CANCELED" ||
+        code === "ECONNABORTED" ||
+        name.includes("canceled") ||
+        message.includes("canceled") ||
+        message.includes("cancelled") ||
+        message.includes("timeout") ||
+        message.includes("network error")
+      );
+    },
+    async resolveFinishAfterTransportFailure(invoiceId) {
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        await this.wait(800 + attempt * 700);
+
+        try {
+          const response = await api.get(`/kasir/pembayaran/${invoiceId}`, {
+            timeout: 30000,
+          });
+
+          const invoice =
+            response?.data?.data?.invoice ||
+            response?.data?.data ||
+            response?.data?.invoice ||
+            null;
+
+          if (this.isInvoicePaid(invoice)) {
+            return {
+              status: true,
+              message: "Pembayaran berhasil diselesaikan.",
+              data: invoice,
+            };
+          }
+        } catch (statusError) {
+          console.warn("CEK STATUS PEMBAYARAN GAGAL:", statusError);
+        }
+      }
+
+      return null;
+    },
+    isInvoicePaid(invoice) {
+      if (!invoice) return false;
+
+      const statusKey = String(invoice.status_key || "").toLowerCase();
+      const statusLabel = String(invoice.status_label || "").toLowerCase();
+      const statusText = String(invoice.status_text || "").toLowerCase();
+      const status = Number(invoice.status || invoice.status_invoice || 0);
+
+      return (
+        Boolean(invoice.tanggal_lunas) ||
+        statusKey === "lunas" ||
+        statusLabel.includes("lunas") ||
+        statusText.includes("lunas") ||
+        status >= 3
+      );
+    },
+    wait(ms) {
+      return new Promise((resolve) => window.setTimeout(resolve, ms));
     },
     format(value) {
       return this.formatCurrency(value);
