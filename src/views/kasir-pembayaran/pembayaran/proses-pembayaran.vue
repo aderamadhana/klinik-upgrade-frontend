@@ -129,16 +129,16 @@
       @reset-promo="resetPromo"
     />
 
-    <v-dialog v-model="depositTreatmentDialog" max-width="560" persistent>
+    <v-dialog v-model="depositTreatmentDialog" max-width="640" persistent>
       <v-card rounded="lg">
         <v-card-title class="pa-4 pb-2">
-          <div class="d-flex align-start justify-space-between ga-3">
-            <div class="d-flex align-start ga-3 min-w-0">
-              <v-avatar color="green-lighten-5" size="32">
+          <div class="d-flex align-center justify-space-between ga-3">
+            <div class="d-flex align-center ga-3 min-w-0">
+              <v-avatar color="green-lighten-5" size="34">
                 <v-icon
                   color="green-darken-2"
                   icon="mdi-wallet-giftcard"
-                  size="18"
+                  size="20"
                 />
               </v-avatar>
               <div class="min-w-0">
@@ -146,7 +146,7 @@
                   Pilih Treatment Deposit
                 </div>
                 <v-card-subtitle class="text-caption pa-0 mt-1">
-                  Tentukan treatment dan qty yang akan menjadi saldo deposit
+                  Pilih treatment yang akan dibuat sebagai saldo deposit
                 </v-card-subtitle>
               </div>
             </div>
@@ -154,7 +154,7 @@
             <v-btn
               icon="mdi-close"
               variant="text"
-              density="compact"
+              density="comfortable"
               size="small"
               @click.stop="closeDepositTreatmentDialog"
             />
@@ -164,12 +164,16 @@
         <v-divider />
 
         <v-card-text class="pa-4">
+          <v-alert type="info" variant="tonal" density="compact" class="mb-3">
+            Produk/obat tetap dibayar normal. Deposit hanya dibuat untuk
+            treatment yang dipilih.
+          </v-alert>
+
           <v-alert
             v-if="!treatmentItems.length"
             type="warning"
             variant="tonal"
             density="compact"
-            class="text-caption"
           >
             Transaksi deposit hanya bisa dipilih jika transaksi memiliki minimal
             satu treatment.
@@ -203,9 +207,9 @@
                 <v-btn
                   type="button"
                   size="small"
-                  color="grey-darken-1"
+                  color="error"
                   variant="tonal"
-                  prepend-icon="mdi-broom"
+                  prepend-icon="mdi-close-circle-outline"
                   class="text-none font-weight-medium"
                   @click.stop="clearDepositTreatments"
                 >
@@ -220,9 +224,6 @@
               variant="outlined"
               rounded="lg"
               class="mb-2"
-              :color="
-                isDepositTreatmentSelected(item, index) ? 'green' : undefined
-              "
               :class="
                 isDepositTreatmentSelected(item, index)
                   ? 'bg-green-lighten-5'
@@ -236,7 +237,6 @@
                     :model-value="isDepositTreatmentSelected(item, index)"
                     color="green"
                     density="compact"
-                    class="mt-n1"
                     @click.stop="toggleDepositTreatmentItem(item, index)"
                   />
 
@@ -270,85 +270,22 @@
                         {{
                           isDepositTreatmentSelected(item, index)
                             ? "Dipilih"
-                            : "Belum"
+                            : "Belum dipilih"
                         }}
                       </v-chip>
                     </div>
 
                     <div class="d-flex align-center ga-2 mt-2 flex-wrap">
-                      <v-chip size="x-small" variant="tonal" color="blue-grey">
-                        Qty transaksi {{ getTreatmentQty(item) }}
+                      <v-chip size="small" variant="tonal" color="blue-grey">
+                        Qty {{ Number(item.qty || item.jumlah || 1) }}
                       </v-chip>
-                      <v-chip size="x-small" variant="tonal" color="blue-grey">
+                      <v-chip size="small" variant="tonal" color="blue-grey">
                         Harga {{ formatCurrency(resolveTreatmentHarga(item)) }}
                       </v-chip>
-                      <v-chip
-                        v-if="isDepositTreatmentSelected(item, index)"
-                        size="x-small"
-                        variant="tonal"
-                        color="green"
-                        class="font-weight-bold"
-                      >
-                        Deposit
-                        {{
-                          formatCurrency(getDepositTreatmentAmount(item, index))
-                        }}
+                      <v-chip size="small" variant="tonal" color="green">
+                        Deposit {{ formatCurrency(getTreatmentSubtotal(item)) }}
                       </v-chip>
                     </div>
-
-                    <v-sheet
-                      v-if="isDepositTreatmentSelected(item, index)"
-                      rounded="lg"
-                      border
-                      class="mt-3 pa-2 bg-white"
-                      @click.stop
-                    >
-                      <div
-                        class="d-flex align-center justify-space-between ga-3 flex-wrap"
-                      >
-                        <div class="min-w-0">
-                          <div class="text-caption text-medium-emphasis">
-                            Qty deposit
-                          </div>
-                          <div class="text-body-2 font-weight-bold">
-                            {{ getSelectedDepositQty(item, index) }} dari
-                            {{ getTreatmentQty(item) }} qty
-                          </div>
-                        </div>
-
-                        <div class="d-flex align-center ga-1">
-                          <v-btn
-                            type="button"
-                            icon="mdi-minus"
-                            size="x-small"
-                            variant="tonal"
-                            color="grey-darken-1"
-                            :disabled="getSelectedDepositQty(item, index) <= 1"
-                            @click.stop="decreaseDepositQty(item, index)"
-                          />
-                          <v-chip
-                            size="small"
-                            color="primary"
-                            variant="tonal"
-                            class="font-weight-bold px-3"
-                          >
-                            {{ getSelectedDepositQty(item, index) }}
-                          </v-chip>
-                          <v-btn
-                            type="button"
-                            icon="mdi-plus"
-                            size="x-small"
-                            variant="tonal"
-                            color="grey-darken-1"
-                            :disabled="
-                              getSelectedDepositQty(item, index) >=
-                              getTreatmentQty(item)
-                            "
-                            @click.stop="increaseDepositQty(item, index)"
-                          />
-                        </div>
-                      </div>
-                    </v-sheet>
                   </div>
                 </div>
               </v-card-text>
@@ -382,58 +319,25 @@
             :disabled="!selectedDepositTreatmentKeys.length"
             @click.stop="confirmDepositTreatmentDialog"
           >
-            Lanjutkan
+            Lanjutkan Pembayaran
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="phoneConfirmDialog" max-width="520" persistent>
-      <v-card rounded="lg">
-        <v-card-title class="pa-4 pb-2">
-          <div class="d-flex align-start justify-space-between ga-3">
-            <div class="d-flex align-start ga-3 min-w-0">
-              <v-avatar color="blue-lighten-5" size="32">
-                <v-icon
-                  color="primary"
-                  icon="mdi-card-account-phone"
-                  size="18"
-                />
-              </v-avatar>
-              <div class="min-w-0">
-                <div class="text-subtitle-1 font-weight-bold">
-                  Konfirmasi Nomor Pasien
-                </div>
-                <v-card-subtitle class="text-caption pa-0 mt-1">
-                  Cek nomor HP/WA sebelum pembayaran diselesaikan
-                </v-card-subtitle>
-              </div>
-            </div>
-
-            <v-btn
-              type="button"
-              icon="mdi-close"
-              variant="text"
-              density="comfortable"
-              size="small"
-              @click.stop="closePhoneConfirmDialog"
-            />
+    <v-dialog v-model="phoneConfirmDialog" max-width="620" persistent>
+      <v-card>
+        <v-card-title>
+          <div class="text-h6 font-weight-bold">Konfirmasi Nomor Pasien</div>
+          <div class="text-body-2 text-medium-emphasis">
+            Perbarui nomor HP/WA pasien sebelum pembayaran diselesaikan jika ada
+            perubahan.
           </div>
         </v-card-title>
 
         <v-divider />
 
-        <v-card-text class="pa-4">
-          <v-alert
-            type="info"
-            variant="tonal"
-            density="compact"
-            class="mb-3 text-caption"
-          >
-            Nomor yang diperbarui akan disimpan ke data pasien dan dinormalisasi
-            ke format 62.
-          </v-alert>
-
+        <v-card-text>
           <v-row dense>
             <v-col cols="12" md="6">
               <v-text-field
@@ -442,7 +346,6 @@
                 variant="outlined"
                 density="compact"
                 prepend-inner-icon="mdi-cellphone"
-                placeholder="62812..."
                 hide-details="auto"
               />
             </v-col>
@@ -453,7 +356,6 @@
                 variant="outlined"
                 density="compact"
                 prepend-inner-icon="mdi-whatsapp"
-                placeholder="62812..."
                 hide-details="auto"
               />
             </v-col>
@@ -464,7 +366,6 @@
                 variant="outlined"
                 density="compact"
                 prepend-inner-icon="mdi-phone"
-                placeholder="Opsional"
                 hide-details="auto"
               />
             </v-col>
@@ -473,29 +374,13 @@
 
         <v-divider />
 
-        <v-card-actions class="pa-3">
-          <v-btn
-            type="button"
-            size="small"
-            color="grey-darken-1"
-            variant="tonal"
-            prepend-icon="mdi-arrow-right"
-            class="text-none font-weight-medium"
-            @click="continueWithoutPhoneUpdate"
-          >
-            Lewati
+        <v-card-actions>
+          <v-btn variant="text" @click="continueWithoutPhoneUpdate">
+            Lanjut Tanpa Ubah
           </v-btn>
           <v-spacer />
-          <v-btn
-            type="button"
-            size="small"
-            color="primary"
-            variant="flat"
-            prepend-icon="mdi-content-save-check"
-            class="text-none font-weight-medium"
-            @click="confirmPhoneAndSubmit"
-          >
-            Simpan & Submit
+          <v-btn color="primary" variant="flat" @click="confirmPhoneAndSubmit">
+            Simpan Nomor & Submit
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -542,7 +427,6 @@ export default {
       depositTreatmentDialog: false,
       selectedDepositTreatmentItemIds: [],
       selectedDepositTreatmentKeys: [],
-      selectedDepositTreatmentQtyMap: {},
       depositSelectionConfirmed: false,
       phoneConfirmDialog: false,
       phoneConfirmationDone: false,
@@ -1538,8 +1422,6 @@ export default {
       if (field === "jenis_transaksi_id") {
         this.depositSelectionConfirmed = false;
         this.selectedDepositTreatmentItemIds = [];
-        this.selectedDepositTreatmentKeys = [];
-        this.selectedDepositTreatmentQtyMap = {};
       }
 
       if (field === "jenis_transaksi_id" && Number(value || 0) !== 4) {
@@ -1717,6 +1599,75 @@ export default {
         0,
       );
     },
+    getPromoEligibleBase(promo) {
+      const kind = this.getPromoKind(promo);
+      const subtotal = Number(this.subtotal || 0);
+      const subtotalDiscount = Number(this.subtotalDiscountAmount || 0);
+      const productBase = Number(this.totalPenjualan || 0);
+      const treatmentBase = Number(this.totalTreatment || 0);
+
+      if (subtotal <= 0) return 0;
+
+      const productDiscountShare = (subtotalDiscount * productBase) / subtotal;
+      const treatmentDiscountShare =
+        (subtotalDiscount * treatmentBase) / subtotal;
+
+      if (kind === "produk") {
+        return Math.max(productBase - productDiscountShare, 0);
+      }
+
+      if (kind === "treatment") {
+        return Math.max(treatmentBase - treatmentDiscountShare, 0);
+      }
+
+      return Math.max(subtotal - subtotalDiscount, 0);
+    },
+    getPromoKind(promo) {
+      if (!promo) return "all";
+
+      const jenis = Number(
+        promo.jenis_voucher_id ||
+          promo.jenis_id ||
+          promo.voucher_jenis_id ||
+          promo.master_voucher_diskon_jenis_id ||
+          0,
+      );
+
+      if (jenis === 1) return "treatment";
+      if (jenis === 2) return "produk";
+      if (jenis === 3 || jenis === 4) return "all";
+
+      if (
+        Number(promo.bisa_produk || 0) === 1 &&
+        Number(promo.bisa_treatment || 0) !== 1
+      ) {
+        return "produk";
+      }
+
+      if (
+        Number(promo.bisa_treatment || 0) === 1 &&
+        Number(promo.bisa_produk || 0) !== 1
+      ) {
+        return "treatment";
+      }
+
+      const key = this.getPromoKey(promo);
+      if (key) {
+        if (
+          this.promoProductList.some((item) => this.getPromoKey(item) === key)
+        ) {
+          return "produk";
+        }
+
+        if (
+          this.promoTreatmentList.some((item) => this.getPromoKey(item) === key)
+        ) {
+          return "treatment";
+        }
+      }
+
+      return "all";
+    },
     getPromoAmount(promo) {
       if (!promo) return 0;
       const value = Number(
@@ -1729,12 +1680,16 @@ export default {
       const tipe = String(
         promo.tipe_diskon || promo.diskon_tipe || promo.type || "",
       ).toLowerCase();
+      const base = this.getPromoEligibleBase(promo);
+
+      if (base <= 0 || value <= 0) return 0;
+
       if (tipe.includes("percent") || tipe.includes("persen") || tipe === "%") {
-        const calculated = (this.promoBaseAmount * value) / 100;
+        const calculated = (base * value) / 100;
         const max = Number(promo.maksimal_diskon || promo.max_diskon || 0);
         return max > 0 ? Math.min(calculated, max) : calculated;
       }
-      return Math.min(value, this.promoBaseAmount);
+      return Math.min(value, base);
     },
     getPromoKey(promo) {
       if (!promo) return "";
@@ -2035,14 +1990,7 @@ export default {
       const subtotal = Number(item?.subtotal || item?.total || 0);
       return subtotal > 0 ? subtotal / qty : 0;
     },
-    getTreatmentQty(item) {
-      const qty = Number(item?.qty || item?.jumlah || 1);
-      return qty > 0 ? qty : 1;
-    },
     getSelectedDepositTreatmentIds() {
-      return this.buildDepositItemsPayload().map((row) => row.item_id);
-    },
-    buildDepositItemsPayload() {
       const selectedKeys = new Set(
         this.selectedDepositTreatmentKeys.map(String),
       );
@@ -2050,39 +1998,24 @@ export default {
       return this.treatmentItems
         .map((item, index) => ({
           key: this.getTreatmentItemKey(item, index),
-          item_id: this.getTreatmentItemId(item),
-          qty: this.getSelectedDepositQty(item, index),
+          id: this.getTreatmentItemId(item),
         }))
         .filter(
-          (row) =>
-            selectedKeys.has(String(row.key)) && Number(row.item_id || 0) > 0,
+          (row) => selectedKeys.has(String(row.key)) && Number(row.id || 0) > 0,
         )
-        .map((row) => ({
-          item_id: Number(row.item_id),
-          qty: Number(row.qty || 1),
-        }));
+        .map((row) => Number(row.id));
     },
     selectAllDepositTreatments() {
-      const qtyMap = { ...this.selectedDepositTreatmentQtyMap };
-
       this.selectedDepositTreatmentKeys = this.treatmentItems
-        .map((item, index) => {
-          const key = this.getTreatmentItemKey(item, index);
-          if (key && !qtyMap[String(key)]) {
-            qtyMap[String(key)] = 1;
-          }
-          return key;
-        })
+        .map((item, index) => this.getTreatmentItemKey(item, index))
         .filter(Boolean);
 
-      this.selectedDepositTreatmentQtyMap = qtyMap;
       this.selectedDepositTreatmentItemIds =
         this.getSelectedDepositTreatmentIds();
     },
     clearDepositTreatments() {
       this.selectedDepositTreatmentKeys = [];
       this.selectedDepositTreatmentItemIds = [];
-      this.selectedDepositTreatmentQtyMap = {};
     },
     isDepositTreatmentSelected(item, index = 0) {
       const key = this.getTreatmentItemKey(item, index);
@@ -2090,66 +2023,17 @@ export default {
         .map(String)
         .includes(String(key));
     },
-    getSelectedDepositQty(item, index = 0) {
-      const key = String(this.getTreatmentItemKey(item, index));
-      const maxQty = this.getTreatmentQty(item);
-      const qty = Number(this.selectedDepositTreatmentQtyMap[key] || 1);
-      return Math.min(Math.max(qty || 1, 1), maxQty);
-    },
-    setDepositTreatmentQty(item, index = 0, value = 1) {
-      const key = String(this.getTreatmentItemKey(item, index));
-      if (!key) return;
-
-      const maxQty = this.getTreatmentQty(item);
-      const qty = Math.min(Math.max(Number(value || 1), 1), maxQty);
-
-      this.selectedDepositTreatmentQtyMap = {
-        ...this.selectedDepositTreatmentQtyMap,
-        [key]: qty,
-      };
-
-      this.selectedDepositTreatmentItemIds =
-        this.getSelectedDepositTreatmentIds();
-    },
-    increaseDepositQty(item, index = 0) {
-      this.setDepositTreatmentQty(
-        item,
-        index,
-        this.getSelectedDepositQty(item, index) + 1,
-      );
-    },
-    decreaseDepositQty(item, index = 0) {
-      this.setDepositTreatmentQty(
-        item,
-        index,
-        this.getSelectedDepositQty(item, index) - 1,
-      );
-    },
-    getDepositTreatmentAmount(item, index = 0) {
-      return (
-        this.resolveTreatmentHarga(item) *
-        this.getSelectedDepositQty(item, index)
-      );
-    },
     toggleDepositTreatmentItem(item, index = 0) {
       const key = this.getTreatmentItemKey(item, index);
       if (!key) return;
 
       const selected = this.selectedDepositTreatmentKeys.map(String);
-      const stringKey = String(key);
-
-      if (selected.includes(stringKey)) {
+      if (selected.includes(String(key))) {
         this.selectedDepositTreatmentKeys = selected.filter(
-          (value) => value !== stringKey,
+          (value) => value !== String(key),
         );
       } else {
-        this.selectedDepositTreatmentKeys = [...selected, stringKey];
-        if (!this.selectedDepositTreatmentQtyMap[stringKey]) {
-          this.selectedDepositTreatmentQtyMap = {
-            ...this.selectedDepositTreatmentQtyMap,
-            [stringKey]: 1,
-          };
-        }
+        this.selectedDepositTreatmentKeys = [...selected, String(key)];
       }
 
       this.selectedDepositTreatmentItemIds =
@@ -2201,9 +2085,6 @@ export default {
         no_telp: this.header.pasien_no_telp || "",
       };
       this.phoneConfirmDialog = true;
-    },
-    closePhoneConfirmDialog() {
-      this.phoneConfirmDialog = false;
     },
     confirmPhoneAndSubmit() {
       if (
@@ -2297,9 +2178,6 @@ export default {
         deposit_expired_at: this.header.deposit_expired_at || null,
         deposit_item_ids: this.isDepositTransaction
           ? this.selectedDepositTreatmentItemIds
-          : [],
-        deposit_items: this.isDepositTransaction
-          ? this.buildDepositItemsPayload()
           : [],
         update_pasien_phone: this.shouldUpdatePatientPhone,
         pasien_no_hp_update: this.phoneForm.no_hp || null,
