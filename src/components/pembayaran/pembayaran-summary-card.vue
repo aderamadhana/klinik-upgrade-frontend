@@ -380,7 +380,6 @@
 
       <v-btn
         color="primary"
-        variant="outlined"
         block
         size="large"
         prepend-icon="mdi-content-save-check-outline"
