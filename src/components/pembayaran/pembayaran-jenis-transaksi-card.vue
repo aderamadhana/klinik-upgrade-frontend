@@ -71,13 +71,13 @@
 
         <v-alert
           v-if="hasProduk"
-          type="error"
+          type="info"
           variant="tonal"
           density="compact"
           class="mb-3"
         >
-          Transaksi deposit tidak boleh memiliki item produk/obat. Hapus item
-          produk sebelum submit.
+          Item produk/obat tetap bisa diproses normal. Deposit hanya akan dibuat
+          untuk treatment yang dipilih saat submit.
         </v-alert>
 
         <v-alert
@@ -87,7 +87,8 @@
           density="compact"
           class="mb-3"
         >
-          Transaksi deposit wajib memiliki minimal satu item treatment.
+          Jenis transaksi deposit hanya bisa dipilih jika transaksi memiliki
+          minimal satu item treatment.
         </v-alert>
 
         <v-row dense>

@@ -24,11 +24,12 @@
         class="d-flex flex-column align-center justify-center text-center pa-8"
       >
         <v-avatar color="grey-lighten-3" size="56" class="mb-3">
-          <v-icon size="30" color="grey">
-            mdi-face-woman-shimmer-outline
-          </v-icon>
+          <v-icon
+            size="30"
+            color="grey"
+            icon="mdi-face-woman-shimmer-outline"
+          />
         </v-avatar>
-
         <div class="text-subtitle-2 font-weight-bold mb-1">
           Belum ada treatment
         </div>
@@ -40,23 +41,27 @@
 
       <v-card
         v-for="(item, index) in items"
-        :key="item.registrasi_treatment_detail_id || `treatment-${index}`"
+        :key="
+          item.invoice_item_id ||
+          item.registrasi_treatment_detail_id ||
+          `treatment-${index}`
+        "
         variant="outlined"
+        rounded="lg"
         class="mb-4"
       >
         <v-card-item class="px-4 py-3">
           <template #prepend>
-            <v-avatar color="primary" variant="tonal" size="34">
-              <v-icon icon="mdi-medical-bag" size="18" />
+            <v-avatar color="primary-lighten-5" size="36">
+              <v-icon icon="mdi-medical-bag" size="20" color="primary" />
             </v-avatar>
           </template>
-
-          <div class="text-body-2 font-weight-bold">
+          <div class="text-subtitle-1 font-weight-bold">
             Treatment #{{ index + 1 }}
           </div>
-          <div class="text-caption text-medium-emphasis mt-1">
+          <v-card-subtitle class="text-caption pa-0 mt-1">
             Detail treatment, beautician, qty, diskon, dan subtotal
-          </div>
+          </v-card-subtitle>
 
           <template #append>
             <v-btn
@@ -118,21 +123,24 @@
                 @update:model-value="updateField(index, 'beautician', $event)"
               />
             </v-col>
+          </v-row>
 
+          <v-row dense class="mt-1">
             <v-col cols="12" sm="6" md="3">
-              <v-text-field
-                :model-value="formatCurrency(item.harga)"
-                label="Harga"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-cash"
-                bg-color="grey-lighten-5"
-                readonly
-                hide-details="auto"
-              />
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div
+                  class="d-flex align-center ga-2 text-caption text-medium-emphasis mb-1"
+                >
+                  <v-icon icon="mdi-cash" size="16" />
+                  Harga
+                </div>
+                <div class="text-body-1 font-weight-bold text-high-emphasis">
+                  {{ formatCurrency(item.harga) }}
+                </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" sm="6" md="2">
+            <v-col cols="12" sm="6" md="3">
               <v-select
                 :model-value="item.diskon_type"
                 :items="diskonTypeList"
@@ -160,17 +168,23 @@
               />
             </v-col>
 
-            <v-col cols="12" sm="6" md="4">
-              <v-text-field
-                :model-value="formatCurrency(getSubtotal(item))"
-                label="Subtotal"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-calculator"
-                bg-color="grey-lighten-5"
-                readonly
-                hide-details="auto"
-              />
+            <v-col cols="12" sm="6" md="3">
+              <v-sheet
+                rounded="lg"
+                border
+                color="blue-lighten-5"
+                class="pa-3 h-100"
+              >
+                <div
+                  class="d-flex align-center ga-2 text-caption text-blue-darken-2 mb-1"
+                >
+                  <v-icon icon="mdi-calculator" size="16" />
+                  Subtotal
+                </div>
+                <div class="text-body-1 font-weight-black text-blue-darken-4">
+                  {{ formatCurrency(getSubtotal(item)) }}
+                </div>
+              </v-sheet>
             </v-col>
           </v-row>
         </v-card-text>
@@ -182,7 +196,6 @@
 <script>
 export default {
   name: "PembayaranTreatmentCard",
-
   props: {
     items: { type: Array, default: () => [] },
     tindakanList: { type: Array, default: () => [] },
@@ -191,13 +204,10 @@ export default {
     formatCurrency: { type: Function, required: true },
     getSubtotal: { type: Function, required: true },
   },
-
   emits: ["add-item", "remove-item", "update-item-field", "fill-item"],
-
   methods: {
     updateField(index, field, value, shouldFill = false) {
       this.$emit("update-item-field", { index, field, value });
-
       if (shouldFill) {
         this.$nextTick(() => {
           this.$emit("fill-item", index);

@@ -203,17 +203,6 @@
         <v-divider />
 
         <v-card-text class="pa-4">
-          <v-alert
-            v-if="isDepositTransaction && hasProdukItem"
-            type="warning"
-            variant="tonal"
-            density="comfortable"
-            class="mb-4"
-          >
-            Transaksi deposit tidak boleh memiliki item produk/obat. Hapus item
-            produk sebelum submit.
-          </v-alert>
-
           <v-row dense>
             <v-col cols="12" md="6" v-if="isDepositTransaction">
               <v-autocomplete

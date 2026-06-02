@@ -40,17 +40,6 @@
           @update-header-field="updateHeaderField"
         />
 
-        <v-alert
-          v-if="isDepositTransaction && penjualanItems.length > 0"
-          type="warning"
-          variant="tonal"
-          density="comfortable"
-          class="mb-4"
-        >
-          Transaksi deposit tidak boleh membawa item produk/obat. Hapus item
-          produk sebelum submit.
-        </v-alert>
-
         <PembayaranObatCard
           :items="penjualanItems"
           :obat-list="obatList"
@@ -140,6 +129,378 @@
       @reset-promo="resetPromo"
     />
 
+    <v-dialog v-model="depositTreatmentDialog" max-width="560" persistent>
+      <v-card rounded="lg">
+        <v-card-title class="pa-4 pb-2">
+          <div class="d-flex align-start justify-space-between ga-3">
+            <div class="d-flex align-start ga-3 min-w-0">
+              <v-avatar color="green-lighten-5" size="32">
+                <v-icon
+                  color="green-darken-2"
+                  icon="mdi-wallet-giftcard"
+                  size="18"
+                />
+              </v-avatar>
+              <div class="min-w-0">
+                <div class="text-subtitle-1 font-weight-bold">
+                  Pilih Treatment Deposit
+                </div>
+                <v-card-subtitle class="text-caption pa-0 mt-1">
+                  Tentukan treatment dan qty yang akan menjadi saldo deposit
+                </v-card-subtitle>
+              </div>
+            </div>
+
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              density="compact"
+              size="small"
+              @click.stop="closeDepositTreatmentDialog"
+            />
+          </div>
+        </v-card-title>
+
+        <v-divider />
+
+        <v-card-text class="pa-4">
+          <v-alert
+            v-if="!treatmentItems.length"
+            type="warning"
+            variant="tonal"
+            density="compact"
+            class="text-caption"
+          >
+            Transaksi deposit hanya bisa dipilih jika transaksi memiliki minimal
+            satu treatment.
+          </v-alert>
+
+          <div v-else>
+            <div
+              class="d-flex align-center justify-space-between mb-3 ga-3 flex-wrap"
+            >
+              <div>
+                <div class="text-body-2 font-weight-bold">Daftar Treatment</div>
+                <div class="text-caption text-medium-emphasis">
+                  {{ selectedDepositTreatmentKeys.length }} dari
+                  {{ treatmentItems.length }} treatment dipilih
+                </div>
+              </div>
+
+              <div class="d-flex ga-2">
+                <v-btn
+                  type="button"
+                  size="small"
+                  color="primary"
+                  variant="tonal"
+                  prepend-icon="mdi-check-all"
+                  class="text-none font-weight-medium"
+                  @click.stop="selectAllDepositTreatments"
+                >
+                  Pilih Semua
+                </v-btn>
+
+                <v-btn
+                  type="button"
+                  size="small"
+                  color="grey-darken-1"
+                  variant="tonal"
+                  prepend-icon="mdi-broom"
+                  class="text-none font-weight-medium"
+                  @click.stop="clearDepositTreatments"
+                >
+                  Kosongkan
+                </v-btn>
+              </div>
+            </div>
+
+            <v-card
+              v-for="(item, index) in treatmentItems"
+              :key="getTreatmentItemKey(item, index)"
+              variant="outlined"
+              rounded="lg"
+              class="mb-2"
+              :color="
+                isDepositTreatmentSelected(item, index) ? 'green' : undefined
+              "
+              :class="
+                isDepositTreatmentSelected(item, index)
+                  ? 'bg-green-lighten-5'
+                  : ''
+              "
+              @click.stop="toggleDepositTreatmentItem(item, index)"
+            >
+              <v-card-text class="pa-3">
+                <div class="d-flex align-start ga-2">
+                  <v-checkbox-btn
+                    :model-value="isDepositTreatmentSelected(item, index)"
+                    color="green"
+                    density="compact"
+                    class="mt-n1"
+                    @click.stop="toggleDepositTreatmentItem(item, index)"
+                  />
+
+                  <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex justify-space-between align-start ga-2">
+                      <div class="min-w-0">
+                        <div class="text-body-2 font-weight-bold text-truncate">
+                          {{
+                            item.nama_treatment ||
+                            item.nama_item ||
+                            item.nama ||
+                            "Treatment"
+                          }}
+                        </div>
+                        <div
+                          class="text-caption text-medium-emphasis text-truncate"
+                        >
+                          {{ item.beautician || "Beautician belum dipilih" }}
+                        </div>
+                      </div>
+
+                      <v-chip
+                        size="x-small"
+                        :color="
+                          isDepositTreatmentSelected(item, index)
+                            ? 'green'
+                            : 'grey'
+                        "
+                        variant="tonal"
+                      >
+                        {{
+                          isDepositTreatmentSelected(item, index)
+                            ? "Dipilih"
+                            : "Belum"
+                        }}
+                      </v-chip>
+                    </div>
+
+                    <div class="d-flex align-center ga-2 mt-2 flex-wrap">
+                      <v-chip size="x-small" variant="tonal" color="blue-grey">
+                        Qty transaksi {{ getTreatmentQty(item) }}
+                      </v-chip>
+                      <v-chip size="x-small" variant="tonal" color="blue-grey">
+                        Harga {{ formatCurrency(resolveTreatmentHarga(item)) }}
+                      </v-chip>
+                      <v-chip
+                        v-if="isDepositTreatmentSelected(item, index)"
+                        size="x-small"
+                        variant="tonal"
+                        color="green"
+                        class="font-weight-bold"
+                      >
+                        Deposit
+                        {{
+                          formatCurrency(getDepositTreatmentAmount(item, index))
+                        }}
+                      </v-chip>
+                    </div>
+
+                    <v-sheet
+                      v-if="isDepositTreatmentSelected(item, index)"
+                      rounded="lg"
+                      border
+                      class="mt-3 pa-2 bg-white"
+                      @click.stop
+                    >
+                      <div
+                        class="d-flex align-center justify-space-between ga-3 flex-wrap"
+                      >
+                        <div class="min-w-0">
+                          <div class="text-caption text-medium-emphasis">
+                            Qty deposit
+                          </div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{ getSelectedDepositQty(item, index) }} dari
+                            {{ getTreatmentQty(item) }} qty
+                          </div>
+                        </div>
+
+                        <div class="d-flex align-center ga-1">
+                          <v-btn
+                            type="button"
+                            icon="mdi-minus"
+                            size="x-small"
+                            variant="tonal"
+                            color="grey-darken-1"
+                            :disabled="getSelectedDepositQty(item, index) <= 1"
+                            @click.stop="decreaseDepositQty(item, index)"
+                          />
+                          <v-chip
+                            size="small"
+                            color="primary"
+                            variant="tonal"
+                            class="font-weight-bold px-3"
+                          >
+                            {{ getSelectedDepositQty(item, index) }}
+                          </v-chip>
+                          <v-btn
+                            type="button"
+                            icon="mdi-plus"
+                            size="x-small"
+                            variant="tonal"
+                            color="grey-darken-1"
+                            :disabled="
+                              getSelectedDepositQty(item, index) >=
+                              getTreatmentQty(item)
+                            "
+                            @click.stop="increaseDepositQty(item, index)"
+                          />
+                        </div>
+                      </div>
+                    </v-sheet>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+          </div>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="pa-3">
+          <v-spacer />
+          <v-btn
+            type="button"
+            size="small"
+            variant="tonal"
+            color="grey-darken-1"
+            prepend-icon="mdi-close"
+            class="text-none font-weight-medium"
+            @click.stop="closeDepositTreatmentDialog"
+          >
+            Batal
+          </v-btn>
+
+          <v-btn
+            type="button"
+            size="small"
+            color="primary"
+            variant="flat"
+            prepend-icon="mdi-cash-check"
+            class="text-none font-weight-medium"
+            :disabled="!selectedDepositTreatmentKeys.length"
+            @click.stop="confirmDepositTreatmentDialog"
+          >
+            Lanjutkan
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="phoneConfirmDialog" max-width="520" persistent>
+      <v-card rounded="lg">
+        <v-card-title class="pa-4 pb-2">
+          <div class="d-flex align-start justify-space-between ga-3">
+            <div class="d-flex align-start ga-3 min-w-0">
+              <v-avatar color="blue-lighten-5" size="32">
+                <v-icon
+                  color="primary"
+                  icon="mdi-card-account-phone"
+                  size="18"
+                />
+              </v-avatar>
+              <div class="min-w-0">
+                <div class="text-subtitle-1 font-weight-bold">
+                  Konfirmasi Nomor Pasien
+                </div>
+                <v-card-subtitle class="text-caption pa-0 mt-1">
+                  Cek nomor HP/WA sebelum pembayaran diselesaikan
+                </v-card-subtitle>
+              </div>
+            </div>
+
+            <v-btn
+              type="button"
+              icon="mdi-close"
+              variant="text"
+              density="comfortable"
+              size="small"
+              @click.stop="closePhoneConfirmDialog"
+            />
+          </div>
+        </v-card-title>
+
+        <v-divider />
+
+        <v-card-text class="pa-4">
+          <v-alert
+            type="info"
+            variant="tonal"
+            density="compact"
+            class="mb-3 text-caption"
+          >
+            Nomor yang diperbarui akan disimpan ke data pasien dan dinormalisasi
+            ke format 62.
+          </v-alert>
+
+          <v-row dense>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="phoneForm.no_hp"
+                label="No. HP"
+                variant="outlined"
+                density="compact"
+                prepend-inner-icon="mdi-cellphone"
+                placeholder="62812..."
+                hide-details="auto"
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="phoneForm.no_wa"
+                label="No. WhatsApp"
+                variant="outlined"
+                density="compact"
+                prepend-inner-icon="mdi-whatsapp"
+                placeholder="62812..."
+                hide-details="auto"
+              />
+            </v-col>
+            <v-col cols="12">
+              <v-text-field
+                v-model="phoneForm.no_telp"
+                label="No. Telepon"
+                variant="outlined"
+                density="compact"
+                prepend-inner-icon="mdi-phone"
+                placeholder="Opsional"
+                hide-details="auto"
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="pa-3">
+          <v-btn
+            type="button"
+            size="small"
+            color="grey-darken-1"
+            variant="tonal"
+            prepend-icon="mdi-arrow-right"
+            class="text-none font-weight-medium"
+            @click="continueWithoutPhoneUpdate"
+          >
+            Lewati
+          </v-btn>
+          <v-spacer />
+          <v-btn
+            type="button"
+            size="small"
+            color="primary"
+            variant="flat"
+            prepend-icon="mdi-content-save-check"
+            class="text-none font-weight-medium"
+            @click="confirmPhoneAndSubmit"
+          >
+            Simpan & Submit
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-snackbar v-model="snackbar.show" :color="snackbar.color">
       {{ snackbar.text }}
     </v-snackbar>
@@ -178,6 +539,19 @@ export default {
       registrasiDetail: null,
       promoDrawer: false,
       promoCode: "",
+      depositTreatmentDialog: false,
+      selectedDepositTreatmentItemIds: [],
+      selectedDepositTreatmentKeys: [],
+      selectedDepositTreatmentQtyMap: {},
+      depositSelectionConfirmed: false,
+      phoneConfirmDialog: false,
+      phoneConfirmationDone: false,
+      shouldUpdatePatientPhone: false,
+      phoneForm: {
+        no_hp: "",
+        no_wa: "",
+        no_telp: "",
+      },
       cashReceived: 0,
       breadcrumbs: [
         { title: "Kasir", disabled: true },
@@ -194,6 +568,12 @@ export default {
         pasien_nama: "",
         pasien_no_rm: "",
         pasien_no_hp: "",
+        pasien_no_wa: "",
+        pasien_no_telp: "",
+        member_id: null,
+        member_no: "",
+        member_tier_nama: "",
+        point_earned: 0,
         poin: 0,
         dokter_id: null,
         dokter_nama: "",
@@ -526,7 +906,14 @@ export default {
             item.nama ||
             item.treatment?.nama ||
             "-",
-          harga: Number(item.harga || item.harga_treatment || 0),
+          harga: Number(
+            item.harga ||
+              item.harga_treatment ||
+              item.tarif ||
+              item.harga_terendah ||
+              item.price ||
+              0,
+          ),
           raw: item,
         }));
 
@@ -849,8 +1236,25 @@ export default {
         pasien_nama: data.pasien?.nama || data.nama_pasien || "",
         pasien_no_rm: data.pasien?.no_rm || data.no_rm || "",
         pasien_no_hp:
-          data.pasien?.no_wa || data.pasien?.no_hp || data.no_hp || "",
-        poin: Number(data.pasien?.poin || data.poin || 0),
+          data.pasien?.no_hp ||
+          data.pasien?.no_wa ||
+          data.no_hp ||
+          invoice.pasien_no_hp ||
+          "",
+        pasien_no_wa: data.pasien?.no_wa || invoice.pasien_no_wa || "",
+        pasien_no_telp: data.pasien?.no_telp || invoice.pasien_no_telp || "",
+        member_id: invoice.member_id || data.member_id || null,
+        member_no: invoice.member_no || data.member_no || "",
+        member_tier_nama:
+          invoice.member_tier_nama || data.member_tier_nama || "",
+        point_earned: Number(invoice.point_earned || data.point_earned || 0),
+        poin: Number(
+          invoice.poin ||
+            invoice.point_earned ||
+            data.pasien?.poin ||
+            data.poin ||
+            0,
+        ),
         dokter_id: data.dokter_awal_id || data.dokter_id || null,
         dokter_nama: data.dokter_awal?.nama || data.dokter?.nama || "-",
         perawat_id: data.perawat_awal_id || data.perawat_id || null,
@@ -996,6 +1400,7 @@ export default {
       const diskonValue = Number(
         item.diskon || item.diskon_nilai || item.diskon_value || 0,
       );
+      const harga = this.resolveTreatmentHarga(item);
 
       return {
         invoice_item_id: fromInvoice ? item.id || null : null,
@@ -1015,7 +1420,7 @@ export default {
         qty: Number(item.qty || item.jumlah || 1),
         beautician: data.perawat_awal?.nama || item.perawat?.nama || null,
         beautician_id: data.perawat_awal_id || item.perawat_id || null,
-        harga: Number(item.harga || item.harga_treatment || item.subtotal || 0),
+        harga,
         voucher_diskon_id: item.voucher_diskon_id || null,
         voucher_diskon_ids: item.voucher_diskon_id
           ? [item.voucher_diskon_id]
@@ -1130,6 +1535,13 @@ export default {
     },
     updateHeaderField({ field, value }) {
       this.header[field] = value;
+      if (field === "jenis_transaksi_id") {
+        this.depositSelectionConfirmed = false;
+        this.selectedDepositTreatmentItemIds = [];
+        this.selectedDepositTreatmentKeys = [];
+        this.selectedDepositTreatmentQtyMap = {};
+      }
+
       if (field === "jenis_transaksi_id" && Number(value || 0) !== 4) {
         this.header.referensi_dokter_id = null;
         this.header.deposit_expired_option_id = null;
@@ -1176,13 +1588,6 @@ export default {
       }
     },
     addPenjualanItem() {
-      if (this.isDepositTransaction) {
-        this.showSnackbar(
-          "Transaksi deposit tidak boleh menambahkan produk/obat.",
-          "warning",
-        );
-        return;
-      }
       this.penjualanItems.push({
         registrasi_penjualan_detail_id: null,
         produk_toko_id: null,
@@ -1303,10 +1708,11 @@ export default {
       );
     },
     getTreatmentSubtotal(item) {
-      const gross = Number(item.harga || 0) * Number(item.qty || 0);
+      const harga = this.resolveTreatmentHarga(item);
+      const gross = Number(harga || 0) * Number(item.qty || 0);
       return Math.max(
         gross -
-          this.getItemDiscount(item) -
+          this.getItemDiscount({ ...item, harga }) -
           Number(item.promo_diskon_amount || 0),
         0,
       );
@@ -1569,6 +1975,263 @@ export default {
       if (this.pembayaran.length) return;
       this.syncCashReceived();
     },
+    getTreatmentItemId(item) {
+      const candidates = [
+        item?.invoice_item_id,
+        item?.pembayaran_item_id,
+        item?.id,
+        item?.registrasi_treatment_detail_id,
+        item?.source_detail_id,
+      ];
+
+      for (const value of candidates) {
+        const id = Number(value || 0);
+        if (id > 0) return id;
+      }
+
+      return null;
+    },
+    getTreatmentItemKey(item, index = 0) {
+      const id = this.getTreatmentItemId(item);
+      if (id) return `treatment-${id}`;
+
+      const fallback = [
+        item?.treatment_toko_id,
+        item?.treatment_id,
+        item?.nama,
+        item?.nama_item,
+        item?.nama_treatment,
+        index,
+      ]
+        .filter(
+          (value) => value !== null && value !== undefined && value !== "",
+        )
+        .join("-");
+
+      return `treatment-temp-${fallback || index}`;
+    },
+    resolveTreatmentHarga(item) {
+      const qty = Math.max(Number(item?.qty || item?.jumlah || 1), 1);
+      const candidates = [
+        item?.harga,
+        item?.harga_treatment,
+        item?.tarif,
+        item?.harga_terendah,
+        item?.price,
+        item?.raw?.harga,
+        item?.raw?.harga_treatment,
+        item?.raw?.tarif,
+        item?.raw?.harga_terendah,
+        item?.treatment_toko?.tarif,
+        item?.treatmentToko?.tarif,
+        item?.master_treatment_toko?.tarif,
+      ];
+
+      for (const value of candidates) {
+        const amount = Number(value || 0);
+        if (amount > 0) return amount;
+      }
+
+      const subtotal = Number(item?.subtotal || item?.total || 0);
+      return subtotal > 0 ? subtotal / qty : 0;
+    },
+    getTreatmentQty(item) {
+      const qty = Number(item?.qty || item?.jumlah || 1);
+      return qty > 0 ? qty : 1;
+    },
+    getSelectedDepositTreatmentIds() {
+      return this.buildDepositItemsPayload().map((row) => row.item_id);
+    },
+    buildDepositItemsPayload() {
+      const selectedKeys = new Set(
+        this.selectedDepositTreatmentKeys.map(String),
+      );
+
+      return this.treatmentItems
+        .map((item, index) => ({
+          key: this.getTreatmentItemKey(item, index),
+          item_id: this.getTreatmentItemId(item),
+          qty: this.getSelectedDepositQty(item, index),
+        }))
+        .filter(
+          (row) =>
+            selectedKeys.has(String(row.key)) && Number(row.item_id || 0) > 0,
+        )
+        .map((row) => ({
+          item_id: Number(row.item_id),
+          qty: Number(row.qty || 1),
+        }));
+    },
+    selectAllDepositTreatments() {
+      const qtyMap = { ...this.selectedDepositTreatmentQtyMap };
+
+      this.selectedDepositTreatmentKeys = this.treatmentItems
+        .map((item, index) => {
+          const key = this.getTreatmentItemKey(item, index);
+          if (key && !qtyMap[String(key)]) {
+            qtyMap[String(key)] = 1;
+          }
+          return key;
+        })
+        .filter(Boolean);
+
+      this.selectedDepositTreatmentQtyMap = qtyMap;
+      this.selectedDepositTreatmentItemIds =
+        this.getSelectedDepositTreatmentIds();
+    },
+    clearDepositTreatments() {
+      this.selectedDepositTreatmentKeys = [];
+      this.selectedDepositTreatmentItemIds = [];
+      this.selectedDepositTreatmentQtyMap = {};
+    },
+    isDepositTreatmentSelected(item, index = 0) {
+      const key = this.getTreatmentItemKey(item, index);
+      return this.selectedDepositTreatmentKeys
+        .map(String)
+        .includes(String(key));
+    },
+    getSelectedDepositQty(item, index = 0) {
+      const key = String(this.getTreatmentItemKey(item, index));
+      const maxQty = this.getTreatmentQty(item);
+      const qty = Number(this.selectedDepositTreatmentQtyMap[key] || 1);
+      return Math.min(Math.max(qty || 1, 1), maxQty);
+    },
+    setDepositTreatmentQty(item, index = 0, value = 1) {
+      const key = String(this.getTreatmentItemKey(item, index));
+      if (!key) return;
+
+      const maxQty = this.getTreatmentQty(item);
+      const qty = Math.min(Math.max(Number(value || 1), 1), maxQty);
+
+      this.selectedDepositTreatmentQtyMap = {
+        ...this.selectedDepositTreatmentQtyMap,
+        [key]: qty,
+      };
+
+      this.selectedDepositTreatmentItemIds =
+        this.getSelectedDepositTreatmentIds();
+    },
+    increaseDepositQty(item, index = 0) {
+      this.setDepositTreatmentQty(
+        item,
+        index,
+        this.getSelectedDepositQty(item, index) + 1,
+      );
+    },
+    decreaseDepositQty(item, index = 0) {
+      this.setDepositTreatmentQty(
+        item,
+        index,
+        this.getSelectedDepositQty(item, index) - 1,
+      );
+    },
+    getDepositTreatmentAmount(item, index = 0) {
+      return (
+        this.resolveTreatmentHarga(item) *
+        this.getSelectedDepositQty(item, index)
+      );
+    },
+    toggleDepositTreatmentItem(item, index = 0) {
+      const key = this.getTreatmentItemKey(item, index);
+      if (!key) return;
+
+      const selected = this.selectedDepositTreatmentKeys.map(String);
+      const stringKey = String(key);
+
+      if (selected.includes(stringKey)) {
+        this.selectedDepositTreatmentKeys = selected.filter(
+          (value) => value !== stringKey,
+        );
+      } else {
+        this.selectedDepositTreatmentKeys = [...selected, stringKey];
+        if (!this.selectedDepositTreatmentQtyMap[stringKey]) {
+          this.selectedDepositTreatmentQtyMap = {
+            ...this.selectedDepositTreatmentQtyMap,
+            [stringKey]: 1,
+          };
+        }
+      }
+
+      this.selectedDepositTreatmentItemIds =
+        this.getSelectedDepositTreatmentIds();
+    },
+    openDepositTreatmentDialog() {
+      if (!this.selectedDepositTreatmentKeys.length) {
+        this.selectAllDepositTreatments();
+      }
+
+      this.depositTreatmentDialog = true;
+    },
+    closeDepositTreatmentDialog() {
+      this.depositTreatmentDialog = false;
+    },
+    confirmDepositTreatmentDialog() {
+      this.selectedDepositTreatmentItemIds =
+        this.getSelectedDepositTreatmentIds();
+
+      if (!this.selectedDepositTreatmentKeys.length) {
+        this.showSnackbar(
+          "Pilih minimal satu treatment yang akan dijadikan deposit.",
+          "error",
+        );
+        return;
+      }
+
+      if (!this.selectedDepositTreatmentItemIds.length) {
+        this.showSnackbar(
+          "Treatment deposit belum memiliki ID invoice. Refresh/generate ulang pembayaran terlebih dahulu.",
+          "error",
+        );
+        return;
+      }
+
+      this.selectedDepositTreatmentItemIds = [
+        ...new Set(
+          this.selectedDepositTreatmentItemIds.map((id) => Number(id)),
+        ),
+      ];
+      this.depositSelectionConfirmed = true;
+      this.depositTreatmentDialog = false;
+      this.$nextTick(() => this.submit());
+    },
+    openPhoneConfirmDialog() {
+      this.phoneForm = {
+        no_hp: this.header.pasien_no_hp || "",
+        no_wa: this.header.pasien_no_wa || this.header.pasien_no_hp || "",
+        no_telp: this.header.pasien_no_telp || "",
+      };
+      this.phoneConfirmDialog = true;
+    },
+    closePhoneConfirmDialog() {
+      this.phoneConfirmDialog = false;
+    },
+    confirmPhoneAndSubmit() {
+      if (
+        !String(
+          this.phoneForm.no_hp ||
+            this.phoneForm.no_wa ||
+            this.phoneForm.no_telp ||
+            "",
+        ).trim()
+      ) {
+        this.showSnackbar(
+          "Isi minimal salah satu nomor HP/WA/telepon pasien.",
+          "error",
+        );
+        return;
+      }
+
+      this.shouldUpdatePatientPhone = true;
+      this.phoneConfirmationDone = true;
+      this.phoneConfirmDialog = false;
+      this.$nextTick(() => this.submit());
+    },
+    continueWithoutPhoneUpdate() {
+      this.shouldUpdatePatientPhone = false;
+      this.phoneConfirmationDone = true;
+      this.phoneConfirmDialog = false;
+      this.$nextTick(() => this.submit());
+    },
     validateBeforeSubmit() {
       const jenisTransaksi = Number(this.header.jenis_transaksi_id || 0);
       const catatan = String(this.header.catatan || "").trim();
@@ -1582,17 +2245,9 @@ export default {
       }
 
       if (jenisTransaksi === 4) {
-        if (this.penjualanItems.length > 0) {
-          this.showSnackbar(
-            "Transaksi deposit tidak boleh memiliki item produk/obat.",
-            "error",
-          );
-          return false;
-        }
-
         if (!this.treatmentItems.length) {
           this.showSnackbar(
-            "Transaksi deposit wajib memiliki item treatment.",
+            "Jenis transaksi deposit hanya bisa dipilih jika transaksi memiliki minimal satu treatment.",
             "error",
           );
           return false;
@@ -1640,6 +2295,16 @@ export default {
         deposit_expired_option_id:
           this.header.deposit_expired_option_id || null,
         deposit_expired_at: this.header.deposit_expired_at || null,
+        deposit_item_ids: this.isDepositTransaction
+          ? this.selectedDepositTreatmentItemIds
+          : [],
+        deposit_items: this.isDepositTransaction
+          ? this.buildDepositItemsPayload()
+          : [],
+        update_pasien_phone: this.shouldUpdatePatientPhone,
+        pasien_no_hp_update: this.phoneForm.no_hp || null,
+        pasien_no_wa_update: this.phoneForm.no_wa || null,
+        pasien_no_telp_update: this.phoneForm.no_telp || null,
         metode: this.pembayaran.map((item, index) => ({
           metode_bayar_id: item.metode_bayar_id || null,
           metode_bayar_nama: item.metode_bayar_nama || item.nama || "CASH",
@@ -1652,7 +2317,25 @@ export default {
         })),
         penjualan_items: this.penjualanItems,
         treatment_items: this.treatmentItems,
-        promo_ids: this.appliedPromos.map((item) => item.id).filter(Boolean),
+        promo_ids: this.appliedPromos
+          .map(
+            (item) =>
+              item.id || item.voucher_id || item.master_voucher_diskon_id,
+          )
+          .filter(Boolean),
+        promos: this.appliedPromos.map((item) => ({
+          id:
+            item.id || item.voucher_id || item.master_voucher_diskon_id || null,
+          voucher_id: item.voucher_id || item.id || null,
+          kode_voucher: item.kode_voucher || item.kode || item.code || null,
+          nama_voucher: item.nama_voucher || item.nama || item.label || null,
+          tipe_diskon:
+            item.tipe_diskon || item.diskon_tipe || item.type || null,
+          total_diskon: Number(
+            item.total_diskon || item.nilai_diskon || item.diskon || 0,
+          ),
+          diskon_amount: this.getPromoAmount(item),
+        })),
         diskon_subtotal_tipe: this.diskonSubtotal.type,
         diskon_subtotal_nilai: Number(this.diskonSubtotal.value || 0),
         grand_total: this.grandTotal,
@@ -1660,6 +2343,16 @@ export default {
     },
     async submit() {
       if (!this.validateBeforeSubmit()) return;
+
+      if (this.isDepositTransaction && !this.depositSelectionConfirmed) {
+        this.openDepositTreatmentDialog();
+        return;
+      }
+
+      if (!this.phoneConfirmationDone) {
+        this.openPhoneConfirmDialog();
+        return;
+      }
 
       const invoiceId = this.header.invoice_id || this.header.registrasi_id;
       if (!invoiceId) {

@@ -132,12 +132,13 @@
         </v-chip>
       </div>
 
-      <div class="d-flex flex-wrap ga-2 mb-4">
+      <div class="d-flex flex-wrap ga-2 mb-4 payment-action-bar">
         <v-btn
           color="primary"
           variant="outlined"
           size="small"
           prepend-icon="mdi-cash-check"
+          class="text-none font-weight-bold payment-quick-btn"
           :disabled="safeGrandTotal <= 0"
           @click="$emit('set-exact-payment')"
         >
@@ -149,6 +150,7 @@
           variant="outlined"
           size="small"
           prepend-icon="mdi-call-split"
+          class="text-none font-weight-bold payment-quick-btn"
           :disabled="safeGrandTotal <= 0 || pembayaran.length <= 1"
           @click="$emit('split-evenly')"
         >
@@ -160,6 +162,7 @@
           variant="outlined"
           size="small"
           prepend-icon="mdi-cash-sync"
+          class="text-none font-weight-bold payment-quick-btn"
           :disabled="safeGrandTotal <= 0"
           @click="$emit('sync-cash-received')"
         >
@@ -171,17 +174,38 @@
         v-for="(pay, index) in pembayaran"
         :key="`pay-${index}`"
         variant="outlined"
-        class="mb-3"
+        class="mb-3 payment-method-card"
+        :class="{
+          'payment-method-card--cash': isCashRow(pay),
+          'payment-method-card--filled': Number(pay.nominal || 0) > 0,
+        }"
       >
         <v-card-item class="px-4 py-3">
           <template #prepend>
-            <v-avatar color="primary" variant="tonal" size="34">
-              <v-icon icon="mdi-credit-card-outline" size="18" />
+            <v-avatar
+              :color="isCashRow(pay) ? 'success' : 'primary'"
+              variant="tonal"
+              size="34"
+              class="payment-method-avatar"
+            >
+              <v-icon
+                :icon="
+                  isCashRow(pay)
+                    ? 'mdi-cash-register'
+                    : 'mdi-credit-card-outline'
+                "
+                size="18"
+              />
             </v-avatar>
           </template>
 
-          <div class="text-body-2 font-weight-bold">
-            Metode Bayar #{{ index + 1 }}
+          <div>
+            <div class="text-body-2 font-weight-bold">
+              Metode Bayar #{{ index + 1 }}
+            </div>
+            <div class="text-caption text-medium-emphasis mt-1">
+              {{ pay.metode_bayar_nama || "Pilih metode pembayaran" }}
+            </div>
           </div>
 
           <template #append>
@@ -250,29 +274,36 @@
         Tambah Metode Bayar
       </v-btn>
 
-      <v-card variant="outlined" class="mb-4">
+      <v-card variant="outlined" class="mb-4 payment-total-card">
         <v-card-text class="pa-4">
-          <div class="d-flex justify-space-between align-center mb-3">
+          <div
+            class="d-flex justify-space-between align-center mb-3 payment-total-row"
+          >
             <span class="text-body-2 text-medium-emphasis"
               >Total Metode Bayar</span
             >
-            <strong class="text-body-2">{{
+            <strong class="payment-total-amount">{{
               formatMoney(safeTotalBayar)
             }}</strong>
           </div>
 
-          <div class="d-flex justify-space-between align-center mb-3">
+          <div
+            class="d-flex justify-space-between align-center mb-3 payment-total-row"
+          >
             <span class="text-body-2 text-medium-emphasis">Status Tagihan</span>
             <v-chip
               :color="paymentCoverageStatus.color"
               variant="tonal"
               size="small"
+              class="payment-status-chip"
             >
               {{ paymentCoverageStatus.text }}
             </v-chip>
           </div>
 
-          <div class="d-flex justify-space-between align-center">
+          <div
+            class="d-flex justify-space-between align-center payment-total-row"
+          >
             <span class="text-body-2 text-medium-emphasis">Sisa Tagihan</span>
             <strong
               class="text-body-2"
@@ -440,6 +471,22 @@ export default {
     },
   },
   methods: {
+    isCashRow(item) {
+      const text = [
+        item?.metode_bayar_nama,
+        item?.nama,
+        item?.nama_metode,
+        item?.nama_metode_bayar,
+        item?.nama_akun,
+        item?.label,
+        item?.kode,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return text.includes("cash") || text.includes("tunai");
+    },
     formatMoney(value) {
       if (this.formatCurrency) {
         return this.formatCurrency(Number(value || 0));
@@ -453,3 +500,62 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.payment-action-bar {
+  padding: 10px;
+  border: 1px solid rgba(25, 118, 210, 0.16);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.payment-quick-btn {
+  min-height: 32px;
+  letter-spacing: 0 !important;
+}
+
+.payment-method-card {
+  border-color: #d7e3f3 !important;
+  border-radius: 12px !important;
+  background: #ffffff;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease;
+}
+
+.payment-method-card--filled {
+  border-color: #b8d3f6 !important;
+  background: #fbfdff;
+}
+
+.payment-method-card--cash {
+  border-color: #1976d2 !important;
+  background: #f5fbff;
+  box-shadow: 0 8px 18px rgba(25, 118, 210, 0.12) !important;
+}
+
+.payment-method-avatar {
+  box-shadow: inset 0 0 0 1px rgba(25, 118, 210, 0.08);
+}
+
+.payment-total-card {
+  border-color: #aecaed !important;
+  border-radius: 12px !important;
+  background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
+}
+
+.payment-total-row {
+  min-height: 30px;
+}
+
+.payment-total-amount {
+  color: #111827;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.payment-status-chip {
+  font-weight: 800;
+}
+</style>
