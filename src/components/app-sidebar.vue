@@ -276,6 +276,18 @@ export default {
               roles: ["superuser"],
             },
             {
+              key: "master-perawat-bahan",
+              title: "Bahan Perawat",
+              to: "/master/perawat-bahan",
+              roles: ["administrator", "superuser", "it", "management"],
+            },
+            {
+              key: "master-treatment-perawat-bahan",
+              title: "Bahan per Treatment",
+              to: "/master/treatment-bahan",
+              roles: ["administrator", "superuser", "it", "management"],
+            },
+            {
               key: "master-product-global",
               title: "Product Global",
               to: "/master/product-global",

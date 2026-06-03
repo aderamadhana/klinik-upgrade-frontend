@@ -245,6 +245,18 @@ const masterRoutes = [
         name: "Edit Poin Rule",
         component: () => import("@/views/master/poin-rule/edit-poin-rule.vue"),
       },
+      {
+        path: "treatment-bahan",
+        name: "Master Treatment Bahan",
+        component: () =>
+          import("@/views/master/treatment-bahan/all-treatment-bahan.vue"),
+      },
+      {
+        path: "perawat-bahan",
+        name: "Master Bahan Perawat",
+        component: () =>
+          import("@/views/master/perawat-bahan/all-perawat-bahan.vue"),
+      },
     ],
   },
 ];

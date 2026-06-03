@@ -173,6 +173,11 @@ const referenceService = {
 
     return response.data.data;
   },
+
+  async bahanPerawat(params = {}) {
+    const response = await api.get("/reference/bahan-perawat", { params });
+    return response.data.data;
+  },
 };
 
 export default referenceService;
