@@ -2055,28 +2055,98 @@ export default {
         this.recalculatePromoEffects();
       }
     },
-    getPromoAmount(promo) {
-      if (!promo) return 0;
-      const value = Number(
-        promo.nilai_diskon ||
-          promo.total_diskon ||
-          promo.diskon ||
-          promo.amount ||
+    getPromoDiscountValue(promo) {
+      return Number(
+        promo?.nilai_diskon ||
+          promo?.total_diskon ||
+          promo?.diskon ||
+          promo?.amount ||
           0,
       );
-      const tipe = String(
-        promo.tipe_diskon || promo.diskon_tipe || promo.type || "",
+    },
+    getPromoDiscountType(promo) {
+      return String(
+        promo?.tipe_diskon || promo?.diskon_tipe || promo?.type || "",
       ).toLowerCase();
-      const base = this.getPromoEligibleBase(promo);
+    },
+    getPromoMaxDiscount(promo) {
+      return Number(
+        promo?.total_diskon_maksimal ||
+          promo?.maksimal_diskon ||
+          promo?.max_diskon ||
+          promo?.maximum_discount ||
+          promo?.max_discount ||
+          0,
+      );
+    },
+    calculatePromoAmountByBase(base, promo) {
+      const value = this.getPromoDiscountValue(promo);
+      const tipe = this.getPromoDiscountType(promo);
+      const max = this.getPromoMaxDiscount(promo);
+      const eligibleBase = Number(base || 0);
 
-      if (base <= 0 || value <= 0) return 0;
+      if (eligibleBase <= 0 || value <= 0) return 0;
 
-      if (tipe.includes("percent") || tipe.includes("persen") || tipe === "%") {
-        const calculated = (base * value) / 100;
-        const max = Number(promo.maksimal_diskon || promo.max_diskon || 0);
-        return max > 0 ? Math.min(calculated, max) : calculated;
+      if (
+        tipe.includes("percent") ||
+        tipe.includes("persen") ||
+        tipe === "%" ||
+        tipe === "1"
+      ) {
+        const calculated = (eligibleBase * value) / 100;
+        return max > 0
+          ? Math.min(calculated, max, eligibleBase)
+          : Math.min(calculated, eligibleBase);
       }
-      return Math.min(value, base);
+
+      return Math.min(value, eligibleBase);
+    },
+    getItemPromoEligibleBase(item, kind = "produk") {
+      const itemBase =
+        kind === "treatment"
+          ? this.getTreatmentSubtotal(item)
+          : this.getPenjualanSubtotal(item);
+      const subtotal = Number(this.subtotal || 0);
+      const subtotalDiscount = Number(this.subtotalDiscountAmount || 0);
+
+      if (subtotal <= 0 || itemBase <= 0) return 0;
+
+      const discountShare = (subtotalDiscount * itemBase) / subtotal;
+      return Math.max(itemBase - discountShare, 0);
+    },
+    getPromoAmount(promo) {
+      if (!promo) return 0;
+
+      if (this.hasPromoSpecificItems(promo)) {
+        const productAmount = this.getPromoMatchedPenjualanItems(promo).reduce(
+          (sum, item) =>
+            sum +
+            this.calculatePromoAmountByBase(
+              this.getItemPromoEligibleBase(item, "produk"),
+              promo,
+            ),
+          0,
+        );
+
+        const treatmentAmount = this.getPromoMatchedTreatmentItems(
+          promo,
+        ).reduce(
+          (sum, item) =>
+            sum +
+            this.calculatePromoAmountByBase(
+              this.getItemPromoEligibleBase(item, "treatment"),
+              promo,
+            ),
+          0,
+        );
+
+        return productAmount + treatmentAmount;
+      }
+
+      return this.calculatePromoAmountByBase(
+        this.getPromoEligibleBase(promo),
+        promo,
+      );
     },
     getPromoKey(promo) {
       if (!promo) return "";

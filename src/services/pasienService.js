@@ -13,6 +13,13 @@ export default {
     return response.data;
   },
 
+  async getRiwayat(id, params = {}) {
+    const response = await api.get(`/administrasi/pasien/${id}/riwayat`, {
+      params,
+    });
+    return response.data;
+  },
+
   async create(payload) {
     const response = await api.post("/administrasi/pasien", payload);
     return response.data;
