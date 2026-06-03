@@ -265,10 +265,6 @@
               <v-chip size="small" color="primary">
                 {{ getLayananLabel(item) }}
               </v-chip>
-
-              <div class="text-caption text-medium-emphasis mt-1">
-                {{ formatChannel(item.channel_konsultasi) }}
-              </div>
             </div>
           </template>
 

@@ -2753,6 +2753,10 @@ export default {
         data?.message || "Pembayaran berhasil diselesaikan.",
         "success",
       );
+
+      window.setTimeout(() => {
+        this.$router.replace({ path: "/kasir/daftar-pembayaran" });
+      }, 500);
     },
     isFinishTransportCanceled(error) {
       const code = String(error?.code || "").toUpperCase();
