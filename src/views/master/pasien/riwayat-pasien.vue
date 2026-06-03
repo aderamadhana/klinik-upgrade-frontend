@@ -8,7 +8,7 @@
             icon="mdi-arrow-left"
             variant="text"
             size="small"
-            :to="{ path: '/administrasi/pasien' }"
+            :to="{ path: '/master/pasien' }"
           />
           <div class="text-caption text-medium-emphasis">Master Pasien</div>
         </div>
@@ -711,6 +711,23 @@ export default {
       );
 
       return { start, end };
+    },
+
+    pointSisa() {
+      const fromSummary = Number(this.summary?.member_point_sisa || 0);
+      const fromPatient = Number(this.patient?.member?.point_sisa || 0);
+
+      return fromSummary || fromPatient || 0;
+    },
+
+    pointValue() {
+      const fromSummary = Number(this.summary?.member_point_value || 0);
+
+      if (fromSummary > 0) {
+        return fromSummary;
+      }
+
+      return this.pointSisa * 2500;
     },
   },
 

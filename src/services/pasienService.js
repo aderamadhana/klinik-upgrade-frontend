@@ -20,6 +20,21 @@ export default {
     return response.data;
   },
 
+  async riwayatSaldoDeposit(id, params = {}) {
+    const response = await api.get(`/administrasi/pasien/${id}/saldo-deposit`, {
+      params,
+    });
+    return response.data;
+  },
+
+  async claimSaldoDeposit(id, depositId, payload = {}) {
+    const response = await api.post(
+      `/administrasi/pasien/${id}/saldo-deposit/${depositId}/claim`,
+      payload,
+    );
+    return response.data;
+  },
+
   async create(payload) {
     const response = await api.post("/administrasi/pasien", payload);
     return response.data;

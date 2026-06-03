@@ -1,648 +1,841 @@
 <template>
-  <div>
+  <v-container fluid class="pa-6">
     <div class="page-header">
       <div>
-        <h1 class="page-title">Deposit Pasien</h1>
+        <h1 class="page-title">Saldo Deposit Pasien</h1>
         <p class="page-subtitle">
-          Kelola saldo deposit pasien, masa berlaku, dan riwayat claim treatment
+          Monitoring saldo deposit treatment, sisa qty, nilai sisa, tanggal
+          expired, dan riwayat claim pasien.
         </p>
       </div>
 
-      <v-breadcrumbs :items="breadcrumbs" divider="/" />
+      <div class="top-action-row">
+        <v-btn
+          variant="tonal"
+          color="secondary"
+          prepend-icon="mdi-arrow-left"
+          class="toolbar-btn"
+          @click="goBack"
+        >
+          Kembali
+        </v-btn>
+
+        <v-btn
+          color="primary"
+          prepend-icon="mdi-refresh"
+          class="toolbar-btn"
+          :loading="loading"
+          @click="loadData"
+        >
+          Refresh
+        </v-btn>
+      </div>
     </div>
-    <v-card>
+
+    <v-alert
+      v-if="errorMessage"
+      type="error"
+      variant="tonal"
+      class="mb-4"
+      closable
+      @click:close="errorMessage = ''"
+    >
+      {{ errorMessage }}
+    </v-alert>
+
+    <v-row class="mb-4" dense>
+      <v-col cols="12" md="3">
+        <v-card class="summary-card">
+          <div class="summary-label">Qty Sisa Aktif</div>
+          <div class="summary-value">
+            {{ formatQty(summary.aktif_qty_sisa) }}
+          </div>
+          <div class="text-caption text-medium-emphasis mt-1">
+            Dari {{ summary.aktif_count || 0 }} deposit aktif
+          </div>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" md="3">
+        <v-card class="summary-card">
+          <div class="summary-label">Nilai Sisa Aktif</div>
+          <div class="summary-value">
+            {{ formatCurrency(summary.aktif_nilai_sisa) }}
+          </div>
+          <div class="text-caption text-medium-emphasis mt-1">
+            Saldo deposit yang masih bisa dipakai
+          </div>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" md="3">
+        <v-card class="summary-card">
+          <div class="summary-label">Akan Expired</div>
+          <div class="summary-value">
+            {{ summary.akan_expired_count || 0 }}
+          </div>
+          <div class="text-caption text-medium-emphasis mt-1">
+            Dalam 30 hari ke depan
+          </div>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" md="3">
+        <v-card class="summary-card">
+          <div class="summary-label">Expired / Habis</div>
+          <div class="summary-value">
+            {{ (summary.expired_count || 0) + (summary.habis_count || 0) }}
+          </div>
+          <div class="text-caption text-medium-emphasis mt-1">
+            Expired {{ summary.expired_count || 0 }} · Habis
+            {{ summary.habis_count || 0 }}
+          </div>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <v-card class="main-card mb-4">
+      <div class="section-header">Data Pasien</div>
+
       <v-card-text>
-        <!-- SECTION: SALDO DEPOSIT -->
-        <div
-          class="d-flex flex-column flex-md-row align-md-center justify-space-between ga-3 mb-4"
-        >
-          <div>
-            <div class="text-h6 font-weight-bold">Saldo Deposit Pasien</div>
-            <div class="text-medium-emphasis text-body-2">
-              Cari berdasarkan nomor faktur, nama treatment, dokter, atau
-              catatan
-            </div>
-          </div>
-
-          <div
-            class="d-flex align-center ga-2"
-            style="min-width: 320px; max-width: 420px; width: 100%"
-          >
-            <v-text-field
-              v-model="searchDeposit"
-              placeholder="Cari saldo deposit..."
-              prepend-inner-icon="mdi-magnify"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-              clearable
-              style="width: 100%"
-            />
-          </div>
+        <div v-if="loading && !patient.id" class="py-2">
+          <v-skeleton-loader type="article" />
         </div>
 
-        <div class="d-flex justify-space-between align-center mb-3">
-          <div class="text-body-2 text-medium-emphasis">
-            Menampilkan <strong>{{ filteredSaldoDeposit.length }}</strong> dari
-            <strong>{{ saldoDeposit.length }}</strong> data
-          </div>
-
-          <v-btn
-            v-if="searchDeposit"
-            variant="text"
-            size="small"
-            prepend-icon="mdi-close"
-            @click="searchDeposit = ''"
-          >
-            Reset pencarian
-          </v-btn>
-        </div>
-
-        <v-data-table
-          :headers="depositHeaders"
-          :items="filteredSaldoDeposit"
-          item-value="id"
-          class="elevation-1"
-        >
-          <template #item.date_created="{ item }">
-            {{ formatDate(item.date_created) }}
-          </template>
-
-          <template #item.date_exp="{ item }">
-            <div class="d-flex align-center ga-2">
-              <v-chip
-                size="small"
-                :color="isExpired(item.date_exp) ? 'error' : 'warning'"
-                variant="tonal"
-              >
-                {{ formatDate(item.date_exp) }}
-              </v-chip>
-
-              <v-btn
-                v-if="roleId === 1"
-                size="small"
-                color="warning"
-                variant="text"
-                icon="mdi-pencil"
-                @click="openEditExp(item)"
-              />
-            </div>
-          </template>
-
-          <template #item.action="{ item }">
-            <v-btn
-              v-if="isExpired(item.date_exp)"
-              size="small"
-              color="grey"
-              variant="flat"
-              disabled
-            >
-              Expired
-            </v-btn>
-
-            <v-btn
-              v-else
-              size="small"
-              color="primary"
-              variant="flat"
-              @click="openClaimDialog(item)"
-            >
-              Proses Claim
-            </v-btn>
-          </template>
-
-          <template #no-data>
-            <div class="text-center py-8">
-              <v-icon size="40" class="mb-2">mdi-database-search</v-icon>
-              <div class="text-subtitle-1 font-weight-medium">
-                Tidak ada data saldo deposit
-              </div>
-              <div class="text-body-2 text-medium-emphasis">
-                Coba ubah kata kunci pencarian Anda
+        <v-row v-else dense>
+          <v-col cols="12" md="3">
+            <div class="patient-detail-item">
+              <div class="patient-detail-label">Nama Pasien</div>
+              <div class="patient-detail-value">
+                {{ patient.nama || "-" }}
               </div>
             </div>
-          </template>
-        </v-data-table>
+          </v-col>
 
-        <v-divider class="my-6" />
-
-        <!-- SECTION: RIWAYAT CLAIM -->
-        <div
-          class="d-flex flex-column flex-md-row align-md-center justify-space-between ga-3 mb-4"
-        >
-          <div>
-            <div class="text-h6 font-weight-bold">Riwayat Claim Deposit</div>
-            <div class="text-medium-emphasis text-body-2">
-              Cari berdasarkan nomor faktur realisasi, treatment, dokter, atau
-              perawat
-            </div>
-          </div>
-
-          <div
-            class="d-flex align-center ga-2"
-            style="min-width: 320px; max-width: 420px; width: 100%"
-          >
-            <v-text-field
-              v-model="searchHistory"
-              placeholder="Cari riwayat claim..."
-              prepend-inner-icon="mdi-magnify"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-              clearable
-              style="width: 100%"
-            />
-          </div>
-        </div>
-
-        <div class="d-flex justify-space-between align-center mb-3">
-          <div class="text-body-2 text-medium-emphasis">
-            Menampilkan <strong>{{ filteredHistoryClaim.length }}</strong> dari
-            <strong>{{ historyClaim.length }}</strong> data
-          </div>
-
-          <v-btn
-            v-if="searchHistory"
-            variant="text"
-            size="small"
-            prepend-icon="mdi-close"
-            @click="searchHistory = ''"
-          >
-            Reset pencarian
-          </v-btn>
-        </div>
-
-        <v-data-table
-          :headers="historyHeaders"
-          :items="filteredHistoryClaim"
-          item-value="id"
-          class="elevation-1"
-        >
-          <template #item.date_created="{ item }">
-            {{ formatDate(item.date_created) }}
-          </template>
-
-          <template #item.date_edited="{ item }">
-            {{ formatDate(item.date_edited) }}
-          </template>
-
-          <template #item.action="{ item }">
-            <v-btn
-              size="small"
-              color="success"
-              variant="flat"
-              prepend-icon="mdi-printer"
-              @click="reprintClaim(item)"
-            >
-              Reprint Claim
-            </v-btn>
-          </template>
-
-          <template #no-data>
-            <div class="text-center py-8">
-              <v-icon size="40" class="mb-2">mdi-file-search</v-icon>
-              <div class="text-subtitle-1 font-weight-medium">
-                Tidak ada riwayat claim yang cocok
-              </div>
-              <div class="text-body-2 text-medium-emphasis">
-                Periksa kata kunci atau reset pencarian
+          <v-col cols="12" md="3">
+            <div class="patient-detail-item">
+              <div class="patient-detail-label">No. RM</div>
+              <div class="patient-detail-value">
+                {{ patient.no_rm || "-" }}
               </div>
             </div>
-          </template>
-        </v-data-table>
+          </v-col>
+
+          <v-col cols="12" md="3">
+            <div class="patient-detail-item">
+              <div class="patient-detail-label">No. HP / WA</div>
+              <div class="patient-detail-value">
+                {{ patient.no_wa || patient.no_hp || patient.no_telp || "-" }}
+              </div>
+            </div>
+          </v-col>
+
+          <v-col cols="12" md="3">
+            <div class="patient-detail-item">
+              <div class="patient-detail-label">Cabang Daftar</div>
+              <div class="patient-detail-value">
+                {{ patient.toko_nama || "-" }}
+              </div>
+            </div>
+          </v-col>
+        </v-row>
       </v-card-text>
     </v-card>
 
-    <!-- Dialog Edit Expired -->
-    <v-dialog v-model="editExpDialog" max-width="400">
-      <v-card>
-        <v-card-title>Edit Tanggal Expired</v-card-title>
+    <v-card class="main-card">
+      <div class="toolbar-wrap">
+        <div class="filter-wrap">
+          <v-text-field
+            v-model="filters.search"
+            class="search-field"
+            density="compact"
+            variant="outlined"
+            label="Cari treatment / invoice / cabang"
+            prepend-inner-icon="mdi-magnify"
+            hide-details
+            clearable
+            @keyup.enter="loadData"
+            @click:clear="handleClearSearch"
+          />
+
+          <v-select
+            v-model="filters.status"
+            class="status-field"
+            density="compact"
+            variant="outlined"
+            label="Status"
+            :items="statusOptions"
+            hide-details
+            @update:model-value="loadData"
+          />
+
+          <v-btn
+            color="primary"
+            variant="tonal"
+            class="toolbar-btn"
+            prepend-icon="mdi-filter"
+            :loading="loading"
+            @click="loadData"
+          >
+            Terapkan
+          </v-btn>
+        </div>
+
+        <div class="action-wrap">
+          <v-chip color="primary" variant="tonal" class="badge-chip">
+            Total {{ deposits.length }} data
+          </v-chip>
+
+          <v-chip color="success" variant="tonal" class="badge-chip">
+            Sisa {{ formatCurrency(summary.total_nilai_sisa) }}
+          </v-chip>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <v-data-table
+          :headers="headers"
+          :items="deposits"
+          :loading="loading"
+          item-value="id"
+          density="comfortable"
+          class="responsive-table"
+          hover
+        >
+          <template #item.nama_treatment="{ item }">
+            <div>
+              <div class="service-title">
+                {{ getRow(item).nama_treatment || "-" }}
+              </div>
+              <div class="service-sub">
+                Invoice {{ getRow(item).no_invoice || "-" }}
+              </div>
+              <div class="service-sub">
+                {{ getRow(item).toko_beli_nama || "-" }}
+              </div>
+            </div>
+          </template>
+
+          <template #item.tanggal_invoice="{ item }">
+            <div>
+              <div class="date-main">
+                {{ getRow(item).tanggal_invoice_formatted || "-" }}
+              </div>
+              <div class="date-sub">
+                Expired {{ getRow(item).expired_at_formatted || "-" }}
+              </div>
+            </div>
+          </template>
+
+          <template #item.qty="{ item }">
+            <div class="text-right">
+              <div class="amount-main">
+                {{ formatQty(getRow(item).qty_sisa) }}
+                /
+                {{ formatQty(getRow(item).qty_total) }}
+              </div>
+              <div class="amount-sub">
+                Claimed {{ formatQty(getRow(item).qty_claimed) }}
+              </div>
+            </div>
+          </template>
+
+          <template #item.nilai="{ item }">
+            <div class="amount-cell">
+              <div class="amount-text">
+                {{ formatCurrency(getRow(item).nilai_sisa) }}
+              </div>
+              <div class="amount-sub">
+                Total {{ formatCurrency(getRow(item).total_nilai) }}
+              </div>
+            </div>
+          </template>
+
+          <template #item.referensi_dokter="{ item }">
+            <div>
+              <div class="doctor-name">
+                {{ getRow(item).referensi_dokter_nama || "-" }}
+              </div>
+              <div class="doctor-channel">
+                {{ getRow(item).claim_scope_text || "-" }}
+              </div>
+            </div>
+          </template>
+
+          <template #item.status_text="{ item }">
+            <v-chip
+              :color="getRow(item).status_color"
+              variant="tonal"
+              size="small"
+              class="badge-chip"
+            >
+              {{ getRow(item).status_text }}
+            </v-chip>
+          </template>
+
+          <template #item.actions="{ item }">
+            <div class="action-cell">
+              <v-btn
+                size="small"
+                variant="tonal"
+                color="success"
+                class="text-action-btn"
+                prepend-icon="mdi-check-decagram"
+                :disabled="
+                  getRow(item).status_key !== 'aktif' ||
+                  Number(getRow(item).qty_sisa || 0) <= 0
+                "
+                @click="openClaimProcessDialog(getRow(item))"
+              >
+                Proses Claim
+              </v-btn>
+
+              <v-btn
+                size="small"
+                variant="tonal"
+                color="primary"
+                class="text-action-btn"
+                prepend-icon="mdi-history"
+                @click="openClaimDialog(getRow(item))"
+              >
+                Riwayat
+              </v-btn>
+            </div>
+          </template>
+
+          <template #no-data>
+            <div class="empty-state">
+              <v-icon size="42" color="grey">mdi-database-off-outline</v-icon>
+              <div class="empty-title">Belum ada saldo deposit</div>
+              <div class="empty-description">
+                Tidak ada data deposit treatment untuk filter yang dipilih.
+              </div>
+            </div>
+          </template>
+        </v-data-table>
+      </div>
+    </v-card>
+
+    <v-dialog v-model="claimDialog" max-width="900">
+      <v-card class="dialog-card">
+        <div class="dialog-title d-flex justify-space-between align-center">
+          <div>Riwayat Claim Deposit</div>
+
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            @click="claimDialog = false"
+          />
+        </div>
+
+        <v-divider />
 
         <v-card-text>
-          <v-text-field
-            v-model="editExpForm.date_exp"
-            label="Tanggal Expired"
-            type="date"
-            variant="outlined"
-            density="comfortable"
-          />
+          <v-row dense class="mb-4">
+            <v-col cols="12" md="4">
+              <div class="info-box">
+                <div class="label-text">Treatment</div>
+                <div class="value-text">
+                  {{ selectedDeposit.nama_treatment || "-" }}
+                </div>
+              </div>
+            </v-col>
+
+            <v-col cols="12" md="4">
+              <div class="info-box">
+                <div class="label-text">Invoice Pembelian</div>
+                <div class="value-text">
+                  {{ selectedDeposit.no_invoice || "-" }}
+                </div>
+              </div>
+            </v-col>
+
+            <v-col cols="12" md="4">
+              <div class="info-box">
+                <div class="label-text">Sisa Deposit</div>
+                <div class="value-text">
+                  {{ formatQty(selectedDeposit.qty_sisa) }}
+                  /
+                  {{ formatCurrency(selectedDeposit.nilai_sisa) }}
+                </div>
+              </div>
+            </v-col>
+          </v-row>
+
+          <v-table density="compact" class="riwayat-table">
+            <thead>
+              <tr>
+                <th>Tanggal Claim</th>
+                <th>Invoice</th>
+                <th>Cabang</th>
+                <th class="text-right">Qty</th>
+                <th class="text-right">Nilai Realisasi</th>
+                <th>Dokter / Perawat</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-if="!selectedClaims.length">
+                <td colspan="6">
+                  <div class="empty-state">
+                    <v-icon size="36" color="grey">mdi-history</v-icon>
+                    <div class="empty-title">Belum ada claim</div>
+                    <div class="empty-description">
+                      Deposit ini belum pernah digunakan.
+                    </div>
+                  </div>
+                </td>
+              </tr>
+
+              <tr v-for="claim in selectedClaims" :key="claim.id">
+                <td>{{ claim.claimed_at_formatted || "-" }}</td>
+                <td>
+                  <div class="invoice-link">
+                    {{ claim.no_invoice || "-" }}
+                  </div>
+                  <div class="invoice-sub">
+                    {{ claim.kode_registrasi || "-" }}
+                  </div>
+                </td>
+                <td>{{ claim.toko_claim_nama || "-" }}</td>
+                <td class="text-right">
+                  {{ formatQty(claim.qty_claim) }}
+                </td>
+                <td class="text-right">
+                  {{ formatCurrency(claim.nilai_realisasi) }}
+                </td>
+                <td>
+                  <div>{{ claim.dokter_nama || "-" }}</div>
+                  <div class="text-caption text-medium-emphasis">
+                    {{ claim.perawat_nama || "-" }}
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
         </v-card-text>
 
-        <v-card-actions>
-          <v-spacer />
-          <v-btn variant="text" @click="editExpDialog = false">Batal</v-btn>
-          <v-btn color="success" variant="flat" @click="saveExpDate">
-            Simpan
-          </v-btn>
+        <v-divider />
+
+        <v-card-actions class="justify-end">
+          <v-btn variant="tonal" @click="claimDialog = false"> Tutup </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <!-- Dialog Claim -->
-    <v-dialog v-model="claimDialog" max-width="700">
-      <v-card>
-        <v-card-title>Proses Claim Deposit</v-card-title>
+    <v-dialog v-model="claimProcessDialog" max-width="760" persistent>
+      <v-card class="dialog-card">
+        <div class="dialog-title d-flex justify-space-between align-center">
+          <div>Proses Claim Deposit</div>
+
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            :disabled="claimSubmitting"
+            @click="closeClaimProcessDialog"
+          />
+        </div>
+
+        <v-divider />
 
         <v-card-text>
-          <v-row>
+          <v-alert
+            v-if="claimError"
+            type="error"
+            variant="tonal"
+            class="mb-4"
+            closable
+            @click:close="claimError = ''"
+          >
+            {{ claimError }}
+          </v-alert>
+
+          <v-row dense>
             <v-col cols="12">
               <v-text-field
-                :model-value="selectedDeposit?.nama_treatment || ''"
                 label="Nama Treatment"
+                :model-value="claimForm.nama_treatment"
                 variant="outlined"
-                density="comfortable"
+                density="compact"
                 readonly
               />
             </v-col>
 
             <v-col cols="12" md="6">
-              <v-select
-                v-model="claimForm.id_dokter"
-                :items="dokterList"
-                item-title="nama"
-                item-value="new_id"
-                label="Dokter Claim Treatment"
+              <v-text-field
+                label="Sisa Qty"
+                :model-value="formatQty(claimForm.qty_sisa)"
                 variant="outlined"
-                density="comfortable"
-                :error-messages="claimErrors.id_dokter"
+                density="compact"
+                readonly
               />
             </v-col>
 
             <v-col cols="12" md="6">
-              <v-select
-                v-model="claimForm.id_perawat"
-                :items="perawatList"
-                item-title="nama"
-                item-value="new_id"
-                label="Perawat Claim Treatment"
+              <v-text-field
+                label="Nilai Sisa"
+                :model-value="formatCurrency(claimForm.nilai_sisa)"
                 variant="outlined"
-                density="comfortable"
-                :error-messages="claimErrors.id_perawat"
+                density="compact"
+                readonly
+              />
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model.number="claimForm.qty_claim"
+                label="Qty Claim"
+                type="number"
+                min="1"
+                :max="claimForm.qty_sisa"
+                variant="outlined"
+                density="compact"
+                hide-details="auto"
+              />
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-text-field
+                label="Estimasi Nilai Realisasi"
+                :model-value="formatCurrency(estimatedClaimValue)"
+                variant="outlined"
+                density="compact"
+                readonly
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-select
+                v-model="claimForm.claim_dokter_id"
+                label="Dokter Claim Treatment"
+                :items="claimOptions.dokter"
+                item-title="title"
+                item-value="value"
+                variant="outlined"
+                density="compact"
+                clearable
+                hide-details="auto"
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-select
+                v-model="claimForm.claim_perawat_id"
+                label="Perawat Claim Treatment"
+                :items="claimOptions.perawat"
+                item-title="title"
+                item-value="value"
+                variant="outlined"
+                density="compact"
+                clearable
+                hide-details="auto"
               />
             </v-col>
 
             <v-col cols="12">
               <v-textarea
-                v-model="claimForm.catatan_treatment"
-                label="Catatan Perubahan Treatment"
+                v-model="claimForm.catatan"
+                label="Catatan Jika Ada Perubahan Treatment Pasien"
+                placeholder="Isi catatan untuk treatment pasien"
                 variant="outlined"
-                density="comfortable"
+                density="compact"
                 rows="3"
+                hide-details="auto"
               />
             </v-col>
           </v-row>
         </v-card-text>
 
-        <v-card-actions>
-          <v-spacer />
-          <v-btn variant="text" @click="claimDialog = false">Batal</v-btn>
-          <v-btn color="success" variant="flat" @click="validateAndOpenConfirm">
+        <v-divider />
+
+        <v-card-actions class="justify-end">
+          <v-btn
+            variant="tonal"
+            :disabled="claimSubmitting"
+            @click="closeClaimProcessDialog"
+          >
+            Batal
+          </v-btn>
+
+          <v-btn
+            color="success"
+            variant="flat"
+            :loading="claimSubmitting"
+            @click="submitClaimDeposit"
+          >
             Claim
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-
-    <!-- Dialog Konfirmasi -->
-    <v-dialog v-model="confirmDialog" max-width="500">
-      <v-card>
-        <v-card-title>Konfirmasi Claim Deposit</v-card-title>
-
-        <v-card-text>
-          <p class="mb-4">
-            Apakah Anda yakin ingin melakukan claim deposit ini? Setelah claim
-            diproses, faktur tidak bisa diedit atau dihapus.
-            <span class="text-red font-weight-bold">
-              ⚠️ Pastikan dokter dan perawat sudah benar.
-            </span>
-          </p>
-
-          <div v-if="selectedDeposit">
-            <div>
-              <strong>Treatment:</strong> {{ selectedDeposit.nama_treatment }}
-            </div>
-            <div><strong>Dokter:</strong> {{ selectedDokterName }}</div>
-            <div><strong>Perawat:</strong> {{ selectedPerawatName }}</div>
-            <div v-if="claimForm.catatan_treatment">
-              <strong>Catatan:</strong> {{ claimForm.catatan_treatment }}
-            </div>
-          </div>
-        </v-card-text>
-
-        <v-card-actions>
-          <v-spacer />
-          <v-btn variant="text" @click="confirmDialog = false">Batal</v-btn>
-          <v-btn color="success" variant="flat" @click="submitClaim">
-            Ya, Claim
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color">
-      {{ snackbar.text }}
-    </v-snackbar>
-  </div>
+  </v-container>
 </template>
 
 <script>
+import pasienService from "@/services/pasienService";
+
 export default {
-  name: "DepositPasienPage",
+  name: "SaldoDepositPasien",
 
   data() {
     return {
-      breadcrumbs: [
-        { title: "Administrasi", disabled: true },
-        { title: "Pasien", disabled: false, to: "/administrasi/pasien" },
-        { title: "Riwayat", disabled: true },
-        { title: "Saldo Deposit", disabled: true },
-      ],
-      roleId: 1,
+      loading: false,
+      errorMessage: "",
 
-      searchDeposit: "",
-      searchHistory: "",
+      patient: {},
+      summary: {},
+      deposits: [],
 
-      depositHeaders: [
-        { title: "NO. FAKTUR DEPOSIT", key: "faktur_pembayaran" },
-        { title: "NAMA TREATMENT", key: "nama_treatment" },
-        { title: "TANGGAL BELI", key: "date_created" },
-        { title: "TANGGAL EXPIRED", key: "date_exp" },
-        { title: "DOKTER REFERER", key: "nama_dokter" },
-        { title: "CATATAN", key: "catatan" },
-        { title: "ACTION", key: "action", sortable: false },
-      ],
+      filters: {
+        search: "",
+        status: "all",
+      },
 
-      historyHeaders: [
-        { title: "NO. FAKTUR REALISASI", key: "faktur_realisasi" },
-        { title: "NAMA TREATMENT", key: "nama_treatment" },
-        { title: "TANGGAL DIBELI", key: "date_created" },
-        { title: "TANGGAL CLAIM", key: "date_edited" },
-        { title: "DOKTER", key: "claiming_dokter_nama" },
-        { title: "PERAWAT", key: "claiming_nb_nama" },
-        { title: "ACTION", key: "action", sortable: false },
+      statusOptions: [
+        { title: "Semua", value: "all" },
+        { title: "Aktif", value: "aktif" },
+        { title: "Akan Expired", value: "akan_expired" },
+        { title: "Expired", value: "expired" },
+        { title: "Habis", value: "habis" },
+        { title: "Batal", value: "batal" },
       ],
 
-      dokterList: [
-        { new_id: "D001", nama: "dr. Andi Saputra" },
-        { new_id: "D002", nama: "dr. Bunga Lestari" },
-        { new_id: "D003", nama: "dr. Candra Wijaya" },
-      ],
-
-      perawatList: [
-        { new_id: "P001", nama: "Ns. Rina" },
-        { new_id: "P002", nama: "Ns. Tika" },
-        { new_id: "P003", nama: "Ns. Wahyu" },
-      ],
-
-      saldoDeposit: [
+      headers: [
         {
-          id: 1,
-          faktur_pembayaran: "DEP-2026-0001",
-          nama_treatment: "Laser Brightening",
-          date_created: "2026-03-10",
-          date_exp: "2026-04-15",
-          nama_dokter: "dr. Andi Saputra",
-          catatan: "3x sesi",
+          title: "Treatment / Invoice",
+          key: "nama_treatment",
+          sortable: false,
         },
-        {
-          id: 2,
-          faktur_pembayaran: "DEP-2026-0002",
-          nama_treatment: "Chemical Peeling",
-          date_created: "2026-02-11",
-          date_exp: "2026-03-15",
-          nama_dokter: "dr. Bunga Lestari",
-          catatan: "Deposit promo",
-        },
-        {
-          id: 3,
-          faktur_pembayaran: "DEP-2026-0003",
-          nama_treatment: "Facial Glow",
-          date_created: "2026-03-20",
-          date_exp: "2026-05-20",
-          nama_dokter: "dr. Candra Wijaya",
-          catatan: "-",
-        },
+        { title: "Tanggal", key: "tanggal_invoice", sortable: false },
+        { title: "Qty", key: "qty", align: "end", sortable: false },
+        { title: "Nilai", key: "nilai", align: "end", sortable: false },
+        { title: "Referensi", key: "referensi_dokter", sortable: false },
+        { title: "Status", key: "status_text", sortable: false },
+        { title: "Aksi", key: "actions", align: "end", sortable: false },
       ],
 
-      historyClaim: [
-        {
-          id: 101,
-          faktur_realisasi: "CLM-2026-0001",
-          nama_treatment: "Microneedling",
-          date_created: "2026-02-01",
-          date_edited: "2026-02-05",
-          claiming_dokter_nama: "dr. Andi Saputra",
-          claiming_nb_nama: "Ns. Rina",
-        },
-        {
-          id: 102,
-          faktur_realisasi: "CLM-2026-0002",
-          nama_treatment: "Facial Detox",
-          date_created: "2026-02-14",
-          date_edited: "2026-02-20",
-          claiming_dokter_nama: "dr. Bunga Lestari",
-          claiming_nb_nama: "Ns. Tika",
-        },
-      ],
-
-      editExpDialog: false,
       claimDialog: false,
-      confirmDialog: false,
+      selectedDeposit: {},
 
-      selectedDeposit: null,
+      claimProcessDialog: false,
+      claimSubmitting: false,
+      claimError: "",
 
-      editExpForm: {
-        id: null,
-        date_exp: "",
+      claimOptions: {
+        dokter: [],
+        perawat: [],
       },
 
       claimForm: {
-        id_deposit: null,
-        id_dokter: "",
-        id_perawat: "",
-        catatan_treatment: "",
-      },
-
-      claimErrors: {
-        id_dokter: "",
-        id_perawat: "",
-      },
-
-      snackbar: {
-        show: false,
-        text: "",
-        color: "success",
+        deposit_id: null,
+        nama_treatment: "",
+        qty_sisa: 0,
+        nilai_sisa: 0,
+        qty_claim: 1,
+        claim_dokter_id: null,
+        claim_perawat_id: null,
+        catatan: "",
       },
     };
   },
 
   computed: {
-    filteredSaldoDeposit() {
-      const q = this.normalize(this.searchDeposit).trim();
-      if (!q) return this.saldoDeposit;
-
-      return this.saldoDeposit.filter((item) => {
-        return [
-          item.faktur_pembayaran,
-          item.nama_treatment,
-          item.nama_dokter,
-          item.catatan,
-          this.formatDate(item.date_created),
-          this.formatDate(item.date_exp),
-        ].some((field) => this.normalize(field).includes(q));
-      });
+    patientId() {
+      return this.$route.params.id;
     },
 
-    filteredHistoryClaim() {
-      const q = this.normalize(this.searchHistory).trim();
-      if (!q) return this.historyClaim;
-
-      return this.historyClaim.filter((item) => {
-        return [
-          item.faktur_realisasi,
-          item.nama_treatment,
-          item.claiming_dokter_nama,
-          item.claiming_nb_nama,
-          this.formatDate(item.date_created),
-          this.formatDate(item.date_edited),
-        ].some((field) => this.normalize(field).includes(q));
-      });
+    selectedClaims() {
+      return Array.isArray(this.selectedDeposit.claims)
+        ? this.selectedDeposit.claims
+        : [];
     },
 
-    selectedDokterName() {
-      return (
-        this.dokterList.find((d) => d.new_id === this.claimForm.id_dokter)
-          ?.nama || "-"
-      );
-    },
+    estimatedClaimValue() {
+      const qtySisa = Number(this.claimForm.qty_sisa || 0);
+      const nilaiSisa = Number(this.claimForm.nilai_sisa || 0);
+      const qtyClaim = Number(this.claimForm.qty_claim || 0);
 
-    selectedPerawatName() {
-      return (
-        this.perawatList.find((p) => p.new_id === this.claimForm.id_perawat)
-          ?.nama || "-"
-      );
+      if (qtySisa <= 0 || nilaiSisa <= 0 || qtyClaim <= 0) {
+        return 0;
+      }
+
+      return Math.min(nilaiSisa, (nilaiSisa / qtySisa) * qtyClaim);
     },
   },
 
+  mounted() {
+    this.loadData();
+  },
+
   methods: {
-    formatDate(dateString) {
-      if (!dateString) return "-";
-      return new Intl.DateTimeFormat("id-ID", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }).format(new Date(dateString));
-    },
-
-    isExpired(dateString) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const expDate = new Date(dateString);
-      expDate.setHours(0, 0, 0, 0);
-
-      return expDate < today;
-    },
-
-    normalize(value) {
-      return String(value || "").toLowerCase();
-    },
-
-    openEditExp(item) {
-      this.editExpForm = {
-        id: item.id,
-        date_exp: item.date_exp,
-      };
-      this.editExpDialog = true;
-    },
-
-    saveExpDate() {
-      const index = this.saldoDeposit.findIndex(
-        (item) => item.id === this.editExpForm.id,
-      );
-
-      if (index !== -1) {
-        this.saldoDeposit[index].date_exp = this.editExpForm.date_exp;
+    async loadData() {
+      if (!this.patientId) {
+        this.errorMessage = "ID pasien tidak valid.";
+        return;
       }
 
-      this.editExpDialog = false;
-      this.showSnackbar("Tanggal expired berhasil diperbarui", "success");
+      this.loading = true;
+      this.errorMessage = "";
+
+      try {
+        const response = await pasienService.riwayatSaldoDeposit(
+          this.patientId,
+          {
+            search: this.filters.search || "",
+            status: this.filters.status || "all",
+          },
+        );
+
+        const payload = response && response.data ? response.data : {};
+
+        this.patient = payload.pasien || {};
+        this.summary = payload.summary || {};
+        this.deposits = Array.isArray(payload.deposits) ? payload.deposits : [];
+
+        const options = payload.claim_options || {};
+        this.claimOptions.dokter = Array.isArray(options.dokter)
+          ? options.dokter
+          : [];
+        this.claimOptions.perawat = Array.isArray(options.perawat)
+          ? options.perawat
+          : [];
+      } catch (error) {
+        this.errorMessage =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Gagal mengambil data saldo deposit pasien.";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    handleClearSearch() {
+      this.filters.search = "";
+      this.loadData();
     },
 
     openClaimDialog(item) {
-      this.selectedDeposit = item;
-      this.claimForm = {
-        id_deposit: item.id,
-        id_dokter: "",
-        id_perawat: "",
-        catatan_treatment: "",
-      };
-      this.claimErrors = {
-        id_dokter: "",
-        id_perawat: "",
-      };
+      this.selectedDeposit = item || {};
       this.claimDialog = true;
     },
 
-    validateAndOpenConfirm() {
-      this.claimErrors = {
-        id_dokter: "",
-        id_perawat: "",
+    openClaimProcessDialog(item) {
+      const row = this.getRow(item);
+      const qtySisa = Number(row.qty_sisa || 0);
+
+      this.claimError = "";
+
+      this.claimForm = {
+        deposit_id: row.id || null,
+        nama_treatment: row.nama_treatment || "",
+        qty_sisa: qtySisa,
+        nilai_sisa: Number(row.nilai_sisa || 0),
+        qty_claim: qtySisa > 0 ? Math.min(1, qtySisa) : 1,
+        claim_dokter_id: null,
+        claim_perawat_id: null,
+        catatan: "",
       };
 
-      let valid = true;
+      this.claimProcessDialog = true;
+    },
 
-      if (!this.claimForm.id_dokter) {
-        this.claimErrors.id_dokter = "Silakan pilih dokter";
-        valid = false;
+    closeClaimProcessDialog() {
+      if (this.claimSubmitting) {
+        return;
       }
 
-      if (!this.claimForm.id_perawat) {
-        this.claimErrors.id_perawat = "Silakan pilih perawat";
-        valid = false;
+      this.claimProcessDialog = false;
+      this.claimError = "";
+    },
+
+    async submitClaimDeposit() {
+      this.claimError = "";
+
+      if (!this.claimForm.deposit_id) {
+        this.claimError = "Deposit tidak valid.";
+        return;
       }
 
-      if (!valid) return;
+      const qtyClaim = Number(this.claimForm.qty_claim || 0);
+      const qtySisa = Number(this.claimForm.qty_sisa || 0);
 
-      this.claimDialog = false;
-      this.confirmDialog = true;
+      if (qtyClaim <= 0) {
+        this.claimError = "Qty claim wajib lebih dari 0.";
+        return;
+      }
+
+      if (qtyClaim > qtySisa) {
+        this.claimError = "Qty claim melebihi sisa deposit.";
+        return;
+      }
+
+      this.claimSubmitting = true;
+
+      try {
+        await pasienService.claimSaldoDeposit(
+          this.patientId,
+          this.claimForm.deposit_id,
+          {
+            qty_claim: qtyClaim,
+            claim_dokter_id: this.claimForm.claim_dokter_id,
+            claim_perawat_id: this.claimForm.claim_perawat_id,
+            catatan: this.claimForm.catatan,
+            toko_claim_id:
+              this.getActiveTokoId() || this.patient.toko_id || null,
+          },
+        );
+
+        this.claimProcessDialog = false;
+        await this.loadData();
+      } catch (error) {
+        this.claimError =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Gagal memproses claim deposit.";
+      } finally {
+        this.claimSubmitting = false;
+      }
     },
 
-    submitClaim() {
-      if (!this.selectedDeposit) return;
+    isClaimDisabled(item) {
+      const row = this.getRow(item);
 
-      const deposit = this.selectedDeposit;
-
-      this.historyClaim.unshift({
-        id: Date.now(),
-        faktur_realisasi: `CLM-${new Date().getTime()}`,
-        nama_treatment: deposit.nama_treatment,
-        date_created: deposit.date_created,
-        date_edited: new Date().toISOString().slice(0, 10),
-        claiming_dokter_nama: this.selectedDokterName,
-        claiming_nb_nama: this.selectedPerawatName,
-      });
-
-      this.saldoDeposit = this.saldoDeposit.filter(
-        (item) => item.id !== deposit.id,
-      );
-
-      this.confirmDialog = false;
-      this.selectedDeposit = null;
-
-      this.showSnackbar("Claim deposit berhasil diproses", "success");
+      return row.status_key !== "aktif" || Number(row.qty_sisa || 0) <= 0;
     },
 
-    reprintClaim(item) {
-      this.showSnackbar(`Dummy reprint untuk ${item.faktur_realisasi}`, "info");
+    goBack() {
+      this.$router.back();
     },
 
-    showSnackbar(text, color = "success") {
-      this.snackbar = {
-        show: true,
-        text,
-        color,
-      };
+    getRow(item) {
+      return item?.raw || item || {};
+    },
+
+    getActiveTokoId() {
+      const raw = localStorage.getItem("selected_toko_id");
+      const id = Number(raw || 0);
+
+      return id > 0 ? id : null;
+    },
+
+    formatCurrency(value) {
+      const number = Number(value || 0);
+
+      return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        maximumFractionDigits: 0,
+      }).format(number);
+    },
+
+    formatQty(value) {
+      const number = Number(value || 0);
+
+      return new Intl.NumberFormat("id-ID", {
+        maximumFractionDigits: 2,
+      }).format(number);
     },
   },
 };

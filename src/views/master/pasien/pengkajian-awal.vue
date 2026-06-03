@@ -760,7 +760,7 @@ export default {
     return {
       breadcrumbs: [
         { title: "Administrasi", disabled: true },
-        { title: "Pasien", disabled: false, to: "/administrasi/pasien" },
+        { title: "Pasien", disabled: false, to: "/master/pasien" },
         { title: "Riwayat", disabled: true },
         { title: "Pengkajian Awal", disabled: true },
       ],

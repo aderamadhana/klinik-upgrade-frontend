@@ -237,25 +237,13 @@ export default {
         {
           header: "MASTER DATA",
           key: "header-master-data",
-          roles: [
-            "administrator",
-            "superuser",
-            "it",
-            "management",
-            "front office",
-          ],
+          roles: ["administrator", "superuser", "it", "management"],
         },
         {
           key: "master-data",
           title: "Master Data",
           icon: "mdi-database-outline",
-          roles: [
-            "administrator",
-            "superuser",
-            "it",
-            "management",
-            "front office",
-          ],
+          roles: ["administrator", "superuser", "it", "management"],
           children: [
             {
               key: "master-toko",
@@ -267,12 +255,6 @@ export default {
               key: "master-karyawan",
               title: "Karyawan",
               to: "/master/karyawan",
-              roles: ["administrator", "superuser", "it", "management"],
-            },
-            {
-              key: "master-pasien",
-              title: "Pasien",
-              to: "/master/pasien",
               roles: ["administrator", "superuser", "it", "management"],
             },
             {
@@ -420,6 +402,20 @@ export default {
         {
           header: "MENU RESEPSIONIS",
           key: "header-resepsionis",
+          roles: [
+            "administrator",
+            "superuser",
+            "it",
+            "management",
+            "front office",
+          ],
+        },
+
+        {
+          key: "master-pasien",
+          title: "Pasien",
+          icon: "mdi-account-injury-outline",
+          to: "/master/pasien",
           roles: [
             "administrator",
             "superuser",
