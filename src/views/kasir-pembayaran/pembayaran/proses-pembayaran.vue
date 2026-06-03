@@ -76,7 +76,7 @@
           :format="format"
           :format-currency="formatCurrency"
           :get-promo-amount="getPromoAmount"
-          @open-promo="promoDrawer = true"
+          @open-promo="openPromoDrawer"
           @remove-promo="removeAppliedPromo"
           @update-diskon-subtotal="updateDiskonSubtotal"
         />
@@ -890,18 +890,172 @@ export default {
         this.loadingKaryawan = false;
       }
     },
+    async openPromoDrawer() {
+      this.promoDrawer = true;
+      await this.fetchVoucherEligible();
+    },
+    findObatOption(value, row = {}) {
+      const candidates = [
+        value,
+        row?.nama,
+        row?.produk_id,
+        row?.produk_toko_id,
+        row?.id,
+      ]
+        .filter((item) => item !== null && item !== undefined && item !== "")
+        .map((item) => String(item));
+
+      return this.obatList.find((option) => {
+        const optionCandidates = [
+          option?.id,
+          option?.produk_id,
+          option?.produk_toko_id,
+          option?.title,
+          option?.nama,
+          option?.raw?.produk_id,
+          option?.raw?.produk_toko_id,
+          option?.raw?.id,
+          option?.raw?.nama,
+          option?.raw?.nama_produk,
+          option?.raw?.produk?.nama,
+        ]
+          .filter((item) => item !== null && item !== undefined && item !== "")
+          .map((item) => String(item));
+
+        return optionCandidates.some((item) => candidates.includes(item));
+      });
+    },
+    findTreatmentOption(value, row = {}) {
+      const candidates = [
+        value,
+        row?.nama,
+        row?.treatment_id,
+        row?.treatment_toko_id,
+        row?.id,
+      ]
+        .filter((item) => item !== null && item !== undefined && item !== "")
+        .map((item) => String(item));
+
+      return this.tindakanList.find((option) => {
+        const optionCandidates = [
+          option?.id,
+          option?.treatment_id,
+          option?.treatment_toko_id,
+          option?.title,
+          option?.nama,
+          option?.raw?.treatment_id,
+          option?.raw?.treatment_toko_id,
+          option?.raw?.id,
+          option?.raw?.nama,
+          option?.raw?.nama_treatment,
+          option?.raw?.treatment?.nama,
+        ]
+          .filter((item) => item !== null && item !== undefined && item !== "")
+          .map((item) => String(item));
+
+        return optionCandidates.some((item) => candidates.includes(item));
+      });
+    },
+    hydrateSelectedItemsFromReferences() {
+      this.penjualanItems = this.penjualanItems.map((item) => {
+        const selected = this.findObatOption(item?.nama, item);
+        if (!selected) return item;
+
+        return {
+          ...item,
+          produk_id:
+            Number(
+              selected.id || selected.raw?.produk_id || item.produk_id || 0,
+            ) || null,
+          produk_toko_id:
+            Number(
+              selected.produk_toko_id ||
+                selected.raw?.produk_toko_id ||
+                item.produk_toko_id ||
+                0,
+            ) || null,
+          nama: selected.title || selected.nama || item.nama,
+          harga: Number(
+            item.harga || selected.harga || selected.raw?.harga_jual || 0,
+          ),
+          unit:
+            item.unit || selected.unit || selected.raw?.nama_satuan || "pcs",
+        };
+      });
+
+      this.treatmentItems = this.treatmentItems.map((item) => {
+        const selected = this.findTreatmentOption(item?.nama, item);
+        if (!selected) return item;
+
+        return {
+          ...item,
+          treatment_id:
+            Number(
+              selected.id ||
+                selected.raw?.treatment_id ||
+                item.treatment_id ||
+                0,
+            ) || null,
+          treatment_toko_id:
+            Number(
+              selected.treatment_toko_id ||
+                selected.raw?.treatment_toko_id ||
+                item.treatment_toko_id ||
+                0,
+            ) || null,
+          nama: selected.title || selected.nama || item.nama,
+          harga: Number(
+            item.harga ||
+              selected.harga ||
+              selected.raw?.tarif ||
+              selected.raw?.harga_terendah ||
+              0,
+          ),
+        };
+      });
+    },
+    getSelectedProdukIds() {
+      return [
+        ...new Set(
+          this.penjualanItems
+            .map((item) => {
+              if (Number(item?.produk_id || 0) > 0) {
+                return Number(item.produk_id);
+              }
+
+              const selected = this.findObatOption(item?.nama, item);
+              return Number(selected?.id || selected?.raw?.produk_id || 0);
+            })
+            .filter((id) => Number(id || 0) > 0),
+        ),
+      ];
+    },
+    getSelectedTreatmentIds() {
+      return [
+        ...new Set(
+          this.treatmentItems
+            .map((item) => {
+              if (Number(item?.treatment_id || 0) > 0) {
+                return Number(item.treatment_id);
+              }
+
+              const selected = this.findTreatmentOption(item?.nama, item);
+              return Number(selected?.id || selected?.raw?.treatment_id || 0);
+            })
+            .filter((id) => Number(id || 0) > 0),
+        ),
+      ];
+    },
     async fetchVoucherEligible() {
       try {
+        this.hydrateSelectedItemsFromReferences();
+
         const params = {
           toko_id: this.header.toko_id,
           pasien_id: this.header.pasien_id,
           tanggal: this.header.tanggal || undefined,
-          produk_ids: this.penjualanItems
-            .map((item) => item.produk_id)
-            .filter(Boolean),
-          treatment_ids: this.treatmentItems
-            .map((item) => item.treatment_id)
-            .filter(Boolean),
+          produk_ids: this.getSelectedProdukIds(),
+          treatment_ids: this.getSelectedTreatmentIds(),
         };
 
         const response = await referenceService.voucherDiskonEligible(params);
@@ -1597,18 +1751,19 @@ export default {
     },
     fillObat(index) {
       const item = this.penjualanItems[index];
-      const selected = this.obatList.find(
-        (obat) => String(obat.title) === String(item.nama),
-      );
+      const selected = this.findObatOption(item?.nama, item);
       if (!selected) return;
 
       this.penjualanItems[index] = {
         ...item,
-        produk_id: selected.id,
-        produk_toko_id: selected.produk_toko_id,
+        produk_id: Number(selected.id || selected.raw?.produk_id || 0) || null,
+        produk_toko_id:
+          Number(
+            selected.produk_toko_id || selected.raw?.produk_toko_id || 0,
+          ) || null,
         nama: selected.title,
-        harga: selected.harga,
-        unit: selected.unit || "pcs",
+        harga: Number(selected.harga || selected.raw?.harga_jual || 0),
+        unit: selected.unit || selected.raw?.nama_satuan || "pcs",
         voucher_diskon_id: null,
         voucher_diskon_ids: [],
         voucher_diskon_nama: "",
@@ -1648,17 +1803,24 @@ export default {
     },
     fillTreatment(index) {
       const item = this.treatmentItems[index];
-      const selected = this.tindakanList.find(
-        (treatment) => String(treatment.title) === String(item.nama),
-      );
+      const selected = this.findTreatmentOption(item?.nama, item);
       if (!selected) return;
 
       this.treatmentItems[index] = {
         ...item,
-        treatment_id: selected.id,
-        treatment_toko_id: selected.treatment_toko_id,
+        treatment_id:
+          Number(selected.id || selected.raw?.treatment_id || 0) || null,
+        treatment_toko_id:
+          Number(
+            selected.treatment_toko_id || selected.raw?.treatment_toko_id || 0,
+          ) || null,
         nama: selected.title,
-        harga: selected.harga,
+        harga: Number(
+          selected.harga ||
+            selected.raw?.tarif ||
+            selected.raw?.harga_terendah ||
+            0,
+        ),
         voucher_diskon_id: null,
         voucher_diskon_ids: [],
         voucher_diskon_nama: "",
