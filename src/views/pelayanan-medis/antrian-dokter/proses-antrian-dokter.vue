@@ -969,7 +969,8 @@
                 density="compact"
                 class="mt-4"
               >
-                Biaya konsultasi menjadi Rp 0 jika pasien mengambil treatment.
+                Biaya {{ consultationLabel }} menjadi Rp 0 jika pasien mengambil
+                treatment.
               </v-alert>
             </v-card-text>
 
@@ -1209,10 +1210,43 @@ export default {
         this.registration?.biaya_konsultasi ??
         this.registration?.konsultasi_total ??
         this.registration?.konsultasi?.total_harga ??
-        0;
+        null;
 
       const number = Number(value);
-      return Number.isFinite(number) ? number : 0;
+      if (Number.isFinite(number) && number > 0) {
+        return number;
+      }
+
+      return this.defaultConsultationAmount;
+    },
+
+    defaultConsultationAmount() {
+      const sourceCode = this.consultationSourceCode.toUpperCase();
+      const sourceName = this.consultationSourceName.toUpperCase();
+
+      if (sourceCode.includes("ONLINE") || sourceName.includes("ONLINE")) {
+        return 0;
+      }
+
+      if (sourceCode.includes("SPPG") || sourceName.includes("SPPG")) {
+        return 250000;
+      }
+
+      if (sourceCode.includes("SPKK") || sourceName.includes("SPKK")) {
+        return 150000;
+      }
+
+      if (
+        sourceCode.includes("OFFLINE") ||
+        sourceCode.includes("DOKTER") ||
+        sourceName.includes("DOKTER") ||
+        this.consultationChannel === "1" ||
+        this.consultationChannel === "offline"
+      ) {
+        return CONSULTATION_PRICE;
+      }
+
+      return 0;
     },
 
     hasOriginalConsultation() {
@@ -1288,15 +1322,15 @@ export default {
     },
 
     consultationFee() {
+      if (this.hasTreatment) {
+        return 0;
+      }
+
       if (this.hasOriginalConsultation) {
         return this.consultationOriginalAmount;
       }
 
       if (!this.form.add_consultation) {
-        return 0;
-      }
-
-      if (this.hasTreatment) {
         return 0;
       }
 
@@ -1405,8 +1439,7 @@ export default {
           show: true,
           type: "success",
           title: "Konsultasi dengan treatment",
-          message:
-            "SOAP diisi dokter. Biaya konsultasi otomatis Rp 0 karena pasien mengambil treatment.",
+          message: `SOAP diisi dokter. Biaya ${this.consultationLabel} otomatis Rp 0 karena pasien mengambil treatment.`,
         };
       }
 
@@ -1425,8 +1458,7 @@ export default {
           show: true,
           type: "info",
           title: "Konsultasi tanpa treatment",
-          message:
-            "Biaya konsultasi dihitung Rp 100.000 jika pasien tidak mengambil treatment.",
+          message: `Biaya ${this.consultationLabel} dihitung Rp ${this.formatNumber(this.consultationOriginalAmount)} jika pasien tidak mengambil treatment.`,
         };
       }
 
@@ -1500,12 +1532,19 @@ export default {
         ]);
 
         if (produkResult.status === "fulfilled") {
+          const produkOptions = this.normalizeProdukOptions(
+            this.extractRows(produkResult.value),
+          );
+
+          // Reference produk-by-toko adalah sumber stok final.
+          // Taruh di depan agar mengalahkan option awal dari detail antrian
+          // yang biasanya belum membawa stok_tersedia/stock_produk_toko_id.
           this.obatOptions = this.uniqueOptions([
+            ...produkOptions,
             ...this.obatOptions,
-            ...this.normalizeProdukOptions(
-              this.extractRows(produkResult.value),
-            ),
           ]);
+
+          this.hydrateObatRowsFromOptions();
         }
 
         if (treatmentResult.status === "fulfilled") {
@@ -1750,8 +1789,19 @@ export default {
               jumlah,
               harga,
               subtotal,
+              tempat_produk_id:
+                item?.tempat_produk_id ||
+                produkToko?.tempat_produk_id ||
+                produk?.tempat_produk_id ||
+                null,
+              stock_produk_toko_id:
+                item?.stock_produk_toko_id ||
+                item?.stock_id ||
+                produkToko?.stock_produk_toko_id ||
+                null,
               stok_tersedia: stokTersedia,
               stok_terbaca: stokTerbaca,
+              sumber_stok: item?.sumber_stok || null,
               frekuensi_penggunaan:
                 item?.frekuensi_penggunaan ||
                 item?.frekuensi ||
@@ -1765,6 +1815,8 @@ export default {
             };
           })
         : [this.createEmptyObatRow()];
+
+      this.hydrateObatRowsFromOptions();
     },
 
     mapTreatment(data = {}) {
@@ -1861,8 +1913,11 @@ export default {
         jumlah: 1,
         harga: 0,
         subtotal: 0,
+        tempat_produk_id: null,
+        stock_produk_toko_id: null,
         stok_tersedia: null,
         stok_terbaca: false,
+        sumber_stok: null,
         frekuensi_penggunaan: "",
         waktu_penggunaan: "",
       };
@@ -1927,13 +1982,7 @@ export default {
         return;
       }
 
-      row.produk_toko_id = option.value;
-      row.produk_id = option.produk_id || null;
-      row.nama = option.label || "";
-      row.harga = this.toNumber(option.harga);
-      row.stok_tersedia = option.stok_tersedia;
-      row.stok_terbaca = option.stok_terbaca;
-
+      this.applyObatOptionToRow(row, option);
       this.recalculateObat(index);
     },
 
@@ -2129,10 +2178,33 @@ export default {
             label,
             display_label: displayLabel,
             value: produkTokoId || produkId,
+            produk_toko_id: produkTokoId || null,
             produk_id: produkId,
+            tempat_produk_id:
+              item?.tempat_produk_id ||
+              item?.master_tempat_produk_id ||
+              produkToko?.tempat_produk_id ||
+              produk?.tempat_produk_id ||
+              null,
+            stock_produk_toko_id:
+              item?.stock_produk_toko_id ||
+              item?.stock_id ||
+              item?.stock_produk_id ||
+              item?.stock_produk_toko?.id ||
+              item?.stockProdukToko?.id ||
+              null,
+            nama_satuan:
+              item?.nama_satuan ||
+              item?.satuan ||
+              produk?.satuan?.nama_satuan ||
+              produk?.satuan?.nama ||
+              null,
             harga,
             stok_tersedia: stokTersedia,
             stok_terbaca: stokTerbaca,
+            stok_akhir: item?.stok_akhir ?? null,
+            stok_reserved: item?.stok_reserved ?? null,
+            sumber_stok: item?.sumber_stok || null,
           };
         })
         .filter((item) => item.value);
@@ -2237,6 +2309,72 @@ export default {
             kode: "",
           });
         }
+      });
+    },
+
+    findObatOption(item = {}) {
+      if (!item?.produk_toko_id && !item?.produk_id) {
+        return null;
+      }
+
+      const produkTokoId = item?.produk_toko_id;
+      const produkId = item?.produk_id;
+
+      return (
+        this.obatOptions.find(
+          (option) =>
+            produkTokoId && String(option.value) === String(produkTokoId),
+        ) ||
+        this.obatOptions.find(
+          (option) =>
+            produkTokoId &&
+            String(option.produk_toko_id || option.value) ===
+              String(produkTokoId),
+        ) ||
+        this.obatOptions.find(
+          (option) => produkId && String(option.produk_id) === String(produkId),
+        ) ||
+        null
+      );
+    },
+
+    applyObatOptionToRow(row, option) {
+      if (!row || !option) {
+        return;
+      }
+
+      row.produk_toko_id =
+        option.produk_toko_id || option.value || row.produk_toko_id || null;
+      row.produk_id = option.produk_id || row.produk_id || null;
+      row.nama = option.label || row.nama || "";
+      row.harga = this.toNumber(option.harga || row.harga);
+      row.tempat_produk_id =
+        option.tempat_produk_id || row.tempat_produk_id || null;
+      row.stock_produk_toko_id =
+        option.stock_produk_toko_id || row.stock_produk_toko_id || null;
+      row.stok_tersedia = option.stok_terbaca
+        ? this.toNumber(option.stok_tersedia)
+        : row.stok_tersedia;
+      row.stok_terbaca = Boolean(option.stok_terbaca || row.stok_terbaca);
+      row.sumber_stok = option.sumber_stok || row.sumber_stok || null;
+    },
+
+    hydrateObatRowFromOptions(row) {
+      if (!row || (!row.produk_toko_id && !row.produk_id)) {
+        return;
+      }
+
+      const option = this.findObatOption(row);
+
+      if (option) {
+        this.applyObatOptionToRow(row, option);
+      }
+    },
+
+    hydrateObatRowsFromOptions() {
+      this.obatItems.forEach((row, index) => {
+        this.hydrateObatRowFromOptions(row);
+        this.recalculateObat(index);
       });
     },
 
@@ -2476,7 +2614,11 @@ export default {
               jumlah: this.toNumber(item.jumlah),
               harga: this.toNumber(item.harga),
               subtotal: this.toNumber(item.subtotal),
+              tempat_produk_id: item.tempat_produk_id || null,
+              stock_produk_toko_id: item.stock_produk_toko_id || null,
               stok_tersedia: item.stok_tersedia,
+              stok_terbaca: item.stok_terbaca ? 1 : 0,
+              sumber_stok: item.sumber_stok || null,
               frekuensi_penggunaan: item.frekuensi_penggunaan || null,
               waktu_penggunaan: item.waktu_penggunaan || null,
               frekuensi: item.frekuensi_penggunaan || null,
@@ -2533,6 +2675,7 @@ export default {
       this.submitLoading = true;
 
       try {
+        this.hydrateObatRowsFromOptions();
         const stockValidation = this.getObatStockValidation();
 
         if (stockValidation.invalid) {

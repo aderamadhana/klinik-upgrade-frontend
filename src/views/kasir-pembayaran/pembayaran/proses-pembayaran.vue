@@ -92,6 +92,12 @@
             :subtotal="subtotal"
             :subtotal-discount-amount="subtotalDiscountAmount"
             :promo-discount-amount="promoDiscountAmount"
+            :member-id="header.member_id"
+            :member-no="header.member_no"
+            :member-tier-nama="header.member_tier_nama"
+            :member-discount-amount="memberDiscountAmount"
+            :point-earned="header.point_earned"
+            :poin="header.poin"
             :grand-total="grandTotal"
             :pembayaran="pembayaran"
             :metode-list="metodeList"
@@ -459,6 +465,7 @@ export default {
         member_id: null,
         member_no: "",
         member_tier_nama: "",
+        diskon_member_amount: 0,
         point_earned: 0,
         poin: 0,
         dokter_id: null,
@@ -583,9 +590,23 @@ export default {
       );
       return Math.min(total, this.promoBaseAmount);
     },
+    memberDiscountAmount() {
+      return Math.min(
+        Number(this.header.diskon_member_amount || 0),
+        Math.max(
+          this.subtotal -
+            this.subtotalDiscountAmount -
+            this.promoDiscountAmount,
+          0,
+        ),
+      );
+    },
     grandTotal() {
       return Math.max(
-        this.subtotal - this.subtotalDiscountAmount - this.promoDiscountAmount,
+        this.subtotal -
+          this.subtotalDiscountAmount -
+          this.promoDiscountAmount -
+          this.memberDiscountAmount,
         0,
       );
     },
@@ -886,10 +907,15 @@ export default {
         const response = await referenceService.voucherDiskonEligible(params);
         const data = this.normalizeVoucherEligibleResponse(response);
 
-        this.promoTreatmentList = data.treatment;
-        this.promoProductList = data.produk;
-        this.promoBundlingList = data.bundling;
-        this.promoValueList = data.value;
+        this.promoTreatmentList = this.filterPromoListByCurrentItems(
+          data.treatment,
+        );
+        this.promoProductList = this.filterPromoListByCurrentItems(data.produk);
+        this.promoBundlingList = this.filterPromoListByCurrentItems(
+          data.bundling,
+        );
+        this.promoValueList = this.filterPromoListByCurrentItems(data.value);
+        this.pruneAppliedPromosByCurrentItems();
         this.updateHeaderVoucherInfo();
       } catch (error) {
         console.error("FETCH VOUCHER ELIGIBLE ERROR:", error);
@@ -1191,6 +1217,9 @@ export default {
         member_no: invoice.member_no || data.member_no || "",
         member_tier_nama:
           invoice.member_tier_nama || data.member_tier_nama || "",
+        diskon_member_amount: Number(
+          invoice.diskon_member_amount || data.diskon_member_amount || 0,
+        ),
         point_earned: Number(invoice.point_earned || data.point_earned || 0),
         poin: Number(
           invoice.poin ||
@@ -1509,6 +1538,10 @@ export default {
       if (["harga", "qty"].includes(field)) {
         this.recalculatePromoEffects();
       }
+      if (["produk_id", "produk_toko_id", "nama"].includes(field)) {
+        this.resetPromo();
+        this.fetchVoucherEligible();
+      }
     },
     updateTreatmentItemField({ index, field, value }) {
       if (!this.treatmentItems[index]) return;
@@ -1529,6 +1562,10 @@ export default {
         : value;
       if (["harga", "qty"].includes(field)) {
         this.recalculatePromoEffects();
+      }
+      if (["treatment_id", "treatment_toko_id", "nama"].includes(field)) {
+        this.resetPromo();
+        this.fetchVoucherEligible();
       }
     },
     addPenjualanItem() {
@@ -1662,27 +1699,45 @@ export default {
       );
     },
     getPromoEligibleBase(promo) {
-      const kind = this.getPromoKind(promo);
+      const itemBase = this.getPromoMatchedItemBase(promo);
       const subtotal = Number(this.subtotal || 0);
       const subtotalDiscount = Number(this.subtotalDiscountAmount || 0);
-      const productBase = Number(this.totalPenjualan || 0);
-      const treatmentBase = Number(this.totalTreatment || 0);
 
-      if (subtotal <= 0) return 0;
+      if (subtotal <= 0 || itemBase <= 0) return 0;
 
-      const productDiscountShare = (subtotalDiscount * productBase) / subtotal;
-      const treatmentDiscountShare =
-        (subtotalDiscount * treatmentBase) / subtotal;
+      const discountShare = (subtotalDiscount * itemBase) / subtotal;
+      return Math.max(itemBase - discountShare, 0);
+    },
+    getPromoMatchedItemBase(promo) {
+      if (!promo) return 0;
+
+      const kind = this.getPromoKind(promo);
+      const hasSpecificItems = this.hasPromoSpecificItems(promo);
+
+      if (hasSpecificItems) {
+        const productBase = this.getPromoMatchedPenjualanItems(promo).reduce(
+          (sum, item) => sum + this.getPenjualanSubtotal(item),
+          0,
+        );
+        const treatmentBase = this.getPromoMatchedTreatmentItems(promo).reduce(
+          (sum, item) => sum + this.getTreatmentSubtotal(item),
+          0,
+        );
+
+        return productBase + treatmentBase;
+      }
 
       if (kind === "produk") {
-        return Math.max(productBase - productDiscountShare, 0);
+        return Number(this.totalPenjualan || 0);
       }
 
       if (kind === "treatment") {
-        return Math.max(treatmentBase - treatmentDiscountShare, 0);
+        return Number(this.totalTreatment || 0);
       }
 
-      return Math.max(subtotal - subtotalDiscount, 0);
+      return (
+        Number(this.totalPenjualan || 0) + Number(this.totalTreatment || 0)
+      );
     },
     getPromoKind(promo) {
       if (!promo) return "all";
@@ -1729,6 +1784,114 @@ export default {
       }
 
       return "all";
+    },
+    getPromoItems(promo) {
+      const items =
+        promo?.items || promo?.voucher_items || promo?.detail_items || [];
+      return Array.isArray(items) ? items : [];
+    },
+    normalizePromoItemType(value) {
+      const text = String(value || "").toLowerCase();
+
+      if (["produk", "product", "obat"].includes(text)) {
+        return "produk";
+      }
+
+      if (["treatment", "perawatan"].includes(text)) {
+        return "treatment";
+      }
+
+      return text;
+    },
+    getPromoSpecificIds(promo, type) {
+      return this.getPromoItems(promo)
+        .filter(
+          (item) =>
+            this.normalizePromoItemType(item.item_type || item.type) === type,
+        )
+        .map((item) =>
+          Number(item.item_id || item.produk_id || item.treatment_id || 0),
+        )
+        .filter((id) => id > 0);
+    },
+    hasPromoSpecificItems(promo) {
+      return this.getPromoItems(promo).some((item) =>
+        ["produk", "treatment"].includes(
+          this.normalizePromoItemType(item.item_type || item.type),
+        ),
+      );
+    },
+    getPromoMatchedPenjualanItems(promo) {
+      const ids = this.getPromoSpecificIds(promo, "produk");
+
+      if (!ids.length && !this.hasPromoSpecificItems(promo)) {
+        return this.getPromoKind(promo) === "produk" ||
+          this.getPromoKind(promo) === "all"
+          ? this.penjualanItems
+          : [];
+      }
+
+      return this.penjualanItems.filter((item) =>
+        ids.includes(Number(item.produk_id || 0)),
+      );
+    },
+    getPromoMatchedTreatmentItems(promo) {
+      const ids = this.getPromoSpecificIds(promo, "treatment");
+
+      if (!ids.length && !this.hasPromoSpecificItems(promo)) {
+        return this.getPromoKind(promo) === "treatment" ||
+          this.getPromoKind(promo) === "all"
+          ? this.treatmentItems
+          : [];
+      }
+
+      return this.treatmentItems.filter((item) =>
+        ids.includes(Number(item.treatment_id || 0)),
+      );
+    },
+    isPromoEligibleForCurrentItems(promo) {
+      if (!promo) return false;
+
+      if (this.hasPromoSpecificItems(promo)) {
+        return (
+          this.getPromoMatchedPenjualanItems(promo).length > 0 ||
+          this.getPromoMatchedTreatmentItems(promo).length > 0
+        );
+      }
+
+      const kind = this.getPromoKind(promo);
+
+      if (kind === "produk") {
+        return this.penjualanItems.some(
+          (item) => Number(item.produk_id || 0) > 0,
+        );
+      }
+
+      if (kind === "treatment") {
+        return this.treatmentItems.some(
+          (item) => Number(item.treatment_id || 0) > 0,
+        );
+      }
+
+      return (
+        this.penjualanItems.some((item) => Number(item.produk_id || 0) > 0) ||
+        this.treatmentItems.some((item) => Number(item.treatment_id || 0) > 0)
+      );
+    },
+    filterPromoListByCurrentItems(list = []) {
+      return Array.isArray(list)
+        ? list.filter((promo) => this.isPromoEligibleForCurrentItems(promo))
+        : [];
+    },
+    pruneAppliedPromosByCurrentItems() {
+      const before = this.appliedPromos.length;
+      this.appliedPromos = this.appliedPromos.filter((promo) =>
+        this.isPromoEligibleForCurrentItems(promo),
+      );
+
+      if (this.appliedPromos.length !== before) {
+        this.recalculatePromoEffects();
+      }
     },
     getPromoAmount(promo) {
       if (!promo) return 0;

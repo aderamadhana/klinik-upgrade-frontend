@@ -42,6 +42,70 @@
         </v-card-text>
       </v-card>
 
+      <v-card
+        v-if="
+          hasMemberInfo || safeMemberDiscountAmount > 0 || safePointEarned > 0
+        "
+        variant="outlined"
+        class="mb-4"
+      >
+        <v-card-text class="pa-4">
+          <div class="d-flex align-start ga-3">
+            <v-avatar color="success" variant="tonal" size="36">
+              <v-icon icon="mdi-card-account-details-star-outline" size="20" />
+            </v-avatar>
+            <div class="flex-grow-1 min-w-0">
+              <div
+                class="d-flex align-center justify-space-between ga-3 flex-wrap"
+              >
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold">
+                    Member & Poin
+                  </div>
+                  <div class="text-caption text-medium-emphasis">
+                    {{ memberLabel }}
+                  </div>
+                </div>
+                <v-chip
+                  v-if="safePointEarned > 0"
+                  color="success"
+                  variant="tonal"
+                  size="small"
+                >
+                  +{{ safePointEarned }} poin
+                </v-chip>
+              </div>
+
+              <v-divider class="my-3" />
+
+              <div class="d-flex justify-space-between align-center mb-2">
+                <span class="text-body-2 text-medium-emphasis"
+                  >Diskon Member</span
+                >
+                <strong
+                  class="text-body-2"
+                  :class="
+                    safeMemberDiscountAmount > 0
+                      ? 'text-error'
+                      : 'text-medium-emphasis'
+                  "
+                >
+                  - {{ formatMoney(safeMemberDiscountAmount) }}
+                </strong>
+              </div>
+              <div class="d-flex justify-space-between align-center">
+                <span class="text-body-2 text-medium-emphasis"
+                  >Poin Didapat</span
+                >
+                <strong class="text-body-2 text-success">
+                  {{ safePointEarned }} poin
+                </strong>
+              </div>
+            </div>
+          </div>
+        </v-card-text>
+      </v-card>
+
       <v-card variant="outlined" class="mb-4">
         <v-card-text class="pa-4">
           <div class="d-flex justify-space-between align-center mb-2">
@@ -81,12 +145,18 @@
               - {{ formatMoney(safeSubtotalDiscountAmount) }}
             </strong>
           </div>
-          <div class="d-flex justify-space-between align-center mb-3">
+          <div class="d-flex justify-space-between align-center mb-2">
             <span class="text-body-2 text-medium-emphasis"
               >Voucher / Promo</span
             >
             <strong class="text-body-2 text-error">
               - {{ formatMoney(safePromoDiscountAmount) }}
+            </strong>
+          </div>
+          <div class="d-flex justify-space-between align-center mb-3">
+            <span class="text-body-2 text-medium-emphasis">Diskon Member</span>
+            <strong class="text-body-2 text-error">
+              - {{ formatMoney(safeMemberDiscountAmount) }}
             </strong>
           </div>
           <v-divider class="my-3" />
@@ -416,6 +486,12 @@ export default {
     subtotal: { type: Number, default: 0 },
     subtotalDiscountAmount: { type: Number, default: 0 },
     promoDiscountAmount: { type: Number, default: 0 },
+    memberId: { type: [Number, String], default: null },
+    memberNo: { type: String, default: "" },
+    memberTierNama: { type: String, default: "" },
+    memberDiscountAmount: { type: Number, default: 0 },
+    pointEarned: { type: [Number, String], default: 0 },
+    poin: { type: [Number, String], default: 0 },
     grandTotal: { type: Number, default: 0 },
     pembayaran: { type: Array, default: () => [] },
     metodeList: { type: Array, default: () => [] },
@@ -472,6 +548,23 @@ export default {
     },
     safePromoDiscountAmount() {
       return Number(this.promoDiscountAmount || 0);
+    },
+    safeMemberDiscountAmount() {
+      return Number(this.memberDiscountAmount || 0);
+    },
+    safePointEarned() {
+      return Number(this.pointEarned || 0);
+    },
+    hasMemberInfo() {
+      return Boolean(this.memberId || this.memberNo || this.memberTierNama);
+    },
+    memberLabel() {
+      if (!this.hasMemberInfo) {
+        return "Pasien belum terdeteksi sebagai member aktif";
+      }
+
+      const tier = this.memberTierNama ? ` • ${this.memberTierNama}` : "";
+      return `${this.memberNo || "Member aktif"}${tier}`;
     },
     safeGrandTotal() {
       return Number(this.grandTotal || 0);
