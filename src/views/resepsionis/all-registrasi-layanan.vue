@@ -264,10 +264,6 @@
                 Rp {{ formatNumber(getTotalAmount(item)) }}
               </div>
 
-              <div class="text-body-2 text-medium-emphasis">
-                Konsul: Rp {{ formatNumber(getConsultationAmount(item)) }}
-              </div>
-
               <div class="d-flex flex-wrap ga-1 mt-1">
                 <v-chip
                   size="x-small"

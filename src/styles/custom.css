@@ -1527,3 +1527,242 @@ input.v-field__input[readonly] {
   margin-top: 12px;
   width: 100%;
 }
+
+/* =========================
+   TABLE GLOBAL - VUETIFY
+   v-data-table & v-data-table-server
+========================= */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.responsive-table {
+  width: 100%;
+  min-width: 1100px;
+}
+
+.table-section {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+.table-wrap {
+  border-top: 1px solid #eef2f7;
+  overflow-x: auto;
+  background: #ffffff;
+}
+
+.v-data-table,
+.v-data-table-server {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+  background: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+.v-data-table .v-table,
+.v-data-table-server .v-table {
+  background: #ffffff !important;
+}
+
+.v-data-table .v-table__wrapper,
+.v-data-table-server .v-table__wrapper {
+  background: #ffffff;
+}
+
+.v-data-table .v-table__wrapper table,
+.v-data-table-server .v-table__wrapper table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.v-data-table .v-table__wrapper table thead th,
+.v-data-table-server .v-table__wrapper table thead th {
+  height: 46px !important;
+  padding: 11px 16px !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%) !important;
+  color: #475569 !important;
+  font-size: 12.5px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.01em !important;
+  text-transform: none !important;
+  white-space: nowrap;
+}
+
+.v-data-table .v-table__wrapper table thead th:first-child,
+.v-data-table-server .v-table__wrapper table thead th:first-child {
+  padding-left: 18px !important;
+}
+
+.v-data-table .v-table__wrapper table thead th:last-child,
+.v-data-table-server .v-table__wrapper table thead th:last-child {
+  padding-right: 18px !important;
+}
+
+.v-data-table .v-table__wrapper table tbody td,
+.v-data-table-server .v-table__wrapper table tbody td {
+  padding: 13px 16px !important;
+  border-bottom: 1px solid #eef2f7 !important;
+  color: #334155 !important;
+  font-size: 13.2px !important;
+  vertical-align: middle;
+}
+
+.v-data-table .v-table__wrapper table tbody tr,
+.v-data-table-server .v-table__wrapper table tbody tr {
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.v-data-table .v-table__wrapper table tbody tr:hover,
+.v-data-table-server .v-table__wrapper table tbody tr:hover {
+  background: #f8fbff !important;
+}
+
+.v-data-table .v-table__wrapper table tbody tr:hover td,
+.v-data-table-server .v-table__wrapper table tbody tr:hover td {
+  color: #111827 !important;
+}
+
+.v-data-table .v-table__wrapper table tbody tr:last-child td,
+.v-data-table-server .v-table__wrapper table tbody tr:last-child td {
+  border-bottom: 0 !important;
+}
+
+.v-data-table .v-table__wrapper table tbody td:first-child,
+.v-data-table-server .v-table__wrapper table tbody td:first-child {
+  padding-left: 18px !important;
+}
+
+.v-data-table .v-table__wrapper table tbody td:last-child,
+.v-data-table-server .v-table__wrapper table tbody td:last-child {
+  padding-right: 18px !important;
+}
+
+.v-data-table .v-data-table-footer,
+.v-data-table-server .v-data-table-footer {
+  min-height: 56px;
+  padding: 10px 16px !important;
+  border-top: 1px solid #e5e7eb;
+  background: #fafafa;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.v-data-table .v-data-table-footer__items-per-page,
+.v-data-table-server .v-data-table-footer__items-per-page {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.v-data-table .v-data-table-footer .v-btn,
+.v-data-table-server .v-data-table-footer .v-btn {
+  box-shadow: none !important;
+}
+
+.v-data-table .v-data-table-progress,
+.v-data-table-server .v-data-table-progress {
+  height: 3px !important;
+}
+
+.v-data-table .v-data-table__td--no-data,
+.v-data-table-server .v-data-table__td--no-data {
+  height: 220px !important;
+  color: #64748b !important;
+  font-size: 13px !important;
+  background: #ffffff !important;
+}
+
+.v-data-table .v-selection-control,
+.v-data-table-server .v-selection-control {
+  min-height: 28px;
+}
+
+.v-data-table .v-chip,
+.v-data-table-server .v-chip {
+  font-weight: 650;
+}
+
+/* Untuk kolom action agar tombol tidak turun/pecah */
+.v-data-table td .action-cell,
+.v-data-table-server td .action-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+/* Table yang butuh scroll horizontal */
+.v-data-table.table-min-md,
+.v-data-table-server.table-min-md {
+  min-width: 960px;
+}
+
+.v-data-table.table-min-lg,
+.v-data-table-server.table-min-lg {
+  min-width: 1100px;
+}
+
+.v-data-table.table-min-xl,
+.v-data-table-server.table-min-xl {
+  min-width: 1280px;
+}
+
+/* =========================
+   TABLE FOOTER CUSTOM
+========================= */
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-top: 1px solid #e5e7eb;
+  background: #fafafa;
+  flex-wrap: wrap;
+}
+
+.footer-count {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.footer-count strong {
+  color: #111827;
+}
+
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.per-page-field {
+  width: 88px;
+}
+
+@media (max-width: 768px) {
+  .v-data-table .v-data-table-footer,
+  .v-data-table-server .v-data-table-footer {
+    align-items: stretch;
+    padding: 12px !important;
+  }
+
+  .table-footer,
+  .footer-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .per-page-field {
+    width: 100%;
+  }
+}
