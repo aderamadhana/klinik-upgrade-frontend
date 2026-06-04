@@ -309,7 +309,17 @@
               >
                 Proses
               </v-btn>
-
+              <v-btn
+                v-if="isInvoicePaid(item)"
+                color="success"
+                variant="tonal"
+                size="small"
+                prepend-icon="mdi-printer-outline"
+                :loading="printingInvoiceId === getPrintableInvoiceId(item)"
+                @click.stop="openInvoiceReceipt(item)"
+              >
+                Invoice
+              </v-btn>
               <v-btn
                 v-else
                 color="info"
@@ -386,6 +396,7 @@ export default {
       refreshIntervalMs: 30000,
       rows: [],
       summaryApi: null,
+      printingInvoiceId: null,
 
       filters: {
         search: "",
@@ -985,6 +996,91 @@ export default {
         error?.message ||
         "Gagal mengambil data pembayaran"
       );
+    },
+    getPrintableInvoiceId(item) {
+      return item?.id || item?.invoice_id || item?.pembayaran_id || null;
+    },
+
+    isInvoicePaid(item) {
+      if (Number(item?.status) === 3) {
+        return true;
+      }
+
+      const meta =
+        typeof this.getStatusMeta === "function"
+          ? this.getStatusMeta(item)
+          : null;
+
+      const statusTexts = [
+        item?.status_label,
+        item?.status_text,
+        item?.status_nama,
+        item?.status_key,
+        item?.invoice_status_label,
+        meta?.label,
+        meta?.text,
+        meta?.key,
+      ];
+
+      return statusTexts.some((value) =>
+        String(value || "")
+          .toLowerCase()
+          .includes("lunas"),
+      );
+    },
+
+    async openInvoiceReceipt(item) {
+      const invoiceId = this.getPrintableInvoiceId(item);
+
+      if (!invoiceId) {
+        alert("ID invoice tidak ditemukan.");
+        return;
+      }
+
+      if (!this.isInvoicePaid(item)) {
+        alert("Invoice hanya bisa dicetak setelah pembayaran lunas.");
+        return;
+      }
+
+      const printWindow = window.open("", "_blank", "width=430,height=720");
+
+      if (!printWindow) {
+        alert(
+          "Popup invoice diblokir browser. Izinkan popup untuk mencetak invoice.",
+        );
+        return;
+      }
+
+      printWindow.document.write(`
+    <html>
+      <head>
+        <title>Memuat Invoice</title>
+      </head>
+      <body style="font-family: Arial, Helvetica, sans-serif; padding: 16px;">
+        Memuat invoice...
+      </body>
+    </html>
+  `);
+
+      this.printingInvoiceId = invoiceId;
+
+      try {
+        const html = await pembayaranService.printInvoice(invoiceId);
+
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.focus();
+      } catch (error) {
+        console.error(error);
+        printWindow.close();
+
+        alert(
+          error?.response?.data || error?.message || "Gagal membuka invoice.",
+        );
+      } finally {
+        this.printingInvoiceId = null;
+      }
     },
   },
 };

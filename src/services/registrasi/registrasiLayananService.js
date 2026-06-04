@@ -465,6 +465,21 @@ const registrasiLayananService = {
       .then((response) => response.data);
   },
 
+  uploadBuktiChatKonsultasiOnline(id, file) {
+    const selectedFile = Array.isArray(file) ? file[0] : file;
+
+    const formData = new FormData();
+    formData.append("bukti_chat_konsultasi_online", selectedFile);
+
+    return api
+      .post(`${BASE_URL}/${id}/upload-bukti-chat-konsultasi-online`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      .then((response) => response.data);
+  },
+
   normalizePayload(form) {
     return normalizePayload(form);
   },

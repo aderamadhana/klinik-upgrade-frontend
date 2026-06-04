@@ -22,4 +22,12 @@ export default {
       .post(`${BASE_URL}/${id}/finish`, payload)
       .then((response) => response.data);
   },
+
+  printInvoice(id) {
+    return api
+      .get(`${BASE_URL}/${id}/print-invoice`, {
+        responseType: "text",
+      })
+      .then((response) => response.data);
+  },
 };

@@ -282,6 +282,26 @@
                 >
                   {{ getTaskMeta(item).label }}
                 </v-chip>
+
+                <v-chip
+                  v-if="isOnlineConsultation(item)"
+                  size="x-small"
+                  :color="
+                    hasBuktiChatKonsultasiOnline(item) ? 'success' : 'warning'
+                  "
+                  variant="tonal"
+                  :prepend-icon="
+                    hasBuktiChatKonsultasiOnline(item)
+                      ? 'mdi-check-circle-outline'
+                      : 'mdi-alert-circle-outline'
+                  "
+                >
+                  {{
+                    hasBuktiChatKonsultasiOnline(item)
+                      ? "Bukti chat ada"
+                      : "Belum upload bukti chat"
+                  }}
+                </v-chip>
               </div>
             </div>
           </template>
@@ -298,7 +318,27 @@
               >
                 {{ getPrimaryAction(item).label }}
               </v-btn>
+              <v-btn
+                v-if="canViewBuktiChatKonsultasiOnline(item)"
+                color="success"
+                variant="tonal"
+                size="small"
+                prepend-icon="mdi-eye-outline"
+                @click="viewBuktiChatKonsultasiOnline(item)"
+              >
+                Lihat Bukti
+              </v-btn>
 
+              <v-btn
+                v-if="canUploadBuktiChatKonsultasiOnline(item)"
+                color="warning"
+                variant="tonal"
+                size="small"
+                prepend-icon="mdi-upload"
+                @click="openBuktiChatDialog(item)"
+              >
+                Upload Bukti
+              </v-btn>
               <v-btn
                 v-if="canCancel(item)"
                 color="error"
@@ -387,7 +427,50 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <v-dialog v-model="buktiChatDialog.show" max-width="520">
+      <v-card>
+        <v-card-title class="text-subtitle-1 font-weight-bold">
+          Upload Bukti Chat Konsultasi Online
+        </v-card-title>
 
+        <v-card-text>
+          <v-alert type="info" variant="tonal" density="compact" class="mb-4">
+            {{ buktiChatDialog.item?.kode_registrasi || "-" }} -
+            {{ getPasienName(buktiChatDialog.item || {}) }}
+          </v-alert>
+
+          <v-file-input
+            v-model="buktiChatDialog.file"
+            label="Pilih file bukti chat"
+            variant="outlined"
+            density="compact"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            show-size
+            clearable
+            prepend-icon="mdi-paperclip"
+            :error-messages="buktiChatDialog.error"
+          />
+
+          <div class="text-caption text-medium-emphasis mt-2">
+            Format yang didukung: JPG, JPEG, PNG, WEBP, atau PDF. Maksimal 5 MB.
+          </div>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="closeBuktiChatDialog"> Tutup </v-btn>
+          <v-btn
+            color="primary"
+            variant="flat"
+            :loading="buktiChatDialog.loading"
+            :disabled="!buktiChatDialog.file"
+            @click="submitBuktiChatKonsultasiOnline"
+          >
+            Upload
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-snackbar
       v-model="snackbar.show"
       :color="snackbar.color"
@@ -531,6 +614,14 @@ export default {
         show: false,
         loading: false,
         item: null,
+      },
+
+      buktiChatDialog: {
+        show: false,
+        loading: false,
+        item: null,
+        file: null,
+        error: "",
       },
 
       snackbar: {
@@ -1421,6 +1512,187 @@ export default {
       this.snackbar.message = message;
       this.snackbar.color = color;
       this.snackbar.show = true;
+    },
+
+    isOnlineConsultation(item) {
+      const sourceCode = String(
+        this.getConsultationSourceCode(item) || "",
+      ).toUpperCase();
+
+      const channel = String(
+        item?.channel_konsultasi ?? item?.layanan?.channel_konsultasi ?? "",
+      ).toLowerCase();
+
+      return (
+        sourceCode.includes("ONLINE") ||
+        channel === "2" ||
+        channel === "online" ||
+        this.getConsultationLabel(item) === "Konsultasi Online"
+      );
+    },
+
+    isRegistrationFinished(item) {
+      const status = Number(item?.status ?? item?.status_registrasi ?? 0);
+
+      if (status === 2) {
+        return true;
+      }
+
+      const label = String(
+        item?.status_label?.label ||
+          item?.status_label ||
+          item?.status_text ||
+          item?.status_layanan ||
+          "",
+      ).toLowerCase();
+
+      return ["selesai", "done", "completed", "finish", "finished"].includes(
+        label,
+      );
+    },
+
+    getBuktiChatKonsultasiOnlineUrl(item) {
+      return (
+        item?.bukti_chat_konsultasi_online_url ||
+        item?.layanan?.bukti_chat_konsultasi_online_url ||
+        item?.bukti_chat_url ||
+        ""
+      );
+    },
+
+    hasBuktiChatKonsultasiOnline(item) {
+      return Boolean(
+        this.getBuktiChatKonsultasiOnlineUrl(item) ||
+        item?.bukti_chat_konsultasi_online ||
+        item?.layanan?.bukti_chat_konsultasi_online ||
+        Number(item?.is_upload_bukti_chat_konsultasi_online || 0) === 1 ||
+        Number(item?.layanan?.is_upload_bukti_chat_konsultasi_online || 0) ===
+          1,
+      );
+    },
+
+    canUploadBuktiChatKonsultasiOnline(item) {
+      return (
+        this.isOnlineConsultation(item) &&
+        this.isRegistrationFinished(item) &&
+        !this.hasBuktiChatKonsultasiOnline(item)
+      );
+    },
+
+    canViewBuktiChatKonsultasiOnline(item) {
+      return (
+        this.isOnlineConsultation(item) &&
+        this.hasBuktiChatKonsultasiOnline(item)
+      );
+    },
+
+    openBuktiChatDialog(item) {
+      this.buktiChatDialog = {
+        show: true,
+        loading: false,
+        item,
+        file: null,
+        error: "",
+      };
+    },
+
+    closeBuktiChatDialog() {
+      if (this.buktiChatDialog.loading) {
+        return;
+      }
+
+      this.buktiChatDialog = {
+        show: false,
+        loading: false,
+        item: null,
+        file: null,
+        error: "",
+      };
+    },
+
+    async submitBuktiChatKonsultasiOnline() {
+      const item = this.buktiChatDialog.item;
+      const file = Array.isArray(this.buktiChatDialog.file)
+        ? this.buktiChatDialog.file[0]
+        : this.buktiChatDialog.file;
+
+      if (!item?.id) {
+        this.buktiChatDialog.error = "Data registrasi tidak valid.";
+        return;
+      }
+
+      if (!file) {
+        this.buktiChatDialog.error = "File bukti chat wajib dipilih.";
+        return;
+      }
+
+      this.buktiChatDialog.loading = true;
+      this.buktiChatDialog.error = "";
+
+      try {
+        const response =
+          await registrasiLayananService.uploadBuktiChatKonsultasiOnline(
+            item.id,
+            file,
+          );
+
+        const payload = response?.data || {};
+
+        const index = this.rows.findIndex(
+          (row) => Number(row.id) === Number(item.id),
+        );
+
+        if (index >= 0) {
+          const current = this.rows[index];
+
+          this.rows.splice(index, 1, {
+            ...current,
+            bukti_chat_konsultasi_online:
+              payload.bukti_chat_konsultasi_online ||
+              current.bukti_chat_konsultasi_online,
+            bukti_chat_konsultasi_online_url:
+              payload.bukti_chat_konsultasi_online_url ||
+              current.bukti_chat_konsultasi_online_url,
+            is_upload_bukti_chat_konsultasi_online: 1,
+            layanan: {
+              ...(current.layanan || {}),
+              bukti_chat_konsultasi_online:
+                payload.bukti_chat_konsultasi_online ||
+                current?.layanan?.bukti_chat_konsultasi_online,
+              bukti_chat_konsultasi_online_url:
+                payload.bukti_chat_konsultasi_online_url ||
+                current?.layanan?.bukti_chat_konsultasi_online_url,
+              is_upload_bukti_chat_konsultasi_online: 1,
+            },
+          });
+        }
+
+        this.showSnackbar(
+          response?.message ||
+            "Bukti chat konsultasi online berhasil diupload.",
+          "success",
+        );
+
+        this.closeBuktiChatDialog();
+      } catch (error) {
+        this.buktiChatDialog.error =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Gagal upload bukti chat konsultasi online.";
+      } finally {
+        this.buktiChatDialog.loading = false;
+      }
+    },
+
+    viewBuktiChatKonsultasiOnline(item) {
+      const url = this.getBuktiChatKonsultasiOnlineUrl(item);
+
+      if (!url) {
+        this.showSnackbar("File bukti chat belum tersedia.", "warning");
+        return;
+      }
+
+      window.open(url, "_blank", "noopener,noreferrer");
     },
   },
 };
