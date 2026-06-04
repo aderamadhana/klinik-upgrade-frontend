@@ -142,7 +142,7 @@
 
             <v-col cols="12" sm="6" md="3">
               <v-select
-                :model-value="item.diskon_type"
+                :model-value="displayDiskonType(item)"
                 :items="diskonTypeList"
                 label="Tipe Diskon"
                 variant="outlined"
@@ -155,14 +155,14 @@
 
             <v-col cols="12" sm="6" md="3">
               <v-text-field
-                :model-value="item.diskon"
                 label="Nilai Diskon"
                 type="number"
                 variant="outlined"
                 density="comfortable"
                 prepend-inner-icon="mdi-sale-outline"
-                :prefix="item.diskon_type === 'Rp' ? 'Rp' : ''"
-                :suffix="item.diskon_type === '%' ? '%' : ''"
+                :model-value="displayDiskonValue(item)"
+                :prefix="displayDiskonType(item) === 'Rp' ? 'Rp' : ''"
+                :suffix="displayDiskonType(item) === '%' ? '%' : ''"
                 hide-details="auto"
                 @update:model-value="updateField(index, 'diskon', $event)"
               />
@@ -182,7 +182,7 @@
                   Subtotal
                 </div>
                 <div class="text-body-1 font-weight-black text-blue-darken-4">
-                  {{ formatCurrency(getSubtotal(item)) }}
+                  {{ formatCurrency(displaySubtotal(item)) }}
                 </div>
               </v-sheet>
             </v-col>
@@ -203,6 +203,18 @@ export default {
     diskonTypeList: { type: Array, default: () => [] },
     formatCurrency: { type: Function, required: true },
     getSubtotal: { type: Function, required: true },
+    getDisplaySubtotal: {
+      type: Function,
+      default: null,
+    },
+    getVoucherDiscountType: {
+      type: Function,
+      default: null,
+    },
+    getVoucherDiscountValue: {
+      type: Function,
+      default: null,
+    },
   },
   emits: ["add-item", "remove-item", "update-item-field", "fill-item"],
   methods: {
@@ -213,6 +225,37 @@ export default {
           this.$emit("fill-item", index);
         });
       }
+    },
+    displayDiskonType(item) {
+      if (this.getVoucherDiscountType) {
+        const value = this.getVoucherDiscountType(item);
+
+        if (value !== null && value !== undefined && value !== "") {
+          return value;
+        }
+      }
+
+      return item.diskon_type || "%";
+    },
+
+    displayDiskonValue(item) {
+      if (this.getVoucherDiscountValue) {
+        const value = this.getVoucherDiscountValue(item);
+
+        if (value !== null && value !== undefined && value !== "") {
+          return value;
+        }
+      }
+
+      return item.diskon || 0;
+    },
+
+    displaySubtotal(item) {
+      if (this.getDisplaySubtotal) {
+        return this.getDisplaySubtotal(item);
+      }
+
+      return this.getSubtotal(item);
     },
   },
 };

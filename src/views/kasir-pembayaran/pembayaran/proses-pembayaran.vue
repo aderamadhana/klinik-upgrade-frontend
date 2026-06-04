@@ -49,6 +49,9 @@
           :format-currency="formatCurrency"
           :get-subtotal="getPenjualanSubtotal"
           :discount-readonly="true"
+          :get-display-subtotal="getPenjualanDisplaySubtotal"
+          :get-voucher-discount-type="getProdukVoucherDiscountType"
+          :get-voucher-discount-value="getProdukVoucherDiscountValue"
           @add-item="addPenjualanItem"
           @remove-item="removePenjualanItem"
           @update-item-field="updatePenjualanItemField"
@@ -63,6 +66,9 @@
           :format-currency="formatCurrency"
           :get-subtotal="getTreatmentSubtotal"
           :discount-readonly="true"
+          :get-display-subtotal="getTreatmentDisplaySubtotal"
+          :get-voucher-discount-type="getTreatmentVoucherDiscountType"
+          :get-voucher-discount-value="getTreatmentVoucherDiscountValue"
           @add-item="addTreatmentItem"
           @remove-item="removeTreatmentItem"
           @update-item-field="updateTreatmentItemField"
@@ -1908,6 +1914,331 @@ export default {
         0,
       );
     },
+    getPenjualanDisplaySubtotal(item) {
+      const subtotal = Number(this.getPenjualanSubtotal(item) || 0);
+      const voucherAmount = Number(
+        this.getItemVoucherDiscountAmount(item, "produk") || 0,
+      );
+
+      return Math.max(subtotal - voucherAmount, 0);
+    },
+
+    getTreatmentDisplaySubtotal(item) {
+      const subtotal = Number(this.getTreatmentSubtotal(item) || 0);
+      const voucherAmount = Number(
+        this.getItemVoucherDiscountAmount(item, "treatment") || 0,
+      );
+
+      return Math.max(subtotal - voucherAmount, 0);
+    },
+
+    getProdukVoucherDiscountType(item) {
+      return this.getItemVoucherDiscountType(item, "produk");
+    },
+
+    getTreatmentVoucherDiscountType(item) {
+      return this.getItemVoucherDiscountType(item, "treatment");
+    },
+
+    getProdukVoucherDiscountValue(item) {
+      return this.getItemVoucherDiscountValue(item, "produk");
+    },
+
+    getTreatmentVoucherDiscountValue(item) {
+      return this.getItemVoucherDiscountValue(item, "treatment");
+    },
+
+    getItemVoucherDiscountType(item, itemType) {
+      const promos = this.getItemVoucherPromos(item, itemType);
+
+      if (!promos.length) {
+        return item.diskon_type || item.manual_diskon_type || "%";
+      }
+
+      if (
+        promos.length === 1 &&
+        this.isPercentDiscountType(
+          promos[0].tipe_diskon || promos[0].diskon_tipe,
+        )
+      ) {
+        return "%";
+      }
+
+      return "Rp";
+    },
+
+    getItemVoucherDiscountValue(item, itemType) {
+      const promos = this.getItemVoucherPromos(item, itemType);
+
+      if (!promos.length) {
+        return Number(item.diskon || item.manual_diskon || 0);
+      }
+
+      if (
+        promos.length === 1 &&
+        this.isPercentDiscountType(
+          promos[0].tipe_diskon || promos[0].diskon_tipe,
+        )
+      ) {
+        return Number(promos[0].total_diskon || promos[0].diskon_nilai || 0);
+      }
+
+      return this.getItemVoucherDiscountAmount(item, itemType);
+    },
+
+    getItemVoucherDiscountAmount(item, itemType) {
+      const subtotal =
+        itemType === "produk"
+          ? Number(this.getPenjualanSubtotal(item) || 0)
+          : Number(this.getTreatmentSubtotal(item) || 0);
+
+      if (subtotal <= 0) {
+        return 0;
+      }
+
+      const promos = this.getItemVoucherPromos(item, itemType);
+
+      return promos.reduce((total, promo) => {
+        return (
+          total +
+          this.calculatePromoAmountForItem(promo, item, itemType, subtotal)
+        );
+      }, 0);
+    },
+
+    getItemVoucherPromos(item, itemType) {
+      return (this.appliedPromos || []).filter((promo) => {
+        const promoKind = this.getPromoKind(promo);
+
+        if (itemType === "produk" && promoKind !== "produk") {
+          return false;
+        }
+
+        if (itemType === "treatment" && promoKind !== "treatment") {
+          return false;
+        }
+
+        return this.promoMatchesItem(promo, item, itemType);
+      });
+    },
+
+    getPromoKind(promo) {
+      const jenisId = Number(
+        promo?.jenis_voucher_id ||
+          promo?.voucher_jenis_id ||
+          promo?.jenis_id ||
+          promo?.jenis_voucher?.id ||
+          0,
+      );
+
+      if (jenisId === 1) return "treatment";
+      if (jenisId === 2) return "produk";
+      if (jenisId === 3) return "bundling";
+      if (jenisId === 4) return "value";
+
+      const text = this.normalizePromoText(
+        [
+          promo?.jenis_voucher,
+          promo?.jenis,
+          promo?.kategori,
+          promo?.type,
+          promo?.nama_jenis,
+          promo?.nama_voucher,
+          promo?.kode_voucher,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      );
+
+      if (
+        text.includes("produk") ||
+        text.includes("product") ||
+        text.includes("obat")
+      ) {
+        return "produk";
+      }
+
+      if (text.includes("treatment") || text.includes("perawatan")) {
+        return "treatment";
+      }
+
+      if (text.includes("bundling")) {
+        return "bundling";
+      }
+
+      if (text.includes("value") || text.includes("subtotal")) {
+        return "value";
+      }
+
+      return "";
+    },
+
+    promoMatchesItem(promo, item, itemType) {
+      const targets = this.getPromoItemTargetIds(promo, itemType);
+
+      if (targets.length) {
+        const itemIds =
+          itemType === "produk"
+            ? [
+                item.produk_id,
+                item.produk_toko_id,
+                item.item_id,
+                item.id,
+                item.invoice_item_id,
+              ]
+            : [
+                item.treatment_id,
+                item.treatment_toko_id,
+                item.item_id,
+                item.id,
+                item.invoice_item_id,
+              ];
+
+        return itemIds
+          .filter(
+            (value) => value !== null && value !== undefined && value !== "",
+          )
+          .map((value) => String(value))
+          .some((value) => targets.includes(value));
+      }
+
+      const promoText = this.normalizePromoText(
+        [promo?.nama_voucher, promo?.kode_voucher, promo?.deskripsi]
+          .filter(Boolean)
+          .join(" "),
+      );
+
+      const itemName = this.normalizePromoText(
+        item?.nama || item?.nama_produk || item?.nama_treatment || "",
+      );
+
+      if (promoText && itemName && promoText.includes(itemName)) {
+        return true;
+      }
+
+      const list =
+        itemType === "produk"
+          ? this.penjualanItems || []
+          : this.treatmentItems || [];
+
+      return list.length === 1;
+    },
+
+    getPromoItemTargetIds(promo, itemType) {
+      const ids = [];
+
+      const pushValue = (value) => {
+        if (value !== null && value !== undefined && value !== "") {
+          ids.push(String(value));
+        }
+      };
+
+      const directKeys =
+        itemType === "produk"
+          ? ["produk_id", "product_id", "master_produk_id", "item_id"]
+          : ["treatment_id", "master_treatment_id", "item_id"];
+
+      directKeys.forEach((key) => pushValue(promo?.[key]));
+
+      const arrayKeys =
+        itemType === "produk"
+          ? ["produk_ids", "product_ids", "master_produk_ids", "item_ids"]
+          : ["treatment_ids", "master_treatment_ids", "item_ids"];
+
+      arrayKeys.forEach((key) => {
+        if (Array.isArray(promo?.[key])) {
+          promo[key].forEach(pushValue);
+        }
+      });
+
+      const itemArrays = [
+        promo?.items,
+        promo?.voucher_items,
+        promo?.voucher_item,
+        promo?.master_voucher_diskon_items,
+        promo?.detail_items,
+      ];
+
+      itemArrays.forEach((rows) => {
+        if (!Array.isArray(rows)) return;
+
+        rows.forEach((row) => {
+          const rowType = this.normalizePromoText(
+            row?.item_type || row?.type || row?.jenis || "",
+          );
+
+          const isProduk =
+            itemType === "produk" &&
+            (rowType.includes("produk") ||
+              rowType.includes("product") ||
+              rowType.includes("obat"));
+
+          const isTreatment =
+            itemType === "treatment" &&
+            (rowType.includes("treatment") || rowType.includes("perawatan"));
+
+          if (!rowType || isProduk || isTreatment) {
+            pushValue(row?.item_id);
+            pushValue(row?.produk_id);
+            pushValue(row?.product_id);
+            pushValue(row?.treatment_id);
+            pushValue(row?.master_produk_id);
+            pushValue(row?.master_treatment_id);
+          }
+        });
+      });
+
+      return [...new Set(ids)];
+    },
+
+    calculatePromoAmountForItem(promo, item, itemType, baseSubtotal) {
+      const tipeDiskon = promo?.tipe_diskon || promo?.diskon_tipe || "%";
+      const nilaiDiskon = Number(
+        promo?.total_diskon ||
+          promo?.diskon_nilai ||
+          promo?.nilai_diskon ||
+          promo?.diskon ||
+          0,
+      );
+
+      if (baseSubtotal <= 0 || nilaiDiskon <= 0) {
+        return 0;
+      }
+
+      if (this.isPercentDiscountType(tipeDiskon)) {
+        const maxDiscount = Number(
+          promo?.total_diskon_maksimal ||
+            promo?.diskon_maksimal ||
+            promo?.max_diskon ||
+            0,
+        );
+
+        let amount = (baseSubtotal * nilaiDiskon) / 100;
+
+        if (maxDiscount > 0) {
+          amount = Math.min(amount, maxDiscount);
+        }
+
+        return Math.min(amount, baseSubtotal);
+      }
+
+      return Math.min(nilaiDiskon, baseSubtotal);
+    },
+
+    isPercentDiscountType(value) {
+      const text = String(value || "")
+        .toLowerCase()
+        .trim();
+
+      return ["percent", "persen", "%", "1"].includes(text);
+    },
+
+    normalizePromoText(value) {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+    },
     getTreatmentSubtotal(item) {
       const harga = this.resolveTreatmentHarga(item);
       const gross = Number(harga || 0) * Number(item.qty || 0);
@@ -2198,7 +2529,13 @@ export default {
           0,
         );
 
-        return productAmount + treatmentAmount;
+        const amount = productAmount + treatmentAmount;
+
+        if (this.isBundlingPromo(promo)) {
+          return this.capBundlingPromoAmount(amount, promo);
+        }
+
+        return amount;
       }
 
       return this.calculatePromoAmountByBase(
@@ -3115,6 +3452,55 @@ export default {
 
     closeDepositTreatmentDialog() {
       this.depositTreatmentDialog = false;
+    },
+
+    isBundlingPromo(promo) {
+      const jenisId = Number(
+        promo?.jenis_voucher_id ||
+          promo?.voucher_jenis_id ||
+          promo?.jenis_id ||
+          promo?.jenis_voucher?.id ||
+          0,
+      );
+
+      if (jenisId === 3) return true;
+
+      const text = String(
+        [
+          promo?.nama_voucher,
+          promo?.kode_voucher,
+          promo?.jenis_voucher,
+          promo?.jenis,
+          promo?.kategori,
+          promo?.type,
+          promo?.nama_jenis,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      )
+        .toLowerCase()
+        .trim();
+
+      return text.includes("bundling");
+    },
+
+    capBundlingPromoAmount(amount, promo) {
+      const tipe = this.getPromoDiscountType(promo);
+      const value = this.getPromoDiscountValue(promo);
+      const max = this.getPromoMaxDiscount(promo);
+
+      if (this.isPercentDiscountType(tipe)) {
+        return max > 0 ? Math.min(amount, max) : amount;
+      }
+
+      const caps = [];
+
+      if (value > 0) caps.push(value);
+      if (max > 0) caps.push(max);
+
+      if (!caps.length) return amount;
+
+      return Math.min(amount, ...caps);
     },
   },
 };
