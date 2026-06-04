@@ -643,10 +643,21 @@ export default {
       return Math.max(this.subtotal - this.subtotalDiscountAmount, 0);
     },
     promoDiscountAmount() {
-      const total = this.appliedPromos.reduce(
-        (sum, promo) => sum + this.getPromoAmount(promo),
-        0,
-      );
+      let remainingBase = this.promoBaseAmount;
+      let total = 0;
+
+      for (const promo of this.appliedPromos) {
+        if (remainingBase <= 0) {
+          break;
+        }
+
+        const amount = this.calculateSinglePromoAmount(promo, remainingBase);
+        const cappedAmount = Math.min(amount, remainingBase);
+
+        total += cappedAmount;
+        remainingBase = Math.max(remainingBase - cappedAmount, 0);
+      }
+
       return Math.min(total, this.promoBaseAmount);
     },
     memberDiscountAmount() {
@@ -2588,64 +2599,66 @@ export default {
       const raw =
         promo?.raw || promo?.voucher || promo?.master_voucher_diskon || {};
 
-      return this.toPromoNumber(
-        this.firstDefined(
-          promo?.total_diskon,
-          promo?.diskon_nilai,
-          promo?.nilai_diskon,
-          promo?.diskon,
-          promo?.value,
-          raw?.total_diskon,
-          raw?.diskon_nilai,
-          raw?.nilai_diskon,
-          raw?.diskon,
-          raw?.value,
+      return Number(
+        promo?.total_diskon ??
+          promo?.diskon_nilai ??
+          promo?.nilai_diskon ??
+          promo?.value ??
+          raw?.total_diskon ??
+          raw?.diskon_nilai ??
+          raw?.nilai_diskon ??
+          raw?.value ??
           0,
-        ),
       );
     },
     getPromoDiscountType(promo) {
       const raw =
         promo?.raw || promo?.voucher || promo?.master_voucher_diskon || {};
-
-      return String(
-        promo?.tipe_diskon ||
-          promo?.diskon_tipe ||
-          promo?.type ||
-          raw?.tipe_diskon ||
-          raw?.diskon_tipe ||
-          raw?.type ||
+      const value = String(
+        promo?.mode ??
+          promo?.tipe_diskon_kode ??
+          promo?.diskon_tipe ??
+          promo?.tipe_diskon ??
+          raw?.mode ??
+          raw?.tipe_diskon_kode ??
+          raw?.diskon_tipe ??
+          raw?.tipe_diskon ??
           "",
       )
-        .toLowerCase()
-        .trim();
+        .trim()
+        .toLowerCase();
+
+      if (["%", "percent", "persen", "1"].includes(value)) {
+        return "%";
+      }
+
+      return "Rp";
     },
     getPromoMaxDiscount(promo) {
       const raw =
         promo?.raw || promo?.voucher || promo?.master_voucher_diskon || {};
 
-      return this.toPromoNumber(
-        this.firstDefined(
-          promo?.total_diskon_maksimal,
-          promo?.diskon_maksimal,
-          promo?.maksimal_diskon,
-          promo?.max_diskon,
-          promo?.maximum_discount,
-          promo?.max_discount,
-          promo?.max_nominal,
-          promo?.maksimal_potongan,
-          raw?.total_diskon_maksimal,
-          raw?.diskon_maksimal,
-          raw?.maksimal_diskon,
-          raw?.max_diskon,
-          raw?.maximum_discount,
-          raw?.max_discount,
-          raw?.max_nominal,
-          raw?.maksimal_potongan,
+      return Number(
+        promo?.total_diskon_maksimal ??
+          promo?.diskon_maksimal ??
+          promo?.maksimal_diskon ??
+          promo?.max_diskon ??
+          promo?.maximum_discount ??
+          promo?.max_discount ??
+          promo?.max_nominal ??
+          promo?.maksimal_potongan ??
+          raw?.total_diskon_maksimal ??
+          raw?.diskon_maksimal ??
+          raw?.maksimal_diskon ??
+          raw?.max_diskon ??
+          raw?.maximum_discount ??
+          raw?.max_discount ??
+          raw?.max_nominal ??
+          raw?.maksimal_potongan ??
           0,
-        ),
       );
     },
+
     calculatePromoAmountByBase(base, promo) {
       const value = this.getPromoDiscountValue(promo);
       const tipe = this.getPromoDiscountType(promo);
@@ -2682,56 +2695,153 @@ export default {
       return Math.max(itemBase - discountShare, 0);
     },
     getPromoAmount(promo) {
-      if (!promo) return 0;
-
-      if (this.hasPromoSpecificItems(promo)) {
-        const productAmount = this.getPromoMatchedPenjualanItems(promo).reduce(
-          (sum, item) =>
-            sum +
-            this.calculatePromoAmountByBase(
-              this.getItemPromoEligibleBase(item, "produk"),
-              promo,
-            ),
-          0,
-        );
-
-        const treatmentAmount = this.getPromoMatchedTreatmentItems(
-          promo,
-        ).reduce(
-          (sum, item) =>
-            sum +
-            this.calculatePromoAmountByBase(
-              this.getItemPromoEligibleBase(item, "treatment"),
-              promo,
-            ),
-          0,
-        );
-
-        const amount = productAmount + treatmentAmount;
-
-        if (this.isBundlingPromo(promo)) {
-          return this.capBundlingPromoAmount(amount, promo);
-        }
-
-        return amount;
+      if (!promo) {
+        return 0;
       }
 
-      return this.calculatePromoAmountByBase(
-        this.getPromoEligibleBase(promo),
-        promo,
+      let remainingBase = this.promoBaseAmount;
+      const currentKey = this.getPromoKey(promo);
+
+      for (const item of this.appliedPromos) {
+        const itemKey = this.getPromoKey(item);
+
+        if (itemKey === currentKey) {
+          break;
+        }
+
+        const previousAmount = this.calculateSinglePromoAmount(
+          item,
+          remainingBase,
+        );
+        remainingBase = Math.max(remainingBase - previousAmount, 0);
+      }
+
+      return Math.min(
+        this.calculateSinglePromoAmount(promo, remainingBase),
+        remainingBase,
       );
     },
+    calculateSinglePromoAmount(promo, baseAmount = 0) {
+      const base = Math.max(Number(baseAmount || 0), 0);
+
+      if (base <= 0 || !promo) {
+        return 0;
+      }
+
+      if (this.isValuePromo(promo)) {
+        return this.calculateValuePromoAmount(promo, base);
+      }
+
+      const fixedAmount = this.getPromoFixedAmount(promo);
+
+      if (fixedAmount > 0) {
+        return Math.min(fixedAmount, base);
+      }
+
+      const tipe = this.getPromoDiscountType(promo);
+      const nilai = this.getPromoDiscountValue(promo);
+      const maxDiscount = this.getPromoMaxDiscount(promo);
+
+      if (nilai <= 0) {
+        return 0;
+      }
+
+      if (tipe === "%") {
+        let amount = Math.round(((base * nilai) / 100) * 100) / 100;
+
+        if (maxDiscount > 0) {
+          amount = Math.min(amount, maxDiscount);
+        }
+
+        return Math.min(amount, base);
+      }
+
+      let amount = nilai;
+
+      if (maxDiscount > 0) {
+        amount = Math.min(amount, maxDiscount);
+      }
+
+      return Math.min(amount, base);
+    },
+    getPromoFixedAmount(promo) {
+      if (this.isValuePromo(promo)) {
+        return 0;
+      }
+
+      return Number(
+        promo?.diskon_amount ??
+          promo?.amount ??
+          promo?.total_potongan ??
+          promo?.potongan ??
+          promo?.total_discount_amount ??
+          0,
+      );
+    },
+
+    isValuePromo(promo) {
+      const raw =
+        promo?.raw || promo?.voucher || promo?.master_voucher_diskon || {};
+      const jenisId = Number(
+        promo?.jenis_voucher_id ??
+          promo?.jenis_id ??
+          promo?.voucher_jenis_id ??
+          raw?.jenis_voucher_id ??
+          raw?.jenis_id ??
+          0,
+      );
+
+      if (jenisId === 4) {
+        return true;
+      }
+
+      const text = String(
+        promo?.jenis_voucher ||
+          promo?.jenis ||
+          promo?.kategori ||
+          promo?.type ||
+          raw?.jenis_voucher ||
+          raw?.jenis ||
+          raw?.kategori ||
+          raw?.type ||
+          "",
+      ).toLowerCase();
+
+      return text === "value" || text.includes("value");
+    },
+    calculateValuePromoAmount(promo, baseAmount = 0) {
+      const base = Math.max(Number(baseAmount || 0), 0);
+      const tipe = this.getPromoDiscountType(promo);
+      const nilai = this.getPromoDiscountValue(promo);
+      const maxDiscount = this.getPromoMaxDiscount(promo);
+
+      if (base <= 0 || nilai <= 0) {
+        return 0;
+      }
+
+      let amount = 0;
+
+      if (tipe === "%") {
+        amount = Math.round(((base * nilai) / 100) * 100) / 100;
+      } else {
+        amount = nilai;
+      }
+
+      if (maxDiscount > 0) {
+        amount = Math.min(amount, maxDiscount);
+      }
+
+      return Math.min(amount, base);
+    },
     getPromoKey(promo) {
-      if (!promo) return "";
       return String(
-        promo.id ||
-          promo.voucher_id ||
-          promo.master_voucher_diskon_id ||
-          promo.kode_voucher ||
-          promo.kode ||
-          promo.code ||
-          promo.nama_voucher ||
-          promo.nama ||
+        promo?.voucher_id ??
+          promo?.id ??
+          promo?.master_voucher_diskon_id ??
+          promo?.kode_voucher ??
+          promo?.kode ??
+          promo?.nama_voucher ??
+          promo?.nama ??
           "",
       );
     },
