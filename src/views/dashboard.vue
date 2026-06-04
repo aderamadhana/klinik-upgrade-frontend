@@ -1,7 +1,12 @@
 <template>
   <div class="dashboard-page">
     <div class="dashboard-title-row">
-      <h1 class="dashboard-title">Dashboard</h1>
+      <div>
+        <h1 class="dashboard-title">Dashboard</h1>
+        <div class="dashboard-subtitle">
+          Ringkasan aktivitas sesuai user login, role aktif, cabang, dan periode
+        </div>
+      </div>
 
       <div class="dashboard-filter-row">
         <v-text-field
@@ -46,34 +51,47 @@
       elevation="0"
     >
       <div class="hero-content">
-        <div class="hero-top">
-          <v-avatar class="hero-avatar" size="54">
-            <v-icon size="30">{{ currentDashboard.icon }}</v-icon>
+        <div class="hero-user-row">
+          <v-avatar class="hero-user-avatar" size="68">
+            {{ userInitial }}
           </v-avatar>
 
-          <div>
-            <div class="hero-date">{{ currentDateText }}</div>
-            <div class="hero-role">{{ displayRoleName }}</div>
+          <div class="hero-user-info">
+            <div class="hero-date">
+              {{ currentDateText }}
+            </div>
+
+            <h2 class="hero-greeting">
+              Selamat datang,
+              <span>{{ userName }}</span>
+            </h2>
+
+            <div class="hero-context-row">
+              <div class="hero-context-chip">
+                <v-icon size="16">mdi-account-key-outline</v-icon>
+                <span>{{ displayRoleName }}</span>
+              </div>
+
+              <div class="hero-context-chip">
+                <v-icon size="16">mdi-storefront-outline</v-icon>
+                <span>{{ selectedTokoName }}</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <h2 class="hero-title">
-          {{ currentDashboard.title }}
-        </h2>
-
-        <p class="hero-subtitle">
-          {{ currentDashboard.subtitle }}
-        </p>
-
-        <div class="hero-chip-row">
-          <div class="hero-chip">
-            <v-icon size="17">mdi-account-circle-outline</v-icon>
-            <span>{{ userName }}</span>
+        <div class="hero-workspace-card">
+          <div class="workspace-icon">
+            <v-icon size="22">{{ currentDashboard.icon }}</v-icon>
           </div>
 
-          <div class="hero-chip">
-            <v-icon size="17">mdi-storefront-outline</v-icon>
-            <span>{{ selectedTokoName }}</span>
+          <div>
+            <div class="workspace-title">
+              {{ currentDashboard.title }}
+            </div>
+            <div class="workspace-subtitle">
+              {{ currentDashboard.subtitle }}
+            </div>
           </div>
         </div>
 
@@ -93,10 +111,10 @@
             variant="tonal"
             class="hero-secondary-btn"
             prepend-icon="mdi-refresh"
-            :loading="loading"
+            :disabled="loading"
             @click="fetchSummary"
           >
-            Refresh Data
+            {{ loading ? "Memuat Data" : "Refresh Data" }}
           </v-btn>
         </div>
       </div>
@@ -159,7 +177,7 @@
         <div>
           <div class="quick-title">Akses Cepat</div>
           <div class="quick-subtitle">
-            Menu utama yang paling sering dipakai oleh role ini
+            Menu utama yang paling relevan untuk user ini
           </div>
         </div>
 
@@ -197,7 +215,7 @@ const dashboardConfigs = {
   administrator: {
     title: "Pusat Kontrol Sistem Klinik",
     subtitle:
-      "Pantau master data, user, cabang, akses sistem, dan kesiapan operasional dari satu halaman.",
+      "Kontrol master data, user, cabang, akses sistem, dan kesiapan operasional.",
     icon: "mdi-shield-crown-outline",
     heroIcon: "mdi-view-dashboard-edit-outline",
     themeClass: "theme-admin",
@@ -253,7 +271,7 @@ const dashboardConfigs = {
         label: "Pembayaran",
         icon: "mdi-cash-register",
         color: "green",
-        to: "/kasir/daftar-pembayaran",
+        to: "/kasir/pembayaran",
       },
       {
         label: "Registrasi",
@@ -266,15 +284,14 @@ const dashboardConfigs = {
 
   superuser: {
     title: "Superuser Control Room",
-    subtitle:
-      "Akses cepat untuk memantau seluruh modul penting dan memastikan transaksi berjalan stabil.",
+    subtitle: "Pantau modul penting dan pastikan transaksi berjalan stabil.",
     icon: "mdi-account-supervisor-circle-outline",
     heroIcon: "mdi-monitor-dashboard",
     themeClass: "theme-superuser",
     primaryAction: {
       label: "Buka Pembayaran",
       icon: "mdi-cash-register",
-      to: "/kasir/daftar-pembayaran",
+      to: "/kasir/pembayaran",
     },
     stats: [
       {
@@ -317,7 +334,7 @@ const dashboardConfigs = {
         label: "Pembayaran",
         icon: "mdi-cash-register",
         color: "green",
-        to: "/kasir/daftar-pembayaran",
+        to: "/kasir/pembayaran",
       },
       {
         label: "Pasien",
@@ -329,7 +346,7 @@ const dashboardConfigs = {
         label: "Produk",
         icon: "mdi-package-variant-closed",
         color: "orange",
-        to: "/master/product-global",
+        to: "/master/produk",
       },
     ],
   },
@@ -337,7 +354,7 @@ const dashboardConfigs = {
   it: {
     title: "IT Monitoring Center",
     subtitle:
-      "Fokus pada stabilitas aplikasi, audit log, user access, error, dan kesiapan modul sebelum digunakan operasional.",
+      "Pantau stabilitas aplikasi, audit log, user access, error, dan integrasi.",
     icon: "mdi-laptop-account",
     heroIcon: "mdi-console-network-outline",
     themeClass: "theme-it",
@@ -393,7 +410,7 @@ const dashboardConfigs = {
         label: "Pembayaran",
         icon: "mdi-cash-register",
         color: "green",
-        to: "/kasir/daftar-pembayaran",
+        to: "/kasir/pembayaran",
       },
       {
         label: "Registrasi",
@@ -407,14 +424,14 @@ const dashboardConfigs = {
   management: {
     title: "Executive Clinic Overview",
     subtitle:
-      "Lihat gambaran operasional klinik secara cepat: transaksi, kunjungan, performa cabang, dan indikator layanan.",
+      "Lihat transaksi, kunjungan, performa cabang, dan indikator layanan.",
     icon: "mdi-chart-box-outline",
     heroIcon: "mdi-chart-areaspline",
     themeClass: "theme-management",
     primaryAction: {
       label: "Lihat Pembayaran",
       icon: "mdi-finance",
-      to: "/kasir/daftar-pembayaran",
+      to: "/kasir/pembayaran",
     },
     stats: [
       {
@@ -453,7 +470,7 @@ const dashboardConfigs = {
         label: "Pembayaran",
         icon: "mdi-cash-register",
         color: "green",
-        to: "/kasir/daftar-pembayaran",
+        to: "/kasir/pembayaran",
       },
       {
         label: "Registrasi",
@@ -471,7 +488,7 @@ const dashboardConfigs = {
         label: "Produk",
         icon: "mdi-package-variant-closed",
         color: "orange",
-        to: "/master/product-global",
+        to: "/master/produk",
       },
     ],
   },
@@ -479,7 +496,7 @@ const dashboardConfigs = {
   front_office: {
     title: "Front Office Service Desk",
     subtitle:
-      "Fokus pada registrasi layanan, update data pasien, bukti konsultasi online, dan alur pasien dari awal.",
+      "Kelola registrasi layanan, data pasien, bukti konsultasi online, dan alur pasien.",
     icon: "mdi-clipboard-account-outline",
     heroIcon: "mdi-account-plus-outline",
     themeClass: "theme-fo",
@@ -541,7 +558,7 @@ const dashboardConfigs = {
         label: "Pembayaran",
         icon: "mdi-cash-register",
         color: "green",
-        to: "/kasir/daftar-pembayaran",
+        to: "/kasir/pembayaran",
       },
     ],
   },
@@ -549,7 +566,7 @@ const dashboardConfigs = {
   dokter: {
     title: "Doctor Workspace",
     subtitle:
-      "Fokus pada konsultasi, assessment, SOAP, subjective, diagnosa, dan keputusan treatment pasien.",
+      "Kelola konsultasi, assessment, SOAP, subjective, diagnosa, dan treatment pasien.",
     icon: "mdi-doctor",
     heroIcon: "mdi-stethoscope",
     themeClass: "theme-dokter",
@@ -611,22 +628,21 @@ const dashboardConfigs = {
         label: "Pembayaran",
         icon: "mdi-cash-register",
         color: "green",
-        to: "/kasir/daftar-pembayaran",
+        to: "/kasir/pembayaran",
       },
     ],
   },
 
   apoteker: {
     title: "Apotek & Produk Control",
-    subtitle:
-      "Fokus pada resep, produk, stok, mutasi, dan kesiapan obat untuk transaksi pasien.",
+    subtitle: "Pantau resep, produk, stok, mutasi, dan kesiapan obat.",
     icon: "mdi-pill",
     heroIcon: "mdi-medication-outline",
     themeClass: "theme-apotek",
     primaryAction: {
       label: "Cek Produk",
       icon: "mdi-package-variant-closed",
-      to: "/master/product-global",
+      to: "/master/produk",
     },
     stats: [
       {
@@ -663,13 +679,13 @@ const dashboardConfigs = {
         label: "Master Produk",
         icon: "mdi-package-variant-closed",
         color: "green",
-        to: "/master/product-global",
+        to: "/master/produk",
       },
       {
         label: "Pembayaran",
         icon: "mdi-cash-register",
         color: "teal",
-        to: "/kasir/daftar-pembayaran",
+        to: "/kasir/pembayaran",
       },
       {
         label: "Pasien",
@@ -689,14 +705,14 @@ const dashboardConfigs = {
   branch_accounting: {
     title: "Branch Accounting Desk",
     subtitle:
-      "Fokus pada validasi pembayaran, metode bayar, invoice lunas, dan kontrol kas cabang.",
+      "Validasi pembayaran, metode bayar, invoice lunas, dan kontrol kas cabang.",
     icon: "mdi-calculator-variant-outline",
     heroIcon: "mdi-cash-register",
     themeClass: "theme-accounting",
     primaryAction: {
       label: "Data Pembayaran",
       icon: "mdi-cash-register",
-      to: "/kasir/daftar-pembayaran",
+      to: "/kasir/pembayaran",
     },
     stats: [
       {
@@ -733,7 +749,7 @@ const dashboardConfigs = {
         label: "Pembayaran",
         icon: "mdi-cash-register",
         color: "green",
-        to: "/kasir/daftar-pembayaran",
+        to: "/kasir/pembayaran",
       },
       {
         label: "Registrasi",
@@ -751,15 +767,14 @@ const dashboardConfigs = {
         label: "Produk",
         icon: "mdi-package-variant-closed",
         color: "teal",
-        to: "/master/product-global",
+        to: "/master/produk",
       },
     ],
   },
 
   security: {
     title: "Security Front Monitoring",
-    subtitle:
-      "Fokus pada kedatangan pasien, antrian masuk, dan bantuan flow awal sebelum pasien diarahkan ke FO.",
+    subtitle: "Pantau kedatangan pasien, antrian masuk, dan flow awal ke FO.",
     icon: "mdi-shield-account-outline",
     heroIcon: "mdi-security",
     themeClass: "theme-security",
@@ -829,7 +844,7 @@ const dashboardConfigs = {
   sp: {
     title: "Sales Promotion Workspace",
     subtitle:
-      "Fokus pada follow-up pasien, promo, voucher, campaign, dan dukungan penjualan layanan.",
+      "Kelola follow-up pasien, promo, voucher, campaign, dan dukungan penjualan.",
     icon: "mdi-bullhorn-outline",
     heroIcon: "mdi-sale-outline",
     themeClass: "theme-sp",
@@ -885,7 +900,7 @@ const dashboardConfigs = {
         label: "Pembayaran",
         icon: "mdi-cash-register",
         color: "green",
-        to: "/kasir/daftar-pembayaran",
+        to: "/kasir/pembayaran",
       },
       {
         label: "Voucher",
@@ -899,7 +914,7 @@ const dashboardConfigs = {
   default: {
     title: "Clinic Operation Dashboard",
     subtitle:
-      "Ringkasan umum aktivitas klinik berdasarkan role dan cabang yang sedang aktif.",
+      "Ringkasan umum aktivitas klinik berdasarkan role dan cabang aktif.",
     icon: "mdi-view-dashboard-outline",
     heroIcon: "mdi-hospital-building",
     themeClass: "theme-default",
@@ -949,7 +964,7 @@ const dashboardConfigs = {
         label: "Pembayaran",
         icon: "mdi-cash-register",
         color: "green",
-        to: "/kasir/daftar-pembayaran",
+        to: "/kasir/pembayaran",
       },
       {
         label: "Pasien",
@@ -961,7 +976,7 @@ const dashboardConfigs = {
         label: "Produk",
         icon: "mdi-package-variant-closed",
         color: "orange",
-        to: "/master/product-global",
+        to: "/master/produk",
       },
     ],
   },
@@ -1009,6 +1024,16 @@ export default {
           "email",
         ]) || "User"
       );
+    },
+
+    userInitial() {
+      return this.userName
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((word) => word.charAt(0))
+        .join("")
+        .toUpperCase();
     },
 
     roleName() {
@@ -1316,6 +1341,12 @@ export default {
   line-height: 1.2;
 }
 
+.dashboard-subtitle {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 13px;
+}
+
 .dashboard-filter-row {
   display: flex;
   align-items: center;
@@ -1330,7 +1361,7 @@ export default {
 .dashboard-hero {
   position: relative;
   width: 100%;
-  min-height: 320px;
+  min-height: 330px;
   padding: 34px 36px;
   overflow: hidden;
   color: #ffffff;
@@ -1363,72 +1394,108 @@ export default {
 .hero-content {
   position: relative;
   z-index: 2;
-  max-width: 760px;
+  max-width: 850px;
 }
 
-.hero-top {
+.hero-user-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 24px;
+  gap: 18px;
 }
 
-.hero-avatar {
+.hero-user-avatar {
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.22);
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 22px;
+  font-weight: 900;
+  backdrop-filter: blur(10px);
+}
+
+.hero-user-info {
+  min-width: 0;
 }
 
 .hero-date {
-  color: rgba(255, 255, 255, 0.86);
+  color: rgba(255, 255, 255, 0.82);
   font-size: 12.5px;
   font-weight: 700;
 }
 
-.hero-role {
-  margin-top: 3px;
+.hero-greeting {
+  margin: 6px 0 0;
   color: #ffffff;
-  font-size: 17px;
-  font-weight: 850;
-}
-
-.hero-title {
-  margin: 0;
-  color: #ffffff;
-  font-size: 38px;
+  font-size: 39px;
   font-weight: 900;
   line-height: 1.12;
   letter-spacing: -0.04em;
 }
 
-.hero-subtitle {
-  max-width: 680px;
-  margin: 14px 0 0;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 15px;
-  line-height: 1.8;
+.hero-greeting span {
+  color: #ffffff;
 }
 
-.hero-chip-row {
+.hero-context-row {
   display: flex;
-  gap: 10px;
+  gap: 9px;
   flex-wrap: wrap;
-  margin-top: 24px;
+  margin-top: 14px;
 }
 
-.hero-chip {
+.hero-context-chip {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 8px 13px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  gap: 7px;
+  min-height: 32px;
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.13);
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 800;
   backdrop-filter: blur(8px);
+}
+
+.hero-workspace-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  max-width: 720px;
+  margin-top: 28px;
+  padding: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+}
+
+.workspace-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+.workspace-title {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.workspace-subtitle {
+  margin-top: 4px;
+  max-width: 620px;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .hero-action-row {
@@ -1662,7 +1729,7 @@ export default {
     padding: 28px;
   }
 
-  .hero-title {
+  .hero-greeting {
     font-size: 30px;
   }
 
@@ -1696,8 +1763,13 @@ export default {
     padding: 22px;
   }
 
-  .hero-title {
-    font-size: 25px;
+  .hero-user-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hero-greeting {
+    font-size: 26px;
   }
 
   .hero-action-row .v-btn {
