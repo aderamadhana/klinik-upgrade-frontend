@@ -71,7 +71,9 @@
                   {{ getPromoDescription(promo) }}
                   <span class="mx-1">•</span>
                   Potongan:
-                  <strong>{{ formatCurrency(getPromoAmount(promo)) }}</strong>
+                  <strong>{{
+                    formatCurrency(resolvePromoAmount(promo))
+                  }}</strong>
                 </v-list-item-subtitle>
 
                 <template #append>
@@ -146,7 +148,79 @@ export default {
       );
     },
     getPromoDescription(promo) {
+      const raw =
+        promo?.raw || promo?.voucher || promo?.master_voucher_diskon || {};
+      const tipe = String(
+        promo?.tipe_diskon ||
+          promo?.diskon_tipe ||
+          promo?.type ||
+          raw?.tipe_diskon ||
+          "",
+      ).toLowerCase();
+      const value = this.toPromoNumber(
+        promo?.total_diskon ??
+          promo?.diskon_nilai ??
+          promo?.nilai_diskon ??
+          promo?.value ??
+          raw?.total_diskon ??
+          0,
+      );
+      const max = this.toPromoNumber(
+        promo?.total_diskon_maksimal ??
+          promo?.diskon_maksimal ??
+          promo?.maksimal_diskon ??
+          promo?.max_diskon ??
+          raw?.total_diskon_maksimal ??
+          raw?.diskon_maksimal ??
+          0,
+      );
+
+      if (tipe === "nominal" || tipe === "rp") {
+        return `Diskon Rp ${value.toLocaleString("id-ID")}`;
+      }
+
+      if (value > 0 && max > 0) {
+        return `Diskon ${value}% maks Rp ${max.toLocaleString("id-ID")}`;
+      }
+
+      if (value > 0) {
+        return `Diskon ${value}%`;
+      }
+
       return promo?.desc || promo?.deskripsi || "Promo transaksi";
+    },
+    resolvePromoAmount(promo) {
+      if (typeof this.getPromoAmount === "function") {
+        return this.getPromoAmount(promo);
+      }
+
+      return this.toPromoNumber(promo?.diskon_amount || promo?.amount || 0);
+    },
+    toPromoNumber(value) {
+      if (value === null || value === undefined || value === "") return 0;
+      if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+
+      let text = String(value).trim();
+      if (!text || text.toLowerCase() === "null") return 0;
+
+      text = text.replace(/[^\d,.-]/g, "");
+
+      const hasComma = text.includes(",");
+      const hasDot = text.includes(".");
+
+      if (hasComma && hasDot) {
+        text =
+          text.lastIndexOf(",") > text.lastIndexOf(".")
+            ? text.replace(/\./g, "").replace(",", ".")
+            : text.replace(/,/g, "");
+      } else if (hasComma) {
+        text = text.replace(",", ".");
+      } else if (hasDot && /^\d{1,3}(\.\d{3})+$/.test(text)) {
+        text = text.replace(/\./g, "");
+      }
+
+      const number = Number(text);
+      return Number.isFinite(number) ? number : 0;
     },
   },
 };

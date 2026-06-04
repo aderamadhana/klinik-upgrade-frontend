@@ -452,25 +452,90 @@ export default {
       return promo.nama || promo.nama_voucher || promo.kode_voucher || "-";
     },
     getPromoDescription(promo) {
-      if (promo.desc) {
-        return promo.desc;
-      }
+      const raw =
+        promo?.raw || promo?.voucher || promo?.master_voucher_diskon || {};
 
-      if (promo.deskripsi) {
-        return promo.deskripsi;
-      }
+      const mode = String(
+        promo?.mode ||
+          promo?.tipe_diskon_kode ||
+          promo?.diskon_tipe ||
+          promo?.tipe_diskon ||
+          raw?.tipe_diskon ||
+          "",
+      )
+        .toLowerCase()
+        .trim();
 
-      const mode =
-        promo.mode ||
-        promo.tipe_diskon_kode ||
-        (promo.tipe_diskon === "nominal" ? "Rp" : "%");
-      const value = Number(promo.value || promo.total_diskon || 0);
+      const value = this.toPromoNumber(
+        promo?.value ??
+          promo?.total_diskon ??
+          promo?.diskon_nilai ??
+          promo?.nilai_diskon ??
+          raw?.total_diskon ??
+          raw?.diskon_nilai ??
+          raw?.nilai_diskon ??
+          0,
+      );
 
-      if (mode === "Rp" || promo.tipe_diskon === "nominal") {
+      const max = this.toPromoNumber(
+        promo?.total_diskon_maksimal ??
+          promo?.diskon_maksimal ??
+          promo?.maksimal_diskon ??
+          promo?.max_diskon ??
+          promo?.maximum_discount ??
+          promo?.max_discount ??
+          promo?.max_nominal ??
+          promo?.maksimal_potongan ??
+          raw?.total_diskon_maksimal ??
+          raw?.diskon_maksimal ??
+          raw?.maksimal_diskon ??
+          raw?.max_diskon ??
+          raw?.maximum_discount ??
+          raw?.max_discount ??
+          raw?.max_nominal ??
+          raw?.maksimal_potongan ??
+          0,
+      );
+
+      if (mode === "rp" || mode === "nominal") {
         return `Diskon Rp ${value.toLocaleString("id-ID")}`;
       }
 
-      return `Diskon ${value}%`;
+      if (value > 0 && max > 0) {
+        return `Diskon ${value}% maks Rp ${max.toLocaleString("id-ID")}`;
+      }
+
+      if (value > 0) {
+        return `Diskon ${value}%`;
+      }
+
+      return promo?.desc || promo?.deskripsi || "Promo transaksi";
+    },
+    toPromoNumber(value) {
+      if (value === null || value === undefined || value === "") return 0;
+      if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+
+      let text = String(value).trim();
+      if (!text || text.toLowerCase() === "null") return 0;
+
+      text = text.replace(/[^\d,.-]/g, "");
+
+      const hasComma = text.includes(",");
+      const hasDot = text.includes(".");
+
+      if (hasComma && hasDot) {
+        text =
+          text.lastIndexOf(",") > text.lastIndexOf(".")
+            ? text.replace(/\./g, "").replace(",", ".")
+            : text.replace(/,/g, "");
+      } else if (hasComma) {
+        text = text.replace(",", ".");
+      } else if (hasDot && /^\d{1,3}(\.\d{3})+$/.test(text)) {
+        text = text.replace(/\./g, "");
+      }
+
+      const number = Number(text);
+      return Number.isFinite(number) ? number : 0;
     },
     getPromoKuota(promo) {
       if (
