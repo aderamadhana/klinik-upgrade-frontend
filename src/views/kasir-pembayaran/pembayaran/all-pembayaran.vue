@@ -1,55 +1,32 @@
 <template>
   <div>
-    <div class="d-flex align-start justify-space-between flex-wrap ga-3 mb-4">
-      <div>
-        <div class="text-h6 font-weight-bold">Daftar Pembayaran</div>
-        <div class="text-body-2 text-medium-emphasis">
-          Monitoring pembayaran pasien dari registrasi layanan.
-        </div>
-        <v-breadcrumbs :items="breadcrumbs" density="compact" class="pa-0 mt-2">
-          <template #divider>
-            <v-icon size="16">mdi-chevron-right</v-icon>
-          </template>
-        </v-breadcrumbs>
-      </div>
-
-      <v-chip
-        color="success"
-        variant="tonal"
-        size="small"
-        prepend-icon="mdi-timer-sync-outline"
-      >
-        Auto refresh 30 detik
-      </v-chip>
-    </div>
-
-    <v-card variant="outlined" class="mb-4">
-      <v-card-text class="pa-4">
+    <v-card variant="flat" class="border mb-4">
+      <v-card-text>
         <v-row dense align="center">
           <v-col cols="12" md="4">
             <v-text-field
               v-model="filters.search"
+              density="compact"
+              variant="outlined"
               placeholder="Cari invoice, registrasi, pasien, no RM..."
               prepend-inner-icon="mdi-magnify"
-              variant="outlined"
-              density="compact"
               hide-details
               clearable
-              @keyup.enter="onSearch"
-              @click:clear="onClearSearch"
+              @keyup.enter="fetchData(1)"
+              @click:clear="handleSearchClear"
             />
           </v-col>
 
           <v-col cols="12" sm="6" md="2">
             <v-text-field
               v-model="filters.tanggal"
-              label="Tanggal"
               type="date"
-              variant="outlined"
+              label="Tanggal"
               density="compact"
+              variant="outlined"
+              prepend-inner-icon="mdi-calendar"
               hide-details
-              clearable
-              @update:model-value="onFilterChange"
+              @update:model-value="fetchData(1)"
             />
           </v-col>
 
@@ -57,14 +34,12 @@
             <v-select
               v-model="filters.status"
               :items="statusOptions"
-              item-title="label"
+              item-title="title"
               item-value="value"
-              placeholder="Status"
-              variant="outlined"
               density="compact"
+              variant="outlined"
               hide-details
-              clearable
-              @update:model-value="onFilterChange"
+              @update:model-value="fetchData(1)"
             />
           </v-col>
 
@@ -72,25 +47,23 @@
             <v-select
               v-model="filters.channel"
               :items="channelOptions"
-              item-title="label"
+              item-title="title"
               item-value="value"
-              placeholder="Channel"
-              variant="outlined"
               density="compact"
+              variant="outlined"
               hide-details
-              clearable
-              @update:model-value="onFilterChange"
+              @update:model-value="fetchData(1)"
             />
           </v-col>
 
-          <v-col cols="12" sm="6" md="1">
+          <v-col cols="12" sm="6" md="1" class="d-flex justify-end">
             <v-btn
               color="primary"
               variant="outlined"
               prepend-icon="mdi-refresh"
-              class="w-100"
               :loading="loading"
-              @click="fetchData()"
+              class="text-none"
+              @click="fetchData(1)"
             >
               Refresh
             </v-btn>
@@ -99,366 +72,365 @@
       </v-card-text>
     </v-card>
 
-    <v-alert
-      v-if="errorMessage"
-      type="error"
-      variant="tonal"
-      border="start"
-      class="mb-4"
-      closable
-      @click:close="errorMessage = ''"
-    >
-      {{ errorMessage }}
-    </v-alert>
+    <v-card variant="flat" class="border">
+      <v-data-table
+        :headers="headers"
+        :items="rows"
+        :loading="loading"
+        :items-per-page="pagination.perPage"
+        density="comfortable"
+        item-value="id"
+        class="border-0"
+        hide-default-footer
+      >
+        <template #loading>
+          <v-skeleton-loader type="table-row@6" />
+        </template>
 
-    <v-card variant="outlined">
-      <v-card-text class="pa-0">
-        <v-data-table
-          :headers="headers"
-          :items="rows"
-          :loading="loading"
-          :items-per-page="pagination.perPage"
-          item-value="_row_key"
-          density="compact"
-          hide-default-footer
-          class="border"
-          loading-text="Memuat data pembayaran..."
-          no-data-text="Data pembayaran tidak ditemukan"
-        >
-          <template #loading>
-            <v-skeleton-loader type="table-row@6" />
-          </template>
-
-          <template #no-data>
-            <div class="text-center pa-8">
-              <v-icon size="40" color="grey"
-                >mdi-credit-card-off-outline</v-icon
-              >
-              <div class="text-subtitle-2 mt-3">
-                Data pembayaran belum tersedia
-              </div>
-              <div class="text-body-2 text-medium-emphasis">
-                Data muncul saat registrasi masuk ke task pembayaran.
-              </div>
+        <template #no-data>
+          <div class="d-flex flex-column align-center justify-center py-12">
+            <v-icon size="42" color="grey">mdi-cash-register</v-icon>
+            <div class="text-subtitle-1 font-weight-bold mt-3">
+              Data pembayaran tidak ditemukan
             </div>
-          </template>
-
-          <template #item.invoice_pasien="{ item }">
-            <div class="d-flex align-start ga-3 py-2">
-              <div class="flex-grow-1">
-                <div class="d-flex align-center flex-wrap ga-2 mb-1">
-                  <button
-                    type="button"
-                    class="text-primary font-weight-bold text-body-2 bg-transparent border-0 pa-0 text-left"
-                    @click="goToDetailPembayaran(item)"
-                  >
-                    {{ getNomorInvoice(item) }}
-                  </button>
-
-                  <v-chip
-                    v-if="isGroupedInvoice(item)"
-                    size="x-small"
-                    color="primary"
-                    variant="tonal"
-                    prepend-icon="mdi-file-multiple-outline"
-                  >
-                    {{ getInvoiceChildren(item).length }} invoice
-                  </v-chip>
-                </div>
-
-                <div
-                  class="text-body-2 text-medium-emphasis d-flex align-center ga-1 mb-1"
-                >
-                  <v-icon size="14">mdi-file-document-outline</v-icon>
-                  <span>{{ getNomorKunjungan(item) }}</span>
-                </div>
-
-                <div
-                  class="text-body-2 text-medium-emphasis d-flex align-center ga-1 mb-1"
-                >
-                  <v-icon size="14">mdi-calendar-month-outline</v-icon>
-                  <span>{{ formatDate(getDataDate(item)) }}</span>
-                </div>
-
-                <div
-                  class="text-body-2 text-medium-emphasis d-flex align-center ga-1"
-                >
-                  <v-icon size="14">mdi-clock-outline</v-icon>
-                  <span>{{ formatTime(getDataTime(item)) }}</span>
-                </div>
-
-                <div v-if="isGroupedInvoice(item)" class="mt-3">
-                  <v-sheet
-                    v-for="child in getInvoiceChildren(item)"
-                    :key="getChildInvoiceKey(child)"
-                    border
-                    rounded
-                    class="px-3 py-2 mb-2"
-                  >
-                    <div class="d-flex align-center justify-space-between ga-3">
-                      <div class="d-flex align-center flex-wrap ga-2">
-                        <v-chip
-                          size="x-small"
-                          :color="getChildInvoiceColor(child)"
-                          variant="tonal"
-                        >
-                          {{ getChildInvoiceLabel(child) }}
-                        </v-chip>
-                        <span class="text-caption font-weight-medium">
-                          {{ getChildInvoiceNumber(child) }}
-                        </span>
-                      </div>
-                      <span class="text-caption font-weight-bold">
-                        Rp {{ formatNumber(getChildInvoiceTotal(child)) }}
-                      </span>
-                    </div>
-                  </v-sheet>
-                </div>
-              </div>
-
-              <v-divider vertical />
-
-              <div class="flex-grow-1">
-                <div class="font-weight-bold text-body-2 mb-1">
-                  {{ getPasienName(item) }}
-                </div>
-
-                <div class="text-body-2 text-medium-emphasis mb-2">
-                  {{ getPasienMeta(item) }}
-                </div>
-
-                <div class="d-flex flex-wrap ga-1">
-                  <v-chip size="x-small" color="primary" variant="tonal">
-                    {{ getTokoName(item) }}
-                  </v-chip>
-                  <v-chip
-                    v-if="hasConsultation(item)"
-                    size="x-small"
-                    color="info"
-                    variant="tonal"
-                  >
-                    {{ getConsultationLabel(item) }}
-                  </v-chip>
-                </div>
-              </div>
+            <div class="text-body-2 text-medium-emphasis mt-1">
+              Ubah filter atau tekan Refresh untuk memuat ulang data.
             </div>
-          </template>
+          </div>
+        </template>
 
-          <template #item.layanan="{ item }">
-            <div class="d-flex flex-wrap ga-1">
-              <v-chip
-                v-if="hasTreatment(item)"
-                size="small"
-                color="success"
-                variant="tonal"
-                prepend-icon="mdi-face-woman-shimmer-outline"
-              >
-                Treatment
-              </v-chip>
-
-              <v-chip
-                v-if="hasConsultation(item)"
-                size="small"
-                color="primary"
-                variant="tonal"
-                prepend-icon="mdi-stethoscope"
-              >
-                {{ getConsultationLabel(item) }}
-              </v-chip>
-
-              <v-chip
-                v-if="hasSales(item)"
-                size="small"
-                color="info"
-                variant="tonal"
-                prepend-icon="mdi-cart-outline"
-              >
-                Penjualan
-              </v-chip>
-
-              <v-chip
-                v-if="hasDepositInvoice(item)"
-                size="small"
-                color="deep-purple"
-                variant="tonal"
-                prepend-icon="mdi-wallet-giftcard"
-              >
-                Deposit
-              </v-chip>
-
-              <v-chip
-                v-if="isPembelianOnline(item)"
-                size="small"
-                color="deep-purple"
-                variant="tonal"
-                prepend-icon="mdi-web"
-              >
-                Pembelian Online
-              </v-chip>
-
-              <span
-                v-if="
-                  !hasTreatment(item) &&
-                  !hasConsultation(item) &&
-                  !hasSales(item) &&
-                  !hasDepositInvoice(item) &&
-                  !isPembelianOnline(item)
-                "
-                class="text-body-2 text-medium-emphasis"
-              >
-                -
-              </span>
-            </div>
-          </template>
-
-          <template #item.total_status="{ item }">
-            <div class="py-2">
-              <div class="font-weight-bold text-body-2">
-                Rp {{ formatNumber(getTotalTagihan(item)) }}
-              </div>
-
-              <div class="text-body-2 text-medium-emphasis">
-                {{ item.metode_pembayaran || "Belum ada metode" }}
-              </div>
-
-              <div class="d-flex flex-wrap ga-1 mt-1">
-                <v-chip
-                  size="x-small"
-                  :color="getStatusMeta(item).color"
-                  variant="tonal"
-                  :prepend-icon="getStatusMeta(item).icon"
-                >
-                  {{ getStatusMeta(item).label }}
-                </v-chip>
-
-                <v-chip
-                  v-if="canProcessPayment(item)"
-                  size="x-small"
-                  color="warning"
-                  variant="tonal"
-                  prepend-icon="mdi-cash-register"
-                >
-                  Perlu Diproses
-                </v-chip>
-              </div>
-            </div>
-          </template>
-
-          <template #item.aksi="{ item }">
-            <div class="d-flex justify-end flex-wrap ga-2 py-2">
+        <template #item.invoice="{ item }">
+          <div class="py-2">
+            <div class="d-flex align-center flex-wrap ga-2 mb-1">
               <v-btn
-                v-if="canProcessPayment(item)"
+                variant="text"
                 color="primary"
-                variant="flat"
+                density="comfortable"
                 size="small"
-                prepend-icon="mdi-cash-register"
-                @click="goToProsesPembayaran(item)"
+                class="px-0 text-none font-weight-bold"
+                @click="goToDetailPembayaran(getActionTarget(item))"
               >
-                Proses
+                {{ getNomorInvoice(item) }}
               </v-btn>
 
-              <v-menu v-else-if="isInvoicePaid(item) && isGroupedInvoice(item)">
-                <template #activator="{ props }">
-                  <v-btn
-                    v-bind="props"
-                    color="success"
-                    variant="tonal"
-                    size="small"
-                    prepend-icon="mdi-printer-outline"
-                    :loading="printingInvoiceId === getPrintableInvoiceId(item)"
-                  >
-                    Invoice
-                  </v-btn>
-                </template>
+              <v-chip
+                v-if="isGroupedInvoice(item)"
+                color="primary"
+                variant="tonal"
+                size="x-small"
+                prepend-icon="mdi-file-multiple-outline"
+              >
+                {{ getInvoiceBadgeLabel(item) }}
+              </v-chip>
+            </div>
 
+            <div
+              class="d-flex align-center ga-1 text-body-2 text-medium-emphasis"
+            >
+              <v-icon size="14">mdi-file-document-outline</v-icon>
+              <span>{{ getNomorKunjungan(item) }}</span>
+            </div>
+
+            <div
+              class="d-flex align-center ga-1 text-body-2 text-medium-emphasis mt-1"
+            >
+              <v-icon size="14">mdi-calendar-month-outline</v-icon>
+              <span>{{ formatDate(getDataDate(item)) }}</span>
+            </div>
+
+            <div
+              class="d-flex align-center ga-1 text-body-2 text-medium-emphasis mt-1"
+            >
+              <v-icon size="14">mdi-clock-outline</v-icon>
+              <span>{{ getDataTime(item) }}</span>
+            </div>
+
+            <v-sheet
+              v-if="getInvoiceChildren(item).length"
+              color="grey-lighten-5"
+              rounded="lg"
+              border
+              class="mt-3 pa-2"
+            >
+              <div
+                v-for="child in getInvoiceChildren(item)"
+                :key="getInvoiceKey(child)"
+                class="d-flex align-center ga-2 py-1"
+              >
+                <v-chip
+                  :color="getJenisTransaksiColor(child)"
+                  variant="tonal"
+                  size="x-small"
+                  class="font-weight-bold"
+                >
+                  {{ getJenisTransaksiLabel(child) }}
+                </v-chip>
+
+                <div class="text-body-2 text-truncate flex-grow-1">
+                  {{ getNomorInvoice(child) }}
+                </div>
+
+                <div class="text-body-2 font-weight-bold text-no-wrap">
+                  Rp {{ formatNumber(getInvoiceTotal(child)) }}
+                </div>
+              </div>
+            </v-sheet>
+          </div>
+        </template>
+
+        <template #item.pasien="{ item }">
+          <div class="py-2">
+            <div class="text-body-2 font-weight-bold">
+              {{ getPasienName(item) }}
+            </div>
+
+            <div class="text-body-2 text-medium-emphasis mt-1">
+              {{ getPasienMeta(item) }}
+            </div>
+
+            <div class="d-flex align-center flex-wrap ga-1 mt-2">
+              <v-chip
+                v-if="getCabangLabel(item)"
+                color="primary"
+                variant="tonal"
+                size="x-small"
+                class="font-weight-bold"
+              >
+                {{ getCabangLabel(item) }}
+              </v-chip>
+
+              <v-chip
+                v-if="getDokterLabel(item)"
+                color="blue"
+                variant="tonal"
+                size="x-small"
+                class="font-weight-bold"
+              >
+                Dokter: {{ getDokterLabel(item) }}
+              </v-chip>
+
+              <v-chip
+                v-if="getPerawatLabel(item)"
+                color="green"
+                variant="tonal"
+                size="x-small"
+                class="font-weight-bold"
+              >
+                Perawat: {{ getPerawatLabel(item) }}
+              </v-chip>
+            </div>
+          </div>
+        </template>
+
+        <template #item.layanan="{ item }">
+          <div class="d-flex align-center flex-wrap ga-2 py-2">
+            <v-chip
+              v-if="hasTreatment(item)"
+              color="success"
+              variant="tonal"
+              size="small"
+              prepend-icon="mdi-face-woman-shimmer-outline"
+              class="font-weight-bold"
+            >
+              Treatment
+            </v-chip>
+
+            <v-chip
+              v-if="hasSales(item)"
+              color="primary"
+              variant="tonal"
+              size="small"
+              prepend-icon="mdi-cart-outline"
+              class="font-weight-bold"
+            >
+              Penjualan
+            </v-chip>
+
+            <v-chip
+              v-if="hasConsultation(item)"
+              color="info"
+              variant="tonal"
+              size="small"
+              prepend-icon="mdi-stethoscope"
+              class="font-weight-bold"
+            >
+              {{ getConsultationLabel(item) }}
+            </v-chip>
+
+            <v-chip
+              v-if="hasDeposit(item)"
+              color="deep-purple"
+              variant="tonal"
+              size="small"
+              prepend-icon="mdi-wallet-giftcard"
+              class="font-weight-bold"
+            >
+              Deposit
+            </v-chip>
+
+            <v-chip
+              v-if="isPembelianOnline(item)"
+              color="orange"
+              variant="tonal"
+              size="small"
+              prepend-icon="mdi-web"
+              class="font-weight-bold"
+            >
+              Online
+            </v-chip>
+          </div>
+        </template>
+
+        <template #item.total_status="{ item }">
+          <div class="py-2">
+            <div class="text-body-1 font-weight-bold text-no-wrap">
+              Rp {{ formatNumber(getTotalTagihan(item)) }}
+            </div>
+
+            <div
+              v-if="getMetodePembayaran(item)"
+              class="text-body-2 text-medium-emphasis mt-1"
+            >
+              {{ getMetodePembayaran(item) }}
+            </div>
+
+            <div class="d-flex align-center flex-wrap ga-1 mt-2">
+              <v-chip
+                :color="getStatusMeta(item).color"
+                variant="tonal"
+                size="x-small"
+                :prepend-icon="getStatusMeta(item).icon"
+                class="font-weight-bold"
+              >
+                {{ getStatusMeta(item).label }}
+              </v-chip>
+            </div>
+          </div>
+        </template>
+
+        <template #item.aksi="{ item }">
+          <div class="d-flex justify-end align-center ga-2 py-2">
+            <v-btn
+              v-if="canProcessPayment(item)"
+              color="orange"
+              variant="flat"
+              size="small"
+              prepend-icon="mdi-cash-register"
+              class="text-none font-weight-bold"
+              @click="goToProsesPembayaran(item)"
+            >
+              Pembayaran
+            </v-btn>
+
+            <v-menu
+              v-else-if="getInvoiceChildren(item).length > 1"
+              location="bottom end"
+              :close-on-content-click="true"
+            >
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  color="success"
+                  variant="tonal"
+                  size="small"
+                  prepend-icon="mdi-printer"
+                  append-icon="mdi-chevron-down"
+                  class="text-none font-weight-bold"
+                  :loading="printingInvoiceId === getGroupPrintKey(item)"
+                >
+                  Invoice
+                </v-btn>
+              </template>
+
+              <v-card min-width="280" variant="flat" class="border">
                 <v-list density="compact">
+                  <v-list-subheader>AKSI INVOICE</v-list-subheader>
+
+                  <v-list-item
+                    prepend-icon="mdi-printer"
+                    title="Cetak Semua"
+                    subtitle="Gabungkan semua invoice dalam 1 halaman print"
+                    :disabled="printingInvoiceId === getGroupPrintKey(item)"
+                    @click="openAllInvoiceReceipts(item)"
+                  />
+
+                  <v-divider />
+
                   <v-list-item
                     v-for="child in getInvoiceChildren(item)"
-                    :key="getChildInvoiceKey(child)"
-                    @click="openInvoiceReceipt(item, child)"
+                    :key="getInvoiceKey(child)"
+                    prepend-icon="mdi-file-document-outline"
+                    :title="`Cetak ${getJenisTransaksiLabel(child)}`"
+                    :subtitle="getNomorInvoice(child)"
+                    :disabled="
+                      printingInvoiceId === getPrintableInvoiceId(child) ||
+                      printingInvoiceId === getGroupPrintKey(item)
+                    "
+                    @click="openInvoiceReceipt(child)"
                   >
-                    <template #prepend>
-                      <v-icon size="18">mdi-printer-outline</v-icon>
+                    <template #append>
+                      <div class="text-body-2 font-weight-bold">
+                        Rp {{ formatNumber(getInvoiceTotal(child)) }}
+                      </div>
                     </template>
-                    <v-list-item-title>
-                      Cetak {{ getChildInvoiceLabel(child) }}
-                    </v-list-item-title>
-                    <v-list-item-subtitle>
-                      {{ getChildInvoiceNumber(child) }} · Rp
-                      {{ formatNumber(getChildInvoiceTotal(child)) }}
-                    </v-list-item-subtitle>
                   </v-list-item>
                 </v-list>
-              </v-menu>
+              </v-card>
+            </v-menu>
 
-              <v-btn
-                v-else-if="isInvoicePaid(item)"
-                color="success"
-                variant="tonal"
-                size="small"
-                prepend-icon="mdi-printer-outline"
-                :loading="printingInvoiceId === getPrintableInvoiceId(item)"
-                @click.stop="openInvoiceReceipt(item)"
-              >
-                Invoice
-              </v-btn>
-
-              <v-btn
-                v-else
-                color="info"
-                variant="tonal"
-                size="small"
-                prepend-icon="mdi-eye-outline"
-                @click="goToDetailPembayaran(item)"
-              >
-                Detail
-              </v-btn>
-            </div>
-          </template>
-        </v-data-table>
-      </v-card-text>
+            <v-btn
+              v-else
+              color="success"
+              variant="tonal"
+              size="small"
+              prepend-icon="mdi-printer"
+              class="text-none font-weight-bold"
+              :loading="printingInvoiceId === getPrintableInvoiceId(item)"
+              @click="openInvoiceReceipt(getActionTarget(item))"
+            >
+              Invoice
+            </v-btn>
+          </div>
+        </template>
+      </v-data-table>
 
       <v-divider />
 
-      <v-card-text
-        class="d-flex align-center justify-space-between flex-wrap ga-3"
-      >
-        <div class="text-body-2 text-medium-emphasis">
-          Total data:
-          <span class="font-weight-bold">{{ pagination.total }}</span>
-        </div>
+      <v-card-text>
+        <div class="d-flex align-center justify-space-between flex-wrap ga-4">
+          <div class="text-body-2 text-medium-emphasis">
+            Total data:
+            <span class="font-weight-bold text-high-emphasis">
+              {{ pagination.total }}
+            </span>
+          </div>
 
-        <div class="d-flex align-center flex-wrap ga-3">
-          <v-select
-            v-model="pagination.perPage"
-            :items="[10, 15, 25, 50, 100]"
-            variant="outlined"
-            density="compact"
-            hide-details
-            @update:model-value="onPerPageChange"
-          />
+          <div class="d-flex align-center ga-3">
+            <v-select
+              v-model="pagination.perPage"
+              :items="perPageOptions"
+              density="compact"
+              variant="outlined"
+              hide-details
+              class="flex-grow-0"
+              @update:model-value="handlePerPageChange"
+            />
 
-          <v-pagination
-            v-model="pagination.page"
-            :length="pagination.lastPage || 1"
-            density="compact"
-            total-visible="5"
-            @update:model-value="onPageChange"
-          />
+            <v-pagination
+              v-model="pagination.page"
+              :length="pagination.lastPage"
+              density="comfortable"
+              rounded="circle"
+              total-visible="5"
+              @update:model-value="fetchData"
+            />
+          </div>
         </div>
       </v-card-text>
     </v-card>
 
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      timeout="2500"
-      location="top right"
-    >
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color">
       {{ snackbar.text }}
-      <template #actions>
-        <v-btn variant="text" @click="snackbar.show = false">Tutup</v-btn>
-      </template>
     </v-snackbar>
   </div>
 </template>
@@ -472,90 +444,47 @@ export default {
   data() {
     return {
       loading: false,
-      isFetching: false,
-      errorMessage: "",
-      autoRefreshInterval: null,
-      refreshIntervalMs: 30000,
-      rows: [],
-      summaryApi: null,
       printingInvoiceId: null,
+      searchTimer: null,
+      rows: [],
       filters: {
         search: "",
-        tanggal: this.getToday(),
-        status: null,
-        channel: null,
+        tanggal: this.todayDate(),
+        status: "",
+        channel: "",
       },
       pagination: {
         page: 1,
         perPage: 15,
         total: 0,
         lastPage: 1,
+        from: null,
+        to: null,
       },
-      snackbar: {
-        show: false,
-        text: "",
-        color: "success",
-      },
-      breadcrumbs: [
-        {
-          title: "Kasir",
-          disabled: true,
-        },
-        {
-          title: "Daftar Pembayaran",
-          disabled: true,
-        },
-      ],
+      perPageOptions: [10, 15, 25, 50],
       statusOptions: [
-        {
-          label: "Semua",
-          value: null,
-        },
-        {
-          label: "Menunggu Pembayaran",
-          value: "menunggu",
-        },
-        {
-          label: "Diproses",
-          value: "proses",
-        },
-        {
-          label: "Lunas",
-          value: "lunas",
-        },
+        { title: "Semua", value: "" },
+        { title: "Menunggu", value: "menunggu" },
+        { title: "Diproses", value: "proses" },
+        { title: "Lunas", value: "lunas" },
       ],
       channelOptions: [
-        {
-          label: "Semua",
-          value: null,
-        },
-        {
-          label: "Konsultasi Offline",
-          value: "offline",
-        },
-        {
-          label: "Konsultasi Online",
-          value: "online",
-        },
-        {
-          label: "Konsultasi SPPG",
-          value: "sppg",
-        },
-        {
-          label: "Konsultasi SPKK",
-          value: "spkk",
-        },
-        {
-          label: "Tanpa Konsultasi",
-          value: "tanpa_konsultasi",
-        },
+        { title: "Semua", value: "" },
+        { title: "Offline", value: "offline" },
+        { title: "Online", value: "online" },
       ],
       headers: [
         {
-          title: "Invoice & Pasien",
-          key: "invoice_pasien",
+          title: "Invoice",
+          key: "invoice",
           sortable: false,
-          minWidth: 520,
+          minWidth: 290,
+        },
+        {
+          title: "Pasien",
+          key: "pasien",
+          sortable: false,
+          minWidth: 260,
         },
         {
           title: "Layanan",
@@ -567,776 +496,638 @@ export default {
           title: "Total / Status",
           key: "total_status",
           sortable: false,
-          minWidth: 220,
+          minWidth: 190,
         },
         {
           title: "Aksi",
           key: "aksi",
           sortable: false,
           align: "end",
-          minWidth: 160,
+          minWidth: 170,
         },
       ],
+      snackbar: {
+        show: false,
+        color: "success",
+        text: "",
+      },
     };
   },
 
+  watch: {
+    "filters.search"() {
+      window.clearTimeout(this.searchTimer);
+      this.searchTimer = window.setTimeout(() => {
+        this.fetchData(1);
+      }, 450);
+    },
+  },
+
   mounted() {
-    this.fetchData();
-    this.startAutoRefresh();
+    this.fetchData(1);
   },
 
   beforeUnmount() {
-    this.stopAutoRefresh();
+    window.clearTimeout(this.searchTimer);
   },
 
   beforeDestroy() {
-    this.stopAutoRefresh();
+    window.clearTimeout(this.searchTimer);
   },
 
   methods: {
-    getToday() {
-      const d = new Date();
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      const year = d.getFullYear();
+    todayDate() {
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+
       return `${year}-${month}-${day}`;
     },
 
-    async fetchData({ silent = false } = {}) {
-      if (this.isFetching) return;
-      this.isFetching = true;
-      this.errorMessage = "";
-
-      if (!silent) {
-        this.loading = true;
-      }
+    async fetchData(page = this.pagination.page) {
+      this.loading = true;
 
       try {
         const params = {
-          page: this.pagination.page,
+          page,
           per_page: this.pagination.perPage,
-          search: this.filters.search || undefined,
           tanggal: this.filters.tanggal || undefined,
           status: this.filters.status || undefined,
           channel: this.filters.channel || undefined,
-          toko_id: this.activeTokoId() || undefined,
+          search: this.filters.search || undefined,
+          sync_pending: 1,
         };
 
         const response = await pembayaranService.getAll(params);
-        const payload = response?.data || response;
-        const rawRows = this.extractRows(payload);
+        const payload = response?.data || response || {};
+        const rows = this.extractRows(payload);
 
-        this.rows = this.normalizePaymentRows(rawRows);
-        this.applyPagination(payload, rawRows);
-        this.applySummary(payload);
+        this.rows = rows;
+        this.applyPagination(payload, rows, page);
       } catch (error) {
-        this.rows = [];
-        this.summaryApi = null;
-        this.pagination.total = 0;
-        this.pagination.lastPage = 1;
-        this.errorMessage = this.getErrorMessage(error);
+        this.showSnackbar(
+          error?.response?.data?.message || "Gagal mengambil data pembayaran.",
+          "error",
+        );
       } finally {
         this.loading = false;
-        this.isFetching = false;
       }
     },
 
     extractRows(payload) {
-      if (Array.isArray(payload)) return payload;
-      if (Array.isArray(payload?.rows)) return payload.rows;
-      if (Array.isArray(payload?.data?.data)) return payload.data.data;
-      if (Array.isArray(payload?.data)) return payload.data;
-      if (Array.isArray(payload?.items)) return payload.items;
+      if (Array.isArray(payload?.rows)) {
+        return payload.rows;
+      }
+
+      if (Array.isArray(payload?.data?.rows)) {
+        return payload.data.rows;
+      }
+
+      if (Array.isArray(payload?.data?.data)) {
+        return payload.data.data;
+      }
+
+      if (Array.isArray(payload?.data)) {
+        return payload.data;
+      }
+
       return [];
     },
 
-    normalizePaymentRows(rows) {
-      if (!Array.isArray(rows) || rows.length === 0) {
-        return [];
-      }
+    applyPagination(payload, rows, fallbackPage) {
+      const meta = payload?.meta || payload?.data?.meta || payload || {};
 
-      const alreadyGrouped = rows.some(
-        (row) => this.getInvoiceChildren(row).length > 0,
+      this.pagination.page = Number(
+        meta.current_page || meta.page || fallbackPage || 1,
       );
-      if (alreadyGrouped) {
-        return rows.map((row, index) => this.decorateGroupedRow(row, index));
+
+      this.pagination.perPage = Number(
+        meta.per_page || meta.perPage || this.pagination.perPage || 15,
+      );
+
+      this.pagination.total = Number(
+        meta.total_group ||
+          meta.total ||
+          meta.total_data ||
+          meta.total_invoice ||
+          rows.length ||
+          0,
+      );
+
+      this.pagination.lastPage = Number(
+        meta.last_page ||
+          meta.lastPage ||
+          Math.max(
+            1,
+            Math.ceil(this.pagination.total / this.pagination.perPage),
+          ),
+      );
+
+      this.pagination.from = meta.from || null;
+      this.pagination.to = meta.to || null;
+    },
+
+    handlePerPageChange() {
+      this.fetchData(1);
+    },
+
+    handleSearchClear() {
+      this.filters.search = "";
+      this.fetchData(1);
+    },
+
+    getActionTarget(item) {
+      const children = this.getInvoiceChildren(item);
+
+      return children[0] || item;
+    },
+
+    getInvoiceChildren(item) {
+      const candidates = [
+        item?.invoices,
+        item?.invoice_list,
+        item?.invoice_rows,
+        item?.detail_invoices,
+        item?.detail_invoice,
+        item?.grouped_invoices,
+        item?.invoice_details,
+        item?.children,
+      ];
+
+      for (const candidate of candidates) {
+        if (Array.isArray(candidate)) {
+          return candidate;
+        }
       }
 
-      const grouped = new Map();
-
-      rows.forEach((row, index) => {
-        const key = this.getInvoiceGroupKey(row);
-
-        if (!grouped.has(key)) {
-          grouped.set(key, []);
-        }
-
-        grouped.get(key).push({ ...row, _original_index: index });
-      });
-
-      return Array.from(grouped.values()).map((items, index) => {
-        if (items.length === 1) {
-          return this.decorateGroupedRow(items[0], index);
-        }
-
-        const first = items[0];
-        const total = items.reduce(
-          (sum, child) =>
-            sum +
-            Number(
-              child?.grand_total ||
-                child?.total_tagihan ||
-                child?.total_pembayaran ||
-                0,
-            ),
-          0,
-        );
-        const totalBayar = items.reduce(
-          (sum, child) => sum + Number(child?.total_bayar || 0),
-          0,
-        );
-        const statusKey = items.every(
-          (child) => this.getStatusKey(child) === "lunas",
-        )
-          ? "lunas"
-          : items.some((child) => this.getStatusKey(child) === "proses")
-            ? "proses"
-            : this.getStatusKey(first);
-
-        return this.decorateGroupedRow(
-          {
-            ...first,
-            id: first?.id || first?.invoice_id || first?.registrasi_id,
-            invoice_id: first?.invoice_id || first?.id,
-            no_invoice: this.getBaseInvoiceNo(first),
-            nomor_invoice: this.getBaseInvoiceNo(first),
-            invoice_number: this.getBaseInvoiceNo(first),
-            invoice_base_no: this.getBaseInvoiceNo(first),
-            invoice_group_no: this.getBaseInvoiceNo(first),
-            is_grouped_invoice: true,
-            invoice_count: items.length,
-            invoice_children: items,
-            invoices: items,
-            child_invoice_ids: items
-              .map((child) => child?.invoice_id || child?.id)
-              .filter(Boolean),
-            grand_total: total,
-            total_tagihan: total,
-            total_pembayaran: total,
-            total_bayar: totalBayar,
-            status_pembayaran_key: statusKey,
-            status_key: statusKey,
-            status: statusKey,
-            ada_treatment: items.some((child) => this.hasTreatment(child)),
-            is_treatment: items.some((child) => this.hasTreatment(child)),
-            ada_penjualan: items.some((child) => this.hasSales(child)),
-            is_penjualan: items.some((child) => this.hasSales(child)),
-          },
-          index,
-        );
-      });
+      return [];
     },
 
-    decorateGroupedRow(row, index) {
-      return {
-        ...row,
-        _row_key:
-          row?._row_key ||
-          row?.invoice_base_no ||
-          row?.invoice_group_no ||
-          row?.no_invoice ||
-          row?.invoice_id ||
-          row?.id ||
-          `row-${index}`,
-      };
+    isGroupedInvoice(item) {
+      return this.getInvoiceCount(item) > 1;
     },
 
-    applyPagination(payload, rawRows = []) {
-      const source = payload?.data || payload || {};
-      const meta = payload?.meta || source?.meta || {};
-      const backendTotal = source?.total || meta?.total;
-      const total = backendTotal || this.rows.length || rawRows.length || 0;
+    getInvoiceCount(item) {
+      const childrenCount = this.getInvoiceChildren(item).length;
 
-      this.pagination.total = Number(total);
-      this.pagination.lastPage = Number(
-        source?.last_page ||
-          meta?.last_page ||
-          Math.ceil(this.pagination.total / this.pagination.perPage) ||
+      return Number(
+        item?.invoice_count ||
+          item?.jumlah_invoice ||
+          item?.total_invoice_group ||
+          item?.total_group_invoice ||
+          item?.total_invoice ||
+          childrenCount ||
           1,
       );
-      this.pagination.page = Number(
-        source?.current_page || meta?.current_page || this.pagination.page || 1,
+    },
+
+    getInvoiceBadgeLabel(item) {
+      return `${this.getInvoiceCount(item)} invoice`;
+    },
+
+    getInvoiceKey(invoice) {
+      return (
+        invoice?.invoice_id ||
+        invoice?.pembayaran_invoice_id ||
+        invoice?.pembayaran_id ||
+        invoice?.id ||
+        invoice?.no_invoice ||
+        invoice?.nomor_invoice ||
+        invoice?.invoice_number ||
+        `${invoice?.jenis_transaksi || "invoice"}-${invoice?.grand_total || 0}`
       );
-    },
-
-    applySummary(payload) {
-      this.summaryApi =
-        payload?.summary ||
-        payload?.data?.summary ||
-        payload?.meta?.summary ||
-        null;
-    },
-
-    activeTokoId() {
-      return localStorage.getItem("selected_toko_id") || null;
-    },
-
-    onSearch() {
-      this.pagination.page = 1;
-      this.fetchData();
-    },
-
-    onClearSearch() {
-      this.filters.search = "";
-      this.pagination.page = 1;
-      this.fetchData();
-    },
-
-    onFilterChange() {
-      this.pagination.page = 1;
-      this.fetchData();
-    },
-
-    onPerPageChange() {
-      this.pagination.page = 1;
-      this.fetchData();
-    },
-
-    onPageChange() {
-      this.fetchData();
-    },
-
-    startAutoRefresh() {
-      this.stopAutoRefresh();
-      this.autoRefreshInterval = setInterval(() => {
-        this.fetchData({ silent: true });
-      }, this.refreshIntervalMs);
-    },
-
-    stopAutoRefresh() {
-      if (this.autoRefreshInterval) {
-        clearInterval(this.autoRefreshInterval);
-        this.autoRefreshInterval = null;
-      }
-    },
-
-    getRegistrasiId(item) {
-      return item?.registrasi_id || item?.pembayaran_id || item?.id;
     },
 
     getNomorInvoice(item) {
       return (
-        item?.invoice_group_no ||
-        item?.invoice_base_no ||
+        item?.no_invoice ||
         item?.nomor_invoice ||
         item?.invoice_number ||
-        item?.no_invoice ||
-        `INV-${this.getRegistrasiId(item) || "-"}`
+        item?.faktur ||
+        "-"
       );
-    },
-
-    getInvoiceGroupKey(item) {
-      return (
-        this.getBaseInvoiceNo(item) ||
-        this.getNomorKunjungan(item) ||
-        `row-${item?.id}`
-      );
-    },
-
-    getBaseInvoiceNo(item) {
-      const explicit = item?.invoice_base_no || item?.invoice_group_no;
-      if (explicit) return String(explicit);
-
-      const invoice =
-        item?.nomor_invoice || item?.invoice_number || item?.no_invoice || "";
-      return String(invoice).replace(/-[A-Z]$/, "");
     },
 
     getNomorKunjungan(item) {
-      return item?.nomor_kunjungan || item?.kode_registrasi || "-";
+      return (
+        item?.kode_registrasi ||
+        item?.nomor_registrasi ||
+        item?.no_registrasi ||
+        item?.registrasi?.kode_registrasi ||
+        "-"
+      );
     },
 
     getDataDate(item) {
       return (
+        item?.tanggal_invoice ||
         item?.tanggal_kunjungan ||
         item?.tanggal ||
-        item?.tanggal_invoice ||
+        item?.date_create ||
         item?.created_at ||
         null
       );
     },
 
     getDataTime(item) {
-      return (
-        item?.waktu_kunjungan ||
+      const value =
+        item?.jam_invoice ||
         item?.jam_kunjungan ||
-        item?.registered_at ||
+        item?.jam ||
         item?.created_at ||
-        null
-      );
+        item?.date_create ||
+        "";
+
+      if (!value) {
+        return "-";
+      }
+
+      const raw = String(value);
+
+      if (/^\d{2}:\d{2}/.test(raw)) {
+        return raw.slice(0, 5);
+      }
+
+      const match = raw.match(/\d{2}:\d{2}/);
+
+      return match ? match[0] : "-";
     },
 
     getPasienName(item) {
       return (
-        item?.pasien?.nama ||
-        item?.pasien?.nama_pasien ||
-        item?.nama_pasien ||
         item?.pasien_nama ||
+        item?.nama_pasien ||
+        item?.pasien?.nama ||
+        item?.registrasi?.pasien?.nama ||
         "-"
       );
     },
 
     getPasienMeta(item) {
-      const pasien = item?.pasien || {};
+      const noRm =
+        item?.pasien_no_rm ||
+        item?.no_rm ||
+        item?.pasien?.no_rm ||
+        item?.registrasi?.pasien?.no_rm ||
+        "-";
+
+      const phone =
+        item?.pasien_no_hp ||
+        item?.no_hp ||
+        item?.no_wa ||
+        item?.pasien?.no_hp ||
+        item?.registrasi?.pasien?.no_hp ||
+        "-";
+
+      return `${noRm} • ${phone}`;
+    },
+
+    getCabangLabel(item) {
       return (
-        [
-          pasien.no_rm || item?.no_rm,
-          pasien.no_hp || item?.no_hp || item?.pasien_no_hp,
-        ]
-          .filter(Boolean)
-          .join(" • ") || "-"
+        item?.cabang ||
+        item?.nama_cabang ||
+        item?.toko_nama ||
+        item?.toko?.nama ||
+        item?.registrasi?.toko?.nama ||
+        ""
       );
     },
 
-    getTokoName(item) {
-      return item?.toko_nama || item?.nama_toko || item?.toko?.nama || "Cabang";
+    getDokterLabel(item) {
+      return (
+        item?.dokter_nama ||
+        item?.nama_dokter ||
+        item?.dokter?.nama ||
+        item?.registrasi?.dokter_awal?.nama ||
+        item?.registrasi?.dokterAwal?.nama ||
+        ""
+      );
+    },
+
+    getPerawatLabel(item) {
+      return (
+        item?.perawat_nama ||
+        item?.nama_perawat ||
+        item?.perawat?.nama ||
+        item?.registrasi?.perawat_awal?.nama ||
+        item?.registrasi?.perawatAwal?.nama ||
+        ""
+      );
     },
 
     getTotalTagihan(item) {
       const children = this.getInvoiceChildren(item);
-      if (children.length > 0) {
-        return children.reduce(
-          (sum, child) =>
-            sum +
-            Number(
-              child?.grand_total ||
-                child?.total_tagihan ||
-                child?.total_pembayaran ||
-                0,
-            ),
-          0,
-        );
+
+      if (children.length) {
+        const total = children.reduce((sum, child) => {
+          return sum + Number(this.getInvoiceTotal(child) || 0);
+        }, 0);
+
+        if (total > 0) {
+          return total;
+        }
       }
 
-      return (
-        item?.total_tagihan ||
-        item?.grand_total ||
-        item?.total_pembayaran ||
-        item?.total ||
-        0
+      return this.getInvoiceTotal(item);
+    },
+
+    getInvoiceTotal(item) {
+      return Number(
+        item?.grand_total ??
+          item?.total_tagihan ??
+          item?.total_pembayaran ??
+          item?.total_invoice ??
+          item?.total ??
+          item?.subtotal ??
+          item?.amount ??
+          0,
       );
     },
 
-    getStatusKey(item) {
-      const children = this.getInvoiceChildren(item);
-      if (children.length > 0) {
-        if (
-          children.every(
-            (child) =>
-              this.getStatusKey({ ...child, invoice_children: [] }) === "lunas",
-          )
-        ) {
-          return "lunas";
-        }
-        if (
-          children.some(
-            (child) =>
-              this.getStatusKey({ ...child, invoice_children: [] }) ===
-              "proses",
-          )
-        ) {
-          return "proses";
-        }
+    getMetodePembayaran(item) {
+      const metode =
+        item?.metode_pembayaran ||
+        item?.metode_bayar ||
+        item?.payment_method ||
+        item?.metode?.[0]?.metode_bayar_nama ||
+        item?.metode?.[0]?.nama ||
+        "";
+
+      if (Array.isArray(metode)) {
+        return metode
+          .map((row) => row?.metode_bayar_nama || row?.nama || row)
+          .filter(Boolean)
+          .join(", ");
       }
 
+      return metode;
+    },
+
+    getStatusKey(item) {
       const raw = String(
-        item?.status_pembayaran_key ||
-          item?.status_key ||
+        item?.status_key ||
+          item?.status_label ||
+          item?.status_invoice ||
           item?.status ||
-          item?.status_pembayaran ||
-          "menunggu",
+          "",
       ).toLowerCase();
 
-      if (["2", "menunggu pembayaran", "menunggu", "waiting"].includes(raw)) {
-        return "menunggu";
-      }
-
-      if (["1", "diproses", "proses", "process"].includes(raw)) {
-        return "proses";
-      }
-
-      if (["3", "lunas", "selesai", "paid", "done"].includes(raw)) {
+      if (["3", "lunas", "paid", "selesai"].includes(raw)) {
         return "lunas";
       }
 
-      if (["9", "batal", "cancel", "cancelled"].includes(raw)) {
-        return "batal";
+      if (["2", "proses", "diproses", "process"].includes(raw)) {
+        return "proses";
       }
 
-      return raw;
+      return "menunggu";
     },
 
     getStatusMeta(item) {
       const key = this.getStatusKey(item);
-      const map = {
-        menunggu: {
-          label: "Menunggu Pembayaran",
-          color: "warning",
-          icon: "mdi-clock-outline",
-        },
-        proses: {
-          label: "Diproses",
-          color: "info",
-          icon: "mdi-progress-clock",
-        },
-        lunas: {
+
+      if (key === "lunas") {
+        return {
           label: "Lunas",
           color: "success",
           icon: "mdi-check-circle-outline",
-        },
-        batal: {
-          label: "Batal",
-          color: "error",
-          icon: "mdi-close-circle-outline",
-        },
-      };
+        };
+      }
 
-      return (
-        map[key] || {
-          label: "-",
-          color: "grey",
-          icon: "mdi-help-circle-outline",
-        }
-      );
+      if (key === "proses") {
+        return {
+          label: "Diproses",
+          color: "info",
+          icon: "mdi-progress-clock",
+        };
+      }
+
+      return {
+        label: "Menunggu",
+        color: "warning",
+        icon: "mdi-clock-outline",
+      };
     },
 
     canProcessPayment(item) {
+      const children = this.getInvoiceChildren(item);
+
+      if (children.length) {
+        return children.some((child) => this.getStatusKey(child) !== "lunas");
+      }
+
+      return this.getStatusKey(item) !== "lunas";
+    },
+
+    hasTreatment(item) {
       if (
-        item?.can_process_pembayaran === true ||
-        item?.can_process_pembayaran === 1
+        item?.has_treatment ||
+        item?.is_treatment ||
+        Number(item?.subtotal_treatment || 0) > 0
       ) {
         return true;
       }
 
-      return ["menunggu", "proses"].includes(this.getStatusKey(item));
-    },
-
-    isInvoicePaid(item) {
-      return this.getStatusKey(item) === "lunas";
-    },
-
-    hasTreatment(item) {
-      const children = this.getInvoiceChildren(item);
-      if (children.length > 0) {
-        return children.some((child) =>
-          this.hasTreatment({ ...child, invoice_children: [] }),
-        );
-      }
-
-      return (
-        this.isTrue(item?.ada_treatment) ||
-        this.isTrue(item?.is_treatment) ||
-        Number(item?.subtotal_treatment || 0) > 0
+      return this.getInvoiceChildren(item).some((child) =>
+        this.hasTreatment(child),
       );
     },
 
     hasSales(item) {
-      const children = this.getInvoiceChildren(item);
-      if (children.length > 0) {
-        return children.some((child) =>
-          this.hasSales({ ...child, invoice_children: [] }),
-        );
+      if (
+        item?.has_penjualan ||
+        item?.has_sales ||
+        item?.is_penjualan ||
+        Number(item?.subtotal_produk || item?.subtotal_penjualan || 0) > 0
+      ) {
+        return true;
       }
 
-      return (
-        this.isTrue(item?.ada_penjualan) ||
-        this.isTrue(item?.is_penjualan) ||
-        this.isTrue(item?.ada_produk) ||
-        Number(item?.subtotal_produk || item?.subtotal_obat || 0) > 0
-      );
-    },
-
-    hasDepositInvoice(item) {
-      const children = this.getInvoiceChildren(item);
-      if (children.length > 0) {
-        return children.some((child) => this.isDepositChild(child));
-      }
-
-      return (
-        Number(item?.jenis_transaksi || 0) === 4 ||
-        String(item?.invoice_suffix || "").toUpperCase() === "D"
+      return this.getInvoiceChildren(item).some((child) =>
+        this.hasSales(child),
       );
     },
 
     hasConsultation(item) {
-      const children = this.getInvoiceChildren(item);
-      if (children.length > 0) {
-        return children.some((child) =>
-          this.hasConsultation({ ...child, invoice_children: [] }),
-        );
+      if (
+        item?.has_konsultasi ||
+        item?.is_konsultasi ||
+        item?.is_konsul ||
+        Number(item?.subtotal_konsultasi || 0) > 0
+      ) {
+        return true;
       }
 
-      const sourceCode = String(item?.konsultasi_source_code || "").trim();
-      const sourceName = String(item?.konsultasi_source_name || "").trim();
-      const jenisLabel = String(item?.jenis_konsultasi_label || "").trim();
+      return this.getInvoiceChildren(item).some((child) =>
+        this.hasConsultation(child),
+      );
+    },
 
-      return (
-        this.isTrue(item?.ada_konsultasi) ||
-        sourceCode !== "" ||
-        sourceName !== "" ||
-        jenisLabel !== "" ||
-        Number(item?.channel_konsultasi || 0) > 0 ||
-        ["offline", "online"].includes(
-          String(item?.channel_konsultasi || "").toLowerCase(),
-        )
+    hasDeposit(item) {
+      if (
+        item?.has_deposit ||
+        item?.is_deposit ||
+        item?.jenis_transaksi === 4 ||
+        String(item?.jenis_transaksi).toLowerCase() === "deposit" ||
+        Number(item?.total_deposit || 0) > 0 ||
+        Number(item?.total_deposit_claim || 0) > 0
+      ) {
+        return true;
+      }
+
+      return this.getInvoiceChildren(item).some((child) =>
+        this.hasDeposit(child),
       );
     },
 
     isPembelianOnline(item) {
-      const children = this.getInvoiceChildren(item);
-      if (children.length > 0) {
-        return children.some((child) =>
-          this.isPembelianOnline({ ...child, invoice_children: [] }),
-        );
+      if (
+        item?.is_pembelian_online ||
+        item?.channel === "online" ||
+        item?.channel_konsultasi === "online"
+      ) {
+        return true;
       }
 
-      return (
-        this.isTrue(item?.is_pembelian_online) ||
-        this.isTrue(item?.ada_pembelian_online)
+      return this.getInvoiceChildren(item).some((child) =>
+        this.isPembelianOnline(child),
       );
     },
 
     getConsultationLabel(item) {
-      const apiLabel = String(
-        item?.jenis_konsultasi_label ||
-          item?.konsultasi_source_name ||
-          item?.channel_konsultasi_label ||
-          "",
-      ).trim();
-
-      if (apiLabel) return apiLabel;
-
-      const sourceCode = String(item?.konsultasi_source_code || "")
-        .trim()
-        .toUpperCase();
-      const sourceMap = {
-        KONSULTASI_OFFLINE: "Konsultasi Dokter",
-        KONSULTASI_ONLINE: "Konsultasi Online",
-        KONSULTASI_SPPG: "Konsultasi SPPG",
-        KONSULTASI_SPKK: "Konsultasi SPKK",
-        KONSULTASI_SPPK: "Konsultasi SPKK",
-      };
-
-      if (sourceMap[sourceCode]) {
-        return sourceMap[sourceCode];
+      if (this.isPembelianOnline(item)) {
+        return "Konsultasi Online";
       }
 
-      const channel = String(item?.channel_konsultasi || "").toLowerCase();
-      if (channel === "1" || channel === "offline") return "Konsultasi Offline";
-      if (channel === "2" || channel === "online") return "Konsultasi Online";
-      if (channel === "sppg") return "Konsultasi SPPG";
-      if (channel === "spkk") return "Konsultasi SPKK";
-      if (channel === "sppk") return "Konsultasi SPKK";
       return "Konsultasi";
     },
 
-    formatChannel(itemOrChannel) {
-      const isObject =
-        itemOrChannel !== null &&
-        typeof itemOrChannel === "object" &&
-        !Array.isArray(itemOrChannel);
+    getJenisTransaksiLabel(item) {
+      const label =
+        item?.jenis_transaksi_label ||
+        item?.tipe_invoice_label ||
+        item?.kategori_invoice_label ||
+        "";
 
-      if (isObject) {
-        return this.getConsultationLabel(itemOrChannel);
+      if (label) {
+        return label;
       }
 
-      const value = String(itemOrChannel || "").toLowerCase();
-      if (value === "1" || value === "offline") return "Konsultasi Offline";
-      if (value === "2" || value === "online") return "Konsultasi Online";
-      if (value === "sppg") return "Konsultasi SPPG";
-      if (value === "spkk") return "Konsultasi SPKK";
-      if (value === "sppk") return "Konsultasi SPKK";
-      return "Tanpa Konsultasi";
+      const value = String(
+        item?.jenis_transaksi ??
+          item?.tipe_invoice ??
+          item?.kategori_invoice ??
+          "",
+      ).toLowerCase();
+
+      const map = {
+        0: "Umum",
+        umum: "Umum",
+        1: "Endorse",
+        endorse: "Endorse",
+        faskar: "Faskar",
+        2: "EliteGlowbal",
+        eliteglowbal: "EliteGlowbal",
+        3: "Owner",
+        owner: "Owner",
+        4: "Deposit",
+        deposit: "Deposit",
+      };
+
+      return map[value] || "Umum";
     },
 
-    goToProsesPembayaran(item) {
-      this.$router.push(
-        `/kasir/daftar-pembayaran/${this.getRegistrasiId(item)}/proses-pembayaran`,
-      );
-    },
+    getJenisTransaksiColor(item) {
+      const label = this.getJenisTransaksiLabel(item).toLowerCase();
 
-    goToDetailPembayaran(item) {
-      this.$router.push(
-        `/kasir/daftar-pembayaran/${this.getRegistrasiId(item)}/detail-pembayaran`,
-      );
-    },
+      if (label.includes("deposit")) {
+        return "deep-purple";
+      }
 
-    getInvoiceChildren(item) {
-      const children =
-        item?.invoice_children ||
-        item?.invoices ||
-        item?.children ||
-        item?.split_invoices ||
-        [];
+      if (label.includes("owner")) {
+        return "orange";
+      }
 
-      return Array.isArray(children) ? children : [];
-    },
+      if (label.includes("elite")) {
+        return "cyan";
+      }
 
-    isGroupedInvoice(item) {
-      return (
-        this.getInvoiceChildren(item).length > 1 ||
-        Number(item?.invoice_count || 0) > 1
-      );
-    },
+      if (label.includes("endorse") || label.includes("faskar")) {
+        return "warning";
+      }
 
-    getChildInvoiceKey(child) {
-      return (
-        child?.invoice_id ||
-        child?.id ||
-        child?.no_invoice ||
-        child?.nomor_invoice
-      );
-    },
-
-    getChildInvoiceNumber(child) {
-      return (
-        child?.no_invoice ||
-        child?.nomor_invoice ||
-        child?.invoice_number ||
-        "-"
-      );
-    },
-
-    getChildInvoiceTotal(child) {
-      return (
-        child?.grand_total ||
-        child?.total_tagihan ||
-        child?.total_pembayaran ||
-        0
-      );
-    },
-
-    getChildInvoiceSuffix(child) {
-      const suffix = String(child?.invoice_suffix || "").toUpperCase();
-      if (suffix) return suffix;
-
-      const number = this.getChildInvoiceNumber(child);
-      const match = String(number).match(/-([A-Z])$/);
-      return match ? match[1] : "U";
-    },
-
-    getChildInvoiceLabel(child) {
-      const suffix = this.getChildInvoiceSuffix(child);
-      const jenisTransaksi = Number(child?.jenis_transaksi || 0);
-
-      if (suffix === "D" || jenisTransaksi === 4) return "Deposit";
-      if (suffix === "F" || jenisTransaksi === 1) return "Faskar";
-      if (suffix === "E" || jenisTransaksi === 2) return "EliteGlowbal";
-      if (suffix === "O" || jenisTransaksi === 3) return "Owner";
-      return "Umum";
-    },
-
-    getChildInvoiceColor(child) {
-      const suffix = this.getChildInvoiceSuffix(child);
-      const jenisTransaksi = Number(child?.jenis_transaksi || 0);
-
-      if (suffix === "D" || jenisTransaksi === 4) return "deep-purple";
-      if (suffix === "F" || jenisTransaksi === 1) return "orange";
-      if (suffix === "E" || jenisTransaksi === 2) return "indigo";
-      if (suffix === "O" || jenisTransaksi === 3) return "brown";
       return "primary";
     },
 
-    isDepositChild(child) {
+    getRoutePaymentId(item) {
+      const target = this.getActionTarget(item);
+
       return (
-        this.getChildInvoiceSuffix(child) === "D" ||
-        Number(child?.jenis_transaksi || 0) === 4
+        target?.invoice_id ||
+        target?.pembayaran_invoice_id ||
+        target?.pembayaran_id ||
+        target?.id ||
+        target?.registrasi_id ||
+        item?.invoice_id ||
+        item?.pembayaran_invoice_id ||
+        item?.pembayaran_id ||
+        item?.id ||
+        item?.registrasi_id
       );
     },
 
-    isTrue(value) {
-      return value === true || value === 1 || value === "1";
-    },
-
-    formatNumber(value) {
-      return Number(value || 0).toLocaleString("id-ID", {
-        minimumFractionDigits: Number(value || 0) % 1 === 0 ? 0 : 2,
-        maximumFractionDigits: 2,
-      });
-    },
-
-    formatDate(value) {
-      if (!value) return "-";
-
-      if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
-        const [year, month, day] = String(value).split("-").map(Number);
-        const date = new Date(year, month - 1, day);
-        return date.toLocaleDateString("id-ID", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        });
-      }
-
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return value;
-      return date.toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
-    },
-
-    formatTime(value) {
-      if (!value) return "-";
-
-      const raw = String(value);
-      if (/^\d{2}:\d{2}/.test(raw)) {
-        return raw.slice(0, 5);
-      }
-
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return "-";
-      return date.toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    },
-
-    showSnackbar(text, color = "success") {
-      this.snackbar.show = true;
-      this.snackbar.text = text;
-      this.snackbar.color = color;
-    },
-
-    getErrorMessage(error) {
-      const response = error?.response?.data;
-
-      if (response?.errors) {
-        const firstKey = Object.keys(response.errors)[0];
-        if (firstKey && Array.isArray(response.errors[firstKey])) {
-          return response.errors[firstKey][0];
-        }
-      }
-
+    getPrintableInvoiceId(item) {
       return (
-        response?.message ||
-        response?.error ||
-        error?.message ||
-        "Gagal mengambil data pembayaran"
+        item?.invoice_id ||
+        item?.pembayaran_invoice_id ||
+        item?.pembayaran_id ||
+        item?.id ||
+        item?.invoice?.id ||
+        null
       );
     },
 
-    getPrintableInvoiceId(item, child = null) {
-      const target = child || item;
-      return target?.invoice_id || target?.id || target?.pembayaran_id || null;
+    getGroupPrintKey(item) {
+      return `group-${
+        item?.group_key ||
+        item?.registrasi_id ||
+        item?.kode_registrasi ||
+        item?.id ||
+        this.getNomorInvoice(item)
+      }`;
     },
 
-    async openInvoiceReceipt(item, child = null) {
-      const invoiceId = this.getPrintableInvoiceId(item, child);
+    getPrintableInvoiceTargets(item) {
+      const children = this.getInvoiceChildren(item);
+
+      if (children.length) {
+        return children.filter((child) => this.getPrintableInvoiceId(child));
+      }
+
+      return this.getPrintableInvoiceId(item) ? [item] : [];
+    },
+
+    goToDetailPembayaran(item) {
+      this.goToProsesPembayaran(item);
+    },
+
+    goToProsesPembayaran(item) {
+      const id = this.getRoutePaymentId(item);
+
+      if (!id) {
+        this.showSnackbar("ID pembayaran tidak ditemukan.", "error");
+        return;
+      }
+
+      this.$router.push(`/kasir/daftar-pembayaran/${id}/proses-pembayaran`);
+    },
+
+    async openInvoiceReceipt(item) {
+      const invoiceId = this.getPrintableInvoiceId(item);
 
       if (!invoiceId) {
-        this.showSnackbar("Invoice tidak valid.", "error");
+        this.showSnackbar("ID invoice tidak ditemukan.", "error");
         return;
       }
 
@@ -1347,18 +1138,197 @@ export default {
         const printWindow = window.open("", "_blank");
 
         if (!printWindow) {
-          this.showSnackbar("Popup print diblokir browser.", "warning");
+          this.showSnackbar("Popup browser diblokir.", "error");
           return;
         }
 
         printWindow.document.open();
         printWindow.document.write(html);
         printWindow.document.close();
+        printWindow.focus();
       } catch (error) {
-        this.showSnackbar(this.getErrorMessage(error), "error");
+        this.showSnackbar(
+          error?.response?.data?.message || "Gagal membuka invoice.",
+          "error",
+        );
       } finally {
         this.printingInvoiceId = null;
       }
+    },
+
+    extractBodyHtml(html) {
+      if (!html) {
+        return "";
+      }
+
+      const match = String(html).match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+
+      return match ? match[1] : html;
+    },
+
+    extractHeadPrintHtml(html) {
+      if (!html) {
+        return "";
+      }
+
+      const source = String(html);
+      const styleTags = source.match(/<style[\s\S]*?<\/style>/gi) || [];
+      const linkTags =
+        source.match(/<link[^>]+rel=["']stylesheet["'][^>]*>/gi) || [];
+
+      return [...linkTags, ...styleTags].join("\n");
+    },
+
+    combineInvoiceHtml(htmlList) {
+      const headHtml = this.extractHeadPrintHtml(htmlList[0] || "");
+
+      const bodyHtml = htmlList
+        .map((html) => {
+          return `
+            <section class="invoice-print-page">
+              ${this.extractBodyHtml(html)}
+            </section>
+          `;
+        })
+        .join("\n");
+
+      return `
+        <!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Cetak Semua Invoice</title>
+            ${headHtml}
+            <style>
+              .invoice-print-page {
+                page-break-after: always;
+                break-after: page;
+              }
+
+              .invoice-print-page:last-child {
+                page-break-after: auto;
+                break-after: auto;
+              }
+
+              @media print {
+                .invoice-print-page {
+                  page-break-after: always;
+                  break-after: page;
+                }
+
+                .invoice-print-page:last-child {
+                  page-break-after: auto;
+                  break-after: auto;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            ${bodyHtml}
+          </body>
+        </html>
+      `;
+    },
+
+    async openAllInvoiceReceipts(item) {
+      const targets = this.getPrintableInvoiceTargets(item);
+      const printKey = this.getGroupPrintKey(item);
+
+      if (!targets.length) {
+        this.showSnackbar("Daftar invoice tidak ditemukan.", "error");
+        return;
+      }
+
+      const printWindow = window.open("", "_blank");
+
+      if (!printWindow) {
+        this.showSnackbar("Popup browser diblokir.", "error");
+        return;
+      }
+
+      this.printingInvoiceId = printKey;
+
+      try {
+        printWindow.document.open();
+        printWindow.document.write(`
+          <!doctype html>
+          <html>
+            <head>
+              <title>Memuat Invoice</title>
+            </head>
+            <body>
+              <p style="font-family: Arial, sans-serif;">Memuat invoice...</p>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+
+        const htmlList = [];
+
+        for (const target of targets) {
+          const invoiceId = this.getPrintableInvoiceId(target);
+
+          if (!invoiceId) {
+            continue;
+          }
+
+          const html = await pembayaranService.printInvoice(invoiceId);
+          htmlList.push(html);
+        }
+
+        if (!htmlList.length) {
+          printWindow.close();
+          this.showSnackbar("Invoice tidak dapat dimuat.", "error");
+          return;
+        }
+
+        printWindow.document.open();
+        printWindow.document.write(this.combineInvoiceHtml(htmlList));
+        printWindow.document.close();
+        printWindow.focus();
+      } catch (error) {
+        printWindow.close();
+
+        this.showSnackbar(
+          error?.response?.data?.message || "Gagal membuka semua invoice.",
+          "error",
+        );
+      } finally {
+        this.printingInvoiceId = null;
+      }
+    },
+
+    formatDate(value) {
+      if (!value) {
+        return "-";
+      }
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return String(value);
+      }
+
+      return date.toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    },
+
+    formatNumber(value) {
+      const number = Number(value || 0);
+
+      return number.toLocaleString("id-ID", {
+        minimumFractionDigits: number % 1 === 0 ? 0 : 2,
+        maximumFractionDigits: 2,
+      });
+    },
+
+    showSnackbar(text, color = "success") {
+      this.snackbar.text = text;
+      this.snackbar.color = color;
+      this.snackbar.show = true;
     },
   },
 };

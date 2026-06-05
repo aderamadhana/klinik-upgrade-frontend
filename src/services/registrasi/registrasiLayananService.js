@@ -156,11 +156,15 @@ const normalizeTreatmentItem = (item = {}) => {
 };
 
 const normalizePenjualanItem = (item = {}) => {
+  const selectedProduk = item.selected_produk || item.produk || item.obat || {};
+
   const produkTokoId =
     item.produk_toko_id ||
     item.master_produk_toko_id ||
     item.obat_toko_id ||
     item.toko_produk_id ||
+    selectedProduk.produk_toko_id ||
+    selectedProduk.master_produk_toko_id ||
     null;
 
   const produkId =
@@ -168,41 +172,78 @@ const normalizePenjualanItem = (item = {}) => {
     item.obat_id ||
     item.master_produk_id ||
     item.product_id ||
+    selectedProduk.produk_id ||
+    selectedProduk.obat_id ||
+    selectedProduk.id ||
     null;
 
-  const harga = toNumber(item.harga || item.harga_jual || 0);
+  const tempatProdukId =
+    item.tempat_produk_id ||
+    item.tempatProdukId ||
+    selectedProduk.tempat_produk_id ||
+    selectedProduk.tempatProdukId ||
+    null;
+
+  const stockProdukTokoId =
+    item.stock_produk_toko_id ||
+    item.stockProdukTokoId ||
+    item.stock_id ||
+    selectedProduk.stock_produk_toko_id ||
+    selectedProduk.stockProdukTokoId ||
+    selectedProduk.stock_id ||
+    null;
+
+  const harga = toNumber(
+    item.harga ||
+      item.harga_jual ||
+      selectedProduk.harga_jual ||
+      selectedProduk.harga ||
+      0,
+  );
+
   const jumlah = toNumber(item.jumlah || item.qty || 1);
   const subtotal = toNumber(item.subtotal || harga * jumlah);
+
+  const namaProduk =
+    item.nama_produk ||
+    item.produk_nama ||
+    item.nama_obat ||
+    item.obat_nama ||
+    item.nama ||
+    selectedProduk.nama ||
+    selectedProduk.nama_produk ||
+    "";
 
   return {
     produk_toko_id: produkTokoId,
     produk_id: produkId,
     obat_id: produkId,
-    nama_produk:
-      item.nama_produk ||
-      item.produk_nama ||
-      item.nama_obat ||
-      item.obat_nama ||
-      item.nama ||
-      "",
-    produk_nama:
-      item.produk_nama ||
-      item.nama_produk ||
-      item.nama_obat ||
-      item.obat_nama ||
-      item.nama ||
-      "",
+
+    tempat_produk_id: tempatProdukId,
+    stock_produk_toko_id: stockProdukTokoId,
+
+    nama_produk: namaProduk,
+    produk_nama: namaProduk,
+
     harga,
     jumlah: jumlah <= 0 ? 1 : jumlah,
+
     diskon_tipe: item.diskon_tipe || item.diskon_type || 0,
     diskon_nilai: toNumber(item.diskon_nilai || item.diskon_value || 0),
     diskon_referral: toNumber(item.diskon_referral || 0),
+
     subtotal,
     source_resep_id: item.source_resep_id || null,
+
     frekuensi: item.frekuensi || "",
     waktu_pakai: item.waktu_pakai || "",
     penggunaan: item.penggunaan || "",
-    unit: item.unit || item.satuan || "",
+    unit:
+      item.unit ||
+      item.satuan ||
+      selectedProduk.nama_satuan ||
+      selectedProduk.satuan ||
+      "",
   };
 };
 
