@@ -6,7 +6,6 @@
         <div class="text-body-2 text-medium-emphasis">
           Monitoring pembayaran pasien dari registrasi layanan.
         </div>
-
         <v-breadcrumbs :items="breadcrumbs" density="compact" class="pa-0 mt-2">
           <template #divider>
             <v-icon size="16">mdi-chevron-right</v-icon>
@@ -119,7 +118,7 @@
           :items="rows"
           :loading="loading"
           :items-per-page="pagination.perPage"
-          item-value="id"
+          item-value="_row_key"
           density="compact"
           hide-default-footer
           class="border"
@@ -132,14 +131,12 @@
 
           <template #no-data>
             <div class="text-center pa-8">
-              <v-icon size="40" color="grey">
-                mdi-credit-card-off-outline
-              </v-icon>
-
+              <v-icon size="40" color="grey"
+                >mdi-credit-card-off-outline</v-icon
+              >
               <div class="text-subtitle-2 mt-3">
                 Data pembayaran belum tersedia
               </div>
-
               <div class="text-body-2 text-medium-emphasis">
                 Data muncul saat registrasi masuk ke task pembayaran.
               </div>
@@ -149,13 +146,25 @@
           <template #item.invoice_pasien="{ item }">
             <div class="d-flex align-start ga-3 py-2">
               <div class="flex-grow-1">
-                <button
-                  type="button"
-                  class="text-primary font-weight-bold text-body-2 mb-1 bg-transparent border-0 pa-0 text-left"
-                  @click="goToDetailPembayaran(item)"
-                >
-                  {{ getNomorInvoice(item) }}
-                </button>
+                <div class="d-flex align-center flex-wrap ga-2 mb-1">
+                  <button
+                    type="button"
+                    class="text-primary font-weight-bold text-body-2 bg-transparent border-0 pa-0 text-left"
+                    @click="goToDetailPembayaran(item)"
+                  >
+                    {{ getNomorInvoice(item) }}
+                  </button>
+
+                  <v-chip
+                    v-if="isGroupedInvoice(item)"
+                    size="x-small"
+                    color="primary"
+                    variant="tonal"
+                    prepend-icon="mdi-file-multiple-outline"
+                  >
+                    {{ getInvoiceChildren(item).length }} invoice
+                  </v-chip>
+                </div>
 
                 <div
                   class="text-body-2 text-medium-emphasis d-flex align-center ga-1 mb-1"
@@ -177,6 +186,34 @@
                   <v-icon size="14">mdi-clock-outline</v-icon>
                   <span>{{ formatTime(getDataTime(item)) }}</span>
                 </div>
+
+                <div v-if="isGroupedInvoice(item)" class="mt-3">
+                  <v-sheet
+                    v-for="child in getInvoiceChildren(item)"
+                    :key="getChildInvoiceKey(child)"
+                    border
+                    rounded
+                    class="px-3 py-2 mb-2"
+                  >
+                    <div class="d-flex align-center justify-space-between ga-3">
+                      <div class="d-flex align-center flex-wrap ga-2">
+                        <v-chip
+                          size="x-small"
+                          :color="getChildInvoiceColor(child)"
+                          variant="tonal"
+                        >
+                          {{ getChildInvoiceLabel(child) }}
+                        </v-chip>
+                        <span class="text-caption font-weight-medium">
+                          {{ getChildInvoiceNumber(child) }}
+                        </span>
+                      </div>
+                      <span class="text-caption font-weight-bold">
+                        Rp {{ formatNumber(getChildInvoiceTotal(child)) }}
+                      </span>
+                    </div>
+                  </v-sheet>
+                </div>
               </div>
 
               <v-divider vertical />
@@ -194,7 +231,6 @@
                   <v-chip size="x-small" color="primary" variant="tonal">
                     {{ getTokoName(item) }}
                   </v-chip>
-
                   <v-chip
                     v-if="hasConsultation(item)"
                     size="x-small"
@@ -241,6 +277,16 @@
               </v-chip>
 
               <v-chip
+                v-if="hasDepositInvoice(item)"
+                size="small"
+                color="deep-purple"
+                variant="tonal"
+                prepend-icon="mdi-wallet-giftcard"
+              >
+                Deposit
+              </v-chip>
+
+              <v-chip
                 v-if="isPembelianOnline(item)"
                 size="small"
                 color="deep-purple"
@@ -255,6 +301,7 @@
                   !hasTreatment(item) &&
                   !hasConsultation(item) &&
                   !hasSales(item) &&
+                  !hasDepositInvoice(item) &&
                   !isPembelianOnline(item)
                 "
                 class="text-body-2 text-medium-emphasis"
@@ -309,8 +356,43 @@
               >
                 Proses
               </v-btn>
+
+              <v-menu v-else-if="isInvoicePaid(item) && isGroupedInvoice(item)">
+                <template #activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    color="success"
+                    variant="tonal"
+                    size="small"
+                    prepend-icon="mdi-printer-outline"
+                    :loading="printingInvoiceId === getPrintableInvoiceId(item)"
+                  >
+                    Invoice
+                  </v-btn>
+                </template>
+
+                <v-list density="compact">
+                  <v-list-item
+                    v-for="child in getInvoiceChildren(item)"
+                    :key="getChildInvoiceKey(child)"
+                    @click="openInvoiceReceipt(item, child)"
+                  >
+                    <template #prepend>
+                      <v-icon size="18">mdi-printer-outline</v-icon>
+                    </template>
+                    <v-list-item-title>
+                      Cetak {{ getChildInvoiceLabel(child) }}
+                    </v-list-item-title>
+                    <v-list-item-subtitle>
+                      {{ getChildInvoiceNumber(child) }} · Rp
+                      {{ formatNumber(getChildInvoiceTotal(child)) }}
+                    </v-list-item-subtitle>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
+
               <v-btn
-                v-if="isInvoicePaid(item)"
+                v-else-if="isInvoicePaid(item)"
                 color="success"
                 variant="tonal"
                 size="small"
@@ -320,6 +402,7 @@
               >
                 Invoice
               </v-btn>
+
               <v-btn
                 v-else
                 color="info"
@@ -373,9 +456,8 @@
       location="top right"
     >
       {{ snackbar.text }}
-
       <template #actions>
-        <v-btn variant="text" @click="snackbar.show = false"> Tutup </v-btn>
+        <v-btn variant="text" @click="snackbar.show = false">Tutup</v-btn>
       </template>
     </v-snackbar>
   </div>
@@ -397,27 +479,23 @@ export default {
       rows: [],
       summaryApi: null,
       printingInvoiceId: null,
-
       filters: {
         search: "",
         tanggal: this.getToday(),
         status: null,
         channel: null,
       },
-
       pagination: {
         page: 1,
         perPage: 15,
         total: 0,
         lastPage: 1,
       },
-
       snackbar: {
         show: false,
         text: "",
         color: "success",
       },
-
       breadcrumbs: [
         {
           title: "Kasir",
@@ -428,7 +506,6 @@ export default {
           disabled: true,
         },
       ],
-
       statusOptions: [
         {
           label: "Semua",
@@ -447,7 +524,6 @@ export default {
           value: "lunas",
         },
       ],
-
       channelOptions: [
         {
           label: "Semua",
@@ -474,13 +550,12 @@ export default {
           value: "tanpa_konsultasi",
         },
       ],
-
       headers: [
         {
           title: "Invoice & Pasien",
           key: "invoice_pasien",
           sortable: false,
-          minWidth: 440,
+          minWidth: 520,
         },
         {
           title: "Layanan",
@@ -524,13 +599,11 @@ export default {
       const month = String(d.getMonth() + 1).padStart(2, "0");
       const day = String(d.getDate()).padStart(2, "0");
       const year = d.getFullYear();
-
       return `${year}-${month}-${day}`;
     },
 
     async fetchData({ silent = false } = {}) {
       if (this.isFetching) return;
-
       this.isFetching = true;
       this.errorMessage = "";
 
@@ -551,9 +624,10 @@ export default {
 
         const response = await pembayaranService.getAll(params);
         const payload = response?.data || response;
+        const rawRows = this.extractRows(payload);
 
-        this.rows = this.extractRows(payload);
-        this.applyPagination(payload);
+        this.rows = this.normalizePaymentRows(rawRows);
+        this.applyPagination(payload, rawRows);
         this.applySummary(payload);
       } catch (error) {
         this.rows = [];
@@ -573,25 +647,123 @@ export default {
       if (Array.isArray(payload?.data?.data)) return payload.data.data;
       if (Array.isArray(payload?.data)) return payload.data;
       if (Array.isArray(payload?.items)) return payload.items;
-
       return [];
     },
 
-    applyPagination(payload) {
+    normalizePaymentRows(rows) {
+      if (!Array.isArray(rows) || rows.length === 0) {
+        return [];
+      }
+
+      const alreadyGrouped = rows.some(
+        (row) => this.getInvoiceChildren(row).length > 0,
+      );
+      if (alreadyGrouped) {
+        return rows.map((row, index) => this.decorateGroupedRow(row, index));
+      }
+
+      const grouped = new Map();
+
+      rows.forEach((row, index) => {
+        const key = this.getInvoiceGroupKey(row);
+
+        if (!grouped.has(key)) {
+          grouped.set(key, []);
+        }
+
+        grouped.get(key).push({ ...row, _original_index: index });
+      });
+
+      return Array.from(grouped.values()).map((items, index) => {
+        if (items.length === 1) {
+          return this.decorateGroupedRow(items[0], index);
+        }
+
+        const first = items[0];
+        const total = items.reduce(
+          (sum, child) =>
+            sum +
+            Number(
+              child?.grand_total ||
+                child?.total_tagihan ||
+                child?.total_pembayaran ||
+                0,
+            ),
+          0,
+        );
+        const totalBayar = items.reduce(
+          (sum, child) => sum + Number(child?.total_bayar || 0),
+          0,
+        );
+        const statusKey = items.every(
+          (child) => this.getStatusKey(child) === "lunas",
+        )
+          ? "lunas"
+          : items.some((child) => this.getStatusKey(child) === "proses")
+            ? "proses"
+            : this.getStatusKey(first);
+
+        return this.decorateGroupedRow(
+          {
+            ...first,
+            id: first?.id || first?.invoice_id || first?.registrasi_id,
+            invoice_id: first?.invoice_id || first?.id,
+            no_invoice: this.getBaseInvoiceNo(first),
+            nomor_invoice: this.getBaseInvoiceNo(first),
+            invoice_number: this.getBaseInvoiceNo(first),
+            invoice_base_no: this.getBaseInvoiceNo(first),
+            invoice_group_no: this.getBaseInvoiceNo(first),
+            is_grouped_invoice: true,
+            invoice_count: items.length,
+            invoice_children: items,
+            invoices: items,
+            child_invoice_ids: items
+              .map((child) => child?.invoice_id || child?.id)
+              .filter(Boolean),
+            grand_total: total,
+            total_tagihan: total,
+            total_pembayaran: total,
+            total_bayar: totalBayar,
+            status_pembayaran_key: statusKey,
+            status_key: statusKey,
+            status: statusKey,
+            ada_treatment: items.some((child) => this.hasTreatment(child)),
+            is_treatment: items.some((child) => this.hasTreatment(child)),
+            ada_penjualan: items.some((child) => this.hasSales(child)),
+            is_penjualan: items.some((child) => this.hasSales(child)),
+          },
+          index,
+        );
+      });
+    },
+
+    decorateGroupedRow(row, index) {
+      return {
+        ...row,
+        _row_key:
+          row?._row_key ||
+          row?.invoice_base_no ||
+          row?.invoice_group_no ||
+          row?.no_invoice ||
+          row?.invoice_id ||
+          row?.id ||
+          `row-${index}`,
+      };
+    },
+
+    applyPagination(payload, rawRows = []) {
       const source = payload?.data || payload || {};
       const meta = payload?.meta || source?.meta || {};
+      const backendTotal = source?.total || meta?.total;
+      const total = backendTotal || this.rows.length || rawRows.length || 0;
 
-      this.pagination.total = Number(
-        source?.total || meta?.total || this.rows.length || 0,
-      );
-
+      this.pagination.total = Number(total);
       this.pagination.lastPage = Number(
         source?.last_page ||
           meta?.last_page ||
           Math.ceil(this.pagination.total / this.pagination.perPage) ||
           1,
       );
-
       this.pagination.page = Number(
         source?.current_page || meta?.current_page || this.pagination.page || 1,
       );
@@ -636,7 +808,6 @@ export default {
 
     startAutoRefresh() {
       this.stopAutoRefresh();
-
       this.autoRefreshInterval = setInterval(() => {
         this.fetchData({ silent: true });
       }, this.refreshIntervalMs);
@@ -655,11 +826,30 @@ export default {
 
     getNomorInvoice(item) {
       return (
+        item?.invoice_group_no ||
+        item?.invoice_base_no ||
         item?.nomor_invoice ||
         item?.invoice_number ||
         item?.no_invoice ||
         `INV-${this.getRegistrasiId(item) || "-"}`
       );
+    },
+
+    getInvoiceGroupKey(item) {
+      return (
+        this.getBaseInvoiceNo(item) ||
+        this.getNomorKunjungan(item) ||
+        `row-${item?.id}`
+      );
+    },
+
+    getBaseInvoiceNo(item) {
+      const explicit = item?.invoice_base_no || item?.invoice_group_no;
+      if (explicit) return String(explicit);
+
+      const invoice =
+        item?.nomor_invoice || item?.invoice_number || item?.no_invoice || "";
+      return String(invoice).replace(/-[A-Z]$/, "");
     },
 
     getNomorKunjungan(item) {
@@ -698,7 +888,6 @@ export default {
 
     getPasienMeta(item) {
       const pasien = item?.pasien || {};
-
       return (
         [
           pasien.no_rm || item?.no_rm,
@@ -714,6 +903,21 @@ export default {
     },
 
     getTotalTagihan(item) {
+      const children = this.getInvoiceChildren(item);
+      if (children.length > 0) {
+        return children.reduce(
+          (sum, child) =>
+            sum +
+            Number(
+              child?.grand_total ||
+                child?.total_tagihan ||
+                child?.total_pembayaran ||
+                0,
+            ),
+          0,
+        );
+      }
+
       return (
         item?.total_tagihan ||
         item?.grand_total ||
@@ -724,48 +928,56 @@ export default {
     },
 
     getStatusKey(item) {
+      const children = this.getInvoiceChildren(item);
+      if (children.length > 0) {
+        if (
+          children.every(
+            (child) =>
+              this.getStatusKey({ ...child, invoice_children: [] }) === "lunas",
+          )
+        ) {
+          return "lunas";
+        }
+        if (
+          children.some(
+            (child) =>
+              this.getStatusKey({ ...child, invoice_children: [] }) ===
+              "proses",
+          )
+        ) {
+          return "proses";
+        }
+      }
+
       const raw = String(
         item?.status_pembayaran_key ||
+          item?.status_key ||
           item?.status ||
           item?.status_pembayaran ||
           "menunggu",
       ).toLowerCase();
 
-      if (["menunggu pembayaran", "menunggu", "waiting"].includes(raw)) {
+      if (["2", "menunggu pembayaran", "menunggu", "waiting"].includes(raw)) {
         return "menunggu";
       }
 
-      if (["diproses", "proses", "process"].includes(raw)) {
+      if (["1", "diproses", "proses", "process"].includes(raw)) {
         return "proses";
       }
 
-      if (["lunas", "selesai", "paid", "done"].includes(raw)) {
+      if (["3", "lunas", "selesai", "paid", "done"].includes(raw)) {
         return "lunas";
       }
 
-      if (["batal", "cancel", "cancelled"].includes(raw)) {
+      if (["9", "batal", "cancel", "cancelled"].includes(raw)) {
         return "batal";
       }
 
       return raw;
     },
 
-    getStatusLabel(item) {
-      const key = this.getStatusKey(item);
-
-      const map = {
-        menunggu: "Menunggu Pembayaran",
-        proses: "Diproses",
-        lunas: "Lunas",
-        batal: "Batal",
-      };
-
-      return map[key] || "-";
-    },
-
     getStatusMeta(item) {
       const key = this.getStatusKey(item);
-
       const map = {
         menunggu: {
           label: "Menunggu Pembayaran",
@@ -809,21 +1021,61 @@ export default {
       return ["menunggu", "proses"].includes(this.getStatusKey(item));
     },
 
+    isInvoicePaid(item) {
+      return this.getStatusKey(item) === "lunas";
+    },
+
     hasTreatment(item) {
+      const children = this.getInvoiceChildren(item);
+      if (children.length > 0) {
+        return children.some((child) =>
+          this.hasTreatment({ ...child, invoice_children: [] }),
+        );
+      }
+
       return (
-        this.isTrue(item?.ada_treatment) || this.isTrue(item?.is_treatment)
+        this.isTrue(item?.ada_treatment) ||
+        this.isTrue(item?.is_treatment) ||
+        Number(item?.subtotal_treatment || 0) > 0
       );
     },
 
     hasSales(item) {
+      const children = this.getInvoiceChildren(item);
+      if (children.length > 0) {
+        return children.some((child) =>
+          this.hasSales({ ...child, invoice_children: [] }),
+        );
+      }
+
       return (
         this.isTrue(item?.ada_penjualan) ||
         this.isTrue(item?.is_penjualan) ||
-        this.isTrue(item?.ada_produk)
+        this.isTrue(item?.ada_produk) ||
+        Number(item?.subtotal_produk || item?.subtotal_obat || 0) > 0
+      );
+    },
+
+    hasDepositInvoice(item) {
+      const children = this.getInvoiceChildren(item);
+      if (children.length > 0) {
+        return children.some((child) => this.isDepositChild(child));
+      }
+
+      return (
+        Number(item?.jenis_transaksi || 0) === 4 ||
+        String(item?.invoice_suffix || "").toUpperCase() === "D"
       );
     },
 
     hasConsultation(item) {
+      const children = this.getInvoiceChildren(item);
+      if (children.length > 0) {
+        return children.some((child) =>
+          this.hasConsultation({ ...child, invoice_children: [] }),
+        );
+      }
+
       const sourceCode = String(item?.konsultasi_source_code || "").trim();
       const sourceName = String(item?.konsultasi_source_name || "").trim();
       const jenisLabel = String(item?.jenis_konsultasi_label || "").trim();
@@ -841,6 +1093,13 @@ export default {
     },
 
     isPembelianOnline(item) {
+      const children = this.getInvoiceChildren(item);
+      if (children.length > 0) {
+        return children.some((child) =>
+          this.isPembelianOnline({ ...child, invoice_children: [] }),
+        );
+      }
+
       return (
         this.isTrue(item?.is_pembelian_online) ||
         this.isTrue(item?.ada_pembelian_online)
@@ -860,7 +1119,6 @@ export default {
       const sourceCode = String(item?.konsultasi_source_code || "")
         .trim()
         .toUpperCase();
-
       const sourceMap = {
         KONSULTASI_OFFLINE: "Konsultasi Dokter",
         KONSULTASI_ONLINE: "Konsultasi Online",
@@ -874,13 +1132,11 @@ export default {
       }
 
       const channel = String(item?.channel_konsultasi || "").toLowerCase();
-
       if (channel === "1" || channel === "offline") return "Konsultasi Offline";
       if (channel === "2" || channel === "online") return "Konsultasi Online";
       if (channel === "sppg") return "Konsultasi SPPG";
       if (channel === "spkk") return "Konsultasi SPKK";
       if (channel === "sppk") return "Konsultasi SPKK";
-
       return "Konsultasi";
     },
 
@@ -895,29 +1151,106 @@ export default {
       }
 
       const value = String(itemOrChannel || "").toLowerCase();
-
       if (value === "1" || value === "offline") return "Konsultasi Offline";
       if (value === "2" || value === "online") return "Konsultasi Online";
       if (value === "sppg") return "Konsultasi SPPG";
       if (value === "spkk") return "Konsultasi SPKK";
       if (value === "sppk") return "Konsultasi SPKK";
-
       return "Tanpa Konsultasi";
     },
 
     goToProsesPembayaran(item) {
       this.$router.push(
-        `/kasir/daftar-pembayaran/${this.getRegistrasiId(
-          item,
-        )}/proses-pembayaran`,
+        `/kasir/daftar-pembayaran/${this.getRegistrasiId(item)}/proses-pembayaran`,
       );
     },
 
     goToDetailPembayaran(item) {
       this.$router.push(
-        `/kasir/daftar-pembayaran/${this.getRegistrasiId(
-          item,
-        )}/detail-pembayaran`,
+        `/kasir/daftar-pembayaran/${this.getRegistrasiId(item)}/detail-pembayaran`,
+      );
+    },
+
+    getInvoiceChildren(item) {
+      const children =
+        item?.invoice_children ||
+        item?.invoices ||
+        item?.children ||
+        item?.split_invoices ||
+        [];
+
+      return Array.isArray(children) ? children : [];
+    },
+
+    isGroupedInvoice(item) {
+      return (
+        this.getInvoiceChildren(item).length > 1 ||
+        Number(item?.invoice_count || 0) > 1
+      );
+    },
+
+    getChildInvoiceKey(child) {
+      return (
+        child?.invoice_id ||
+        child?.id ||
+        child?.no_invoice ||
+        child?.nomor_invoice
+      );
+    },
+
+    getChildInvoiceNumber(child) {
+      return (
+        child?.no_invoice ||
+        child?.nomor_invoice ||
+        child?.invoice_number ||
+        "-"
+      );
+    },
+
+    getChildInvoiceTotal(child) {
+      return (
+        child?.grand_total ||
+        child?.total_tagihan ||
+        child?.total_pembayaran ||
+        0
+      );
+    },
+
+    getChildInvoiceSuffix(child) {
+      const suffix = String(child?.invoice_suffix || "").toUpperCase();
+      if (suffix) return suffix;
+
+      const number = this.getChildInvoiceNumber(child);
+      const match = String(number).match(/-([A-Z])$/);
+      return match ? match[1] : "U";
+    },
+
+    getChildInvoiceLabel(child) {
+      const suffix = this.getChildInvoiceSuffix(child);
+      const jenisTransaksi = Number(child?.jenis_transaksi || 0);
+
+      if (suffix === "D" || jenisTransaksi === 4) return "Deposit";
+      if (suffix === "F" || jenisTransaksi === 1) return "Faskar";
+      if (suffix === "E" || jenisTransaksi === 2) return "EliteGlowbal";
+      if (suffix === "O" || jenisTransaksi === 3) return "Owner";
+      return "Umum";
+    },
+
+    getChildInvoiceColor(child) {
+      const suffix = this.getChildInvoiceSuffix(child);
+      const jenisTransaksi = Number(child?.jenis_transaksi || 0);
+
+      if (suffix === "D" || jenisTransaksi === 4) return "deep-purple";
+      if (suffix === "F" || jenisTransaksi === 1) return "orange";
+      if (suffix === "E" || jenisTransaksi === 2) return "indigo";
+      if (suffix === "O" || jenisTransaksi === 3) return "brown";
+      return "primary";
+    },
+
+    isDepositChild(child) {
+      return (
+        this.getChildInvoiceSuffix(child) === "D" ||
+        Number(child?.jenis_transaksi || 0) === 4
       );
     },
 
@@ -926,7 +1259,10 @@ export default {
     },
 
     formatNumber(value) {
-      return Number(value || 0).toLocaleString("id-ID");
+      return Number(value || 0).toLocaleString("id-ID", {
+        minimumFractionDigits: Number(value || 0) % 1 === 0 ? 0 : 2,
+        maximumFractionDigits: 2,
+      });
     },
 
     formatDate(value) {
@@ -935,7 +1271,6 @@ export default {
       if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
         const [year, month, day] = String(value).split("-").map(Number);
         const date = new Date(year, month - 1, day);
-
         return date.toLocaleDateString("id-ID", {
           day: "2-digit",
           month: "short",
@@ -944,9 +1279,7 @@ export default {
       }
 
       const date = new Date(value);
-
       if (Number.isNaN(date.getTime())) return value;
-
       return date.toLocaleDateString("id-ID", {
         day: "2-digit",
         month: "short",
@@ -958,15 +1291,12 @@ export default {
       if (!value) return "-";
 
       const raw = String(value);
-
       if (/^\d{2}:\d{2}/.test(raw)) {
         return raw.slice(0, 5);
       }
 
       const date = new Date(value);
-
       if (Number.isNaN(date.getTime())) return "-";
-
       return date.toLocaleTimeString("id-ID", {
         hour: "2-digit",
         minute: "2-digit",
@@ -984,7 +1314,6 @@ export default {
 
       if (response?.errors) {
         const firstKey = Object.keys(response.errors)[0];
-
         if (firstKey && Array.isArray(response.errors[firstKey])) {
           return response.errors[firstKey][0];
         }
@@ -997,87 +1326,36 @@ export default {
         "Gagal mengambil data pembayaran"
       );
     },
-    getPrintableInvoiceId(item) {
-      return item?.id || item?.invoice_id || item?.pembayaran_id || null;
+
+    getPrintableInvoiceId(item, child = null) {
+      const target = child || item;
+      return target?.invoice_id || target?.id || target?.pembayaran_id || null;
     },
 
-    isInvoicePaid(item) {
-      if (Number(item?.status) === 3) {
-        return true;
-      }
-
-      const meta =
-        typeof this.getStatusMeta === "function"
-          ? this.getStatusMeta(item)
-          : null;
-
-      const statusTexts = [
-        item?.status_label,
-        item?.status_text,
-        item?.status_nama,
-        item?.status_key,
-        item?.invoice_status_label,
-        meta?.label,
-        meta?.text,
-        meta?.key,
-      ];
-
-      return statusTexts.some((value) =>
-        String(value || "")
-          .toLowerCase()
-          .includes("lunas"),
-      );
-    },
-
-    async openInvoiceReceipt(item) {
-      const invoiceId = this.getPrintableInvoiceId(item);
+    async openInvoiceReceipt(item, child = null) {
+      const invoiceId = this.getPrintableInvoiceId(item, child);
 
       if (!invoiceId) {
-        alert("ID invoice tidak ditemukan.");
+        this.showSnackbar("Invoice tidak valid.", "error");
         return;
       }
-
-      if (!this.isInvoicePaid(item)) {
-        alert("Invoice hanya bisa dicetak setelah pembayaran lunas.");
-        return;
-      }
-
-      const printWindow = window.open("", "_blank", "width=430,height=720");
-
-      if (!printWindow) {
-        alert(
-          "Popup invoice diblokir browser. Izinkan popup untuk mencetak invoice.",
-        );
-        return;
-      }
-
-      printWindow.document.write(`
-    <html>
-      <head>
-        <title>Memuat Invoice</title>
-      </head>
-      <body style="font-family: Arial, Helvetica, sans-serif; padding: 16px;">
-        Memuat invoice...
-      </body>
-    </html>
-  `);
 
       this.printingInvoiceId = invoiceId;
 
       try {
         const html = await pembayaranService.printInvoice(invoiceId);
+        const printWindow = window.open("", "_blank");
+
+        if (!printWindow) {
+          this.showSnackbar("Popup print diblokir browser.", "warning");
+          return;
+        }
 
         printWindow.document.open();
         printWindow.document.write(html);
         printWindow.document.close();
-        printWindow.focus();
       } catch (error) {
-        console.error(error);
-        printWindow.close();
-
-        alert(
-          error?.response?.data || error?.message || "Gagal membuka invoice.",
-        );
+        this.showSnackbar(this.getErrorMessage(error), "error");
       } finally {
         this.printingInvoiceId = null;
       }
