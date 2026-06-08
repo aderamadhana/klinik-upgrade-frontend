@@ -451,6 +451,143 @@
       </v-card>
     </v-dialog>
 
+    <v-dialog v-model="memberRewardDialog" max-width="560" persistent>
+      <v-card rounded="lg">
+        <v-card-title class="pa-5 pb-2">
+          <div class="d-flex align-start ga-3">
+            <v-avatar color="amber-lighten-5" size="44">
+              <v-icon color="amber-darken-2" icon="mdi-crown" size="26" />
+            </v-avatar>
+
+            <div class="min-w-0">
+              <div class="text-h6 font-weight-bold">
+                Benefit Member Diperbarui
+              </div>
+              <div class="text-body-2 text-medium-emphasis mt-1">
+                Pasien mendapatkan update member setelah pembayaran berhasil.
+              </div>
+            </div>
+          </div>
+        </v-card-title>
+
+        <v-card-text class="pa-5 pt-3">
+          <v-alert
+            v-if="memberReward && memberReward.tier_changed"
+            type="success"
+            variant="tonal"
+            density="comfortable"
+            class="mb-4"
+          >
+            Tier pasien naik dari
+            <strong>{{ memberReward.previous_tier_nama || "-" }}</strong>
+            menjadi
+            <strong>{{ memberReward.current_tier_nama || "-" }}</strong
+            >.
+          </v-alert>
+
+          <v-alert
+            v-else-if="memberReward && memberReward.member_created"
+            type="success"
+            variant="tonal"
+            density="comfortable"
+            class="mb-4"
+          >
+            Pasien berhasil menjadi member
+            <strong>{{ memberReward.current_tier_nama || "-" }}</strong
+            >.
+          </v-alert>
+
+          <v-row dense>
+            <v-col cols="12" sm="6">
+              <v-card variant="tonal" color="primary" rounded="lg">
+                <v-card-text class="pa-4">
+                  <div class="text-caption text-medium-emphasis">
+                    Poin Didapat
+                  </div>
+                  <div class="text-h5 font-weight-bold mt-1">
+                    {{
+                      formatNumber(memberReward ? memberReward.point_earned : 0)
+                    }}
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" sm="6">
+              <v-card variant="tonal" color="green" rounded="lg">
+                <v-card-text class="pa-4">
+                  <div class="text-caption text-medium-emphasis">
+                    Saldo Poin
+                  </div>
+                  <div class="text-h5 font-weight-bold mt-1">
+                    {{
+                      formatNumber(
+                        memberReward ? memberReward.point_balance : 0,
+                      )
+                    }}
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12">
+              <v-list density="compact" class="mt-2">
+                <v-list-item>
+                  <template #prepend>
+                    <v-icon icon="mdi-card-account-details-outline" />
+                  </template>
+                  <v-list-item-title>No. Member</v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{ memberReward ? memberReward.member_no || "-" : "-" }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+
+                <v-list-item>
+                  <template #prepend>
+                    <v-icon icon="mdi-star-circle-outline" />
+                  </template>
+                  <v-list-item-title>Tier Saat Ini</v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{
+                      memberReward ? memberReward.current_tier_nama || "-" : "-"
+                    }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+
+                <v-list-item>
+                  <template #prepend>
+                    <v-icon icon="mdi-receipt-text-outline" />
+                  </template>
+                  <v-list-item-title>No. Invoice</v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{
+                      memberReward
+                        ? memberReward.no_invoice || header.invoice_no || "-"
+                        : header.invoice_no || "-"
+                    }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+            </v-col>
+          </v-row>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn
+            color="primary"
+            variant="flat"
+            class="text-none font-weight-bold"
+            @click="continueAfterMemberReward"
+          >
+            Lanjut ke Daftar Pembayaran
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-snackbar v-model="snackbar.show" :color="snackbar.color">
       {{ snackbar.text }}
     </v-snackbar>
@@ -485,6 +622,9 @@ export default {
       loadingReference: false,
       loadingKaryawan: false,
       loadingSubmit: false,
+      memberRewardDialog: false,
+      memberReward: null,
+      pendingFinishRedirect: null,
       errorMessage: "",
       registrasiDetail: null,
       promoDrawer: false,
@@ -3401,14 +3541,67 @@ export default {
       }
     },
     handleFinishSuccessResponse(data) {
+      const reward = this.normalizeMemberReward(
+        data?.data?.member_reward || data?.member_reward || null,
+      );
+
       this.showSnackbar(
         data?.message || "Pembayaran berhasil diselesaikan.",
         "success",
       );
 
+      if (reward?.should_show) {
+        this.memberReward = reward;
+        this.pendingFinishRedirect = { path: "/kasir/daftar-pembayaran" };
+        this.memberRewardDialog = true;
+        return;
+      }
+
       window.setTimeout(() => {
-        this.$router.replace({ path: "/kasir/daftar-pembayaran" });
+        this.goToPaymentList();
       }, 500);
+    },
+    normalizeMemberReward(payload) {
+      if (!payload || typeof payload !== "object") {
+        return null;
+      }
+
+      const pointEarned = Number(payload.point_earned || 0);
+      const pointBalance = Number(payload.point_balance || 0);
+      const totalPoint = Number(payload.total_point || pointBalance || 0);
+      const tierChanged = Boolean(payload.tier_changed);
+      const memberCreated = Boolean(payload.member_created);
+
+      return {
+        ...payload,
+        should_show: Boolean(
+          payload.should_show ||
+          tierChanged ||
+          memberCreated ||
+          pointEarned > 0,
+        ),
+        tier_changed: tierChanged,
+        member_created: memberCreated,
+        point_earned: pointEarned,
+        point_balance: pointBalance,
+        total_point: totalPoint,
+        total_spending: Number(payload.total_spending || 0),
+      };
+    },
+    continueAfterMemberReward() {
+      this.memberRewardDialog = false;
+      this.goToPaymentList();
+    },
+    goToPaymentList() {
+      const target = this.pendingFinishRedirect || {
+        path: "/kasir/daftar-pembayaran",
+      };
+
+      this.pendingFinishRedirect = null;
+      this.$router.replace(target);
+    },
+    formatNumber(value) {
+      return new Intl.NumberFormat("id-ID").format(Number(value || 0));
     },
     isFinishTransportCanceled(error) {
       const code = String(error?.code || "").toUpperCase();

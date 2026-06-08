@@ -317,7 +317,7 @@
               size="small"
               prepend-icon="mdi-cash-register"
               class="text-none font-weight-bold"
-              @click="goToProsesPembayaran(item)"
+              @click="goToProsesPembayaran(getProcessTarget(item))"
             >
               Pembayaran
             </v-btn>
@@ -641,6 +641,66 @@ export default {
       const children = this.getInvoiceChildren(item);
 
       return children[0] || item;
+    },
+
+    getProcessTarget(item) {
+      const children = this.getInvoiceChildren(item);
+
+      if (!children.length) {
+        return item;
+      }
+
+      const unpaidChild =
+        children.find((child) => this.getStatusKey(child) !== "lunas") ||
+        children[0];
+
+      return {
+        ...item,
+        ...unpaidChild,
+        registrasi_id:
+          this.getRegistrasiId(unpaidChild) || this.getRegistrasiId(item),
+        kode_registrasi:
+          unpaidChild?.kode_registrasi ||
+          item?.kode_registrasi ||
+          unpaidChild?.registrasi?.kode_registrasi ||
+          item?.registrasi?.kode_registrasi,
+      };
+    },
+
+    getRegistrasiId(item) {
+      const value =
+        item?.registrasi_id ??
+        item?.registrasi_kunjungan_id ??
+        item?.registrasi?.id ??
+        item?.kunjungan_id ??
+        item?.registration_id ??
+        null;
+
+      const numericValue = Number(value);
+
+      return Number.isFinite(numericValue) && numericValue > 0
+        ? numericValue
+        : null;
+    },
+
+    getInvoiceId(item) {
+      const value =
+        item?.invoice_id ??
+        item?.pembayaran_invoice_id ??
+        item?.pembayaran_id ??
+        item?.id ??
+        item?.invoice?.id ??
+        null;
+
+      const numericValue = Number(value);
+
+      return Number.isFinite(numericValue) && numericValue > 0
+        ? numericValue
+        : null;
+    },
+
+    getProcessRouteId(item) {
+      return this.getInvoiceId(item);
     },
 
     getInvoiceChildren(item) {
@@ -1113,14 +1173,22 @@ export default {
     },
 
     goToProsesPembayaran(item) {
-      const id = this.getRoutePaymentId(item);
+      const invoiceId = this.getProcessRouteId(item);
 
-      if (!id) {
-        this.showSnackbar("ID pembayaran tidak ditemukan.", "error");
+      if (!invoiceId) {
+        this.showSnackbar(
+          "ID invoice tidak ditemukan pada data pembayaran.",
+          "error",
+        );
         return;
       }
 
-      this.$router.push(`/kasir/daftar-pembayaran/${id}/proses-pembayaran`);
+      this.$router.push({
+        name: "Proses Pembayaran Layanan",
+        params: {
+          id: invoiceId,
+        },
+      });
     },
 
     async openInvoiceReceipt(item) {
