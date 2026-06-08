@@ -4,21 +4,25 @@
       <div>
         <h1 class="page-title">Antrian Perawat</h1>
         <p class="page-subtitle">
-          Kelola antrian pasien treatment setelah pembayaran selesai
+          Pantau pasien yang masuk ke jalur perawat, status pengerjaan, CPPT,
+          foto before-after, dan bahan treatment.
         </p>
       </div>
 
-      <v-breadcrumbs :items="breadcrumbs" divider="/" />
+      <v-breadcrumbs :items="breadcrumbs" density="compact" class="pa-0">
+        <template #divider>
+          <v-icon size="16">mdi-chevron-right</v-icon>
+        </template>
+      </v-breadcrumbs>
     </div>
 
-    <v-card variant="flat" class="border mb-4">
-      <!-- TOOLBAR -->
-      <v-card-text class="pa-4">
+    <v-card variant="flat" class="main-card">
+      <div class="section-body">
         <v-row dense align="center">
           <v-col cols="12" md="5">
             <v-text-field
               v-model="filters.search"
-              placeholder="Cari no registrasi, pasien, treatment, dokter..."
+              placeholder="Cari no registrasi, no RM, pasien, perawat, treatment..."
               prepend-inner-icon="mdi-magnify"
               variant="outlined"
               density="compact"
@@ -29,425 +33,447 @@
             />
           </v-col>
 
-          <v-col cols="12" md="7">
-            <v-row dense justify="end" align="center">
-              <v-col cols="12" sm="6" md="3">
-                <v-text-field
-                  v-model="filters.tanggal"
-                  label="Tanggal"
-                  type="date"
-                  prepend-inner-icon="mdi-calendar"
-                  variant="outlined"
-                  density="compact"
-                  hide-details
-                  @update:model-value="onFilterChange"
-                />
-              </v-col>
+          <v-col cols="12" sm="6" md="2">
+            <v-text-field
+              v-model="filters.tanggal"
+              label="Tanggal"
+              type="date"
+              prepend-inner-icon="mdi-calendar"
+              variant="outlined"
+              density="compact"
+              hide-details
+              clearable
+              @update:model-value="onFilterChange"
+            />
+          </v-col>
 
-              <v-col cols="12" sm="6" md="3">
-                <v-select
-                  v-model="filters.status"
-                  :items="statusOptions"
-                  item-title="label"
-                  item-value="value"
-                  label="Status"
-                  variant="outlined"
-                  density="compact"
-                  hide-details
-                  @update:model-value="onFilterChange"
-                />
-              </v-col>
+          <v-col cols="12" sm="6" md="2">
+            <v-select
+              v-model="filters.progress"
+              :items="progressFilterItems"
+              item-title="label"
+              item-value="value"
+              label="Progress"
+              variant="outlined"
+              density="compact"
+              hide-details
+              clearable
+              @update:model-value="onFilterChange"
+            />
+          </v-col>
 
-              <v-col cols="12" sm="6" md="3">
-                <v-btn
-                  variant="outlined"
-                  color="primary"
-                  prepend-icon="mdi-refresh"
-                  :loading="loading"
-                  block
-                  @click="fetchData"
-                >
-                  Refresh
-                </v-btn>
-              </v-col>
-            </v-row>
+          <v-col cols="12" md="3">
+            <div class="d-flex align-center justify-end ga-2 flex-wrap">
+              <v-btn
+                color="primary"
+                variant="outlined"
+                prepend-icon="mdi-refresh"
+                class="toolbar-btn"
+                :loading="loading"
+                @click="fetchData()"
+              >
+                Refresh
+              </v-btn>
+
+              <v-chip
+                color="success"
+                variant="tonal"
+                size="small"
+                class="font-weight-bold"
+              >
+                <v-icon icon="mdi-timer-sync-outline" start />
+                30d
+              </v-chip>
+            </div>
           </v-col>
         </v-row>
 
-        <div class="d-flex justify-end mt-3">
-          <v-chip
-            color="success"
-            size="small"
-            prepend-icon="mdi-timer-sync-outline"
-          >
-            Auto refresh 30 detik
-          </v-chip>
-        </div>
-      </v-card-text>
-
-      <v-divider />
-
-      <!-- ALERT -->
-      <v-card-text v-if="errorMessage" class="pa-4 pb-0">
         <v-alert
+          v-if="errorMessage"
           type="error"
+          variant="tonal"
           density="compact"
           closable
-          class="mb-3"
+          class="mt-4"
           @click:close="errorMessage = ''"
         >
           {{ errorMessage }}
         </v-alert>
-      </v-card-text>
-
-      <!-- SUMMARY -->
-      <v-card-text class="pa-4 pb-0">
-        <v-row dense>
-          <v-col cols="12" sm="6" md="3">
-            <v-card variant="outlined">
-              <v-card-text class="pa-3">
-                <div class="d-flex align-center justify-space-between">
-                  <div>
-                    <div class="text-caption text-medium-emphasis">
-                      Total Antrian
-                    </div>
-                    <div class="text-h6 font-weight-bold">
-                      {{ summary.total }}
-                    </div>
-                  </div>
-
-                  <v-avatar color="primary" size="36">
-                    <v-icon icon="mdi-format-list-numbered" size="20" />
-                  </v-avatar>
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-
-          <v-col cols="12" sm="6" md="3">
-            <v-card variant="outlined">
-              <v-card-text class="pa-3">
-                <div class="d-flex align-center justify-space-between">
-                  <div>
-                    <div class="text-caption text-medium-emphasis">
-                      Menunggu
-                    </div>
-                    <div class="text-h6 font-weight-bold">
-                      {{ summary.menunggu }}
-                    </div>
-                  </div>
-
-                  <v-avatar color="warning" size="36">
-                    <v-icon icon="mdi-clock-outline" size="20" />
-                  </v-avatar>
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-
-          <v-col cols="12" sm="6" md="3">
-            <v-card variant="outlined">
-              <v-card-text class="pa-3">
-                <div class="d-flex align-center justify-space-between">
-                  <div>
-                    <div class="text-caption text-medium-emphasis">
-                      Diproses
-                    </div>
-                    <div class="text-h6 font-weight-bold">
-                      {{ summary.diproses }}
-                    </div>
-                  </div>
-
-                  <v-avatar color="info" size="36">
-                    <v-icon icon="mdi-progress-clock" size="20" />
-                  </v-avatar>
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-
-          <v-col cols="12" sm="6" md="3">
-            <v-card variant="outlined">
-              <v-card-text class="pa-3">
-                <div class="d-flex align-center justify-space-between">
-                  <div>
-                    <div class="text-caption text-medium-emphasis">Selesai</div>
-                    <div class="text-h6 font-weight-bold">
-                      {{ summary.selesai }}
-                    </div>
-                  </div>
-
-                  <v-avatar color="success" size="36">
-                    <v-icon icon="mdi-check-circle-outline" size="20" />
-                  </v-avatar>
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
-      </v-card-text>
-
-      <!-- TABLE -->
-      <v-card-text class="pa-4">
-        <v-data-table
-          :headers="headers"
-          :items="rows"
-          :loading="loading"
-          item-value="id"
-          density="compact"
-          class="border"
-          :items-per-page="pagination.perPage"
-          hide-default-footer
-          loading-text="Memuat data antrian perawat..."
-          no-data-text="Data antrian perawat tidak ditemukan"
-        >
-          <template #loading>
-            <v-skeleton-loader type="table-row@8" />
-          </template>
-          <template #item.registrasi="{ item }">
-            <div class="py-2">
-              <v-btn
-                variant="text"
-                color="primary"
-                size="small"
-                class="px-0 font-weight-bold"
-                @click="goToDetailRegistrasi(item)"
-              >
-                {{ getKodeRegistrasi(item) }}
-              </v-btn>
-
-              <div class="text-caption text-medium-emphasis">
-                {{ getWaktuKunjungan(item) }}
-              </div>
-            </div>
-          </template>
-
-          <template #item.pasien="{ item }">
-            <div class="py-2">
-              <div class="text-body-2 font-weight-bold">
-                {{ getPasienName(item) }}
-              </div>
-
-              <div class="text-caption text-medium-emphasis mt-1">
-                {{ getPasienMeta(item) }}
-              </div>
-            </div>
-          </template>
-
-          <template #item.treatment="{ item }">
-            <div class="py-2">
-              <div class="text-body-2 font-weight-medium">
-                {{ getNamaTreatment(item) }}
-              </div>
-
-              <div class="text-caption text-medium-emphasis mt-1">
-                {{ formatDate(item.tanggal_kunjungan || item.tanggal) }}
-              </div>
-            </div>
-          </template>
-
-          <template #item.petugas="{ item }">
-            <div class="py-2">
-              <div class="text-body-2 font-weight-medium">
-                Dokter: {{ getDokterName(item) }}
-              </div>
-
-              <div class="text-caption text-medium-emphasis mt-1">
-                Perawat: {{ getPerawatName(item) }}
-              </div>
-            </div>
-          </template>
-
-          <template #item.keterangan="{ item }">
-            <div class="d-flex flex-wrap ga-1 py-2">
-              <v-chip
-                size="x-small"
-                :color="isTrue(item.cppt) ? 'success' : 'warning'"
-                :prepend-icon="
-                  isTrue(item.cppt)
-                    ? 'mdi-check-circle-outline'
-                    : 'mdi-clock-outline'
-                "
-              >
-                CPPT {{ isTrue(item.cppt) ? "sudah" : "belum" }}
-              </v-chip>
-
-              <v-chip
-                size="x-small"
-                :color="isTrue(item.before_after) ? 'success' : 'warning'"
-                :prepend-icon="
-                  isTrue(item.before_after)
-                    ? 'mdi-check-circle-outline'
-                    : 'mdi-clock-outline'
-                "
-              >
-                Before/After {{ isTrue(item.before_after) ? "sudah" : "belum" }}
-              </v-chip>
-
-              <v-chip
-                size="x-small"
-                :color="isTrue(item.bahan_treatment) ? 'success' : 'warning'"
-                :prepend-icon="
-                  isTrue(item.bahan_treatment)
-                    ? 'mdi-check-circle-outline'
-                    : 'mdi-clock-outline'
-                "
-              >
-                Bahan {{ isTrue(item.bahan_treatment) ? "sudah" : "belum" }}
-              </v-chip>
-            </div>
-          </template>
-
-          <template #item.status="{ item }">
-            <v-chip size="small" :color="getStatusColor(item)">
-              {{ formatStatus(item) }}
-            </v-chip>
-          </template>
-
-          <template #item.aksi="{ item }">
-            <div class="d-flex justify-end align-center ga-2 flex-wrap py-2">
-              <v-btn
-                size="small"
-                color="primary"
-                prepend-icon="mdi-stethoscope"
-                @click="goToInputCppt(item)"
-              >
-                CPPT
-              </v-btn>
-
-              <v-btn
-                size="small"
-                color="success"
-                prepend-icon="mdi-camera"
-                @click="goToInputBeforeAfter(item)"
-              >
-                Before/After
-              </v-btn>
-
-              <v-btn
-                size="small"
-                color="warning"
-                prepend-icon="mdi-flask"
-                @click="goToInputBahanTreatment(item)"
-              >
-                Bahan
-              </v-btn>
-
-              <v-btn
-                v-if="canDeleteQueue(item)"
-                size="small"
-                color="error"
-                prepend-icon="mdi-delete-outline"
-                @click="confirmDelete(item)"
-              >
-                Hapus
-              </v-btn>
-            </div>
-          </template>
-
-          <template #no-data>
-            <div class="text-center py-8">
-              <v-avatar color="grey-lighten-3" size="56" class="mb-3">
-                <v-icon
-                  icon="mdi-clipboard-text-off-outline"
-                  size="30"
-                  color="grey"
-                />
-              </v-avatar>
-
-              <div class="text-subtitle-2 font-weight-bold mb-1">
-                Belum ada antrian perawat
-              </div>
-
-              <div class="text-body-2 text-medium-emphasis">
-                Data akan muncul setelah pembayaran selesai dan registrasi
-                memiliki treatment.
-              </div>
-            </div>
-          </template>
-        </v-data-table>
-      </v-card-text>
+      </div>
 
       <v-divider />
 
-      <!-- FOOTER -->
-      <v-card-actions class="pa-4">
-        <div
-          class="d-flex align-center justify-space-between flex-wrap ga-3 w-100"
+      <div class="px-4">
+        <v-tabs
+          v-model="activeTab"
+          color="primary"
+          align-tabs="start"
+          slider-size="2"
+          show-arrows
+          class="queue-status-tabs"
+          @update:model-value="onTabChange"
         >
-          <div class="text-body-2 text-medium-emphasis">
-            Total data:
-            <strong class="text-high-emphasis">
-              {{ pagination.total }}
-            </strong>
-          </div>
+          <v-tab
+            v-for="tab in statusTabs"
+            :key="tab.value"
+            :value="tab.value"
+            class="queue-status-tab text-none"
+          >
+            <div class="d-flex align-center ga-2">
+              <v-icon :icon="tab.icon" size="18" />
+              <span>{{ tab.label }}</span>
+              <v-chip size="x-small" color="primary" variant="flat">
+                {{ tab.count }}
+              </v-chip>
+            </div>
+          </v-tab>
+        </v-tabs>
+      </div>
 
-          <div class="d-flex align-center ga-2 flex-wrap">
-            <v-select
-              v-model="pagination.perPage"
-              :items="[10, 15, 25, 50, 100]"
-              variant="outlined"
-              density="compact"
-              hide-details
-              width="96"
-              @update:model-value="onPerPageChange"
-            />
+      <v-divider />
 
-            <v-pagination
-              v-model="pagination.page"
-              :length="pagination.lastPage"
-              density="compact"
-              total-visible="5"
-              @update:model-value="fetchData"
-            />
+      <div class="section-body">
+        <template v-if="loading">
+          <div class="queue-card-list">
+            <v-card
+              v-for="index in 4"
+              :key="`loading-${index}`"
+              variant="flat"
+              class="queue-item-card"
+            >
+              <v-card-text class="pa-4">
+                <v-skeleton-loader type="article" />
+              </v-card-text>
+            </v-card>
           </div>
+        </template>
+
+        <template v-else-if="rows.length">
+          <div class="queue-card-list">
+            <v-card
+              v-for="item in rows"
+              :key="getCardKey(item)"
+              variant="flat"
+              class="queue-item-card"
+            >
+              <v-card-text class="pa-4">
+                <div class="queue-card-layout">
+                  <div class="queue-card-ticket">
+                    <div class="ticket-number">
+                      {{ getDisplayQueueNumber(item) }}
+                    </div>
+                    <div class="ticket-label">Antrian</div>
+                  </div>
+
+                  <div class="queue-card-main">
+                    <div class="queue-card-top">
+                      <div class="queue-card-identity">
+                        <div class="patient-name">
+                          {{ getPasienName(item) }}
+                        </div>
+
+                        <div class="queue-meta-line">
+                          <span>{{ getPasienCode(item) }}</span>
+                          <span>•</span>
+                          <span>{{ getKodeRegistrasi(item) }}</span>
+                        </div>
+                      </div>
+
+                      <div class="queue-card-status-inline">
+                        <v-chip
+                          size="small"
+                          :color="getStatusMeta(item).color"
+                          :prepend-icon="getStatusMeta(item).icon"
+                          variant="flat"
+                          class="font-weight-bold"
+                        >
+                          {{ getStatusMeta(item).label }}
+                        </v-chip>
+                      </div>
+                    </div>
+
+                    <div class="queue-card-info">
+                      <div class="queue-info-row">
+                        <div class="queue-info-label">Waktu</div>
+                        <div class="queue-info-value">
+                          {{ formatDate(getDataDate(item)) }}
+                          <span class="text-medium-emphasis">|</span>
+                          Masuk {{ formatTime(getDataTime(item)) }}
+                          <span class="text-medium-emphasis">|</span>
+                          <span :class="getWaitingTextClass(item)">
+                            {{ getWaitingLabel(item) }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div class="queue-info-row">
+                        <div class="queue-info-label">Treatment</div>
+                        <div class="queue-info-value">
+                          {{ getTreatmentSummary(item) }}
+                        </div>
+                      </div>
+
+                      <div class="queue-info-row">
+                        <div class="queue-info-label">Petugas</div>
+                        <div class="queue-info-value">
+                          Dokter: {{ getDokterName(item) }}
+                          <span class="text-medium-emphasis">/</span>
+                          Perawat: {{ getPerawatName(item) }}
+                        </div>
+                      </div>
+
+                      <div class="queue-chip-row">
+                        <v-chip
+                          size="small"
+                          :color="isCpptDone(item) ? 'success' : 'warning'"
+                          :prepend-icon="
+                            isCpptDone(item)
+                              ? 'mdi-check-circle-outline'
+                              : 'mdi-clipboard-text-outline'
+                          "
+                          variant="tonal"
+                          class="service-chip"
+                        >
+                          {{ isCpptDone(item) ? "CPPT selesai" : "CPPT belum" }}
+                        </v-chip>
+
+                        <v-chip
+                          size="small"
+                          :color="
+                            isBeforeAfterDone(item) ? 'success' : 'warning'
+                          "
+                          :prepend-icon="
+                            isBeforeAfterDone(item)
+                              ? 'mdi-check-circle-outline'
+                              : 'mdi-camera-outline'
+                          "
+                          variant="tonal"
+                          class="service-chip"
+                        >
+                          {{
+                            isBeforeAfterDone(item)
+                              ? "Foto selesai"
+                              : "Foto belum"
+                          }}
+                        </v-chip>
+
+                        <v-chip
+                          size="small"
+                          :color="
+                            isBahanTreatmentDone(item) ? 'success' : 'warning'
+                          "
+                          :prepend-icon="
+                            isBahanTreatmentDone(item)
+                              ? 'mdi-check-circle-outline'
+                              : 'mdi-flask-outline'
+                          "
+                          variant="tonal"
+                          class="service-chip"
+                        >
+                          {{
+                            isBahanTreatmentDone(item)
+                              ? "Bahan selesai"
+                              : "Bahan belum"
+                          }}
+                        </v-chip>
+
+                        <v-chip
+                          size="small"
+                          color="secondary"
+                          prepend-icon="mdi-account-heart-outline"
+                          variant="tonal"
+                          class="service-chip"
+                        >
+                          {{ getPerawatName(item) }}
+                        </v-chip>
+                      </div>
+
+                      <div class="queue-info-row">
+                        <div class="queue-info-label">Catatan</div>
+                        <div class="queue-info-value">
+                          {{ getCatatan(item) }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="queue-card-actions">
+                    <v-btn
+                      v-if="getPrimaryAction(item)"
+                      :color="getPrimaryAction(item).color"
+                      variant="flat"
+                      :prepend-icon="getPrimaryAction(item).icon"
+                      class="text-none font-weight-bold"
+                      :loading="
+                        isActionLoading(item, getPrimaryAction(item).key)
+                      "
+                      @click="handlePrimaryAction(item)"
+                    >
+                      {{ getPrimaryAction(item).label }}
+                    </v-btn>
+
+                    <v-btn
+                      v-else
+                      color="secondary"
+                      variant="tonal"
+                      prepend-icon="mdi-eye-outline"
+                      class="text-none font-weight-bold"
+                      @click="goToCppt(item)"
+                    >
+                      Detail
+                    </v-btn>
+
+                    <v-menu location="bottom end">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          variant="outlined"
+                          color="secondary"
+                          prepend-icon="mdi-dots-horizontal"
+                          class="text-none font-weight-bold"
+                        >
+                          Lainnya
+                        </v-btn>
+                      </template>
+
+                      <v-list density="compact">
+                        <v-list-item
+                          prepend-icon="mdi-clipboard-text-outline"
+                          title="Input CPPT"
+                          @click="goToCppt(item)"
+                        />
+
+                        <v-list-item
+                          prepend-icon="mdi-camera-outline"
+                          title="Input Before After"
+                          @click="goToBeforeAfter(item)"
+                        />
+
+                        <v-list-item
+                          prepend-icon="mdi-flask-outline"
+                          title="Input Bahan Treatment"
+                          @click="goToBahanTreatment(item)"
+                        />
+
+                        <v-divider />
+
+                        <v-list-item
+                          v-if="canStart(item)"
+                          prepend-icon="mdi-play-circle-outline"
+                          title="Mulai Proses"
+                          @click="startQueue(item)"
+                        />
+
+                        <v-list-item
+                          v-if="canFinish(item)"
+                          prepend-icon="mdi-check-circle-outline"
+                          title="Tandai Selesai"
+                          @click="openFinishDialog(item)"
+                        />
+
+                        <v-divider v-if="canDelete(item)" />
+
+                        <v-list-item
+                          v-if="canDelete(item)"
+                          prepend-icon="mdi-delete-outline"
+                          title="Hapus Antrian"
+                          base-color="error"
+                          @click="openDeleteDialog(item)"
+                        />
+                      </v-list>
+                    </v-menu>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="empty-state">
+            <v-avatar color="grey-lighten-3" size="64">
+              <v-icon
+                icon="mdi-clipboard-text-search-outline"
+                size="34"
+                color="grey"
+              />
+            </v-avatar>
+
+            <div class="empty-title">Belum ada antrian perawat</div>
+
+            <div class="empty-description">
+              Data akan muncul setelah pasien masuk ke jalur perawat.
+            </div>
+
+            <div class="empty-description">
+              Coba ubah filter pencarian, tanggal, progress, atau tab status.
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <v-divider />
+
+      <div class="table-footer">
+        <div class="footer-count">
+          Total data:
+          <strong>{{ pagination.total }}</strong>
         </div>
-      </v-card-actions>
+
+        <div class="footer-actions">
+          <v-select
+            v-model="pagination.perPage"
+            class="per-page-field"
+            :items="[10, 15, 25, 50, 100]"
+            variant="outlined"
+            density="compact"
+            hide-details
+            @update:model-value="onPerPageChange"
+          />
+
+          <v-pagination
+            v-model="pagination.page"
+            :length="pagination.lastPage || 1"
+            density="compact"
+            total-visible="5"
+            @update:model-value="fetchData"
+          />
+        </div>
+      </div>
     </v-card>
 
-    <!-- DELETE DIALOG -->
-    <v-dialog v-model="dialogDelete" max-width="460">
-      <v-card>
-        <v-card-title class="text-subtitle-1 font-weight-bold pa-4">
-          Hapus Antrian Perawat?
+    <v-dialog v-model="finishDialog.show" max-width="480">
+      <v-card class="dialog-card">
+        <v-card-title class="dialog-title">
+          Selesaikan Antrian Perawat?
         </v-card-title>
 
         <v-divider />
 
         <v-card-text class="pa-4">
-          <div class="text-body-2 mb-3">
-            Data hanya akan dihapus dari daftar antrian perawat. Registrasi dan
-            pembayaran tidak dihapus.
+          <v-alert type="info" variant="tonal" density="compact" class="mb-4">
+            Pastikan CPPT, foto before-after, dan bahan treatment sudah sesuai
+            sebelum antrian diselesaikan.
+          </v-alert>
+
+          <div v-if="finishDialog.item" class="delete-dialog-info">
+            <div>
+              <strong>No Registrasi:</strong>
+              {{ getKodeRegistrasi(finishDialog.item) }}
+            </div>
+            <div>
+              <strong>Pasien:</strong>
+              {{ getPasienName(finishDialog.item) }}
+            </div>
+            <div>
+              <strong>Treatment:</strong>
+              {{ getTreatmentSummary(finishDialog.item) }}
+            </div>
+            <div>
+              <strong>Perawat:</strong>
+              {{ getPerawatName(finishDialog.item) }}
+            </div>
           </div>
-
-          <v-card v-if="selectedItem" variant="outlined">
-            <v-card-text class="pa-3">
-              <div class="d-flex justify-space-between align-center mb-2">
-                <span class="text-body-2 text-medium-emphasis">
-                  No Registrasi
-                </span>
-                <strong class="text-body-2">
-                  {{ getKodeRegistrasi(selectedItem) }}
-                </strong>
-              </div>
-
-              <div class="d-flex justify-space-between align-center mb-2">
-                <span class="text-body-2 text-medium-emphasis"> Pasien </span>
-                <strong class="text-body-2">
-                  {{ getPasienName(selectedItem) }}
-                </strong>
-              </div>
-
-              <div class="d-flex justify-space-between align-center">
-                <span class="text-body-2 text-medium-emphasis">
-                  Treatment
-                </span>
-                <strong class="text-body-2">
-                  {{ getNamaTreatment(selectedItem) }}
-                </strong>
-              </div>
-            </v-card-text>
-          </v-card>
         </v-card-text>
 
         <v-divider />
@@ -456,7 +482,73 @@
           <v-btn
             variant="outlined"
             color="secondary"
-            :disabled="deleteLoading"
+            class="text-none font-weight-bold"
+            :disabled="finishDialog.loading"
+            @click="closeFinishDialog"
+          >
+            Batal
+          </v-btn>
+
+          <v-btn
+            color="success"
+            variant="flat"
+            prepend-icon="mdi-check-circle-outline"
+            class="text-none font-weight-bold"
+            :loading="finishDialog.loading"
+            @click="finishQueue"
+          >
+            Selesaikan
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="deleteDialog.show" max-width="480">
+      <v-card class="dialog-card">
+        <v-card-title class="dialog-title">
+          Hapus Antrian Perawat?
+        </v-card-title>
+
+        <v-divider />
+
+        <v-card-text class="pa-4">
+          <v-alert
+            type="warning"
+            variant="tonal"
+            density="compact"
+            class="mb-4"
+          >
+            Data antrian akan dihapus dari daftar antrian perawat.
+          </v-alert>
+
+          <div v-if="deleteDialog.item" class="delete-dialog-info">
+            <div>
+              <strong>No Registrasi:</strong>
+              {{ getKodeRegistrasi(deleteDialog.item) }}
+            </div>
+            <div>
+              <strong>Pasien:</strong>
+              {{ getPasienName(deleteDialog.item) }}
+            </div>
+            <div>
+              <strong>Treatment:</strong>
+              {{ getTreatmentSummary(deleteDialog.item) }}
+            </div>
+            <div>
+              <strong>Status:</strong>
+              {{ getStatusMeta(deleteDialog.item).label }}
+            </div>
+          </div>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="justify-end pa-4">
+          <v-btn
+            variant="outlined"
+            color="secondary"
+            class="text-none font-weight-bold"
+            :disabled="deleteDialog.loading"
             @click="closeDeleteDialog"
           >
             Batal
@@ -465,10 +557,12 @@
           <v-btn
             color="error"
             variant="flat"
-            :loading="deleteLoading"
-            @click="deleteItem"
+            prepend-icon="mdi-delete-outline"
+            class="text-none font-weight-bold"
+            :loading="deleteDialog.loading"
+            @click="deleteQueue"
           >
-            Ya, Hapus
+            Hapus
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -477,13 +571,13 @@
     <v-snackbar
       v-model="snackbar.show"
       :color="snackbar.color"
+      timeout="3000"
       location="top right"
-      timeout="2500"
     >
-      {{ snackbar.text }}
+      {{ snackbar.message }}
 
       <template #actions>
-        <v-btn icon="mdi-close" variant="text" @click="snackbar.show = false" />
+        <v-btn variant="text" @click="snackbar.show = false"> Tutup </v-btn>
       </template>
     </v-snackbar>
   </div>
@@ -502,15 +596,18 @@ export default {
       errorMessage: "",
       autoRefreshInterval: null,
       refreshIntervalMs: 30000,
-
-      rows: [],
-      summaryApi: null,
+      activeTab: "all",
 
       filters: {
         search: "",
         tanggal: this.getToday(),
         status: null,
+        progress: null,
       },
+
+      rows: [],
+      countRows: [],
+      summaryData: {},
 
       pagination: {
         page: 1,
@@ -519,71 +616,56 @@ export default {
         lastPage: 1,
       },
 
-      dialogDelete: false,
-      deleteLoading: false,
-      selectedItem: null,
+      actionLoading: {
+        id: null,
+        key: null,
+      },
+
+      finishDialog: {
+        show: false,
+        loading: false,
+        item: null,
+      },
+
+      deleteDialog: {
+        show: false,
+        loading: false,
+        item: null,
+      },
 
       snackbar: {
         show: false,
-        text: "",
         color: "success",
+        message: "",
       },
 
       breadcrumbs: [
-        { title: "Pelayanan Medis", disabled: true },
-        { title: "Antrian Perawat", disabled: true },
+        {
+          title: "Pelayanan Medis",
+          disabled: true,
+        },
+        {
+          title: "Antrian Perawat",
+          disabled: true,
+        },
       ],
 
-      statusOptions: [
-        { label: "Semua", value: null },
-        { label: "Menunggu", value: "menunggu" },
-        { label: "Diproses", value: "proses" },
-        { label: "Selesai", value: "selesai" },
-      ],
-
-      headers: [
+      progressFilterItems: [
         {
-          title: "No Registrasi",
-          key: "registrasi",
-          sortable: false,
-          width: 190,
+          label: "CPPT belum",
+          value: "cppt",
         },
         {
-          title: "Pasien",
-          key: "pasien",
-          sortable: false,
-          minWidth: 260,
+          label: "Foto belum",
+          value: "before_after",
         },
         {
-          title: "Treatment",
-          key: "treatment",
-          sortable: false,
-          minWidth: 260,
+          label: "Bahan belum",
+          value: "bahan",
         },
         {
-          title: "Dokter / Perawat",
-          key: "petugas",
-          sortable: false,
-          minWidth: 240,
-        },
-        {
-          title: "Keterangan",
-          key: "keterangan",
-          sortable: false,
-          minWidth: 290,
-        },
-        {
-          title: "Status",
-          key: "status",
-          sortable: false,
-          width: 130,
-        },
-        {
-          title: "Aksi",
-          key: "aksi",
-          sortable: false,
-          align: "end",
-          width: 390,
+          label: "Semua selesai",
+          value: "lengkap",
         },
       ],
     };
@@ -594,25 +676,71 @@ export default {
       return localStorage.getItem("selected_toko_id") || null;
     },
 
-    summary() {
-      if (this.summaryApi) {
-        return {
-          total: Number(this.summaryApi.total || 0),
-          menunggu: Number(this.summaryApi.menunggu || 0),
-          diproses: Number(this.summaryApi.diproses || 0),
-          selesai: Number(this.summaryApi.selesai || 0),
-        };
+    countSourceRows() {
+      let result = this.countRows.length ? [...this.countRows] : [...this.rows];
+
+      if (this.filters.progress) {
+        result = result.filter((item) =>
+          this.matchesProgressFilter(item, this.filters.progress),
+        );
       }
 
+      return result;
+    },
+
+    summary() {
+      const sourceRows = this.countSourceRows;
+
       return {
-        total: this.rows.length,
-        menunggu: this.rows.filter((x) => this.getStatusValue(x) === "menunggu")
-          .length,
-        diproses: this.rows.filter((x) => this.getStatusValue(x) === "proses")
-          .length,
-        selesai: this.rows.filter((x) => this.getStatusValue(x) === "selesai")
-          .length,
+        total: sourceRows.length,
+        menunggu: sourceRows.filter(
+          (item) => this.getStatusValue(item) === "menunggu",
+        ).length,
+        diproses: sourceRows.filter((item) =>
+          ["dipanggil", "proses"].includes(this.getStatusValue(item)),
+        ).length,
+        selesai: sourceRows.filter(
+          (item) => this.getStatusValue(item) === "selesai",
+        ).length,
+        batal: sourceRows.filter((item) =>
+          ["batal", "dilewati"].includes(this.getStatusValue(item)),
+        ).length,
       };
+    },
+
+    statusTabs() {
+      return [
+        {
+          label: "Semua",
+          value: "all",
+          icon: "mdi-format-list-bulleted",
+          count: this.summary.total,
+        },
+        {
+          label: "Menunggu",
+          value: "menunggu",
+          icon: "mdi-clock-outline",
+          count: this.summary.menunggu,
+        },
+        {
+          label: "Diproses",
+          value: "diproses",
+          icon: "mdi-progress-clock",
+          count: this.summary.diproses,
+        },
+        {
+          label: "Selesai",
+          value: "selesai",
+          icon: "mdi-check-circle-outline",
+          count: this.summary.selesai,
+        },
+        {
+          label: "Batal",
+          value: "batal",
+          icon: "mdi-close-circle-outline",
+          count: this.summary.batal,
+        },
+      ];
     },
   },
 
@@ -631,10 +759,10 @@ export default {
 
   methods: {
     getToday() {
-      const d = new Date();
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      const year = d.getFullYear();
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
 
       return `${year}-${month}-${day}`;
     },
@@ -663,11 +791,13 @@ export default {
         const payload = response?.data || response;
 
         this.rows = this.extractRows(payload);
+        this.summaryData = this.extractSummary(payload);
         this.applyPagination(payload);
-        this.applySummary(payload);
+        await this.fetchTabCounts();
       } catch (error) {
         this.rows = [];
-        this.summaryApi = null;
+        this.countRows = [];
+        this.summaryData = {};
         this.pagination.total = 0;
         this.pagination.lastPage = 1;
         this.errorMessage = this.getErrorMessage(error);
@@ -677,42 +807,88 @@ export default {
       }
     },
 
+    async fetchTabCounts() {
+      try {
+        const params = {
+          page: 1,
+          per_page: 1000,
+          search: this.filters.search || undefined,
+          tanggal: this.filters.tanggal || undefined,
+          toko_id: this.activeTokoId || undefined,
+        };
+
+        const response = await antrianPerawatService.getAll(params);
+        const payload = response?.data || response;
+
+        this.countRows = this.extractRows(payload);
+      } catch (error) {
+        this.countRows = [...this.rows];
+      }
+    },
+
     extractRows(payload) {
       if (Array.isArray(payload)) return payload;
-      if (Array.isArray(payload?.rows)) return payload.rows;
-      if (Array.isArray(payload?.data?.data)) return payload.data.data;
       if (Array.isArray(payload?.data)) return payload.data;
       if (Array.isArray(payload?.items)) return payload.items;
+      if (Array.isArray(payload?.rows)) return payload.rows;
+      if (Array.isArray(payload?.data?.data)) return payload.data.data;
 
       return [];
     },
 
-    applyPagination(payload) {
-      const source = payload?.data || payload || {};
-      const meta = payload?.meta || source?.meta || {};
-
-      this.pagination.total = Number(
-        source?.total || meta?.total || this.rows.length || 0,
-      );
-
-      this.pagination.lastPage = Number(
-        source?.last_page ||
-          meta?.last_page ||
-          Math.ceil(this.pagination.total / this.pagination.perPage) ||
-          1,
-      );
-
-      this.pagination.page = Number(
-        source?.current_page || meta?.current_page || this.pagination.page || 1,
-      );
-    },
-
-    applySummary(payload) {
-      this.summaryApi =
+    extractSummary(payload) {
+      return (
         payload?.summary ||
         payload?.data?.summary ||
         payload?.meta?.summary ||
-        null;
+        payload?.data?.meta?.summary ||
+        {}
+      );
+    },
+
+    applyPagination(payload) {
+      const meta =
+        payload?.meta || payload?.pagination || payload?.data?.meta || {};
+
+      const total = Number(
+        payload?.total ||
+          meta?.total ||
+          payload?.data?.total ||
+          this.rows.length ||
+          0,
+      );
+
+      const perPage = Number(
+        payload?.per_page ||
+          meta?.per_page ||
+          meta?.perPage ||
+          payload?.data?.per_page ||
+          this.pagination.perPage ||
+          15,
+      );
+
+      const currentPage = Number(
+        payload?.current_page ||
+          meta?.current_page ||
+          meta?.currentPage ||
+          payload?.data?.current_page ||
+          this.pagination.page ||
+          1,
+      );
+
+      const lastPage = Number(
+        payload?.last_page ||
+          meta?.last_page ||
+          meta?.lastPage ||
+          payload?.data?.last_page ||
+          Math.ceil(total / perPage) ||
+          1,
+      );
+
+      this.pagination.total = total;
+      this.pagination.perPage = perPage;
+      this.pagination.page = currentPage;
+      this.pagination.lastPage = lastPage || 1;
     },
 
     onSearch() {
@@ -736,6 +912,41 @@ export default {
       this.fetchData();
     },
 
+    onTabChange(value) {
+      this.activeTab = value;
+      this.pagination.page = 1;
+      this.filters.status = this.mapTabToApiStatus(value);
+      this.fetchData();
+    },
+
+    mapTabToApiStatus(value) {
+      const map = {
+        all: null,
+        menunggu: "menunggu",
+        diproses: "proses",
+        selesai: "selesai",
+        batal: "batal",
+      };
+
+      return map[value] ?? null;
+    },
+
+    matchesProgressFilter(item, progress) {
+      if (progress === "cppt") return !this.isCpptDone(item);
+      if (progress === "before_after") return !this.isBeforeAfterDone(item);
+      if (progress === "bahan") return !this.isBahanTreatmentDone(item);
+
+      if (progress === "lengkap") {
+        return (
+          this.isCpptDone(item) &&
+          this.isBeforeAfterDone(item) &&
+          this.isBahanTreatmentDone(item)
+        );
+      }
+
+      return true;
+    },
+
     startAutoRefresh() {
       this.stopAutoRefresh();
 
@@ -751,114 +962,342 @@ export default {
       }
     },
 
-    async ensureStarted(item) {
-      const id = this.getRegistrasiId(item);
-
-      if (!id) return;
-
-      if (this.getStatusValue(item) === "menunggu") {
-        try {
-          await antrianPerawatService.start(id);
-        } catch (error) {
-          this.showSnackbar(this.getErrorMessage(error), "error");
-        }
-      }
-    },
-
-    async goToInputCppt(item) {
-      await this.ensureStarted(item);
-      this.$router.push(
-        `/pelayanan-medis/antrian-perawat/${this.getRegistrasiId(item)}/input-cppt`,
-      );
-    },
-
-    async goToInputBeforeAfter(item) {
-      await this.ensureStarted(item);
-      this.$router.push(
-        `/pelayanan-medis/antrian-perawat/${this.getRegistrasiId(item)}/input-before-after`,
-      );
-    },
-
-    async goToInputBahanTreatment(item) {
-      await this.ensureStarted(item);
-      this.$router.push(
-        `/pelayanan-medis/antrian-perawat/${this.getRegistrasiId(item)}/input-bahan-treatment`,
-      );
-    },
-
-    goToDetailRegistrasi(item) {
-      this.$router.push(
-        `/resepsionis/registrasi-layanan/${this.getRegistrasiId(item)}`,
-      );
-    },
-
-    confirmDelete(item) {
-      this.selectedItem = { ...item };
-      this.dialogDelete = true;
-    },
-
-    closeDeleteDialog() {
-      this.dialogDelete = false;
-      this.selectedItem = null;
-    },
-
-    async deleteItem() {
-      if (!this.selectedItem) return;
-
-      if (!this.canDeleteQueue(this.selectedItem)) {
-        this.showSnackbar(
-          "Antrian tidak bisa dihapus karena pasien sudah mulai dilayani",
-          "warning",
-        );
-        this.closeDeleteDialog();
-        return;
-      }
-
-      this.deleteLoading = true;
-
-      try {
-        const response = await antrianPerawatService.delete(
-          this.getRegistrasiId(this.selectedItem),
-        );
-
-        this.showSnackbar(
-          response?.message || "Antrian perawat berhasil dihapus",
-          "success",
-        );
-
-        this.closeDeleteDialog();
-        this.fetchData();
-      } catch (error) {
-        this.showSnackbar(this.getErrorMessage(error), "error");
-      } finally {
-        this.deleteLoading = false;
-      }
-    },
-
-    canDeleteQueue(item) {
-      if (item?.can_delete_antrian === true || item?.can_delete_antrian === 1) {
-        return true;
-      }
-
+    getCardKey(item) {
       return (
-        this.getStatusValue(item) === "menunggu" &&
-        !this.isTrue(item.cppt) &&
-        !this.isTrue(item.before_after) &&
-        !this.isTrue(item.bahan_treatment)
+        item?.antrian_perawat_id ||
+        item?.antrian_id ||
+        item?.queue_id ||
+        item?.id ||
+        item?.registrasi_id ||
+        item?.kode_registrasi ||
+        `${this.getPasienName(item)}-${this.getDataDate(item)}-${this.getDataTime(item)}`
+      );
+    },
+
+    getAntrianId(item) {
+      return (
+        item?.antrian_perawat_id ||
+        item?.antrian_id ||
+        item?.queue_id ||
+        item?.antrian?.id ||
+        item?.id ||
+        null
       );
     },
 
     getRegistrasiId(item) {
-      return item?.registrasi_id || item?.registrasi?.id || item?.id;
+      return (
+        item?.registrasi_id ||
+        item?.registrasi?.id ||
+        item?.kunjungan_id ||
+        null
+      );
     },
 
     getKodeRegistrasi(item) {
       return (
         item?.kode_registrasi ||
+        item?.no_registrasi ||
+        item?.registrasi?.kode_registrasi ||
+        item?.registrasi?.no_registrasi ||
+        `REG-${this.getRegistrasiId(item) || this.getAntrianId(item) || "-"}`
+      );
+    },
+
+    getNomorAntrian(item) {
+      const value =
+        item?.kode_nomor ||
+        item?.nomor_antrian_perawat ||
         item?.nomor_antrian ||
         item?.no_antrian ||
-        item?.registrasi?.kode_registrasi ||
-        `REG-${this.getRegistrasiId(item) || "-"}`
+        item?.antrian?.kode_nomor ||
+        item?.antrian?.nomor ||
+        item?.queue_number ||
+        "";
+
+      return String(value || "");
+    },
+
+    getDisplayQueueNumber(item) {
+      const raw = this.getNomorAntrian(item);
+
+      if (raw) {
+        const cleanRaw = String(raw).trim();
+
+        if (cleanRaw.length <= 4 && !cleanRaw.includes("-")) {
+          return cleanRaw;
+        }
+
+        const matches = cleanRaw.match(/\d+/g);
+
+        if (matches && matches.length) {
+          let last = matches[matches.length - 1];
+
+          if (last.length > 3) {
+            last = last.slice(-3);
+          }
+
+          return last.padStart(3, "0");
+        }
+      }
+
+      const code = String(this.getKodeRegistrasi(item) || "");
+      const parts = code.split("-").filter(Boolean);
+      const lastPart = parts.length ? parts[parts.length - 1] : "";
+
+      if (/^\d+$/.test(lastPart)) {
+        return lastPart.length > 3
+          ? lastPart.slice(-3)
+          : lastPart.padStart(3, "0");
+      }
+
+      const numbers = code.match(/\d+/g);
+
+      if (numbers && numbers.length) {
+        const lastNumber = numbers[numbers.length - 1];
+        return lastNumber.length > 3
+          ? lastNumber.slice(-3)
+          : lastNumber.padStart(3, "0");
+      }
+
+      return "-";
+    },
+
+    getDataDate(item) {
+      return (
+        item?.tanggal ||
+        item?.tanggal_kunjungan ||
+        item?.tanggal_registrasi ||
+        item?.registrasi?.tanggal_kunjungan ||
+        item?.created_at ||
+        item?.createdAt ||
+        null
+      );
+    },
+
+    getDataTime(item) {
+      return (
+        item?.jam ||
+        item?.jam_kunjungan ||
+        item?.jam_registrasi ||
+        item?.checkin_at ||
+        item?.registered_at ||
+        item?.registrasi?.registered_at ||
+        item?.created_at ||
+        item?.createdAt ||
+        null
+      );
+    },
+
+    getQueueStartAt(item) {
+      const directValue =
+        item?.checkin_at ||
+        item?.registered_at ||
+        item?.antrian?.checkin_at ||
+        item?.antrian?.created_at ||
+        item?.created_at ||
+        item?.createdAt;
+
+      if (directValue) {
+        return this.parseDateTime(directValue);
+      }
+
+      return this.parseDateTime(
+        this.getDataDate(item),
+        this.formatTime(this.getDataTime(item)),
+      );
+    },
+
+    getQueueEndAt(item, status) {
+      if (status === "selesai") {
+        return this.parseDateTime(
+          item?.finished_at ||
+            item?.selesai_at ||
+            item?.antrian?.finished_at ||
+            item?.updated_at ||
+            item?.updatedAt,
+        );
+      }
+
+      if (status === "batal" || status === "dilewati") {
+        return this.parseDateTime(
+          item?.cancelled_at ||
+            item?.batal_at ||
+            item?.antrian?.cancelled_at ||
+            item?.updated_at ||
+            item?.updatedAt,
+        );
+      }
+
+      return null;
+    },
+
+    getWaitingMinutes(item) {
+      const startAt = this.getQueueStartAt(item);
+
+      if (!startAt) return null;
+
+      const status = this.getStatusValue(item);
+      const endAt = this.getQueueEndAt(item, status) || new Date();
+
+      return Math.max(
+        0,
+        Math.floor((endAt.getTime() - startAt.getTime()) / 60000),
+      );
+    },
+
+    getWaitingLabel(item) {
+      const status = this.getStatusValue(item);
+
+      if (status === "selesai") return "Selesai";
+      if (status === "batal") return "Batal";
+      if (status === "dilewati") return "Dilewati";
+      if (status === "proses") return "Sedang diproses";
+      if (status === "dipanggil") return "Sudah dipanggil";
+
+      const minutes = this.getWaitingMinutes(item);
+
+      if (minutes === null) return "-";
+      if (minutes < 1) return "Baru masuk";
+      if (minutes < 60) return `Menunggu ${minutes} menit`;
+
+      const hours = Math.floor(minutes / 60);
+      const rest = minutes % 60;
+
+      return rest
+        ? `Menunggu ${hours} jam ${rest} menit`
+        : `Menunggu ${hours} jam`;
+    },
+
+    getWaitingTextClass(item) {
+      const status = this.getStatusValue(item);
+
+      if (status === "selesai") return "text-success";
+      if (status === "batal" || status === "dilewati") return "text-error";
+      if (status === "proses" || status === "dipanggil") return "text-primary";
+
+      const minutes = this.getWaitingMinutes(item);
+
+      if (minutes === null) return "";
+      if (minutes >= 60) return "text-error";
+      if (minutes >= 30) return "text-warning";
+
+      return "text-success";
+    },
+
+    normalizeStatus(raw, item = null) {
+      if (item) {
+        if (this.isTruthy(item?.is_delete) || this.isTruthy(item?.is_batal))
+          return "batal";
+
+        if (
+          this.isTruthy(item?.is_selesai) ||
+          this.isTruthy(item?.is_done) ||
+          item?.finished_at ||
+          item?.selesai_at
+        ) {
+          return "selesai";
+        }
+      }
+
+      if (raw === 0 || raw === "0") return "menunggu";
+      if (raw === 1 || raw === "1") return "menunggu";
+      if (raw === 2 || raw === "2") return "proses";
+      if (raw === 3 || raw === "3") return "selesai";
+      if (raw === 4 || raw === "4") return "selesai";
+      if (raw === 9 || raw === "9") return "batal";
+
+      const value = String(raw || "menunggu").toLowerCase();
+
+      if (["waiting", "wait", "menunggu", "pending"].includes(value))
+        return "menunggu";
+      if (["called", "call", "dipanggil"].includes(value)) return "dipanggil";
+
+      if (
+        [
+          "serve",
+          "serving",
+          "process",
+          "processing",
+          "proses",
+          "diproses",
+          "berjalan",
+        ].includes(value)
+      )
+        return "proses";
+      if (
+        [
+          "done",
+          "finish",
+          "finished",
+          "selesai",
+          "complete",
+          "completed",
+        ].includes(value)
+      )
+        return "selesai";
+      if (["skip", "skipped", "lewat", "dilewati"].includes(value))
+        return "dilewati";
+      if (["cancel", "cancelled", "canceled", "batal"].includes(value))
+        return "batal";
+
+      return value;
+    },
+
+    getStatusValue(item) {
+      const raw =
+        item?.status_antrian ||
+        item?.antrian?.status ||
+        item?.queue_status ||
+        item?.status_task ||
+        item?.status ||
+        item?.status_perawat;
+
+      return this.normalizeStatus(raw, item);
+    },
+
+    getStatusMeta(item) {
+      const status = this.getStatusValue(item);
+
+      const map = {
+        menunggu: {
+          label: "Menunggu",
+          color: "warning",
+          icon: "mdi-clock-outline",
+        },
+        dipanggil: {
+          label: "Dipanggil",
+          color: "info",
+          icon: "mdi-bell-ring-outline",
+        },
+        proses: {
+          label: "Diproses",
+          color: "primary",
+          icon: "mdi-progress-clock",
+        },
+        selesai: {
+          label: "Selesai",
+          color: "success",
+          icon: "mdi-check-circle-outline",
+        },
+        dilewati: {
+          label: "Dilewati",
+          color: "error",
+          icon: "mdi-debug-step-over",
+        },
+        batal: {
+          label: "Batal",
+          color: "error",
+          icon: "mdi-close-circle-outline",
+        },
+      };
+
+      return (
+        map[status] || {
+          label: status || "-",
+          color: "secondary",
+          icon: "mdi-help-circle-outline",
+        }
       );
     },
 
@@ -868,160 +1307,531 @@ export default {
         item?.pasien?.nama_pasien ||
         item?.nama_pasien ||
         item?.pasien_nama ||
+        item?.registrasi?.pasien?.nama ||
         "-"
       );
     },
 
-    getPasienMeta(item) {
-      const pasien = item?.pasien || {};
-
+    getPasienCode(item) {
       return (
-        [pasien.no_rm || item.no_rm, pasien.no_hp || item.no_hp]
-          .filter(Boolean)
-          .join(" • ") || "-"
-      );
-    },
-
-    getNamaTreatment(item) {
-      return (
-        item?.nama_tindakan ||
-        item?.nama_treatment ||
-        item?.treatment_label ||
-        "-"
+        item?.pasien?.no_rm ||
+        item?.no_rm ||
+        item?.pasien_no_rm ||
+        item?.registrasi?.pasien?.no_rm ||
+        "RM -"
       );
     },
 
     getDokterName(item) {
       return (
+        item?.dokter?.nama ||
         item?.dokter_awal?.nama ||
         item?.dokterAwal?.nama ||
-        item?.dokter?.nama ||
         item?.nama_dokter ||
         item?.dokter_nama ||
-        "-"
+        item?.registrasi?.dokter?.nama ||
+        item?.registrasi?.dokter_awal?.nama ||
+        "Belum ditentukan"
       );
     },
 
     getPerawatName(item) {
       return (
-        item?.perawat_awal?.nama ||
-        item?.perawatAwal?.nama ||
         item?.perawat?.nama ||
+        item?.karyawan?.nama ||
+        item?.beautician?.nama ||
         item?.nama_perawat ||
         item?.perawat_nama ||
+        item?.karyawan_nama ||
+        item?.registrasi?.perawat?.nama ||
+        "Belum ditentukan"
+      );
+    },
+
+    getTreatmentSummary(item) {
+      const explicit =
+        item?.nama_treatment ||
+        item?.treatment_nama ||
+        item?.treatment?.nama ||
+        item?.master_treatment?.nama ||
+        item?.nama_layanan ||
+        item?.layanan_nama;
+
+      if (explicit) return explicit;
+
+      const items =
+        item?.treatments ||
+        item?.treatment_items ||
+        item?.perawatan_detail ||
+        item?.registrasi?.treatment_items ||
+        [];
+
+      if (Array.isArray(items) && items.length) {
+        const names = items
+          .map(
+            (row) =>
+              row?.nama_treatment ||
+              row?.treatment?.nama ||
+              row?.nama ||
+              row?.label,
+          )
+          .filter(Boolean);
+
+        if (names.length) {
+          if (names.length <= 2) return names.join(" • ");
+          return `${names.slice(0, 2).join(" • ")} +${names.length - 2} lainnya`;
+        }
+      }
+
+      return "Treatment";
+    },
+
+    getCatatan(item) {
+      return (
+        item?.catatan ||
+        item?.catatan_perawat ||
+        item?.note ||
+        item?.notes ||
+        item?.registrasi?.catatan ||
         "-"
       );
     },
 
-    getWaktuKunjungan(item) {
-      if (item?.waktu_kunjungan) return `Jam ${item.waktu_kunjungan}`;
-      if (item?.jam_kunjungan) return `Jam ${item.jam_kunjungan}`;
+    getProgressValue(item, keys) {
+      for (const key of keys) {
+        const value = this.getNestedValue(item, key);
 
-      return `Jam ${this.formatTime(item?.registered_at || item?.created_at)}`;
+        if (value !== undefined && value !== null && value !== "") return value;
+      }
+
+      return null;
     },
 
-    getStatusValue(item) {
-      return String(
-        item?.status_antrian_perawat ||
-          item?.status_antrian ||
-          item?.queue_status ||
-          "menunggu",
-      ).toLowerCase();
+    getNestedValue(object, path) {
+      return String(path)
+        .split(".")
+        .reduce((result, key) => {
+          if (result === undefined || result === null) return undefined;
+          return result[key];
+        }, object);
     },
 
-    formatStatus(item) {
+    isProgressDone(value) {
+      if (value === true) return true;
+      if (typeof value === "number") return value > 0;
+
+      if (typeof value === "string") {
+        const normalized = value.trim().toLowerCase();
+        return [
+          "1",
+          "true",
+          "yes",
+          "done",
+          "selesai",
+          "sudah",
+          "completed",
+        ].includes(normalized);
+      }
+
+      if (Array.isArray(value)) return value.length > 0;
+
+      return Boolean(value);
+    },
+
+    isCpptDone(item) {
+      const value = this.getProgressValue(item, [
+        "input_cppt",
+        "is_input_cppt",
+        "cppt_done",
+        "has_cppt",
+        "registrasi_perawat_cppt",
+        "cppt",
+        "progress.cppt",
+      ]);
+
+      return this.isProgressDone(value);
+    },
+
+    isBeforeAfterDone(item) {
+      const value = this.getProgressValue(item, [
+        "input_before_after",
+        "is_input_before_after",
+        "before_after_done",
+        "has_before_after",
+        "has_foto_before_after",
+        "registrasi_perawat_before_after_foto",
+        "before_after",
+        "progress.before_after",
+      ]);
+
+      return this.isProgressDone(value);
+    },
+
+    isBahanTreatmentDone(item) {
+      const value = this.getProgressValue(item, [
+        "input_bahan_treatment",
+        "is_input_bahan_treatment",
+        "bahan_treatment_done",
+        "has_bahan_treatment",
+        "has_input_bahan",
+        "registrasi_perawat_bahan_treatment_detail",
+        "bahan_treatment",
+        "progress.bahan_treatment",
+      ]);
+
+      return this.isProgressDone(value);
+    },
+
+    getPrimaryAction(item) {
       const status = this.getStatusValue(item);
 
-      const map = {
-        menunggu: "Menunggu",
-        proses: "Diproses",
-        diproses: "Diproses",
-        selesai: "Selesai",
-        batal: "Batal",
-      };
+      if (status === "batal") return null;
 
-      return map[status] || "-";
+      if (status === "selesai") {
+        return {
+          key: "cppt",
+          label: "Lihat CPPT",
+          icon: "mdi-eye-outline",
+          color: "secondary",
+        };
+      }
+
+      if (status === "menunggu") {
+        return {
+          key: "start",
+          label: "Mulai",
+          icon: "mdi-play-circle-outline",
+          color: "primary",
+        };
+      }
+
+      if (!this.isCpptDone(item)) {
+        return {
+          key: "cppt",
+          label: "Input CPPT",
+          icon: "mdi-clipboard-text-outline",
+          color: "primary",
+        };
+      }
+
+      if (!this.isBeforeAfterDone(item)) {
+        return {
+          key: "before_after",
+          label: "Input Foto",
+          icon: "mdi-camera-outline",
+          color: "info",
+        };
+      }
+
+      if (!this.isBahanTreatmentDone(item)) {
+        return {
+          key: "bahan",
+          label: "Input Bahan",
+          icon: "mdi-flask-outline",
+          color: "deep-purple",
+        };
+      }
+
+      return {
+        key: "finish",
+        label: "Selesaikan",
+        icon: "mdi-check-circle-outline",
+        color: "success",
+      };
     },
 
-    getStatusClass(item) {
-      const status = this.getStatusValue(item);
+    handlePrimaryAction(item) {
+      const action = this.getPrimaryAction(item);
 
-      const map = {
-        menunggu: "status-waiting",
-        proses: "status-process",
-        diproses: "status-process",
-        selesai: "status-done",
-        batal: "status-cancel",
-      };
+      if (!action) {
+        this.showSnackbar("Aksi tidak tersedia untuk antrian ini.", "error");
+        return;
+      }
 
-      return map[status] || "status-waiting";
+      if (action.key === "start") {
+        this.startQueue(item);
+        return;
+      }
+
+      if (action.key === "cppt") {
+        this.goToCppt(item);
+        return;
+      }
+
+      if (action.key === "before_after") {
+        this.goToBeforeAfter(item);
+        return;
+      }
+
+      if (action.key === "bahan") {
+        this.goToBahanTreatment(item);
+        return;
+      }
+
+      if (action.key === "finish") this.openFinishDialog(item);
     },
 
-    isTrue(value) {
-      return value === true || value === 1 || value === "1";
+    isActionLoading(item, key) {
+      return (
+        this.actionLoading.id === this.getAntrianId(item) &&
+        this.actionLoading.key === key
+      );
+    },
+
+    canStart(item) {
+      return this.getStatusValue(item) === "menunggu";
+    },
+
+    canFinish(item) {
+      return !["selesai", "batal", "dilewati"].includes(
+        this.getStatusValue(item),
+      );
+    },
+
+    canDelete(item) {
+      return !["selesai"].includes(this.getStatusValue(item));
+    },
+
+    async startQueue(item) {
+      const id = this.getAntrianId(item);
+
+      if (!id) {
+        this.showSnackbar("ID antrian perawat tidak ditemukan.", "error");
+        return;
+      }
+
+      this.actionLoading = { id, key: "start" };
+
+      try {
+        const response = await antrianPerawatService.start(id);
+
+        this.showSnackbar(
+          response?.message ||
+            response?.data?.message ||
+            "Antrian perawat mulai diproses.",
+          "success",
+        );
+
+        this.fetchData();
+      } catch (error) {
+        this.showSnackbar(this.getErrorMessage(error), "error");
+      } finally {
+        this.actionLoading = { id: null, key: null };
+      }
+    },
+
+    openFinishDialog(item) {
+      this.finishDialog.item = item;
+      this.finishDialog.show = true;
+    },
+
+    closeFinishDialog() {
+      this.finishDialog.show = false;
+      this.finishDialog.loading = false;
+      this.finishDialog.item = null;
+    },
+
+    async finishQueue() {
+      const id = this.getAntrianId(this.finishDialog.item);
+
+      if (!id) {
+        this.showSnackbar("ID antrian perawat tidak ditemukan.", "error");
+        return;
+      }
+
+      this.finishDialog.loading = true;
+
+      try {
+        const response = await antrianPerawatService.finish(id);
+
+        this.showSnackbar(
+          response?.message ||
+            response?.data?.message ||
+            "Antrian perawat berhasil diselesaikan.",
+          "success",
+        );
+
+        this.closeFinishDialog();
+        this.fetchData();
+      } catch (error) {
+        this.showSnackbar(this.getErrorMessage(error), "error");
+      } finally {
+        this.finishDialog.loading = false;
+      }
+    },
+
+    openDeleteDialog(item) {
+      this.deleteDialog.item = item;
+      this.deleteDialog.show = true;
+    },
+
+    closeDeleteDialog() {
+      this.deleteDialog.show = false;
+      this.deleteDialog.loading = false;
+      this.deleteDialog.item = null;
+    },
+
+    async deleteQueue() {
+      const id = this.getAntrianId(this.deleteDialog.item);
+
+      if (!id) {
+        this.showSnackbar("ID antrian perawat tidak ditemukan.", "error");
+        return;
+      }
+
+      this.deleteDialog.loading = true;
+
+      try {
+        const response = await antrianPerawatService.delete(id);
+
+        this.showSnackbar(
+          response?.message ||
+            response?.data?.message ||
+            "Antrian perawat berhasil dihapus.",
+          "success",
+        );
+
+        this.closeDeleteDialog();
+        this.fetchData();
+      } catch (error) {
+        this.showSnackbar(this.getErrorMessage(error), "error");
+      } finally {
+        this.deleteDialog.loading = false;
+      }
+    },
+
+    goToCppt(item) {
+      const id = this.getAntrianId(item);
+
+      if (!id) {
+        this.showSnackbar("ID antrian perawat tidak ditemukan.", "error");
+        return;
+      }
+
+      this.$router.push(`/pelayanan-medis/antrian-perawat/${id}/input-cppt`);
+    },
+
+    goToBeforeAfter(item) {
+      const id = this.getAntrianId(item);
+
+      if (!id) {
+        this.showSnackbar("ID antrian perawat tidak ditemukan.", "error");
+        return;
+      }
+
+      this.$router.push(
+        `/pelayanan-medis/antrian-perawat/${id}/input-before-after`,
+      );
+    },
+
+    goToBahanTreatment(item) {
+      const id = this.getAntrianId(item);
+
+      if (!id) {
+        this.showSnackbar("ID antrian perawat tidak ditemukan.", "error");
+        return;
+      }
+
+      this.$router.push(
+        `/pelayanan-medis/antrian-perawat/${id}/input-bahan-treatment`,
+      );
+    },
+
+    isTruthy(value) {
+      if (value === true) return true;
+      if (typeof value === "number") return value > 0;
+
+      if (typeof value === "string") {
+        const normalized = value.trim().toLowerCase();
+        return !["", "0", "false", "null", "undefined", "tidak", "no"].includes(
+          normalized,
+        );
+      }
+
+      return Boolean(value);
+    },
+
+    parseDateTime(value, fallbackTime = null) {
+      if (!value) return null;
+      if (value instanceof Date)
+        return Number.isNaN(value.getTime()) ? null : value;
+
+      const text = String(value).trim();
+      if (!text) return null;
+
+      let normalized = text;
+
+      if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+        normalized = fallbackTime
+          ? `${normalized}T${fallbackTime}`
+          : `${normalized}T00:00:00`;
+      } else {
+        normalized = normalized.replace(" ", "T");
+      }
+
+      const date = new Date(normalized);
+      return Number.isNaN(date.getTime()) ? null : date;
     },
 
     formatDate(value) {
       if (!value) return "-";
 
-      if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
-        const [year, month, day] = String(value).split("-").map(Number);
-        const date = new Date(year, month - 1, day);
+      const text = String(value);
+      const datePart = text.split("T")[0].split(" ")[0];
 
-        return date.toLocaleDateString("id-ID", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        });
+      if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+        const [year, month, day] = datePart.split("-");
+        return `${day}/${month}/${year}`;
       }
 
-      const date = new Date(value);
+      const date = this.parseDateTime(value);
+      if (!date) return "-";
 
-      if (Number.isNaN(date.getTime())) return value;
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
 
-      return date.toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
+      return `${day}/${month}/${year}`;
     },
 
     formatTime(value) {
       if (!value) return "-";
 
-      const date = new Date(value);
+      const text = String(value).trim();
 
-      if (Number.isNaN(date.getTime())) return "-";
+      if (/^\d{2}:\d{2}/.test(text)) return text.slice(0, 5);
 
-      return date.toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    },
+      const timePart = text.includes("T")
+        ? text.split("T")[1]
+        : text.includes(" ")
+          ? text.split(" ")[1]
+          : "";
 
-    showSnackbar(text, color = "success") {
-      this.snackbar.show = true;
-      this.snackbar.text = text;
-      this.snackbar.color = color;
+      if (timePart && /^\d{2}:\d{2}/.test(timePart))
+        return timePart.slice(0, 5);
+
+      const date = this.parseDateTime(value);
+      if (!date) return "-";
+
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+
+      return `${hours}:${minutes}`;
     },
 
     getErrorMessage(error) {
-      const response = error?.response?.data;
-
-      if (response?.errors) {
-        const firstKey = Object.keys(response.errors)[0];
-
-        if (firstKey && Array.isArray(response.errors[firstKey])) {
-          return response.errors[firstKey][0];
-        }
-      }
-
       return (
-        response?.message ||
-        response?.error ||
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
         error?.message ||
-        "Terjadi kesalahan pada data antrian perawat"
+        "Terjadi kesalahan saat memuat data antrian perawat."
       );
+    },
+
+    showSnackbar(message, color = "success") {
+      this.snackbar.message = message;
+      this.snackbar.color = color;
+      this.snackbar.show = true;
     },
   },
 };

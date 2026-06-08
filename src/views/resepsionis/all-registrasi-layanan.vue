@@ -1,37 +1,40 @@
 <template>
   <div>
-    <div class="d-flex align-start justify-space-between flex-wrap ga-3 mb-4">
+    <div class="page-header">
       <div>
-        <div class="text-h6 font-weight-bold">Registrasi Layanan</div>
-        <div class="text-body-2 text-medium-emphasis">
-          Monitoring data registrasi layanan pasien berdasarkan master dan field
-          registrasi terbaru.
-        </div>
+        <h1 class="page-title">Registrasi Layanan</h1>
+        <p class="page-subtitle">
+          Monitoring registrasi pasien, layanan, task berjalan, dan aksi
+          lanjutan.
+        </p>
+      </div>
 
-        <v-breadcrumbs :items="breadcrumbs" density="compact" class="pa-0 mt-2">
+      <div class="d-flex align-center ga-2 flex-wrap">
+        <v-breadcrumbs :items="breadcrumbs" density="compact" class="pa-0">
           <template #divider>
             <v-icon size="16">mdi-chevron-right</v-icon>
           </template>
         </v-breadcrumbs>
-      </div>
 
-      <v-btn
-        color="success"
-        variant="flat"
-        prepend-icon="mdi-plus"
-        @click="goToAdd"
-      >
-        Entry Data
-      </v-btn>
+        <v-btn
+          color="success"
+          variant="flat"
+          prepend-icon="mdi-plus"
+          class="toolbar-btn"
+          @click="goToAdd"
+        >
+          Entry Data
+        </v-btn>
+      </div>
     </div>
 
-    <v-card variant="outlined" class="mb-4">
-      <v-card-text class="pa-4">
+    <v-card variant="flat" class="main-card">
+      <div class="section-body">
         <v-row dense align="center">
-          <v-col cols="12" md="3">
+          <v-col cols="12" md="4">
             <v-text-field
               v-model="filters.search"
-              placeholder="Cari registrasi / pasien / dokter"
+              placeholder="Cari registrasi, pasien, dokter, no RM..."
               prepend-inner-icon="mdi-magnify"
               variant="outlined"
               density="compact"
@@ -47,6 +50,7 @@
               v-model="filters.tanggal"
               label="Tanggal"
               type="date"
+              prepend-inner-icon="mdi-calendar"
               variant="outlined"
               density="compact"
               hide-details
@@ -61,7 +65,7 @@
               :items="layananItems"
               item-title="title"
               item-value="value"
-              placeholder="Layanan"
+              label="Layanan"
               variant="outlined"
               density="compact"
               hide-details
@@ -70,310 +74,342 @@
             />
           </v-col>
 
-          <v-col cols="12" sm="6" md="2">
-            <v-select
-              v-model="filters.current_task"
-              :items="taskItems"
-              item-title="title"
-              item-value="value"
-              placeholder="Task"
-              variant="outlined"
-              density="compact"
-              hide-details
-              clearable
-              @update:model-value="applyFilters"
-            />
-          </v-col>
+          <v-col cols="12" md="4">
+            <div class="d-flex justify-end ga-2 flex-wrap">
+              <v-chip
+                color="secondary"
+                variant="tonal"
+                size="small"
+                class="font-weight-bold"
+              >
+                <v-icon icon="mdi-account-key-outline" start />
+                Role: {{ currentRoleText }}
+              </v-chip>
 
-          <v-col cols="12" sm="6" md="2">
-            <v-select
-              v-model="filters.status"
-              :items="statusItems"
-              item-title="title"
-              item-value="value"
-              placeholder="Status"
-              variant="outlined"
-              density="compact"
-              hide-details
-              clearable
-              @update:model-value="applyFilters"
-            />
-          </v-col>
-
-          <v-col cols="12" md="1">
-            <v-btn
-              color="primary"
-              variant="outlined"
-              prepend-icon="mdi-refresh"
-              class="w-100"
-              :loading="loading"
-              @click="fetchData"
-            >
-              Refresh
-            </v-btn>
+              <v-btn
+                color="primary"
+                variant="outlined"
+                prepend-icon="mdi-refresh"
+                class="toolbar-btn"
+                :loading="loading"
+                @click="fetchData"
+              >
+                Refresh
+              </v-btn>
+            </div>
           </v-col>
         </v-row>
-      </v-card-text>
-    </v-card>
 
-    <v-alert
-      v-if="errorMessage"
-      type="error"
-      variant="tonal"
-      border="start"
-      class="mb-4"
-    >
-      {{ errorMessage }}
-    </v-alert>
-
-    <v-card variant="outlined">
-      <v-card-text class="pa-0">
-        <v-data-table
-          :headers="headers"
-          :items="rows"
-          :loading="loading"
-          :items-per-page="pagination.perPage"
-          item-value="id"
+        <v-alert
+          v-if="errorMessage"
+          type="error"
+          variant="tonal"
           density="compact"
-          hide-default-footer
-          class="border"
+          closable
+          class="mt-4"
+          @click:close="errorMessage = ''"
         >
-          <template #loading>
-            <v-skeleton-loader type="table-row@6" />
-          </template>
-
-          <template #no-data>
-            <div class="text-center pa-8">
-              <v-icon size="40" color="grey"
-                >mdi-clipboard-text-search-outline</v-icon
-              >
-              <div class="text-subtitle-2 mt-3">
-                Data registrasi belum tersedia
-              </div>
-              <div class="text-body-2 text-medium-emphasis">
-                Ubah filter atau tambahkan registrasi layanan baru.
-              </div>
-            </div>
-          </template>
-
-          <template #item.registrasi_pasien="{ item }">
-            <div class="d-flex align-start ga-3 py-2">
-              <div class="min-w-0">
-                <div class="text-primary font-weight-bold text-body-2 mb-1">
-                  {{ item.kode_registrasi || `REG-${item.id}` }}
-                </div>
-
-                <div
-                  class="text-body-2 text-medium-emphasis d-flex align-center ga-1 mb-1"
-                >
-                  <v-icon size="14">mdi-calendar-month-outline</v-icon>
-                  <span>{{ formatDate(getDataDate(item)) }}</span>
-                </div>
-
-                <div
-                  class="text-body-2 text-medium-emphasis d-flex align-center ga-1"
-                >
-                  <v-icon size="14">mdi-clock-outline</v-icon>
-                  <span>{{ formatTime(getDataTime(item)) }}</span>
-                </div>
-              </div>
-
-              <v-divider vertical />
-
-              <div class="min-w-0">
-                <div class="font-weight-bold text-body-2 mb-1">
-                  {{ getPasienName(item) }}
-                </div>
-
-                <div class="text-body-2 text-medium-emphasis mb-2">
-                  {{ getPasienMeta(item) }}
-                </div>
-
-                <div class="d-flex flex-wrap ga-1">
-                  <v-chip size="x-small" color="primary" variant="tonal">
-                    Dokter: {{ getDokterName(item) }}
-                  </v-chip>
-
-                  <v-chip size="x-small" color="success" variant="tonal">
-                    Perawat: {{ getPerawatName(item) }}
-                  </v-chip>
-                </div>
-              </div>
-            </div>
-          </template>
-
-          <template #item.layanan="{ item }">
-            <div class="d-flex flex-wrap ga-1">
-              <v-chip
-                v-if="hasTreatment(item)"
-                size="small"
-                color="success"
-                variant="tonal"
-                prepend-icon="mdi-face-woman-shimmer-outline"
-              >
-                Treatment
-              </v-chip>
-
-              <v-chip
-                v-if="hasConsultation(item)"
-                size="small"
-                color="primary"
-                variant="tonal"
-                prepend-icon="mdi-stethoscope"
-              >
-                {{ getConsultationLabel(item) }}
-              </v-chip>
-
-              <v-chip
-                v-if="hasSales(item)"
-                size="small"
-                color="info"
-                variant="tonal"
-                prepend-icon="mdi-cart-outline"
-              >
-                Penjualan
-              </v-chip>
-
-              <v-chip
-                v-if="isPembelianOnline(item)"
-                size="small"
-                color="deep-purple"
-                variant="tonal"
-                prepend-icon="mdi-web"
-              >
-                Pembelian Online
-              </v-chip>
-
-              <span
-                v-if="
-                  !hasTreatment(item) &&
-                  !hasConsultation(item) &&
-                  !hasSales(item) &&
-                  !isPembelianOnline(item)
-                "
-                class="text-body-2 text-medium-emphasis"
-              >
-                -
-              </span>
-            </div>
-          </template>
-
-          <template #item.total_status="{ item }">
-            <div class="py-2">
-              <div class="font-weight-bold text-body-2">
-                Rp {{ formatNumber(getTotalAmount(item)) }}
-              </div>
-
-              <div class="d-flex flex-wrap ga-1 mt-1">
-                <v-chip
-                  size="x-small"
-                  :color="getStatusMeta(item).color"
-                  variant="tonal"
-                  :prepend-icon="getStatusMeta(item).icon"
-                >
-                  {{ getStatusMeta(item).label }}
-                </v-chip>
-
-                <v-chip
-                  size="x-small"
-                  :color="getTaskMeta(item).color"
-                  variant="tonal"
-                  :prepend-icon="getTaskMeta(item).icon"
-                >
-                  {{ getTaskMeta(item).label }}
-                </v-chip>
-
-                <v-chip
-                  v-if="isOnlineConsultation(item)"
-                  size="x-small"
-                  :color="
-                    hasBuktiChatKonsultasiOnline(item) ? 'success' : 'warning'
-                  "
-                  variant="tonal"
-                  :prepend-icon="
-                    hasBuktiChatKonsultasiOnline(item)
-                      ? 'mdi-check-circle-outline'
-                      : 'mdi-alert-circle-outline'
-                  "
-                >
-                  {{
-                    hasBuktiChatKonsultasiOnline(item)
-                      ? "Bukti chat ada"
-                      : "Belum upload bukti chat"
-                  }}
-                </v-chip>
-              </div>
-            </div>
-          </template>
-
-          <template #item.actions="{ item }">
-            <div class="d-flex justify-end flex-wrap ga-2 py-2">
-              <v-btn
-                v-if="getPrimaryAction(item)"
-                :color="getActionButtonColor(getPrimaryAction(item))"
-                variant="flat"
-                size="small"
-                :prepend-icon="getPrimaryAction(item).icon"
-                @click="handlePrimaryAction(item)"
-              >
-                {{ getPrimaryAction(item).label }}
-              </v-btn>
-              <v-btn
-                v-if="canViewBuktiChatKonsultasiOnline(item)"
-                color="success"
-                variant="tonal"
-                size="small"
-                prepend-icon="mdi-eye-outline"
-                @click="viewBuktiChatKonsultasiOnline(item)"
-              >
-                Lihat Bukti
-              </v-btn>
-
-              <v-btn
-                v-if="canUploadBuktiChatKonsultasiOnline(item)"
-                color="warning"
-                variant="tonal"
-                size="small"
-                prepend-icon="mdi-upload"
-                @click="openBuktiChatDialog(item)"
-              >
-                Upload Bukti
-              </v-btn>
-              <v-btn
-                v-if="canCancel(item)"
-                color="error"
-                variant="flat"
-                size="small"
-                prepend-icon="mdi-close-circle-outline"
-                @click="openCancelDialog(item)"
-              >
-                Batal
-              </v-btn>
-
-              <span
-                v-if="!getPrimaryAction(item) && !canCancel(item)"
-                class="text-body-2 text-medium-emphasis"
-              >
-                Tidak ada aksi
-              </span>
-            </div>
-          </template>
-        </v-data-table>
-      </v-card-text>
+          {{ errorMessage }}
+        </v-alert>
+      </div>
 
       <v-divider />
 
-      <v-card-text
-        class="d-flex align-center justify-space-between flex-wrap ga-3"
-      >
-        <div class="text-body-2 text-medium-emphasis">
+      <div class="px-4">
+        <v-tabs
+          v-model="activeTab"
+          color="primary"
+          align-tabs="start"
+          slider-size="2"
+          show-arrows
+          class="queue-status-tabs"
+          @update:model-value="onTabChange"
+        >
+          <v-tab
+            v-for="tab in statusTabs"
+            :key="tab.value"
+            :value="tab.value"
+            class="queue-status-tab text-none"
+          >
+            <div class="d-flex align-center ga-2">
+              <v-icon :icon="tab.icon" size="18" />
+              <span>{{ tab.label }}</span>
+              <v-chip size="x-small" color="primary" variant="flat">
+                {{ tab.count }}
+              </v-chip>
+            </div>
+          </v-tab>
+        </v-tabs>
+      </div>
+
+      <v-divider />
+
+      <div class="section-body">
+        <template v-if="loading">
+          <div class="queue-card-list">
+            <v-card
+              v-for="index in 4"
+              :key="`loading-${index}`"
+              variant="flat"
+              class="queue-item-card"
+            >
+              <v-card-text class="pa-4">
+                <v-skeleton-loader type="article" />
+              </v-card-text>
+            </v-card>
+          </div>
+        </template>
+
+        <template v-else-if="visibleRows.length">
+          <div class="queue-card-list">
+            <v-card
+              v-for="item in visibleRows"
+              :key="getCardKey(item)"
+              variant="flat"
+              class="queue-item-card"
+            >
+              <v-card-text class="pa-4">
+                <div class="queue-card-layout">
+                  <div class="queue-card-ticket">
+                    <div class="ticket-number">
+                      {{ getDisplayQueueNumber(item) }}
+                    </div>
+                    <div class="ticket-label">Registrasi</div>
+                  </div>
+
+                  <div class="queue-card-main">
+                    <div class="queue-card-top">
+                      <div class="queue-card-identity">
+                        <div class="patient-name">
+                          {{ getPasienName(item) }}
+                        </div>
+
+                        <div class="queue-meta-line">
+                          <span>{{ getPasienCode(item) }}</span>
+                          <span>•</span>
+                          <span>{{ getKodeRegistrasi(item) }}</span>
+                        </div>
+                      </div>
+
+                      <div class="queue-card-status-inline">
+                        <v-chip
+                          size="small"
+                          :color="getStatusMeta(item).color"
+                          :prepend-icon="getStatusMeta(item).icon"
+                          variant="flat"
+                          class="font-weight-bold"
+                        >
+                          {{ getStatusMeta(item).label }}
+                        </v-chip>
+                      </div>
+                    </div>
+
+                    <div class="queue-card-info">
+                      <div class="queue-info-row">
+                        <div class="queue-info-label">Waktu</div>
+                        <div class="queue-info-value">
+                          {{ formatDate(getDataDate(item)) }}
+                          <span class="text-medium-emphasis">|</span>
+                          {{ formatTime(getDataTime(item)) }}
+                        </div>
+                      </div>
+
+                      <div class="queue-info-row">
+                        <div class="queue-info-label">Pasien</div>
+                        <div class="queue-info-value">
+                          {{ getPasienMeta(item) }}
+                        </div>
+                      </div>
+
+                      <div class="queue-info-row">
+                        <div class="queue-info-label">Layanan</div>
+                        <div class="queue-info-value">
+                          {{ getLayananSummary(item) }}
+                        </div>
+                      </div>
+
+                      <div class="queue-chip-row">
+                        <v-chip
+                          v-for="chip in getLayananChips(item)"
+                          :key="`${getCardKey(item)}-${chip.label}`"
+                          :color="chip.color"
+                          :prepend-icon="chip.icon"
+                          size="small"
+                          variant="tonal"
+                          class="service-chip"
+                        >
+                          {{ chip.label }}
+                        </v-chip>
+
+                        <v-chip
+                          size="small"
+                          :color="getTaskMeta(item).color"
+                          :prepend-icon="getTaskMeta(item).icon"
+                          variant="tonal"
+                          class="service-chip"
+                        >
+                          {{ getTaskMeta(item).label }}
+                        </v-chip>
+
+                        <v-chip
+                          v-if="isOnlineConsultation(item)"
+                          size="small"
+                          :color="
+                            hasBuktiChatKonsultasiOnline(item)
+                              ? 'success'
+                              : 'warning'
+                          "
+                          :prepend-icon="
+                            hasBuktiChatKonsultasiOnline(item)
+                              ? 'mdi-check-circle-outline'
+                              : 'mdi-alert-circle-outline'
+                          "
+                          variant="tonal"
+                          class="service-chip"
+                        >
+                          {{
+                            hasBuktiChatKonsultasiOnline(item)
+                              ? "Bukti chat ada"
+                              : "Belum upload bukti chat"
+                          }}
+                        </v-chip>
+                      </div>
+
+                      <div class="queue-info-row">
+                        <div class="queue-info-label">Petugas</div>
+                        <div class="queue-info-value">
+                          Dokter: {{ getDokterName(item) }}
+                          <span class="text-medium-emphasis">/</span>
+                          Perawat: {{ getPerawatName(item) }}
+                        </div>
+                      </div>
+
+                      <div class="queue-info-row">
+                        <div class="queue-info-label">Total</div>
+                        <div class="queue-info-value font-weight-bold">
+                          Rp {{ formatNumber(getTotalAmount(item)) }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="queue-card-actions">
+                    <v-btn
+                      v-if="getPrimaryAction(item)"
+                      :color="getActionButtonColor(getPrimaryAction(item))"
+                      variant="flat"
+                      :prepend-icon="getPrimaryAction(item).icon"
+                      class="text-none font-weight-bold"
+                      @click="handlePrimaryAction(item)"
+                    >
+                      {{ getPrimaryAction(item).label }}
+                    </v-btn>
+
+                    <v-btn
+                      v-else
+                      color="secondary"
+                      variant="tonal"
+                      prepend-icon="mdi-eye-outline"
+                      class="text-none font-weight-bold"
+                      @click="goToDetail(item)"
+                    >
+                      Detail
+                    </v-btn>
+
+                    <v-menu location="bottom end">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          variant="outlined"
+                          color="secondary"
+                          prepend-icon="mdi-dots-horizontal"
+                          class="text-none font-weight-bold"
+                        >
+                          Lainnya
+                        </v-btn>
+                      </template>
+
+                      <v-list density="compact">
+                        <v-list-item
+                          prepend-icon="mdi-eye-outline"
+                          title="Lihat Detail"
+                          @click="goToDetail(item)"
+                        />
+
+                        <v-list-item
+                          v-if="canViewBuktiChatKonsultasiOnline(item)"
+                          prepend-icon="mdi-file-eye-outline"
+                          title="Lihat Bukti Chat"
+                          @click="viewBuktiChatKonsultasiOnline(item)"
+                        />
+
+                        <v-list-item
+                          v-if="canUploadBuktiChatKonsultasiOnline(item)"
+                          prepend-icon="mdi-upload-outline"
+                          title="Upload Bukti Chat"
+                          @click="openBuktiChatDialog(item)"
+                        />
+
+                        <v-divider v-if="canCancel(item)" />
+
+                        <v-list-item
+                          v-if="canCancel(item)"
+                          prepend-icon="mdi-close-circle-outline"
+                          title="Batalkan Registrasi"
+                          base-color="error"
+                          @click="openCancelDialog(item)"
+                        />
+                      </v-list>
+                    </v-menu>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="empty-state">
+            <v-avatar color="grey-lighten-3" size="64">
+              <v-icon
+                icon="mdi-clipboard-text-search-outline"
+                size="34"
+                color="grey"
+              />
+            </v-avatar>
+
+            <div class="empty-title">Data registrasi belum tersedia</div>
+
+            <div class="empty-description">
+              Ubah filter, tanggal, tab status, atau tambahkan registrasi
+              layanan baru.
+            </div>
+
+            <v-btn
+              color="success"
+              variant="flat"
+              prepend-icon="mdi-plus"
+              class="mt-3 toolbar-btn"
+              @click="goToAdd"
+            >
+              Entry Data
+            </v-btn>
+          </div>
+        </template>
+      </div>
+
+      <v-divider />
+
+      <div class="table-footer">
+        <div class="footer-count">
           Total data:
-          <span class="font-weight-bold">{{ pagination.total }}</span>
+          <strong>{{ pagination.total }}</strong>
         </div>
 
-        <div class="d-flex align-center flex-wrap ga-3">
+        <div class="footer-actions">
           <v-select
             v-model="pagination.perPage"
+            class="per-page-field"
             :items="[10, 15, 25, 50]"
             variant="outlined"
             density="compact"
@@ -389,66 +425,103 @@
             @update:model-value="fetchData"
           />
         </div>
-      </v-card-text>
+      </div>
     </v-card>
 
-    <v-dialog v-model="cancelDialog.show" max-width="460">
-      <v-card>
-        <v-card-title class="text-subtitle-1 font-weight-bold">
-          Batalkan Registrasi
-        </v-card-title>
+    <v-dialog v-model="cancelDialog.show" max-width="480">
+      <v-card class="dialog-card">
+        <v-card-title class="dialog-title"> Batalkan Registrasi </v-card-title>
 
-        <v-card-text>
-          <div class="text-body-2 mb-3">
-            Yakin ingin membatalkan registrasi berikut?
-          </div>
+        <v-divider />
 
-          <v-alert type="warning" variant="tonal" density="compact">
-            {{ cancelDialog.item?.kode_registrasi || "-" }} -
-            {{ getPasienName(cancelDialog.item || {}) }}
+        <v-card-text class="pa-4">
+          <v-alert
+            type="warning"
+            variant="tonal"
+            density="compact"
+            class="mb-4"
+          >
+            Registrasi akan dibatalkan dan tidak bisa diproses ke task
+            berikutnya.
           </v-alert>
+
+          <div v-if="cancelDialog.item" class="delete-dialog-info">
+            <div>
+              <strong>No Registrasi:</strong>
+              {{ getKodeRegistrasi(cancelDialog.item) }}
+            </div>
+            <div>
+              <strong>Pasien:</strong>
+              {{ getPasienName(cancelDialog.item) }}
+            </div>
+            <div>
+              <strong>Layanan:</strong>
+              {{ getLayananSummary(cancelDialog.item) }}
+            </div>
+            <div>
+              <strong>Task:</strong>
+              {{ getTaskMeta(cancelDialog.item).label }}
+            </div>
+          </div>
         </v-card-text>
 
-        <v-card-actions>
-          <v-spacer />
+        <v-divider />
 
-          <v-btn variant="text" @click="cancelDialog.show = false">
+        <v-card-actions class="justify-end pa-4">
+          <v-btn
+            variant="outlined"
+            color="secondary"
+            class="text-none font-weight-bold"
+            :disabled="cancelDialog.loading"
+            @click="closeCancelDialog"
+          >
             Tutup
           </v-btn>
 
           <v-btn
             color="error"
             variant="flat"
+            prepend-icon="mdi-close-circle-outline"
+            class="text-none font-weight-bold"
             :loading="cancelDialog.loading"
-            @click="confirmCancel"
+            @click="submitCancel"
           >
             Batalkan
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
+
     <v-dialog v-model="buktiChatDialog.show" max-width="520">
-      <v-card>
-        <v-card-title class="text-subtitle-1 font-weight-bold">
+      <v-card class="dialog-card">
+        <v-card-title class="dialog-title">
           Upload Bukti Chat Konsultasi Online
         </v-card-title>
 
-        <v-card-text>
-          <v-alert type="info" variant="tonal" density="compact" class="mb-4">
-            {{ buktiChatDialog.item?.kode_registrasi || "-" }} -
-            {{ getPasienName(buktiChatDialog.item || {}) }}
-          </v-alert>
+        <v-divider />
+
+        <v-card-text class="pa-4">
+          <div v-if="buktiChatDialog.item" class="delete-dialog-info mb-4">
+            <div>
+              <strong>No Registrasi:</strong>
+              {{ getKodeRegistrasi(buktiChatDialog.item) }}
+            </div>
+            <div>
+              <strong>Pasien:</strong>
+              {{ getPasienName(buktiChatDialog.item) }}
+            </div>
+          </div>
 
           <v-file-input
             v-model="buktiChatDialog.file"
             label="Pilih file bukti chat"
+            prepend-icon=""
+            prepend-inner-icon="mdi-paperclip"
             variant="outlined"
             density="compact"
-            accept="image/jpeg,image/png,image/webp,application/pdf"
-            show-size
-            clearable
-            prepend-icon="mdi-paperclip"
+            accept=".jpg,.jpeg,.png,.webp,.pdf"
             :error-messages="buktiChatDialog.error"
+            show-size
           />
 
           <div class="text-caption text-medium-emphasis mt-2">
@@ -456,12 +529,24 @@
           </div>
         </v-card-text>
 
-        <v-card-actions>
-          <v-spacer />
-          <v-btn variant="text" @click="closeBuktiChatDialog"> Tutup </v-btn>
+        <v-divider />
+
+        <v-card-actions class="justify-end pa-4">
+          <v-btn
+            variant="outlined"
+            color="secondary"
+            class="text-none font-weight-bold"
+            :disabled="buktiChatDialog.loading"
+            @click="closeBuktiChatDialog"
+          >
+            Tutup
+          </v-btn>
+
           <v-btn
             color="primary"
             variant="flat"
+            prepend-icon="mdi-upload-outline"
+            class="text-none font-weight-bold"
             :loading="buktiChatDialog.loading"
             :disabled="!buktiChatDialog.file"
             @click="submitBuktiChatKonsultasiOnline"
@@ -471,6 +556,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
     <v-snackbar
       v-model="snackbar.show"
       :color="snackbar.color"
@@ -496,6 +582,7 @@ export default {
     return {
       loading: false,
       errorMessage: "",
+      activeTab: "all",
 
       breadcrumbs: [
         {
@@ -516,92 +603,15 @@ export default {
         status: null,
       },
 
-      headers: [
-        {
-          title: "Registrasi & Pasien",
-          key: "registrasi_pasien",
-          sortable: false,
-          minWidth: 440,
-        },
-        {
-          title: "Layanan",
-          key: "layanan",
-          sortable: false,
-          minWidth: 260,
-        },
-        {
-          title: "Total / Status",
-          key: "total_status",
-          sortable: false,
-          minWidth: 220,
-        },
-        {
-          title: "Aksi",
-          key: "actions",
-          sortable: false,
-          align: "end",
-          minWidth: 240,
-        },
-      ],
-
       layananItems: [
-        {
-          title: "Konsultasi",
-          value: "konsultasi",
-        },
-        {
-          title: "Treatment",
-          value: "treatment",
-        },
-        {
-          title: "Penjualan",
-          value: "penjualan",
-        },
-        {
-          title: "Pembelian Online",
-          value: "pembelian_online",
-        },
-      ],
-
-      taskItems: [
-        {
-          title: "Konsultasi / Dokter",
-          value: 1,
-        },
-        {
-          title: "Treatment",
-          value: 2,
-        },
-        {
-          title: "Perawat",
-          value: 3,
-        },
-        {
-          title: "Pembayaran",
-          value: 4,
-        },
-        {
-          title: "Selesai",
-          value: 5,
-        },
-      ],
-
-      statusItems: [
-        {
-          title: "Aktif",
-          value: "aktif",
-        },
-        {
-          title: "Batal",
-          value: "batal",
-        },
-        {
-          title: "Selesai",
-          value: "selesai",
-        },
+        { title: "Konsultasi", value: "konsultasi" },
+        { title: "Treatment", value: "treatment" },
+        { title: "Penjualan", value: "penjualan" },
+        { title: "Pembelian Online", value: "pembelian_online" },
       ],
 
       rows: [],
+      countRows: [],
 
       pagination: {
         page: 1,
@@ -641,6 +651,7 @@ export default {
             "dokter",
             "doctor",
             "it",
+            "superuser",
           ],
         },
         pembayaran: {
@@ -654,6 +665,8 @@ export default {
             "cashier",
             "keuangan",
             "finance",
+            "it",
+            "superuser",
           ],
         },
         proses_treatment: {
@@ -663,8 +676,12 @@ export default {
             "super_admin",
             "administrator",
             "admin",
+            "dokter",
+            "doctor",
             "perawat",
             "beautician",
+            "it",
+            "superuser",
           ],
         },
         proses_perawat: {
@@ -676,6 +693,8 @@ export default {
             "admin",
             "perawat",
             "beautician",
+            "it",
+            "superuser",
           ],
         },
       },
@@ -698,6 +717,91 @@ export default {
     currentRoleText() {
       return this.getRoleLabel(this.currentRole) || "Tidak terbaca";
     },
+
+    summaryCounts() {
+      const sourceRows = this.countRows.length ? this.countRows : this.rows;
+
+      return {
+        all: sourceRows.length,
+        active: sourceRows.filter((item) => this.isActiveStatus(item)).length,
+        dokter: sourceRows.filter(
+          (item) => Number(this.getCurrentTaskValue(item)) === 1,
+        ).length,
+        treatment: sourceRows.filter(
+          (item) => Number(this.getCurrentTaskValue(item)) === 2,
+        ).length,
+        perawat: sourceRows.filter(
+          (item) => Number(this.getCurrentTaskValue(item)) === 3,
+        ).length,
+        pembayaran: sourceRows.filter(
+          (item) => Number(this.getCurrentTaskValue(item)) === 4,
+        ).length,
+        selesai: sourceRows.filter(
+          (item) => this.getStatusValue(item) === "selesai",
+        ).length,
+        batal: sourceRows.filter(
+          (item) => this.getStatusValue(item) === "batal",
+        ).length,
+      };
+    },
+
+    statusTabs() {
+      return [
+        {
+          label: "Semua",
+          value: "all",
+          icon: "mdi-format-list-bulleted",
+          count: this.getTabCount("all"),
+        },
+        {
+          label: "Aktif",
+          value: "active",
+          icon: "mdi-progress-clock",
+          count: this.getTabCount("active"),
+        },
+        {
+          label: "Dokter",
+          value: "dokter",
+          icon: "mdi-stethoscope",
+          count: this.getTabCount("dokter"),
+        },
+        {
+          label: "Treatment",
+          value: "treatment",
+          icon: "mdi-face-woman-shimmer-outline",
+          count: this.getTabCount("treatment"),
+        },
+        {
+          label: "Perawat",
+          value: "perawat",
+          icon: "mdi-account-heart-outline",
+          count: this.getTabCount("perawat"),
+        },
+        {
+          label: "Pembayaran",
+          value: "pembayaran",
+          icon: "mdi-cash-register",
+          count: this.getTabCount("pembayaran"),
+        },
+        {
+          label: "Selesai",
+          value: "selesai",
+          icon: "mdi-check-circle-outline",
+          count: this.getTabCount("selesai"),
+        },
+        {
+          label: "Batal",
+          value: "batal",
+          icon: "mdi-close-circle-outline",
+          count: this.getTabCount("batal"),
+        },
+      ];
+    },
+
+    visibleRows() {
+      if (this.activeTab === "all") return this.rows;
+      return this.rows.filter((item) => this.matchesTab(item, this.activeTab));
+    },
   },
 
   mounted() {
@@ -710,12 +814,20 @@ export default {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
-
       return `${year}-${month}-${day}`;
     },
 
     goToAdd() {
       this.$router.push("/resepsionis/registrasi-layanan/add");
+    },
+
+    goToDetail(item) {
+      const id = this.getRegistrasiId(item);
+      if (!id) {
+        this.showSnackbar("ID registrasi tidak ditemukan.", "error");
+        return;
+      }
+      this.$router.push(`/resepsionis/registrasi-layanan/${id}`);
     },
 
     applyFilters() {
@@ -726,6 +838,73 @@ export default {
     onPerPageChange() {
       this.pagination.page = 1;
       this.fetchData();
+    },
+
+    onTabChange(value) {
+      this.activeTab = value;
+      this.pagination.page = 1;
+      const mapped = this.mapTabToFilter(value);
+      this.filters.status = mapped.status;
+      this.filters.current_task = mapped.current_task;
+      this.fetchData();
+    },
+
+    mapTabToFilter(value) {
+      const map = {
+        all: {
+          status: null,
+          current_task: null,
+        },
+        active: {
+          status: 1,
+          current_task: null,
+        },
+        dokter: {
+          status: 1,
+          current_task: 1,
+        },
+        treatment: {
+          status: 1,
+          current_task: 2,
+        },
+        perawat: {
+          status: 1,
+          current_task: 3,
+        },
+        pembayaran: {
+          status: 1,
+          current_task: 4,
+        },
+        selesai: {
+          status: 2,
+          current_task: null,
+        },
+        batal: {
+          status: 9,
+          current_task: null,
+        },
+      };
+
+      return map[value] || map.all;
+    },
+
+    getTabCount(value) {
+      return this.summaryCounts[value] || 0;
+    },
+
+    matchesTab(item, tab) {
+      if (tab === "all") return true;
+      if (tab === "active") return this.isActiveStatus(item);
+      if (tab === "dokter") return Number(this.getCurrentTaskValue(item)) === 1;
+      if (tab === "treatment")
+        return Number(this.getCurrentTaskValue(item)) === 2;
+      if (tab === "perawat")
+        return Number(this.getCurrentTaskValue(item)) === 3;
+      if (tab === "pembayaran")
+        return Number(this.getCurrentTaskValue(item)) === 4;
+      if (tab === "selesai") return this.getStatusValue(item) === "selesai";
+      if (tab === "batal") return this.getStatusValue(item) === "batal";
+      return true;
     },
 
     async fetchData() {
@@ -749,8 +928,10 @@ export default {
 
         this.rows = this.extractRows(payload);
         this.applyPagination(payload);
+        await this.fetchTabCounts();
       } catch (error) {
         this.rows = [];
+        this.countRows = [];
         this.pagination.total = 0;
         this.pagination.lastPage = 1;
         this.errorMessage =
@@ -762,27 +943,31 @@ export default {
       }
     },
 
+    async fetchTabCounts() {
+      try {
+        const params = {
+          page: 1,
+          per_page: 1000,
+          search: this.filters.search || undefined,
+          tanggal: this.filters.tanggal || undefined,
+          layanan: this.filters.layanan || undefined,
+          toko_id: this.activeTokoId || undefined,
+        };
+
+        const response = await registrasiLayananService.getAll(params);
+        const payload = response?.data || response;
+        this.countRows = this.extractRows(payload);
+      } catch (error) {
+        this.countRows = [...this.rows];
+      }
+    },
+
     extractRows(payload) {
-      if (Array.isArray(payload)) {
-        return payload;
-      }
-
-      if (Array.isArray(payload?.data)) {
-        return payload.data;
-      }
-
-      if (Array.isArray(payload?.data?.data)) {
-        return payload.data.data;
-      }
-
-      if (Array.isArray(payload?.rows)) {
-        return payload.rows;
-      }
-
-      if (Array.isArray(payload?.items)) {
-        return payload.items;
-      }
-
+      if (Array.isArray(payload)) return payload;
+      if (Array.isArray(payload?.data)) return payload.data;
+      if (Array.isArray(payload?.data?.data)) return payload.data.data;
+      if (Array.isArray(payload?.rows)) return payload.rows;
+      if (Array.isArray(payload?.items)) return payload.items;
       return [];
     },
 
@@ -796,7 +981,6 @@ export default {
           this.rows.length ||
           0,
       );
-
       const perPage = Number(
         meta.per_page ||
           meta.perPage ||
@@ -805,7 +989,6 @@ export default {
           this.pagination.perPage ||
           15,
       );
-
       const currentPage = Number(
         meta.current_page ||
           meta.currentPage ||
@@ -814,7 +997,6 @@ export default {
           this.pagination.page ||
           1,
       );
-
       const lastPage = Number(
         meta.last_page ||
           meta.lastPage ||
@@ -828,6 +1010,45 @@ export default {
       this.pagination.perPage = perPage;
       this.pagination.page = currentPage;
       this.pagination.lastPage = lastPage || 1;
+    },
+
+    getCardKey(item) {
+      return (
+        item?.id ||
+        item?.registrasi_id ||
+        item?.kode_registrasi ||
+        `${this.getPasienName(item)}-${this.getDataDate(item)}-${this.getDataTime(item)}`
+      );
+    },
+
+    getRegistrasiId(item) {
+      return item?.id || item?.registrasi_id || item?.registrasi?.id || null;
+    },
+
+    getKodeRegistrasi(item) {
+      return (
+        item?.kode_registrasi ||
+        item?.no_registrasi ||
+        `REG-${this.getRegistrasiId(item) || "-"}`
+      );
+    },
+
+    getDisplayQueueNumber(item) {
+      const code = String(this.getKodeRegistrasi(item) || "");
+      const parts = code.split("-").filter(Boolean);
+      const lastPart = parts.length ? parts[parts.length - 1] : "";
+      if (/^\d+$/.test(lastPart))
+        return lastPart.length > 3
+          ? lastPart.slice(-3)
+          : lastPart.padStart(3, "0");
+      const numbers = code.match(/\d+/g);
+      if (numbers && numbers.length) {
+        const lastNumber = numbers[numbers.length - 1];
+        return lastNumber.length > 3
+          ? lastNumber.slice(-3)
+          : lastNumber.padStart(3, "0");
+      }
+      return "-";
     },
 
     getDataDate(item) {
@@ -912,30 +1133,70 @@ export default {
 
     getConsultationLabel(item) {
       const sourceName = this.getConsultationSourceName(item);
-
-      if (sourceName) {
-        return sourceName;
-      }
+      if (sourceName) return sourceName;
 
       const sourceCode = String(
         this.getConsultationSourceCode(item) || "",
       ).toUpperCase();
-
       if (sourceCode.includes("ONLINE")) return "Konsultasi Online";
       if (sourceCode.includes("SPPG")) return "Konsultasi SPPG";
       if (sourceCode.includes("SPKK")) return "Konsultasi SPKK";
-      if (sourceCode.includes("OFFLINE") || sourceCode.includes("DOKTER")) {
+      if (sourceCode.includes("OFFLINE") || sourceCode.includes("DOKTER"))
         return "Konsultasi Dokter";
-      }
 
       const channel = String(
         item?.channel_konsultasi ?? item?.layanan?.channel_konsultasi ?? "",
       ).toLowerCase();
-
       if (channel === "2" || channel === "online") return "Konsultasi Online";
       if (channel === "1" || channel === "offline") return "Konsultasi Dokter";
+      return "Konsultasi";
+    },
 
-      return "Tanpa Konsultasi";
+    getLayananSummary(item) {
+      const labels = [];
+      if (this.hasConsultation(item))
+        labels.push(this.getConsultationLabel(item));
+      if (this.hasTreatment(item)) labels.push("Treatment");
+      if (this.hasSales(item)) labels.push("Penjualan");
+      if (this.isPembelianOnline(item)) labels.push("Pembelian Online");
+      return labels.length ? labels.join(" • ") : "-";
+    },
+
+    getLayananChips(item) {
+      const chips = [];
+      if (this.hasConsultation(item))
+        chips.push({
+          label: this.getConsultationLabel(item),
+          color: this.isOnlineConsultation(item) ? "info" : "primary",
+          icon: this.isOnlineConsultation(item)
+            ? "mdi-monitor-account"
+            : "mdi-stethoscope",
+        });
+      if (this.hasTreatment(item))
+        chips.push({
+          label: "Treatment",
+          color: "success",
+          icon: "mdi-face-woman-shimmer-outline",
+        });
+      if (this.hasSales(item))
+        chips.push({
+          label: "Penjualan",
+          color: "info",
+          icon: "mdi-cart-outline",
+        });
+      if (this.isPembelianOnline(item))
+        chips.push({
+          label: "Pembelian Online",
+          color: "deep-purple",
+          icon: "mdi-web",
+        });
+      if (!chips.length)
+        chips.push({
+          label: "Belum ada layanan",
+          color: "secondary",
+          icon: "mdi-minus-circle-outline",
+        });
+      return chips;
     },
 
     getPasienName(item) {
@@ -948,24 +1209,30 @@ export default {
       );
     },
 
-    getPasienMeta(item) {
-      const kode =
+    getPasienCode(item) {
+      return (
         item?.pasien?.kode_pasien ||
         item?.pasien?.no_rm ||
         item?.pasien_kode ||
         item?.kode_pasien ||
         item?.no_rm ||
-        "-";
+        "RM -"
+      );
+    },
 
-      const phone =
+    getPasienPhone(item) {
+      return (
         item?.pasien?.no_hp ||
         item?.pasien?.no_wa ||
         item?.pasien_no_hp ||
         item?.no_hp ||
         item?.no_wa ||
-        "-";
+        "-"
+      );
+    },
 
-      return `${kode} • ${phone}`;
+    getPasienMeta(item) {
+      return `${this.getPasienCode(item)} • ${this.getPasienPhone(item)}`;
     },
 
     getDokterName(item) {
@@ -974,7 +1241,7 @@ export default {
         item?.dokter_nama ||
         item?.nama_dokter ||
         item?.dokter_name ||
-        "-"
+        "Belum ditentukan"
       );
     },
 
@@ -984,7 +1251,7 @@ export default {
         item?.perawat_nama ||
         item?.nama_perawat ||
         item?.perawat_name ||
-        "-"
+        "Belum ditentukan"
       );
     },
 
@@ -999,252 +1266,188 @@ export default {
       );
     },
 
-    getConsultationAmount(item) {
-      const value =
-        item?.total_konsultasi ??
-        item?.layanan?.total_konsultasi ??
-        item?.biaya_konsultasi ??
-        item?.konsultasi_total ??
-        item?.konsultasi?.total_harga ??
-        0;
+    getStatusValue(item) {
+      const rawStatus =
+        item?.status ??
+        item?.status_registrasi ??
+        item?.status_label?.value ??
+        item?.status_label ??
+        item?.status_text ??
+        "";
 
-      const number = Number(value);
-      return Number.isFinite(number) ? number : 0;
+      if (rawStatus === 1 || rawStatus === "1") return "aktif";
+      if (rawStatus === 2 || rawStatus === "2") return "selesai";
+      if (rawStatus === 9 || rawStatus === "9") return "batal";
+
+      if (this.isCancelled(item)) return "batal";
+      if (this.isDone(item)) return "selesai";
+
+      const raw = String(rawStatus).toLowerCase();
+
+      if (["batal", "cancel", "cancelled", "canceled"].includes(raw))
+        return "batal";
+      if (["selesai", "done", "finish", "finished", "lunas"].includes(raw))
+        return "selesai";
+      if (["aktif", "active", "progress", "proses"].includes(raw))
+        return "aktif";
+
+      return "aktif";
     },
 
-    getStatusValue(item) {
-      const raw =
-        item?.status_registrasi || item?.status || item?.status_layanan;
+    isActiveStatus(item) {
+      return this.getStatusValue(item) === "aktif";
+    },
 
-      if (raw === null || raw === undefined || raw === "") {
-        return "aktif";
-      }
+    isCancelled(item) {
+      return (
+        Number(item?.is_cancel || 0) === 1 ||
+        Number(item?.is_batal || 0) === 1 ||
+        Number(item?.is_delete || 0) === 1 ||
+        String(item?.status || "").toLowerCase() === "batal"
+      );
+    },
 
-      return String(raw).toLowerCase();
+    isDone(item) {
+      const task = Number(this.getCurrentTaskValue(item) || 0);
+      const status = String(item?.status || "").toLowerCase();
+      return (
+        task >= 5 ||
+        Number(item?.is_selesai || 0) === 1 ||
+        ["selesai", "done", "finish", "finished"].includes(status)
+      );
     },
 
     getStatusMeta(item) {
       const status = this.getStatusValue(item);
-
-      if (["batal", "cancel", "cancelled", "dibatalkan"].includes(status)) {
+      if (status === "batal")
         return {
           label: "Batal",
           color: "error",
           icon: "mdi-close-circle-outline",
         };
-      }
-
-      if (
-        ["selesai", "done", "completed", "finish", "finished"].includes(status)
-      ) {
+      if (status === "selesai")
         return {
           label: "Selesai",
           color: "success",
           icon: "mdi-check-circle-outline",
         };
-      }
-
-      return {
-        label: "Aktif",
-        color: "primary",
-        icon: "mdi-clock-outline",
-      };
+      return { label: "Aktif", color: "primary", icon: "mdi-progress-clock" };
     },
 
-    getTaskValue(item) {
-      return Number(
+    getCurrentTaskValue(item) {
+      return (
         item?.current_task ||
-          item?.task ||
-          item?.task_status ||
-          item?.currentTask ||
-          0,
+        item?.task_type ||
+        item?.task?.task_type ||
+        item?.currentTask?.task_type ||
+        item?.registrasi_task?.task_type ||
+        null
       );
     },
 
     getTaskMeta(item) {
-      const task = this.getTaskValue(item);
-
-      if (task === 1) {
-        return {
-          label: "Konsultasi",
+      const task = Number(this.getCurrentTaskValue(item) || 0);
+      const map = {
+        1: {
+          label: "Konsultasi / Dokter",
           color: "primary",
           icon: "mdi-stethoscope",
-        };
-      }
-
-      if (task === 2) {
-        return {
+        },
+        2: {
           label: "Treatment",
           color: "success",
           icon: "mdi-face-woman-shimmer-outline",
-        };
-      }
-
-      if (task === 3) {
-        return {
+        },
+        3: {
           label: "Perawat",
-          color: "teal",
+          color: "deep-purple",
           icon: "mdi-account-heart-outline",
-        };
-      }
-
-      if (task === 4) {
-        return {
-          label: "Pembayaran",
-          color: "info",
-          icon: "mdi-cash-register",
-        };
-      }
-
-      if (task === 5) {
-        return {
+        },
+        4: { label: "Pembayaran", color: "warning", icon: "mdi-cash-register" },
+        5: {
           label: "Selesai",
           color: "success",
           icon: "mdi-check-circle-outline",
-        };
-      }
-
-      return {
-        label: "Belum ada task",
-        color: "grey",
-        icon: "mdi-progress-question",
+        },
       };
+      return (
+        map[task] || {
+          label: "Belum ada task",
+          color: "secondary",
+          icon: "mdi-minus-circle-outline",
+        }
+      );
     },
 
     getPrimaryAction(item) {
-      if (!this.isActiveItem(item)) {
-        return null;
-      }
-
-      const task = this.getTaskValue(item);
-
-      if (task === 1) {
+      if (this.getStatusValue(item) === "batal") return null;
+      const id = this.getRegistrasiId(item);
+      const task = Number(this.getCurrentTaskValue(item) || 0);
+      if (!id) return null;
+      if (this.getStatusValue(item) === "selesai" || task >= 5)
+        return {
+          key: "detail",
+          label: "Lihat Detail",
+          icon: "mdi-eye-outline",
+          color: "secondary",
+          to: `/resepsionis/registrasi-layanan/${id}`,
+        };
+      if (task === 1 && this.canAccessAction("proses_dokter"))
         return {
           key: "proses_dokter",
           label: "Proses Dokter",
-          color: "primary",
           icon: "mdi-stethoscope",
-          route: (id) =>
-            `/pelayanan-medis/antrian-dokter/${id}/proses-antrian-dokter`,
+          color: "primary",
+          to: `/pelayanan-medis/antrian-dokter/${id}/proses-antrian-dokter`,
         };
-      }
-
-      if (task === 2) {
+      if (task === 2 && this.canAccessAction("proses_treatment"))
         return {
           key: "proses_treatment",
           label: "Proses Treatment",
-          color: "success",
           icon: "mdi-face-woman-shimmer-outline",
-          route: null,
+          color: "success",
+          to: `/pelayanan-medis/antrian-dokter/${id}/proses-antrian-dokter`,
         };
-      }
-
-      if (task === 3) {
+      if (task === 3 && this.canAccessAction("proses_perawat"))
         return {
           key: "proses_perawat",
-          label: "Proses Perawat",
-          color: "teal",
+          label: "Lihat Antrian Perawat",
           icon: "mdi-account-heart-outline",
-          route: null,
+          color: "deep-purple",
+          to: "/pelayanan-medis/antrian-perawat",
         };
-      }
-
-      if (task === 4) {
+      if (task === 4 && this.canAccessAction("pembayaran"))
         return {
           key: "pembayaran",
-          label: "Pembayaran",
-          color: "info",
+          label: "Proses Pembayaran",
           icon: "mdi-cash-register",
-          route: (id) => `/kasir/daftar-pembayaran/${id}/proses-pembayaran`,
+          color: "warning",
+          to: `/kasir/daftar-pembayaran/${id}/proses-pembayaran`,
         };
-      }
+      return {
+        key: "detail",
+        label: "Lihat Detail",
+        icon: "mdi-eye-outline",
+        color: "secondary",
+        to: `/resepsionis/registrasi-layanan/${id}`,
+      };
+    },
 
-      return null;
+    getActionButtonColor(action) {
+      return action?.color || "primary";
     },
 
     handlePrimaryAction(item) {
       const action = this.getPrimaryAction(item);
-
-      if (!action) {
-        this.showSnackbar(
-          "Tidak ada aksi yang tersedia untuk data ini.",
-          "warning",
-        );
+      if (!action?.to) {
+        this.showSnackbar("Aksi tidak tersedia untuk registrasi ini.", "error");
         return;
       }
-
-      if (!this.canAccessAction(action.key)) {
-        this.showSnackbar(this.getAccessDeniedMessage(action.key), "warning");
-        return;
-      }
-
-      if (!action.route) {
-        this.showSnackbar(
-          `Aksi ${action.label} belum memiliki halaman proses langsung dari daftar registrasi.`,
-          "warning",
-        );
-        return;
-      }
-
-      const routeId = this.resolveActionRouteId(item, action.key);
-
-      if (!routeId) {
-        this.showSnackbar(
-          `ID tujuan untuk ${action.label} tidak ditemukan pada data registrasi.`,
-          "error",
-        );
-        return;
-      }
-
-      this.$router.push(action.route(routeId));
-    },
-
-    resolveActionRouteId(item, actionKey) {
-      if (actionKey === "proses_dokter") {
-        return (
-          item?.antrian_dokter_id ||
-          item?.antrianDokter?.id ||
-          item?.queue_dokter_id ||
-          item?.dokter_queue_id ||
-          item?.id
-        );
-      }
-
-      if (actionKey === "pembayaran") {
-        return (
-          item?.pembayaran_id || item?.payment_id || item?.kasir_id || item?.id
-        );
-      }
-
-      return item?.id || null;
-    },
-
-    getActionButtonColor(action) {
-      if (!action?.key) {
-        return action?.color || "primary";
-      }
-
-      return this.canAccessAction(action.key) ? action.color : "warning";
+      this.$router.push(action.to);
     },
 
     canCancel(item) {
-      return this.isActiveItem(item);
-    },
-
-    isActiveItem(item) {
-      const status = this.getStatusValue(item);
-
-      return ![
-        "batal",
-        "cancel",
-        "cancelled",
-        "dibatalkan",
-        "selesai",
-        "done",
-        "completed",
-        "finish",
-        "finished",
-      ].includes(status);
+      return this.getStatusValue(item) === "aktif";
     },
 
     openCancelDialog(item) {
@@ -1252,21 +1455,28 @@ export default {
       this.cancelDialog.show = true;
     },
 
-    async confirmCancel() {
-      if (!this.cancelDialog.item?.id) {
+    closeCancelDialog() {
+      this.cancelDialog.show = false;
+      this.cancelDialog.loading = false;
+      this.cancelDialog.item = null;
+    },
+
+    async submitCancel() {
+      const id = this.getRegistrasiId(this.cancelDialog.item);
+      if (!id) {
         this.showSnackbar("ID registrasi tidak ditemukan.", "error");
         return;
       }
-
       this.cancelDialog.loading = true;
-
       try {
-        await registrasiLayananService.cancel(this.cancelDialog.item.id);
-
-        this.cancelDialog.show = false;
-        this.cancelDialog.item = null;
-
-        this.showSnackbar("Registrasi berhasil dibatalkan.", "success");
+        const response = await registrasiLayananService.cancel(id);
+        this.showSnackbar(
+          response?.message ||
+            response?.data?.message ||
+            "Registrasi berhasil dibatalkan.",
+          "success",
+        );
+        this.closeCancelDialog();
         this.fetchData();
       } catch (error) {
         this.showSnackbar(
@@ -1280,302 +1490,38 @@ export default {
       }
     },
 
-    canAccessAction(actionKey) {
-      const rule = this.accessRules[actionKey];
-
-      if (!rule || !Array.isArray(rule.roles) || rule.roles.length === 0) {
-        return true;
-      }
-
-      const activeTokens = new Set(this.currentRoleTokens);
-      const allowedTokens = rule.roles.flatMap((role) =>
-        this.normalizeRoleTokens(role),
-      );
-
-      return allowedTokens.some((token) => activeTokens.has(token));
-    },
-
-    getAccessDeniedMessage(actionKey) {
-      const rule = this.accessRules[actionKey];
-
-      if (!rule) {
-        return "Akses ditolak untuk aksi ini.";
-      }
-
-      return `Akses ditolak. ${rule.label} hanya untuk role: ${rule.roles.join(
-        ", ",
-      )}. Role aktif Anda: ${this.currentRoleText}.`;
-    },
-
-    resolveCurrentRole() {
-      const selectedRole = this.safeJsonParse(
-        localStorage.getItem("selected_role"),
-      );
-
-      if (selectedRole) {
-        return selectedRole;
-      }
-
-      const directRole =
-        localStorage.getItem("role") ||
-        localStorage.getItem("role_name") ||
-        localStorage.getItem("user_role") ||
-        localStorage.getItem("selected_role_name");
-
-      if (directRole) {
-        return this.safeJsonParse(directRole) || directRole;
-      }
-
-      const user =
-        this.safeJsonParse(localStorage.getItem("user")) ||
-        this.safeJsonParse(localStorage.getItem("auth_user")) ||
-        this.safeJsonParse(localStorage.getItem("user_data")) ||
-        this.safeJsonParse(localStorage.getItem("current_user"));
-
-      return (
-        user?.selected_role ||
-        user?.selectedRole ||
-        user?.role ||
-        user?.roles ||
-        user?.role_name ||
-        user?.roleName ||
-        user?.data?.selected_role ||
-        user?.data?.role ||
-        user?.data?.roles ||
-        null
-      );
-    },
-
-    safeJsonParse(value) {
-      if (!value) {
-        return null;
-      }
-
-      try {
-        return JSON.parse(value);
-      } catch {
-        return value;
-      }
-    },
-
-    normalizeRoleTokens(role) {
-      const tokens = new Set();
-
-      const addToken = (value) => {
-        if (value === null || value === undefined || value === "") {
-          return;
-        }
-
-        const text = String(value).trim().toLowerCase();
-
-        if (!text) {
-          return;
-        }
-
-        const underscore = text
-          .replace(/[^a-z0-9]+/g, "_")
-          .replace(/^_+|_+$/g, "");
-        const compact = text.replace(/[^a-z0-9]+/g, "");
-
-        if (underscore) {
-          tokens.add(underscore);
-        }
-
-        if (compact) {
-          tokens.add(compact);
-        }
-      };
-
-      const walk = (value) => {
-        if (value === null || value === undefined || value === "") {
-          return;
-        }
-
-        if (typeof value === "string" || typeof value === "number") {
-          addToken(value);
-          return;
-        }
-
-        if (Array.isArray(value)) {
-          value.forEach((item) => walk(item));
-          return;
-        }
-
-        if (typeof value === "object") {
-          [
-            "name",
-            "nama",
-            "label",
-            "title",
-            "code",
-            "kode",
-            "slug",
-            "value",
-            "role",
-            "roles",
-            "role_name",
-            "roleName",
-            "role_code",
-            "roleCode",
-          ].forEach((key) => walk(value[key]));
-        }
-      };
-
-      walk(role);
-
-      return Array.from(tokens);
-    },
-
-    getRoleLabel(role) {
-      if (!role) {
-        return "";
-      }
-
-      if (typeof role === "string" || typeof role === "number") {
-        return String(role);
-      }
-
-      if (Array.isArray(role)) {
-        return role
-          .map((item) => this.getRoleLabel(item))
-          .filter(Boolean)
-          .join(", ");
-      }
-
-      return (
-        role?.nama ||
-        role?.name ||
-        role?.label ||
-        role?.title ||
-        role?.role_name ||
-        role?.roleName ||
-        role?.code ||
-        role?.kode ||
-        ""
-      );
-    },
-
-    formatNumber(value) {
-      const number = Number(value || 0);
-
-      if (Number.isNaN(number)) {
-        return "0";
-      }
-
-      return number.toLocaleString("id-ID");
-    },
-
-    formatDate(value) {
-      if (!value) {
-        return "-";
-      }
-
-      const date = new Date(value);
-
-      if (Number.isNaN(date.getTime())) {
-        return value;
-      }
-
-      return date.toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
-    },
-
-    formatTime(value) {
-      if (!value) {
-        return "-";
-      }
-
-      const raw = String(value);
-
-      const timeMatch = raw.match(/(\d{2}):(\d{2})/);
-
-      if (timeMatch) {
-        return `Jam ${timeMatch[1]}.${timeMatch[2]}`;
-      }
-
-      const date = new Date(value);
-
-      if (Number.isNaN(date.getTime())) {
-        return "-";
-      }
-
-      const hour = String(date.getHours()).padStart(2, "0");
-      const minute = String(date.getMinutes()).padStart(2, "0");
-
-      return `Jam ${hour}.${minute}`;
-    },
-
-    showSnackbar(message, color = "success") {
-      this.snackbar.message = message;
-      this.snackbar.color = color;
-      this.snackbar.show = true;
-    },
-
     isOnlineConsultation(item) {
+      if (!this.hasConsultation(item)) return false;
       const sourceCode = String(
         this.getConsultationSourceCode(item) || "",
       ).toUpperCase();
-
+      const sourceName = String(
+        this.getConsultationSourceName(item) || "",
+      ).toUpperCase();
       const channel = String(
         item?.channel_konsultasi ?? item?.layanan?.channel_konsultasi ?? "",
       ).toLowerCase();
-
       return (
         sourceCode.includes("ONLINE") ||
-        channel === "2" ||
+        sourceName.includes("ONLINE") ||
         channel === "online" ||
-        this.getConsultationLabel(item) === "Konsultasi Online"
+        channel === "2"
       );
     },
 
-    isRegistrationFinished(item) {
-      const status = Number(item?.status ?? item?.status_registrasi ?? 0);
-
-      if (status === 2) {
-        return true;
-      }
-
-      const label = String(
-        item?.status_label?.label ||
-          item?.status_label ||
-          item?.status_text ||
-          item?.status_layanan ||
-          "",
-      ).toLowerCase();
-
-      return ["selesai", "done", "completed", "finish", "finished"].includes(
-        label,
-      );
+    hasBuktiChatKonsultasiOnline(item) {
+      return Boolean(this.getBuktiChatKonsultasiOnlineUrl(item));
     },
 
     getBuktiChatKonsultasiOnlineUrl(item) {
       return (
         item?.bukti_chat_konsultasi_online_url ||
-        item?.layanan?.bukti_chat_konsultasi_online_url ||
-        item?.bukti_chat_url ||
-        ""
-      );
-    },
-
-    hasBuktiChatKonsultasiOnline(item) {
-      return Boolean(
-        this.getBuktiChatKonsultasiOnlineUrl(item) ||
         item?.bukti_chat_konsultasi_online ||
-        item?.layanan?.bukti_chat_konsultasi_online ||
-        Number(item?.is_upload_bukti_chat_konsultasi_online || 0) === 1 ||
-        Number(item?.layanan?.is_upload_bukti_chat_konsultasi_online || 0) ===
-          1,
-      );
-    },
-
-    canUploadBuktiChatKonsultasiOnline(item) {
-      return (
-        this.isOnlineConsultation(item) &&
-        this.isRegistrationFinished(item) &&
-        !this.hasBuktiChatKonsultasiOnline(item)
+        item?.konsultasi_online?.bukti_chat_konsultasi_online_url ||
+        item?.konsultasi_online?.bukti_chat_konsultasi_online ||
+        item?.registrasi?.bukti_chat_konsultasi_online_url ||
+        item?.registrasi?.bukti_chat_konsultasi_online ||
+        ""
       );
     },
 
@@ -1586,113 +1532,184 @@ export default {
       );
     },
 
+    canUploadBuktiChatKonsultasiOnline(item) {
+      return (
+        this.isOnlineConsultation(item) &&
+        !this.hasBuktiChatKonsultasiOnline(item) &&
+        this.getStatusValue(item) === "aktif"
+      );
+    },
+
+    viewBuktiChatKonsultasiOnline(item) {
+      const url = this.getBuktiChatKonsultasiOnlineUrl(item);
+      if (!url) {
+        this.showSnackbar("File bukti chat belum tersedia.", "error");
+        return;
+      }
+      window.open(url, "_blank", "noopener,noreferrer");
+    },
+
     openBuktiChatDialog(item) {
-      this.buktiChatDialog = {
-        show: true,
-        loading: false,
-        item,
-        file: null,
-        error: "",
-      };
+      this.buktiChatDialog.show = true;
+      this.buktiChatDialog.item = item;
+      this.buktiChatDialog.file = null;
+      this.buktiChatDialog.error = "";
     },
 
     closeBuktiChatDialog() {
-      if (this.buktiChatDialog.loading) {
-        return;
-      }
-
-      this.buktiChatDialog = {
-        show: false,
-        loading: false,
-        item: null,
-        file: null,
-        error: "",
-      };
+      this.buktiChatDialog.show = false;
+      this.buktiChatDialog.loading = false;
+      this.buktiChatDialog.item = null;
+      this.buktiChatDialog.file = null;
+      this.buktiChatDialog.error = "";
     },
 
     async submitBuktiChatKonsultasiOnline() {
-      const item = this.buktiChatDialog.item;
-      const file = Array.isArray(this.buktiChatDialog.file)
+      const id = this.getRegistrasiId(this.buktiChatDialog.item);
+      const selectedFile = Array.isArray(this.buktiChatDialog.file)
         ? this.buktiChatDialog.file[0]
         : this.buktiChatDialog.file;
-
-      if (!item?.id) {
-        this.buktiChatDialog.error = "Data registrasi tidak valid.";
+      if (!id) {
+        this.buktiChatDialog.error = "ID registrasi tidak ditemukan.";
         return;
       }
-
-      if (!file) {
+      if (!selectedFile) {
         this.buktiChatDialog.error = "File bukti chat wajib dipilih.";
         return;
       }
-
+      const maxSize = 5 * 1024 * 1024;
+      if (selectedFile.size > maxSize) {
+        this.buktiChatDialog.error = "Ukuran file maksimal 5 MB.";
+        return;
+      }
       this.buktiChatDialog.loading = true;
       this.buktiChatDialog.error = "";
-
       try {
         const response =
           await registrasiLayananService.uploadBuktiChatKonsultasiOnline(
-            item.id,
-            file,
+            id,
+            selectedFile,
           );
-
-        const payload = response?.data || {};
-
-        const index = this.rows.findIndex(
-          (row) => Number(row.id) === Number(item.id),
-        );
-
-        if (index >= 0) {
-          const current = this.rows[index];
-
-          this.rows.splice(index, 1, {
-            ...current,
-            bukti_chat_konsultasi_online:
-              payload.bukti_chat_konsultasi_online ||
-              current.bukti_chat_konsultasi_online,
-            bukti_chat_konsultasi_online_url:
-              payload.bukti_chat_konsultasi_online_url ||
-              current.bukti_chat_konsultasi_online_url,
-            is_upload_bukti_chat_konsultasi_online: 1,
-            layanan: {
-              ...(current.layanan || {}),
-              bukti_chat_konsultasi_online:
-                payload.bukti_chat_konsultasi_online ||
-                current?.layanan?.bukti_chat_konsultasi_online,
-              bukti_chat_konsultasi_online_url:
-                payload.bukti_chat_konsultasi_online_url ||
-                current?.layanan?.bukti_chat_konsultasi_online_url,
-              is_upload_bukti_chat_konsultasi_online: 1,
-            },
-          });
-        }
-
         this.showSnackbar(
           response?.message ||
-            "Bukti chat konsultasi online berhasil diupload.",
+            response?.data?.message ||
+            "Bukti chat berhasil diupload.",
           "success",
         );
-
         this.closeBuktiChatDialog();
+        this.fetchData();
       } catch (error) {
         this.buktiChatDialog.error =
           error?.response?.data?.message ||
+          error?.response?.data?.error ||
           error?.message ||
-          "Gagal upload bukti chat konsultasi online.";
+          "Gagal upload bukti chat.";
       } finally {
         this.buktiChatDialog.loading = false;
       }
     },
 
-    viewBuktiChatKonsultasiOnline(item) {
-      const url = this.getBuktiChatKonsultasiOnlineUrl(item);
+    canAccessAction(key) {
+      const rule = this.accessRules[key];
+      if (!rule) return true;
+      if (!rule.roles || !rule.roles.length) return true;
+      return rule.roles.some((role) => this.currentRoleTokens.includes(role));
+    },
 
-      if (!url) {
-        this.showSnackbar("File bukti chat belum tersedia.", "warning");
-        return;
+    resolveCurrentRole() {
+      const selectedRole = this.safeJsonParse(
+        localStorage.getItem("selected_role"),
+        null,
+      );
+      const user = this.safeJsonParse(localStorage.getItem("user"), null);
+      return (
+        selectedRole?.name ||
+        selectedRole?.nama ||
+        selectedRole?.role_name ||
+        localStorage.getItem("selected_role_name") ||
+        user?.role?.name ||
+        user?.role?.nama ||
+        user?.role_name ||
+        user?.role ||
+        user?.jabatan ||
+        ""
+      );
+    },
+
+    normalizeRoleTokens(role) {
+      const text = String(role || "")
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .toLowerCase();
+      const baseTokens = text
+        .split(/[\s,/_-]+/)
+        .map((token) => token.trim())
+        .filter(Boolean);
+      const joined = text.replace(/[\s/_-]+/g, "_");
+      return Array.from(new Set([...baseTokens, joined]));
+    },
+
+    getRoleLabel(role) {
+      const value = String(role || "").trim();
+      if (!value) return "";
+      return value
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+    },
+
+    safeJsonParse(value, fallback = null) {
+      try {
+        return value ? JSON.parse(value) : fallback;
+      } catch {
+        return fallback;
       }
+    },
 
-      window.open(url, "_blank", "noopener,noreferrer");
+    formatDate(value) {
+      if (!value) return "-";
+      const text = String(value);
+      const datePart = text.split("T")[0].split(" ")[0];
+      if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+        const [year, month, day] = datePart.split("-");
+        return `${day}/${month}/${year}`;
+      }
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "-";
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    },
+
+    formatTime(value) {
+      if (!value) return "-";
+      const text = String(value).trim();
+      if (/^\d{2}:\d{2}/.test(text)) return text.slice(0, 5);
+      const timePart = text.includes("T")
+        ? text.split("T")[1]
+        : text.includes(" ")
+          ? text.split(" ")[1]
+          : "";
+      if (timePart && /^\d{2}:\d{2}/.test(timePart))
+        return timePart.slice(0, 5);
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "-";
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      return `${hours}:${minutes}`;
+    },
+
+    formatNumber(value) {
+      const number = Number(value || 0);
+      return new Intl.NumberFormat("id-ID", {
+        maximumFractionDigits: 0,
+      }).format(Number.isFinite(number) ? number : 0);
+    },
+
+    showSnackbar(message, color = "success") {
+      this.snackbar.message = message;
+      this.snackbar.color = color;
+      this.snackbar.show = true;
     },
   },
 };

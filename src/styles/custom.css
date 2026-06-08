@@ -1766,3 +1766,201 @@ input.v-field__input[readonly] {
     width: 100%;
   }
 }
+.status-tab-wrap {
+  padding: 0 16px;
+  background: #fff;
+}
+
+.queue-status-tabs {
+  min-height: 56px;
+}
+
+.queue-status-tab {
+  min-height: 56px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.queue-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.queue-item-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px !important;
+  background: #ffffff;
+  box-shadow: none !important;
+}
+
+.queue-card-layout {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: start;
+}
+
+.queue-card-ticket {
+  min-height: 120px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 10px;
+  text-align: center;
+}
+
+.ticket-number {
+  color: #111827;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.ticket-label {
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.queue-card-main {
+  min-width: 0;
+}
+
+.queue-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.queue-card-identity {
+  min-width: 0;
+}
+
+.queue-meta-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.queue-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.queue-info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.queue-info-label {
+  min-width: 72px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.queue-info-value {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  min-width: 0;
+}
+
+.queue-chip-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.queue-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+  min-width: 128px;
+  justify-content: center;
+}
+
+.text-primary {
+  color: #1d4ed8 !important;
+}
+
+.text-warning {
+  color: #b45309 !important;
+}
+
+.text-success {
+  color: #15803d !important;
+}
+
+.text-error {
+  color: #b91c1c !important;
+}
+
+@media (max-width: 1264px) {
+  .queue-card-layout {
+    grid-template-columns: 110px minmax(0, 1fr);
+  }
+
+  .queue-card-actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: flex-start;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .status-tab-wrap {
+    padding: 0 12px;
+  }
+
+  .queue-card-layout {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .queue-card-ticket {
+    min-height: auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    text-align: left;
+  }
+
+  .ticket-number {
+    font-size: 28px;
+  }
+
+  .ticket-label {
+    margin-top: 0;
+  }
+
+  .queue-card-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .queue-card-actions .v-btn {
+    width: 100%;
+  }
+}

@@ -349,14 +349,16 @@
               </template>
 
               <v-alert
-                v-else
+                v-else-if="
+                  Number(onlineRegistration.channel_konsultasi || 0) === 2
+                "
                 type="warning"
                 variant="tonal"
                 density="compact"
                 class="mt-4"
               >
-                Data medis sudah ada, tetapi foto pendaftaran belum diterima
-                dari API atau URL foto belum valid.
+                Foto pendaftaran belum tersedia pada payload detail antrian
+                dokter.
               </v-alert>
             </v-card-text>
           </v-card>
@@ -548,29 +550,54 @@
                 </div>
 
                 <div class="text-caption text-medium-emphasis">
-                  Riwayat pelayanan, transaksi, treatment, dan obat pasien
-                  sebelumnya.
+                  Riwayat pelayanan, transaksi, treatment, obat, SOAP, dan CPPT
+                  pasien sebelumnya.
                 </div>
               </div>
 
-              <v-chip
-                color="primary"
-                variant="tonal"
-                size="small"
-                prepend-icon="mdi-history"
-              >
-                {{ riwayatTransaksi.length }} Riwayat
-              </v-chip>
+              <div class="d-flex align-center ga-2 flex-wrap">
+                <v-chip
+                  v-if="riwayatSummary"
+                  color="success"
+                  variant="tonal"
+                  size="small"
+                  prepend-icon="mdi-account-heart-outline"
+                >
+                  {{ riwayatSummaryText }}
+                </v-chip>
+
+                <v-chip
+                  color="primary"
+                  variant="tonal"
+                  size="small"
+                  prepend-icon="mdi-history"
+                >
+                  {{
+                    loadingRiwayatTransaksi ? "Memuat" : riwayatTransaksi.length
+                  }}
+                  Riwayat
+                </v-chip>
+              </div>
             </div>
 
             <v-data-table
               :headers="riwayatHeaders"
               :items="riwayatTransaksi"
-              density="compact"
-              item-value="id"
-              :hide-default-footer="riwayatTransaksi.length === 0"
+              :loading="loadingRiwayatTransaksi"
+              density="comfortable"
+              item-value="registrasi_id"
+              :hide-default-footer="riwayatTransaksi.length <= 5"
               class="border"
             >
+              <template #loading>
+                <div class="pa-6 text-center text-medium-emphasis">
+                  <v-progress-circular indeterminate size="28" class="mb-3" />
+                  <div class="text-body-2">
+                    Memuat riwayat transaksi pasien...
+                  </div>
+                </div>
+              </template>
+
               <template #no-data>
                 <div
                   class="d-flex flex-column align-center justify-center text-center pa-8"
@@ -591,104 +618,167 @@
                   </div>
 
                   <div class="text-body-2 text-medium-emphasis">
-                    Data akan muncul setelah pasien memiliki transaksi atau
-                    pelayanan yang selesai.
+                    Data akan muncul setelah pasien memiliki registrasi,
+                    pelayanan, atau transaksi yang tersimpan.
                   </div>
                 </div>
               </template>
 
               <template #item.tgl="{ item }">
-                <div class="text-body-2">
-                  {{
-                    getRiwayatValue(item, [
-                      "tgl",
-                      "tanggal",
-                      "tanggal_transaksi",
-                    ])
-                  }}
+                <div class="py-1">
+                  <div class="text-body-2 font-weight-medium">
+                    {{ riwayatTanggal(item) }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis">
+                    {{ riwayatWaktu(item) }}
+                  </div>
+                  <div
+                    class="text-caption text-primary font-weight-medium mt-1"
+                  >
+                    {{ riwayatKodeRegistrasi(item) }}
+                  </div>
                 </div>
               </template>
 
               <template #item.dokter="{ item }">
-                <div class="text-body-2">
-                  {{ getRiwayatValue(item, ["dokter", "nama_dokter"]) }}
+                <div class="py-1">
+                  <div class="text-body-2 font-weight-medium">
+                    {{ riwayatDokterName(item) }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis">
+                    Perawat: {{ riwayatPerawatName(item) }}
+                  </div>
                 </div>
               </template>
 
               <template #item.tindakan_perawat="{ item }">
-                <div
-                  v-if="
-                    getRiwayatArray(item, [
-                      'tindakan_perawat',
-                      'tindakan',
-                      'treatment',
-                    ]).length
-                  "
-                  class="d-flex flex-column ga-1 py-1"
-                >
+                <div class="py-1">
                   <div
-                    v-for="(row, index) in getRiwayatArray(item, [
-                      'tindakan_perawat',
-                      'tindakan',
-                      'treatment',
-                    ])"
-                    :key="index"
-                    class="text-body-2"
+                    v-if="riwayatTreatmentItems(item).length"
+                    class="d-flex flex-column ga-1"
                   >
-                    {{ displayText(row) }}
+                    <div
+                      v-for="row in riwayatTreatmentItems(item)"
+                      :key="row.key"
+                      class="text-body-2"
+                    >
+                      <span class="font-weight-medium">{{ row.nama }}</span>
+                      <span class="text-medium-emphasis">
+                        x {{ formatNumber(row.qty) }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <span v-else class="text-body-2 text-medium-emphasis">-</span>
+
+                  <div
+                    v-if="riwayatLayananLabels(item).length"
+                    class="d-flex flex-wrap ga-1 mt-2"
+                  >
+                    <v-chip
+                      v-for="label in riwayatLayananLabels(item)"
+                      :key="label"
+                      size="x-small"
+                      color="info"
+                      variant="tonal"
+                    >
+                      {{ label }}
+                    </v-chip>
                   </div>
                 </div>
-
-                <span v-else class="text-body-2 text-medium-emphasis"> - </span>
               </template>
 
               <template #item.obat="{ item }">
                 <div
-                  v-if="
-                    getRiwayatArray(item, ['obat', 'produk', 'obat_produk'])
-                      .length
-                  "
-                  class="d-flex flex-column ga-1 py-1"
+                  v-if="riwayatProdukItems(item).length"
+                  class="d-flex flex-column ga-2 py-1"
                 >
                   <div
-                    v-for="(row, index) in getRiwayatArray(item, [
-                      'obat',
-                      'produk',
-                      'obat_produk',
-                    ])"
-                    :key="index"
+                    v-for="row in riwayatProdukItems(item)"
+                    :key="row.key"
                     class="text-body-2"
                   >
-                    {{ displayText(row) }}
+                    <div>
+                      <span class="font-weight-medium">{{ row.nama }}</span>
+                      <span class="text-medium-emphasis">
+                        x {{ formatNumber(row.qty) }}
+                      </span>
+                    </div>
+
+                    <div
+                      v-if="
+                        row.frekuensi ||
+                        row.waktu_pakai ||
+                        row.instruksi_pemakaian
+                      "
+                      class="text-caption text-medium-emphasis mt-1"
+                    >
+                      <span v-if="row.frekuensi">{{ row.frekuensi }}</span>
+                      <span v-if="row.frekuensi && row.waktu_pakai"> • </span>
+                      <span v-if="row.waktu_pakai">{{ row.waktu_pakai }}</span>
+                      <span
+                        v-if="
+                          (row.frekuensi || row.waktu_pakai) &&
+                          row.instruksi_pemakaian
+                        "
+                      >
+                        •
+                      </span>
+                      <span v-if="row.instruksi_pemakaian">
+                        {{ row.instruksi_pemakaian }}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <span v-else class="text-body-2 text-medium-emphasis"> - </span>
+                <span v-else class="text-body-2 text-medium-emphasis">-</span>
               </template>
 
               <template #item.catatan="{ item }">
-                <div class="text-body-2">
-                  {{
-                    getRiwayatValue(item, ["catatan", "notes", "keterangan"])
-                  }}
+                <div class="py-1">
+                  <div class="text-body-2">
+                    {{ riwayatCatatan(item) }}
+                  </div>
+
+                  <div
+                    v-if="riwayatSoapSummary(item) !== '-'"
+                    class="text-caption text-medium-emphasis mt-1"
+                  >
+                    SOAP: {{ riwayatSoapSummary(item) }}
+                  </div>
                 </div>
               </template>
 
               <template #item.transaksi="{ item }">
-                <div class="text-body-2 font-weight-medium">
-                  {{
-                    getRiwayatValue(item, [
-                      "transaksi",
-                      "faktur",
-                      "no_transaksi",
-                    ])
-                  }}
+                <div class="py-1 text-right">
+                  <div class="text-body-2 font-weight-bold">
+                    {{ riwayatInvoiceNo(item) }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis">
+                    {{ riwayatJenisTransaksi(item) }}
+                  </div>
+                  <div class="text-body-2 font-weight-bold mt-1">
+                    Rp {{ formatNumber(riwayatGrandTotal(item)) }}
+                  </div>
+                  <v-chip
+                    size="x-small"
+                    :color="riwayatStatusColor(item)"
+                    variant="tonal"
+                    class="mt-1"
+                  >
+                    {{ riwayatStatusText(item) }}
+                  </v-chip>
                 </div>
               </template>
 
               <template #item.klinik="{ item }">
-                <div class="text-body-2">
-                  {{ getRiwayatValue(item, ["klinik", "toko", "cabang"]) }}
+                <div class="py-1">
+                  <div class="text-body-2 font-weight-medium">
+                    {{ riwayatTokoName(item) }}
+                  </div>
+                  <div class="text-caption text-medium-emphasis">
+                    {{ riwayatChannelLabel(item) }}
+                  </div>
                 </div>
               </template>
             </v-data-table>
@@ -1207,11 +1297,35 @@ export default {
       },
 
       onlineRegistration: {
-        keluhan_utama: "-",
-        riwayat_penyakit: "-",
-        alergi: "-",
-        obat_dikonsumsi: "-",
-        catatan_pendaftaran: "-",
+        registrasi_id: null,
+        request_dokter_id: null,
+        request_dokter_nama: null,
+        request_dokter: null,
+        alergi: null,
+        keluhan_utama: null,
+        keluhan: null,
+        keluhan_awal: null,
+        produk_obat_sebelumnya: null,
+        produk_sebelumnya: null,
+        sedang_hamil: null,
+        sedang_hamil_raw: null,
+        sedang_menyusui: null,
+        sedang_menyusui_raw: null,
+        catatan_cs: null,
+        catatan_awal: null,
+        catatan_registrasi: null,
+        jenis_konsultasi: null,
+        jenis_konsultasi_label: null,
+        channel_konsultasi: null,
+        channel_label: null,
+        konsultasi_source_code: null,
+        konsultasi_source_name: null,
+        bukti_chat_konsultasi_online: null,
+        bukti_chat_konsultasi_online_url: null,
+        foto_kiri: null,
+        foto_depan: null,
+        foto_kanan: null,
+        fotos: [],
       },
 
       form: {
@@ -1280,6 +1394,8 @@ export default {
       ],
 
       riwayatTransaksi: [],
+      riwayatSummary: null,
+      loadingRiwayatTransaksi: false,
       obatItems: [],
       treatmentItems: [],
 
@@ -1294,6 +1410,22 @@ export default {
   computed: {
     antrianId() {
       return this.$route.params.id;
+    },
+
+    riwayatSummaryText() {
+      const summary = this.riwayatSummary || {};
+      const totalVisit =
+        summary.total_visit ||
+        summary.total_kunjungan ||
+        summary.visit_count ||
+        summary.total_transaksi ||
+        0;
+
+      if (totalVisit) {
+        return `${this.formatNumber(totalVisit)} Visit`;
+      }
+
+      return "Ringkasan Pasien";
     },
 
     consultationSourceCode() {
@@ -1453,28 +1585,6 @@ export default {
         sourceName.includes("ONLINE") ||
         this.consultationChannel === "2" ||
         this.consultationChannel.includes("online")
-      );
-    },
-
-    showOnlineMedicalInfo() {
-      const data = this.onlineRegistration || {};
-      const source = this.onlineRegistrationSource || {};
-
-      return (
-        Number(data.channel_konsultasi || source.channel_konsultasi || 0) ===
-          2 ||
-        Boolean(data.request_dokter) ||
-        Boolean(data.keluhan) ||
-        Boolean(data.keluhan_utama) ||
-        Boolean(data.alergi) ||
-        Boolean(data.produk_sebelumnya) ||
-        Boolean(data.produk_obat_sebelumnya) ||
-        Boolean(data.sedang_hamil) ||
-        Boolean(data.sedang_menyusui) ||
-        Boolean(data.catatan_cs) ||
-        Boolean(data.catatan_awal) ||
-        Boolean(data.catatan_registrasi) ||
-        this.onlineRegistrationPhotos.length > 0
       );
     },
 
@@ -1642,48 +1752,30 @@ export default {
         message: "",
       };
     },
-    onlineRegistrationSource() {
+    showOnlineMedicalInfo() {
+      const data = this.onlineRegistration || {};
+
       return (
-        this.detail || this.queue || this.antrian || this.antrianDetail || {}
+        Number(data.channel_konsultasi || 0) === 2 ||
+        this.hasMedicalValue(data.konsultasi_source_code) ||
+        this.hasMedicalValue(data.konsultasi_source_name) ||
+        this.hasMedicalValue(data.request_dokter_nama) ||
+        this.hasMedicalValue(data.request_dokter) ||
+        this.hasMedicalValue(data.keluhan_utama) ||
+        this.hasMedicalValue(data.keluhan) ||
+        this.hasMedicalValue(data.keluhan_awal) ||
+        this.hasMedicalValue(data.alergi) ||
+        this.hasMedicalValue(data.produk_obat_sebelumnya) ||
+        this.hasMedicalValue(data.produk_sebelumnya) ||
+        this.hasMedicalValue(data.sedang_hamil) ||
+        this.hasMedicalValue(data.sedang_menyusui) ||
+        this.hasMedicalValue(data.catatan_cs) ||
+        this.hasMedicalValue(data.catatan_awal) ||
+        this.hasMedicalValue(data.catatan_registrasi) ||
+        this.onlineRegistrationPhotos.length > 0
       );
     },
 
-    onlineRegistration() {
-      const source = this.onlineRegistrationSource || {};
-
-      const intake =
-        source.online_registration ||
-        source.onlineRegistration ||
-        source.konsultasi_intake ||
-        source.konsultasiIntake ||
-        {};
-
-      return {
-        ...intake,
-        channel_konsultasi:
-          intake.channel_konsultasi || source.channel_konsultasi || null,
-        channel_label:
-          intake.channel_label ||
-          source.channel_label ||
-          source.channel_konsultasi_label ||
-          null,
-        jenis_konsultasi_label:
-          intake.jenis_konsultasi_label ||
-          source.jenis_konsultasi_label ||
-          null,
-        source_name:
-          intake.source_name || source.konsultasi_source_name || null,
-        bukti_chat_konsultasi_online:
-          intake.bukti_chat_konsultasi_online ||
-          source.bukti_chat_konsultasi_online ||
-          null,
-        fotos:
-          intake.fotos ||
-          source.konsultasi_fotos ||
-          source.konsultasiFotos ||
-          [],
-      };
-    },
     onlineRegistrationItems() {
       const data = this.onlineRegistration || {};
 
@@ -1691,12 +1783,12 @@ export default {
         {
           key: "request_dokter_nama",
           label: "Request Dokter Khusus",
-          value: data.request_dokter_nama,
+          value: data.request_dokter_nama || data.request_dokter,
         },
         {
           key: "keluhan_utama",
           label: "Keluhan Utama",
-          value: data.keluhan_utama || data.keluhan_awal,
+          value: data.keluhan_utama || data.keluhan || data.keluhan_awal,
           cols: 12,
         },
         {
@@ -1707,35 +1799,21 @@ export default {
         {
           key: "produk_obat_sebelumnya",
           label: "Produk / Obat Sebelumnya",
-          value: data.produk_obat_sebelumnya,
+          value: data.produk_obat_sebelumnya || data.produk_sebelumnya,
         },
         {
           key: "sedang_hamil",
           label: "Sedang Hamil",
-          value: this.normalizeMedicalYesNo(data.sedang_hamil),
+          value: this.normalizeMedicalYesNo(
+            data.sedang_hamil_raw ?? data.sedang_hamil,
+          ),
         },
         {
           key: "sedang_menyusui",
           label: "Sedang Menyusui",
-          value: this.normalizeMedicalYesNo(data.sedang_menyusui),
-        },
-        {
-          key: "catatan_cs",
-          label: "Catatan CS",
-          value: data.catatan_cs,
-          cols: 12,
-        },
-        {
-          key: "catatan_awal",
-          label: "Catatan Awal",
-          value: data.catatan_awal,
-          cols: 12,
-        },
-        {
-          key: "catatan_registrasi",
-          label: "Catatan Registrasi",
-          value: data.catatan_registrasi,
-          cols: 12,
+          value: this.normalizeMedicalYesNo(
+            data.sedang_menyusui_raw ?? data.sedang_menyusui,
+          ),
         },
       ];
     },
@@ -1743,36 +1821,10 @@ export default {
     onlineRegistrationPhotos() {
       const data = this.onlineRegistration || {};
 
-      const normalize = (photo, label, key) => {
-        if (!photo) {
-          return null;
-        }
-
-        if (typeof photo === "string") {
-          return {
-            key,
-            label,
-            url: this.resolvePhotoUrl(photo),
-            file_name: "",
-            posisi_foto: null,
-          };
-        }
-
-        const rawUrl = photo.file_url || photo.url || photo.file_path || "";
-
-        return {
-          key: photo.key || key,
-          label: photo.label || label,
-          url: this.resolvePhotoUrl(rawUrl),
-          file_name: photo.file_name || "",
-          posisi_foto: photo.posisi_foto || null,
-        };
-      };
-
       const photos = [
-        normalize(data.foto_kiri, "Foto Kiri", "foto_kiri"),
-        normalize(data.foto_depan, "Foto Depan", "foto_depan"),
-        normalize(data.foto_kanan, "Foto Kanan", "foto_kanan"),
+        this.normalizeOnlinePhoto(data.foto_kiri, "Foto Kiri", "foto_kiri"),
+        this.normalizeOnlinePhoto(data.foto_depan, "Foto Depan", "foto_depan"),
+        this.normalizeOnlinePhoto(data.foto_kanan, "Foto Kanan", "foto_kanan"),
         ...(Array.isArray(data.fotos)
           ? data.fotos.map((photo, index) => {
               const position = Number(photo?.posisi_foto || 0);
@@ -1796,150 +1848,31 @@ export default {
                       ? "foto_kanan"
                       : `foto_${index + 1}`;
 
-              return normalize(photo, label, key);
+              return this.normalizeOnlinePhoto(photo, label, key);
             })
           : []),
       ].filter(Boolean);
 
-      return photos.filter((photo, index, list) => {
-        const currentKey = photo.posisi_foto || photo.key || photo.url || index;
+      return photos
+        .filter((photo) => photo.url)
+        .filter((photo, index, list) => {
+          const currentKey =
+            photo.posisi_foto || photo.key || photo.url || index;
 
-        return (
-          list.findIndex((item, itemIndex) => {
-            const itemKey =
-              item.posisi_foto || item.key || item.url || itemIndex;
+          return (
+            list.findIndex((item, itemIndex) => {
+              const itemKey =
+                item.posisi_foto || item.key || item.url || itemIndex;
 
-            return itemKey === currentKey;
-          }) === index
+              return itemKey === currentKey;
+            }) === index
+          );
+        })
+        .sort(
+          (a, b) => Number(a.posisi_foto || 99) - Number(b.posisi_foto || 99),
         );
-      });
-    },
-
-    onlineRegistration() {
-      const source =
-        this.detail || this.antrian || this.queue || this.queueDetail || {};
-
-      const data =
-        source.online_registration ||
-        source.onlineRegistration ||
-        source.konsultasi_intake ||
-        source.konsultasiIntake ||
-        {};
-
-      return {
-        ...data,
-
-        request_dokter_id:
-          data.request_dokter_id ?? source.request_dokter_id ?? null,
-        request_dokter_nama:
-          data.request_dokter_nama ||
-          data.request_dokter ||
-          source.request_dokter_nama ||
-          source.request_dokter ||
-          null,
-
-        alergi: data.alergi ?? source.alergi ?? null,
-
-        keluhan_utama:
-          data.keluhan_utama ||
-          data.keluhan ||
-          data.keluhan_awal ||
-          source.keluhan_utama ||
-          source.keluhan ||
-          source.keluhan_awal ||
-          null,
-
-        keluhan_awal: data.keluhan_awal || source.keluhan_awal || null,
-
-        produk_obat_sebelumnya:
-          data.produk_obat_sebelumnya ||
-          data.produk_sebelumnya ||
-          source.produk_obat_sebelumnya ||
-          source.produk_sebelumnya ||
-          null,
-
-        sedang_hamil:
-          data.sedang_hamil ??
-          data.sedang_hamil_raw ??
-          source.sedang_hamil ??
-          null,
-
-        sedang_menyusui:
-          data.sedang_menyusui ??
-          data.sedang_menyusui_raw ??
-          source.sedang_menyusui ??
-          null,
-
-        catatan_cs: data.catatan_cs || source.catatan_cs || null,
-
-        catatan_awal: data.catatan_awal || source.catatan_awal || null,
-
-        catatan_registrasi:
-          data.catatan_registrasi || source.catatan_registrasi || null,
-
-        jenis_konsultasi:
-          data.jenis_konsultasi ?? source.jenis_konsultasi ?? null,
-
-        jenis_konsultasi_label:
-          data.jenis_konsultasi_label || source.jenis_konsultasi_label || null,
-
-        channel_konsultasi:
-          data.channel_konsultasi ?? source.channel_konsultasi ?? null,
-
-        channel_label:
-          data.channel_label ||
-          source.channel_konsultasi_label ||
-          source.channel_label ||
-          null,
-
-        konsultasi_source_code:
-          data.konsultasi_source_code || source.konsultasi_source_code || null,
-
-        konsultasi_source_name:
-          data.konsultasi_source_name ||
-          data.source_name ||
-          source.konsultasi_source_name ||
-          null,
-
-        foto_kiri: data.foto_kiri || source.foto_kiri || null,
-
-        foto_depan: data.foto_depan || source.foto_depan || null,
-
-        foto_kanan: data.foto_kanan || source.foto_kanan || null,
-
-        fotos:
-          data.fotos ||
-          source.konsultasi_fotos ||
-          source.konsultasiFotos ||
-          source.fotos ||
-          [],
-      };
-    },
-
-    showOnlineMedicalInfo() {
-      const data = this.onlineRegistration || {};
-
-      return (
-        Number(data.channel_konsultasi || 0) === 2 ||
-        Boolean(data.konsultasi_source_code) ||
-        Boolean(data.konsultasi_source_name) ||
-        Boolean(data.request_dokter_nama) ||
-        Boolean(data.keluhan_utama) ||
-        Boolean(data.keluhan_awal) ||
-        Boolean(data.alergi) ||
-        Boolean(data.produk_obat_sebelumnya) ||
-        data.sedang_hamil !== null ||
-        data.sedang_hamil !== undefined ||
-        data.sedang_menyusui !== null ||
-        data.sedang_menyusui !== undefined ||
-        Boolean(data.catatan_cs) ||
-        Boolean(data.catatan_awal) ||
-        Boolean(data.catatan_registrasi) ||
-        this.onlineRegistrationPhotos.length > 0
-      );
     },
   },
-
   mounted() {
     this.fetchDetail();
   },
@@ -1955,6 +1888,7 @@ export default {
 
         this.registration = data;
         this.mapRegistration(data);
+        await this.fetchRiwayatTransaksi(data);
 
         await this.loadReferenceOptions(data);
         this.syncSelectedSoapOptions();
@@ -1965,6 +1899,54 @@ export default {
         );
       } finally {
         this.loading = false;
+      }
+    },
+
+    async fetchRiwayatTransaksi(data = {}) {
+      const pasienId = this.resolvePasienId(data);
+
+      if (!pasienId) {
+        this.mapRiwayat(data);
+        return;
+      }
+
+      this.loadingRiwayatTransaksi = true;
+
+      try {
+        const response = await api.get(
+          `/administrasi/pasien/${pasienId}/riwayat`,
+          {
+            params: {
+              limit: 20,
+            },
+          },
+        );
+
+        const payload = response?.data?.data || response?.data || {};
+        const rows = this.extractRiwayatRows(payload);
+        const currentRegistrasiId = Number(
+          data?.registrasi_id ||
+            data?.antrian_dokter_id ||
+            data?.id ||
+            this.antrianId,
+        );
+
+        this.riwayatSummary = payload?.summary || null;
+        this.riwayatTransaksi = rows
+          .filter((row) => {
+            const raw = this.getRiwayatRaw(row);
+            const rowRegistrasiId = Number(raw?.registrasi_id || raw?.id || 0);
+
+            return (
+              !currentRegistrasiId || rowRegistrasiId !== currentRegistrasiId
+            );
+          })
+          .slice(0, 10);
+      } catch (error) {
+        console.error("Gagal memuat riwayat transaksi pasien:", error);
+        this.mapRiwayat(data);
+      } finally {
+        this.loadingRiwayatTransaksi = false;
       }
     },
 
@@ -2117,22 +2099,126 @@ export default {
           "-",
       };
 
+      const onlinePayload =
+        data?.online_registration || data?.onlineRegistration || {};
+      const intakePayload =
+        data?.konsultasi_intake || data?.konsultasiIntake || {};
+      const onlinePhotos = this.pickFirstArray(
+        onlinePayload?.fotos,
+        onlinePayload?.photos,
+        intakePayload?.fotos,
+        intakePayload?.photos,
+        data?.konsultasi_fotos,
+        data?.konsultasiFotos,
+      );
+
       this.onlineRegistration = {
+        registrasi_id: onlinePayload?.registrasi_id || data?.id || null,
+        request_dokter_id:
+          onlinePayload?.request_dokter_id ??
+          intakePayload?.request_dokter_id ??
+          null,
+        request_dokter_nama:
+          onlinePayload?.request_dokter_nama ||
+          onlinePayload?.request_dokter ||
+          intakePayload?.request_dokter_nama ||
+          null,
+        request_dokter:
+          onlinePayload?.request_dokter ||
+          onlinePayload?.request_dokter_nama ||
+          intakePayload?.request_dokter_nama ||
+          null,
+        alergi: onlinePayload?.alergi ?? intakePayload?.alergi ?? null,
         keluhan_utama:
-          intake?.keluhan_utama ||
-          intake?.keluhan ||
-          data?.keluhan_utama ||
-          "-",
-        riwayat_penyakit:
-          intake?.riwayat_penyakit || data?.riwayat_penyakit || "-",
-        alergi: intake?.alergi || data?.alergi || "-",
-        obat_dikonsumsi:
-          intake?.obat_dikonsumsi || data?.obat_dikonsumsi || "-",
-        catatan_pendaftaran:
-          intake?.catatan ||
-          data?.catatan_registrasi ||
-          data?.catatan_pendaftaran ||
-          "-",
+          onlinePayload?.keluhan_utama ||
+          onlinePayload?.keluhan ||
+          intakePayload?.keluhan_utama ||
+          intakePayload?.keluhan_awal ||
+          null,
+        keluhan:
+          onlinePayload?.keluhan ||
+          onlinePayload?.keluhan_utama ||
+          intakePayload?.keluhan_utama ||
+          intakePayload?.keluhan_awal ||
+          null,
+        keluhan_awal:
+          onlinePayload?.keluhan_awal || intakePayload?.keluhan_awal || null,
+        produk_obat_sebelumnya:
+          onlinePayload?.produk_obat_sebelumnya ||
+          onlinePayload?.produk_sebelumnya ||
+          intakePayload?.produk_obat_sebelumnya ||
+          null,
+        produk_sebelumnya:
+          onlinePayload?.produk_sebelumnya ||
+          onlinePayload?.produk_obat_sebelumnya ||
+          intakePayload?.produk_obat_sebelumnya ||
+          null,
+        sedang_hamil:
+          onlinePayload?.sedang_hamil ??
+          onlinePayload?.sedang_hamil_raw ??
+          intakePayload?.sedang_hamil ??
+          null,
+        sedang_hamil_raw:
+          onlinePayload?.sedang_hamil_raw ??
+          intakePayload?.sedang_hamil ??
+          onlinePayload?.sedang_hamil ??
+          null,
+        sedang_menyusui:
+          onlinePayload?.sedang_menyusui ??
+          onlinePayload?.sedang_menyusui_raw ??
+          intakePayload?.sedang_menyusui ??
+          null,
+        sedang_menyusui_raw:
+          onlinePayload?.sedang_menyusui_raw ??
+          intakePayload?.sedang_menyusui ??
+          onlinePayload?.sedang_menyusui ??
+          null,
+        catatan_cs:
+          onlinePayload?.catatan_cs || intakePayload?.catatan_cs || null,
+        catatan_awal:
+          onlinePayload?.catatan_awal || intakePayload?.catatan_awal || null,
+        catatan_registrasi:
+          onlinePayload?.catatan_registrasi || data?.catatan_registrasi || null,
+        jenis_konsultasi:
+          onlinePayload?.jenis_konsultasi ??
+          intakePayload?.jenis_konsultasi ??
+          null,
+        jenis_konsultasi_label:
+          onlinePayload?.jenis_konsultasi_label ||
+          data?.jenis_konsultasi_label ||
+          "Konsultasi Online",
+        channel_konsultasi:
+          onlinePayload?.channel_konsultasi ?? data?.channel_konsultasi ?? null,
+        channel_label:
+          onlinePayload?.channel_label ||
+          data?.channel_konsultasi_label ||
+          data?.channel_label ||
+          null,
+        konsultasi_source_code:
+          onlinePayload?.konsultasi_source_code ||
+          data?.konsultasi_source_code ||
+          null,
+        konsultasi_source_name:
+          onlinePayload?.konsultasi_source_name ||
+          data?.konsultasi_source_name ||
+          null,
+        bukti_chat_konsultasi_online:
+          onlinePayload?.bukti_chat_konsultasi_online ||
+          data?.bukti_chat_konsultasi_online ||
+          null,
+        bukti_chat_konsultasi_online_url:
+          onlinePayload?.bukti_chat_konsultasi_online_url ||
+          data?.bukti_chat_konsultasi_online_url ||
+          null,
+        foto_kiri:
+          onlinePayload?.foto_kiri || this.findPhotoByPosition(onlinePhotos, 1),
+        foto_depan:
+          onlinePayload?.foto_depan ||
+          this.findPhotoByPosition(onlinePhotos, 2),
+        foto_kanan:
+          onlinePayload?.foto_kanan ||
+          this.findPhotoByPosition(onlinePhotos, 3),
+        fotos: onlinePhotos,
       };
 
       this.mapSoap(data?.dokter_soap || data?.dokterSoap || data?.soap || {});
@@ -2364,13 +2450,28 @@ export default {
     },
 
     mapRiwayat(data = {}) {
-      this.riwayatTransaksi = this.extractFirstArray(data, [
-        "riwayat_transaksi",
-        "riwayatTransaksi",
-        "history_transaksi",
-        "historyTransaksi",
-        "riwayat",
-      ]);
+      this.riwayatTransaksi = this.extractRiwayatRows(data);
+    },
+
+    extractRiwayatRows(payload = {}) {
+      if (Array.isArray(payload)) {
+        return payload;
+      }
+
+      const data = payload?.data || payload || {};
+
+      return this.pickFirstArray(
+        data?.riwayat,
+        data?.riwayat_transaksi,
+        data?.riwayatTransaksi,
+        data?.history_transaksi,
+        data?.historyTransaksi,
+        data?.rows,
+        data?.items,
+        payload?.riwayat,
+        payload?.riwayat_transaksi,
+        payload?.riwayatTransaksi,
+      );
     },
 
     createEmptyObatRow() {
@@ -3182,6 +3283,18 @@ export default {
       );
     },
 
+    resolvePasienId(data = {}) {
+      return (
+        data?.pasien_id ||
+        data?.pasien?.id ||
+        data?.patient?.id ||
+        data?.registrasi_layanan?.pasien_id ||
+        this.registration?.pasien_id ||
+        this.registration?.pasien?.id ||
+        null
+      );
+    },
+
     resolveSelectedLabels(values = [], options = []) {
       if (!Array.isArray(values)) {
         return [];
@@ -3278,6 +3391,316 @@ export default {
       }
 
       return [];
+    },
+
+    getNestedValue(source = {}, path = "") {
+      if (!path) {
+        return null;
+      }
+
+      return String(path)
+        .split(".")
+        .reduce((value, key) => {
+          if (value === null || value === undefined) {
+            return null;
+          }
+
+          return value?.[key];
+        }, source);
+    },
+
+    pickRiwayatValue(item, paths = []) {
+      const raw = this.getRiwayatRaw(item);
+
+      for (const path of paths) {
+        const value = this.getNestedValue(raw, path);
+
+        if (value !== null && value !== undefined && value !== "") {
+          return value;
+        }
+      }
+
+      return null;
+    },
+
+    riwayatTanggal(item) {
+      return this.displayText(
+        this.pickRiwayatValue(item, [
+          "tanggal",
+          "tgl",
+          "tanggal_transaksi",
+          "tanggal_kunjungan",
+          "registered_at",
+        ]),
+      );
+    },
+
+    riwayatWaktu(item) {
+      return this.displayText(
+        this.pickRiwayatValue(item, ["waktu", "jam", "jam_kunjungan"]),
+      );
+    },
+
+    riwayatKodeRegistrasi(item) {
+      return this.displayText(
+        this.pickRiwayatValue(item, [
+          "kode_registrasi",
+          "nomor_antrian",
+          "no_registrasi",
+        ]),
+      );
+    },
+
+    riwayatDokterName(item) {
+      return this.displayText(
+        this.pickRiwayatValue(item, ["dokter.nama", "dokter", "nama_dokter"]),
+      );
+    },
+
+    riwayatPerawatName(item) {
+      return this.displayText(
+        this.pickRiwayatValue(item, [
+          "perawat.nama",
+          "perawat",
+          "nama_perawat",
+        ]),
+      );
+    },
+
+    riwayatTokoName(item) {
+      return this.displayText(
+        this.pickRiwayatValue(item, [
+          "toko.nama_toko",
+          "toko.nama",
+          "klinik",
+          "cabang",
+        ]),
+      );
+    },
+
+    riwayatChannelLabel(item) {
+      return this.displayText(
+        this.pickRiwayatValue(item, [
+          "konsultasi_source_name",
+          "channel_label",
+          "channel_konsultasi_label",
+          "layanan.label",
+          "layanan_label",
+        ]),
+      );
+    },
+
+    riwayatInvoiceNo(item) {
+      return this.displayText(
+        this.pickRiwayatValue(item, [
+          "pembayaran.no_invoice",
+          "no_invoice",
+          "transaksi",
+          "faktur",
+          "no_transaksi",
+        ]),
+      );
+    },
+
+    riwayatJenisTransaksi(item) {
+      return this.displayText(
+        this.pickRiwayatValue(item, [
+          "pembayaran.jenis_transaksi_text",
+          "jenis_transaksi_text",
+          "jenis_transaksi",
+        ]),
+      );
+    },
+
+    riwayatGrandTotal(item) {
+      return this.toNumber(
+        this.pickRiwayatValue(item, [
+          "pembayaran.grand_total",
+          "grand_total",
+          "total",
+          "nominal",
+        ]),
+      );
+    },
+
+    riwayatStatusText(item) {
+      return this.displayText(
+        this.pickRiwayatValue(item, [
+          "status.text",
+          "status.invoice_text",
+          "status.registrasi_text",
+          "status_text",
+          "status",
+        ]),
+      );
+    },
+
+    riwayatStatusColor(item) {
+      return (
+        this.pickRiwayatValue(item, ["status.color", "status_color"]) ||
+        "primary"
+      );
+    },
+
+    riwayatLayananLabels(item) {
+      const layanan = this.pickRiwayatValue(item, ["layanan"]);
+
+      if (Array.isArray(layanan)) {
+        return layanan
+          .map((row) => this.displayText(row))
+          .filter((row) => row !== "-");
+      }
+
+      if (layanan && typeof layanan === "object") {
+        return Object.values(layanan)
+          .filter(Boolean)
+          .map((row) => this.displayText(row))
+          .filter((row) => row !== "-");
+      }
+
+      if (layanan) {
+        return [this.displayText(layanan)].filter((row) => row !== "-");
+      }
+
+      return [];
+    },
+
+    riwayatItems(item, types = []) {
+      const raw = this.getRiwayatRaw(item);
+      const rows = this.pickFirstArray(
+        raw?.items,
+        raw?.invoice_items,
+        raw?.pembayaran_items,
+        raw?.details,
+      );
+
+      if (!types.length) {
+        return rows;
+      }
+
+      return rows.filter((row) => {
+        const itemTypeNumber = Number(row?.item_type || 0);
+        const itemTypeText = String(
+          row?.item_type_text ||
+            row?.jenis_item_text ||
+            row?.jenis_item ||
+            row?.type ||
+            row?.kategori ||
+            "",
+        ).toLowerCase();
+
+        const sourceTypeText = String(
+          row?.source_type_text ||
+            row?.source_type ||
+            row?.accurate_source_type ||
+            "",
+        ).toLowerCase();
+
+        return types.some((allowedType) => {
+          const allowed = String(allowedType).toLowerCase();
+
+          if (["treatment", "perawatan"].includes(allowed)) {
+            return (
+              itemTypeNumber === 2 ||
+              itemTypeNumber === 4 ||
+              itemTypeText.includes("treatment") ||
+              itemTypeText.includes("perawatan") ||
+              sourceTypeText.includes("treatment") ||
+              sourceTypeText.includes("perawatan")
+            );
+          }
+
+          if (["produk", "obat", "penjualan"].includes(allowed)) {
+            return (
+              itemTypeNumber === 3 ||
+              itemTypeText.includes("produk") ||
+              itemTypeText.includes("obat") ||
+              itemTypeText.includes("penjualan") ||
+              sourceTypeText.includes("produk") ||
+              sourceTypeText.includes("obat") ||
+              sourceTypeText.includes("penjualan")
+            );
+          }
+
+          return (
+            itemTypeText.includes(allowed) || sourceTypeText.includes(allowed)
+          );
+        });
+      });
+    },
+
+    normalizeRiwayatItem(row = {}, index = 0) {
+      return {
+        key:
+          row?.id ||
+          row?.item_id ||
+          `${row?.nama || row?.nama_item || index}-${index}`,
+        nama:
+          row?.nama_item ||
+          row?.nama_produk ||
+          row?.nama_treatment ||
+          row?.nama ||
+          row?.description ||
+          "-",
+        qty: this.toNumber(row?.jumlah || row?.qty || row?.quantity || 1),
+        frekuensi:
+          row?.frekuensi || row?.frekuensi_penggunaan || row?.frequency || "",
+        waktu_pakai:
+          row?.waktu_pakai || row?.waktu_penggunaan || row?.waktu || "",
+        instruksi_pemakaian:
+          row?.instruksi_pemakaian ||
+          row?.aturan_pakai ||
+          row?.cara_pakai ||
+          row?.catatan_pemakaian ||
+          "",
+      };
+    },
+
+    riwayatTreatmentItems(item) {
+      const rows = this.riwayatItems(item, ["treatment", "perawatan"]);
+
+      return rows.map((row, index) => this.normalizeRiwayatItem(row, index));
+    },
+
+    riwayatProdukItems(item) {
+      const rows = this.riwayatItems(item, ["produk", "obat", "penjualan"]);
+
+      return rows.map((row, index) => this.normalizeRiwayatItem(row, index));
+    },
+
+    riwayatCatatan(item) {
+      return this.displayText(
+        this.pickRiwayatValue(item, [
+          "catatan",
+          "catatan_registrasi",
+          "intake.keluhan_utama",
+          "intake.keluhan_awal",
+          "notes",
+          "keterangan",
+        ]),
+      );
+    },
+
+    riwayatSoapSummary(item) {
+      const soap = this.pickRiwayatValue(item, ["soap"]);
+
+      if (!soap || typeof soap !== "object") {
+        return "-";
+      }
+
+      const values = [
+        soap?.subjective_text,
+        soap?.subjective,
+        soap?.objective,
+        soap?.assessment_text,
+        soap?.assessment,
+        soap?.planning,
+        soap?.plan,
+      ]
+        .map((value) => this.displayText(value))
+        .filter((value) => value && value !== "-");
+
+      return values.length ? values.slice(0, 2).join(" | ") : "-";
     },
 
     toArray(value) {
@@ -3534,43 +3957,27 @@ export default {
       this.snackbar.show = true;
     },
 
-    displayMedicalText(value) {
-      if (value === null || value === undefined || value === "") {
-        return "-";
-      }
-
-      return value;
+    pickFirstArray(...values) {
+      return (
+        values.find((value) => Array.isArray(value) && value.length > 0) || []
+      );
     },
 
-    formatBooleanMedicalValue(value) {
-      if (value === null || value === undefined || value === "") {
-        return "";
+    findPhotoByPosition(photos, position) {
+      if (!Array.isArray(photos)) {
+        return null;
       }
 
-      const normalized = String(value).toLowerCase();
-
-      if (
-        value === true ||
-        value === 1 ||
-        normalized === "1" ||
-        normalized === "ya" ||
-        normalized === "true"
-      ) {
-        return "Ya";
-      }
-
-      if (
-        value === false ||
-        value === 0 ||
-        normalized === "0" ||
-        normalized === "tidak" ||
-        normalized === "false"
-      ) {
-        return "Tidak";
-      }
-
-      return value;
+      return (
+        photos.find((photo) => Number(photo?.posisi_foto || 0) === position) ||
+        null
+      );
     },
+
+    hasMedicalValue(value) {
+      return value !== null && value !== undefined && value !== "";
+    },
+
     displayMedicalText(value) {
       if (value === null || value === undefined || value === "") {
         return "-";
@@ -3605,30 +4012,74 @@ export default {
       return value;
     },
 
+    normalizeOnlinePhoto(photo, label, key) {
+      if (!photo) {
+        return null;
+      }
+
+      if (typeof photo === "string") {
+        return {
+          key,
+          label,
+          url: this.resolvePhotoUrl(photo),
+          file_name: "",
+          posisi_foto: null,
+        };
+      }
+
+      const rawUrl = photo.file_url || photo.url || photo.file_path || "";
+
+      return {
+        key: photo.key || key,
+        label: photo.label || label,
+        url: this.resolvePhotoUrl(rawUrl),
+        file_name: photo.file_name || "",
+        posisi_foto: photo.posisi_foto || null,
+      };
+    },
+
     resolvePhotoUrl(value) {
       if (!value) {
         return "";
       }
 
-      const url = String(value);
+      const url = String(value).trim();
 
       if (/^https?:\/\//i.test(url) || url.startsWith("blob:")) {
         return url;
       }
 
-      if (url.startsWith("/storage/")) {
-        return url;
+      const cleanUrl = url.replace(/^public\//, "");
+
+      const apiBaseUrl =
+        import.meta.env.VITE_API_URL ||
+        import.meta.env.VITE_APP_API_URL ||
+        import.meta.env.VITE_BASE_API_URL ||
+        "";
+
+      let backendOrigin = "";
+
+      if (apiBaseUrl) {
+        backendOrigin = apiBaseUrl.replace(/\/api\/?$/i, "").replace(/\/$/, "");
+      } else if (window.location.port === "5173") {
+        backendOrigin = `${window.location.protocol}//${window.location.hostname}:8000`;
+      } else {
+        backendOrigin = window.location.origin;
       }
 
-      if (url.startsWith("storage/")) {
-        return `/${url}`;
+      if (cleanUrl.startsWith("/storage/")) {
+        return `${backendOrigin}${cleanUrl}`;
       }
 
-      if (url.startsWith("/")) {
-        return url;
+      if (cleanUrl.startsWith("storage/")) {
+        return `${backendOrigin}/${cleanUrl}`;
       }
 
-      return `/storage/${url.replace(/^public\//, "")}`;
+      if (cleanUrl.startsWith("/")) {
+        return `${backendOrigin}${cleanUrl}`;
+      }
+
+      return `${backendOrigin}/storage/${cleanUrl}`;
     },
   },
 };

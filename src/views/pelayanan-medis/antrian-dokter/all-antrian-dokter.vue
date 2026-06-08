@@ -4,357 +4,365 @@
       <div>
         <h1 class="page-title">Antrian Dokter</h1>
         <p class="page-subtitle">
-          Kelola antrian pasien yang masuk ke jalur dokter
+          Pantau pasien yang masuk ke jalur dokter, lama tunggu, status, dan
+          aksi proses.
         </p>
       </div>
 
       <v-breadcrumbs :items="breadcrumbs" divider="/" />
     </div>
 
-    <v-card variant="flat" class="border mb-4">
-      <!-- TOOLBAR -->
-      <v-card-text class="pa-4">
+    <v-card variant="flat" class="main-card">
+      <div class="section-body">
         <v-row dense align="center">
-          <v-col cols="12" md="5">
+          <v-col cols="12" md="4">
             <v-text-field
               v-model="filters.search"
-              placeholder="Cari no registrasi, no RM, pasien, dokter..."
-              prepend-inner-icon="mdi-magnify"
+              class="search-field"
               variant="outlined"
               density="compact"
               hide-details
               clearable
+              prepend-inner-icon="mdi-magnify"
+              placeholder="Cari no registrasi, no RM, pasien, dokter..."
               @keyup.enter="onSearch"
               @click:clear="onClearSearch"
             />
           </v-col>
 
-          <v-col cols="12" md="7">
-            <v-row dense justify="end" align="center">
-              <v-col cols="12" sm="6" md="3">
-                <v-text-field
-                  v-model="filters.tanggal"
-                  label="Tanggal"
-                  type="date"
-                  prepend-inner-icon="mdi-calendar"
-                  variant="outlined"
-                  density="compact"
-                  hide-details
-                  @update:model-value="onFilterChange"
-                />
-              </v-col>
+          <v-col cols="12" sm="6" md="2">
+            <v-text-field
+              v-model="filters.tanggal"
+              variant="outlined"
+              density="compact"
+              hide-details
+              type="date"
+              label="Tanggal"
+              prepend-inner-icon="mdi-calendar"
+              @update:model-value="onFilterChange"
+            />
+          </v-col>
 
-              <v-col cols="12" sm="6" md="3">
-                <v-select
-                  v-model="filters.status"
-                  :items="statusOptions"
-                  item-title="label"
-                  item-value="value"
-                  label="Status"
-                  variant="outlined"
-                  density="compact"
-                  hide-details
-                  @update:model-value="onFilterChange"
-                />
-              </v-col>
+          <v-col cols="12" sm="6" md="2">
+            <v-select
+              v-model="filters.channel"
+              class="status-field"
+              variant="outlined"
+              density="compact"
+              hide-details
+              label="Channel"
+              :items="channelOptions"
+              item-title="label"
+              item-value="value"
+              @update:model-value="onFilterChange"
+            />
+          </v-col>
 
-              <v-col cols="12" sm="6" md="3">
-                <v-select
-                  v-model="filters.channel"
-                  :items="channelOptions"
-                  item-title="label"
-                  item-value="value"
-                  label="Channel"
-                  variant="outlined"
-                  density="compact"
-                  hide-details
-                  @update:model-value="onFilterChange"
-                />
-              </v-col>
+          <v-col cols="12" sm="8" md="4">
+            <div class="d-flex align-center ga-2 flex-wrap justify-md-end">
+              <v-btn
+                color="primary"
+                variant="outlined"
+                prepend-icon="mdi-refresh"
+                class="toolbar-btn"
+                :loading="loading"
+                @click="fetchData()"
+              >
+                Refresh
+              </v-btn>
 
-              <v-col cols="12" sm="6" md="3">
-                <v-btn
-                  variant="outlined"
-                  color="primary"
-                  prepend-icon="mdi-refresh"
-                  :loading="loading"
-                  block
-                  @click="fetchData"
-                >
-                  Refresh
-                </v-btn>
-              </v-col>
-            </v-row>
+              <v-chip
+                color="success"
+                variant="tonal"
+                size="small"
+                class="font-weight-bold"
+              >
+                <v-icon start icon="mdi-timer-sync-outline" />
+                30d
+              </v-chip>
+            </div>
           </v-col>
         </v-row>
 
-        <div class="d-flex justify-end mt-3">
-          <v-chip
-            color="success"
-            size="small"
-            prepend-icon="mdi-timer-sync-outline"
-          >
-            Auto refresh 30 detik
-          </v-chip>
-        </div>
-      </v-card-text>
-
-      <v-divider />
-
-      <!-- ALERT -->
-      <v-card-text v-if="errorMessage" class="pa-4 pb-0">
         <v-alert
+          v-if="errorMessage"
           type="error"
+          variant="tonal"
           density="compact"
           closable
-          class="mb-3"
+          class="mt-4"
           @click:close="errorMessage = ''"
         >
           {{ errorMessage }}
         </v-alert>
-      </v-card-text>
-
-      <!-- SUMMARY -->
-      <v-card-text class="pa-4 pb-0">
-        <v-row dense>
-          <v-col
-            v-for="card in summaryCards"
-            :key="card.key"
-            cols="12"
-            sm="6"
-            md="3"
-          >
-            <v-card :color="card.color">
-              <v-card-text class="pa-3">
-                <div class="d-flex align-center justify-space-between">
-                  <div>
-                    <div class="text-caption font-weight-medium">
-                      {{ card.label }}
-                    </div>
-
-                    <div class="text-h6 font-weight-bold mt-1">
-                      {{ card.value }}
-                    </div>
-                  </div>
-
-                  <v-icon :icon="card.icon" size="28" />
-                </div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
-      </v-card-text>
-
-      <!-- TABLE -->
-      <v-card-text class="pa-4">
-        <v-data-table
-          :headers="headers"
-          :items="rows"
-          :loading="loading"
-          item-value="id"
-          density="compact"
-          class="border"
-          :items-per-page="pagination.perPage"
-          hide-default-footer
-          loading-text="Memuat data antrian dokter..."
-          no-data-text="Data antrian dokter tidak ditemukan"
-        >
-          <template #loading>
-            <v-skeleton-loader type="table-row@8" />
-          </template>
-
-          <template #item.pasien_kunjungan="{ item }">
-            <div class="py-3">
-              <div class="d-flex align-center ga-2 flex-wrap mb-2">
-                <v-btn
-                  variant="text"
-                  color="primary"
-                  size="small"
-                  class="px-0 font-weight-bold"
-                  prepend-icon="mdi-ticket-confirmation-outline"
-                  @click="goToDetailRegistrasi(item)"
-                >
-                  {{ getKodeRegistrasi(item) }}
-                </v-btn>
-
-                <v-chip
-                  size="small"
-                  color="secondary"
-                  prepend-icon="mdi-calendar-clock-outline"
-                >
-                  {{ formatDate(item.tanggal_kunjungan || item.tanggal) }}
-                  {{ getWaktuKunjungan(item) }}
-                </v-chip>
-              </div>
-
-              <div class="text-body-2 font-weight-bold">
-                {{ getPasienName(item) }}
-              </div>
-
-              <div class="text-caption text-medium-emphasis mt-1">
-                {{ getPasienMeta(item) }}
-              </div>
-            </div>
-          </template>
-
-          <template #item.layanan="{ item }">
-            <div class="py-3">
-              <!-- <div class="text-body-2 font-weight-bold mb-2">
-                {{ formatLayanan(item) }}
-              </div> -->
-
-              <div class="d-flex align-center ga-1 flex-wrap">
-                <v-chip
-                  v-for="chip in getLayananChips(item)"
-                  :key="chip.label"
-                  :color="chip.color"
-                  :prepend-icon="chip.icon"
-                  size="small"
-                >
-                  {{ chip.label }}
-                </v-chip>
-              </div>
-            </div>
-          </template>
-
-          <template #item.status="{ item }">
-            <v-chip
-              size="default"
-              :color="getStatusColor(item)"
-              :prepend-icon="getStatusIcon(item)"
-              variant="flat"
-              class="font-weight-bold"
-            >
-              {{ formatStatus(item) }}
-            </v-chip>
-          </template>
-
-          <template #item.aksi="{ item }">
-            <div class="d-flex justify-end align-center ga-2 py-2 flex-wrap">
-              <v-btn
-                size="small"
-                color="primary"
-                variant="flat"
-                prepend-icon="mdi-play-circle-outline"
-                @click.stop="goToProsesAntrianDokter(item)"
-              >
-                Proses
-              </v-btn>
-
-              <v-btn
-                size="small"
-                color="error"
-                prepend-icon="mdi-delete-outline"
-                @click.stop="confirmDelete(item)"
-              >
-                Hapus
-              </v-btn>
-            </div>
-          </template>
-
-          <template #no-data>
-            <div class="text-center py-8">
-              <v-avatar color="grey-lighten-3" size="56" class="mb-3">
-                <v-icon
-                  icon="mdi-clipboard-text-off-outline"
-                  size="30"
-                  color="grey"
-                />
-              </v-avatar>
-
-              <div class="text-subtitle-2 font-weight-bold mb-1">
-                Belum ada antrian dokter
-              </div>
-
-              <div class="text-body-2 text-medium-emphasis">
-                Data akan muncul setelah FO menyimpan registrasi dengan jalur
-                dokter.
-              </div>
-            </div>
-          </template>
-        </v-data-table>
-      </v-card-text>
+      </div>
 
       <v-divider />
 
-      <!-- FOOTER -->
-      <v-card-actions class="pa-4">
-        <div
-          class="d-flex align-center justify-space-between flex-wrap ga-3 w-100"
+      <div class="px-4">
+        <v-tabs
+          v-model="activeStatusTab"
+          color="primary"
+          align-tabs="start"
+          slider-size="2"
+          show-arrows
+          class="queue-status-tabs"
+          @update:model-value="onStatusTabChange"
         >
-          <div class="text-body-2 text-medium-emphasis">
-            Total data:
-            <strong class="text-high-emphasis">
-              {{ pagination.total }}
-            </strong>
-          </div>
+          <v-tab
+            v-for="tab in statusTabs"
+            :key="tab.value"
+            :value="tab.value"
+            class="queue-status-tab text-none"
+          >
+            <div class="d-flex align-center ga-2">
+              <v-icon :icon="tab.icon" size="18" />
+              <span>{{ tab.label }}</span>
+              <v-chip size="x-small" variant="flat" color="primary">
+                {{ tab.count }}
+              </v-chip>
+            </div>
+          </v-tab>
+        </v-tabs>
+      </div>
 
-          <div class="d-flex align-center ga-2 flex-wrap">
-            <v-select
-              v-model="pagination.perPage"
-              :items="[10, 15, 25, 50, 100]"
-              variant="outlined"
-              density="compact"
-              hide-details
-              width="96"
-              @update:model-value="onPerPageChange"
-            />
+      <v-divider />
 
-            <v-pagination
-              v-model="pagination.page"
-              :length="pagination.lastPage"
-              density="compact"
-              total-visible="5"
-              @update:model-value="fetchData"
-            />
+      <div class="section-body">
+        <template v-if="loading">
+          <div class="queue-card-list">
+            <v-card
+              v-for="n in 3"
+              :key="`skeleton-${n}`"
+              variant="flat"
+              class="queue-item-card"
+            >
+              <v-card-text class="pa-4">
+                <v-skeleton-loader type="article" />
+              </v-card-text>
+            </v-card>
           </div>
+        </template>
+
+        <template v-else-if="rows.length">
+          <div class="queue-card-list">
+            <v-card
+              v-for="item in rows"
+              :key="getCardKey(item)"
+              variant="flat"
+              class="queue-item-card"
+            >
+              <v-card-text class="pa-4">
+                <div class="queue-card-layout">
+                  <div class="queue-card-ticket">
+                    <div class="ticket-number">
+                      {{ getDisplayQueueNumber(item) }}
+                    </div>
+                    <div class="ticket-label">Antrian</div>
+                  </div>
+
+                  <div class="queue-card-main">
+                    <div class="queue-card-top">
+                      <div class="queue-card-identity">
+                        <div class="patient-name">
+                          {{ getPasienName(item) }}
+                        </div>
+
+                        <div class="queue-meta-line">
+                          <span>{{ getPatientRm(item) }}</span>
+                          <span>•</span>
+                          <span>{{ getKodeRegistrasi(item) }}</span>
+                        </div>
+                      </div>
+
+                      <div class="queue-card-status-inline">
+                        <v-chip
+                          size="small"
+                          :color="getStatusColor(item)"
+                          :prepend-icon="getStatusIcon(item)"
+                          variant="flat"
+                          class="font-weight-bold"
+                        >
+                          {{ formatStatus(item) }}
+                        </v-chip>
+                      </div>
+                    </div>
+
+                    <div class="queue-card-info">
+                      <div class="queue-info-row">
+                        <div class="queue-info-label">Waktu</div>
+                        <div class="queue-info-value">
+                          Masuk {{ getWaktuKunjungan(item) || "-" }}
+                          <span class="text-medium-emphasis">|</span>
+                          <span :class="getWaitingTextClass(item)">
+                            {{ getWaitingLabel(item) }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div class="queue-info-row">
+                        <div class="queue-info-label">Layanan</div>
+                        <div class="queue-info-value">
+                          {{ formatLayanan(item) }}
+                        </div>
+                      </div>
+
+                      <div class="queue-chip-row">
+                        <v-chip
+                          v-for="chip in getLayananChips(item)"
+                          :key="`${getCardKey(item)}-${chip.label}`"
+                          :color="chip.color"
+                          :prepend-icon="chip.icon"
+                          size="small"
+                          variant="tonal"
+                          class="service-chip"
+                        >
+                          {{ chip.label }}
+                        </v-chip>
+                      </div>
+
+                      <div class="queue-info-row">
+                        <div class="queue-info-label">Dokter</div>
+                        <div class="queue-info-value">
+                          {{ getDokterName(item) }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="queue-card-actions">
+                    <v-btn
+                      color="primary"
+                      variant="flat"
+                      prepend-icon="mdi-play-circle-outline"
+                      class="text-none font-weight-bold"
+                      @click.stop="goToProsesAntrianDokter(item)"
+                    >
+                      {{ getActionLabel(item) }}
+                    </v-btn>
+
+                    <v-menu location="bottom end">
+                      <template #activator="{ props }">
+                        <v-btn
+                          v-bind="props"
+                          variant="outlined"
+                          color="secondary"
+                          prepend-icon="mdi-dots-horizontal"
+                          class="text-none font-weight-bold"
+                        >
+                          Lainnya
+                        </v-btn>
+                      </template>
+
+                      <v-list density="compact">
+                        <v-list-item
+                          prepend-icon="mdi-eye-outline"
+                          title="Lihat / Proses"
+                          @click="goToProsesAntrianDokter(item)"
+                        />
+                        <v-divider />
+                        <v-list-item
+                          prepend-icon="mdi-delete-outline"
+                          title="Hapus Antrian"
+                          base-color="error"
+                          @click="confirmDelete(item)"
+                        />
+                      </v-list>
+                    </v-menu>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="empty-state">
+            <v-avatar color="grey-lighten-3" size="64">
+              <v-icon
+                icon="mdi-clipboard-text-off-outline"
+                size="34"
+                color="grey"
+              />
+            </v-avatar>
+
+            <div class="empty-title">Belum ada antrian dokter</div>
+
+            <div class="empty-description">
+              Data akan muncul setelah FO menyimpan registrasi dengan jalur
+              dokter.
+            </div>
+
+            <div class="empty-description">
+              Coba ubah filter pencarian, tanggal, channel, atau tab status.
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <v-divider />
+
+      <div class="table-footer">
+        <div class="footer-count">
+          Total data:
+          <strong>{{ pagination.total }}</strong>
         </div>
-      </v-card-actions>
+
+        <div class="footer-actions">
+          <v-select
+            v-model="pagination.perPage"
+            class="per-page-field"
+            :items="[10, 15, 25, 50, 100]"
+            variant="outlined"
+            density="compact"
+            hide-details
+            @update:model-value="onPerPageChange"
+          />
+
+          <v-pagination
+            v-model="pagination.page"
+            :length="pagination.lastPage || 1"
+            density="compact"
+            total-visible="5"
+            @update:model-value="fetchData"
+          />
+        </div>
+      </div>
     </v-card>
 
-    <!-- DELETE DIALOG -->
-    <v-dialog v-model="dialogDelete" max-width="460">
-      <v-card>
-        <v-card-title class="text-subtitle-1 font-weight-bold pa-4">
-          Hapus Antrian Dokter?
-        </v-card-title>
+    <v-dialog v-model="dialogDelete" max-width="480">
+      <v-card class="dialog-card">
+        <v-card-title class="dialog-title">Hapus Antrian Dokter?</v-card-title>
 
         <v-divider />
 
         <v-card-text class="pa-4">
-          <v-alert type="warning" density="compact" class="mb-4">
+          <v-alert
+            type="warning"
+            density="compact"
+            variant="tonal"
+            class="mb-4"
+          >
             Data antrian dokter ini akan dihapus dari daftar antrian.
           </v-alert>
 
-          <v-card v-if="selectedItem" variant="outlined">
-            <v-card-text class="pa-3">
-              <div class="d-flex justify-space-between align-center mb-2 ga-3">
-                <span class="text-body-2 text-medium-emphasis">
-                  No Registrasi
-                </span>
-
-                <strong class="text-body-2 text-right">
-                  {{ getKodeRegistrasi(selectedItem) }}
-                </strong>
-              </div>
-
-              <div class="d-flex justify-space-between align-center mb-2 ga-3">
-                <span class="text-body-2 text-medium-emphasis"> Pasien </span>
-
-                <strong class="text-body-2 text-right">
-                  {{ getPasienName(selectedItem) }}
-                </strong>
-              </div>
-
-              <div class="d-flex justify-space-between align-center ga-3">
-                <span class="text-body-2 text-medium-emphasis"> Dokter </span>
-
-                <strong class="text-body-2 text-right">
-                  {{ getDokterName(selectedItem) }}
-                </strong>
-              </div>
-            </v-card-text>
-          </v-card>
+          <div v-if="selectedItem" class="delete-dialog-info">
+            <div>
+              <strong>No Registrasi:</strong>
+              {{ getKodeRegistrasi(selectedItem) }}
+            </div>
+            <div>
+              <strong>No Antrian:</strong>
+              {{ getDisplayQueueNumber(selectedItem) }}
+            </div>
+            <div>
+              <strong>Pasien:</strong> {{ getPasienName(selectedItem) }}
+            </div>
+            <div>
+              <strong>Dokter:</strong> {{ getDokterName(selectedItem) }}
+            </div>
+            <div><strong>Status:</strong> {{ formatStatus(selectedItem) }}</div>
+          </div>
         </v-card-text>
 
         <v-divider />
@@ -363,6 +371,7 @@
           <v-btn
             variant="outlined"
             color="secondary"
+            class="text-none font-weight-bold"
             :disabled="deleteLoading"
             @click="closeDeleteDialog"
           >
@@ -373,6 +382,7 @@
             color="error"
             variant="flat"
             prepend-icon="mdi-delete-outline"
+            class="text-none font-weight-bold"
             :loading="deleteLoading"
             @click="deleteItem"
           >
@@ -391,7 +401,12 @@
       {{ snackbar.text }}
 
       <template #actions>
-        <v-btn icon="mdi-close" variant="text" @click="snackbar.show = false" />
+        <v-btn
+          icon="mdi-close"
+          variant="text"
+          size="small"
+          @click="snackbar.show = false"
+        />
       </template>
     </v-snackbar>
   </div>
@@ -418,7 +433,11 @@ export default {
         channel: null,
       },
 
+      activeStatusTab: "all",
+
       rows: [],
+      countRows: [],
+      summaryData: {},
 
       pagination: {
         page: 1,
@@ -442,47 +461,11 @@ export default {
         { title: "Antrian Dokter", disabled: true },
       ],
 
-      statusOptions: [
-        { label: "Semua", value: null },
-        { label: "Menunggu", value: "menunggu" },
-        { label: "Dipanggil", value: "dipanggil" },
-        { label: "Diproses", value: "proses" },
-        { label: "Selesai", value: "selesai" },
-      ],
-
       channelOptions: [
         { label: "Semua", value: null },
         { label: "Offline", value: "offline" },
         { label: "Online", value: "online" },
         { label: "Tanpa Konsultasi", value: "tanpa_konsultasi" },
-      ],
-
-      headers: [
-        {
-          title: "Pasien / Kunjungan",
-          key: "pasien_kunjungan",
-          sortable: false,
-          minWidth: 390,
-        },
-        {
-          title: "Layanan",
-          key: "layanan",
-          sortable: false,
-          minWidth: 150,
-        },
-        {
-          title: "Status",
-          key: "status",
-          sortable: false,
-          width: 150,
-        },
-        {
-          title: "Aksi",
-          key: "aksi",
-          sortable: false,
-          align: "end",
-          width: 350,
-        },
       ],
     };
   },
@@ -493,47 +476,56 @@ export default {
     },
 
     summary() {
+      const sourceRows = this.countRows.length ? this.countRows : this.rows;
+
       return {
-        total: this.rows.length,
-        menunggu: this.rows.filter((x) => this.getStatusValue(x) === "menunggu")
-          .length,
-        diproses: this.rows.filter((x) =>
-          ["dipanggil", "proses"].includes(this.getStatusValue(x)),
+        total: sourceRows.length,
+        menunggu: sourceRows.filter(
+          (item) => this.getStatusValue(item) === "menunggu",
         ).length,
-        selesai: this.rows.filter((x) => this.getStatusValue(x) === "selesai")
-          .length,
+        diproses: sourceRows.filter((item) =>
+          ["dipanggil", "proses"].includes(this.getStatusValue(item)),
+        ).length,
+        selesai: sourceRows.filter(
+          (item) => this.getStatusValue(item) === "selesai",
+        ).length,
+        batal: sourceRows.filter((item) =>
+          ["batal", "dilewati"].includes(this.getStatusValue(item)),
+        ).length,
       };
     },
 
-    summaryCards() {
+    statusTabs() {
       return [
         {
-          key: "total",
-          label: "Total Antrian",
-          value: this.summary.total,
-          color: "primary",
-          icon: "mdi-format-list-numbered",
+          label: "Semua",
+          value: "all",
+          icon: "mdi-format-list-bulleted",
+          count: this.summary.total,
         },
         {
-          key: "menunggu",
           label: "Menunggu",
-          value: this.summary.menunggu,
-          color: "warning",
+          value: "menunggu",
           icon: "mdi-clock-outline",
+          count: this.summary.menunggu,
         },
         {
-          key: "diproses",
           label: "Diproses",
-          value: this.summary.diproses,
-          color: "info",
+          value: "diproses",
           icon: "mdi-progress-clock",
+          count: this.summary.diproses,
         },
         {
-          key: "selesai",
           label: "Selesai",
-          value: this.summary.selesai,
-          color: "success",
+          value: "selesai",
           icon: "mdi-check-circle-outline",
+          count: this.summary.selesai,
+        },
+        {
+          label: "Batal",
+          value: "batal",
+          icon: "mdi-close-circle-outline",
+          count: this.summary.batal,
         },
       ];
     },
@@ -554,10 +546,10 @@ export default {
 
   methods: {
     getToday() {
-      const d = new Date();
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      const year = d.getFullYear();
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
 
       return `${year}-${month}-${day}`;
     },
@@ -587,15 +579,39 @@ export default {
         const payload = response?.data || response;
 
         this.rows = this.extractRows(payload);
+        this.summaryData = this.extractSummary(payload);
         this.applyPagination(payload);
+        await this.fetchTabCounts();
       } catch (error) {
         this.rows = [];
+        this.countRows = [];
+        this.summaryData = {};
         this.pagination.total = 0;
         this.pagination.lastPage = 1;
         this.errorMessage = this.getErrorMessage(error);
       } finally {
         this.loading = false;
         this.isFetching = false;
+      }
+    },
+
+    async fetchTabCounts() {
+      try {
+        const params = {
+          page: 1,
+          per_page: 1000,
+          search: this.filters.search || undefined,
+          tanggal: this.filters.tanggal || undefined,
+          channel: this.filters.channel || undefined,
+          toko_id: this.activeTokoId || undefined,
+        };
+
+        const response = await antrianDokterService.getAll(params);
+        const payload = response?.data || response;
+
+        this.countRows = this.extractRows(payload);
+      } catch (error) {
+        this.countRows = [...this.rows];
       }
     },
 
@@ -607,6 +623,16 @@ export default {
       if (Array.isArray(payload?.data?.data)) return payload.data.data;
 
       return [];
+    },
+
+    extractSummary(payload) {
+      return (
+        payload?.summary ||
+        payload?.data?.summary ||
+        payload?.meta?.summary ||
+        payload?.data?.meta?.summary ||
+        {}
+      );
     },
 
     applyPagination(payload) {
@@ -658,6 +684,25 @@ export default {
       this.fetchData();
     },
 
+    onStatusTabChange(value) {
+      this.activeStatusTab = value;
+      this.pagination.page = 1;
+      this.filters.status = this.mapTabToApiStatus(value);
+      this.fetchData();
+    },
+
+    mapTabToApiStatus(value) {
+      const map = {
+        all: null,
+        menunggu: "menunggu",
+        diproses: "proses",
+        selesai: "selesai",
+        batal: "batal",
+      };
+
+      return map[value] ?? null;
+    },
+
     startAutoRefresh() {
       this.stopAutoRefresh();
 
@@ -676,15 +721,14 @@ export default {
     goToProsesAntrianDokter(item) {
       const id = this.getRegistrasiId(item);
 
+      if (!id) {
+        this.showSnackbar("ID registrasi tidak ditemukan", "error");
+        return;
+      }
+
       this.$router.push(
         `/pelayanan-medis/antrian-dokter/${id}/proses-antrian-dokter`,
       );
-    },
-
-    goToDetailRegistrasi(item) {
-      const id = this.getRegistrasiId(item);
-
-      this.$router.push(`/resepsionis/registrasi-layanan/${id}`);
     },
 
     confirmDelete(item) {
@@ -700,11 +744,16 @@ export default {
     async deleteItem() {
       if (!this.selectedItem) return;
 
+      const id = this.getAntrianId(this.selectedItem);
+
+      if (!id) {
+        this.showSnackbar("ID antrian tidak ditemukan", "error");
+        return;
+      }
+
       this.deleteLoading = true;
 
       try {
-        const id = this.getAntrianId(this.selectedItem);
-
         const response = await antrianDokterService.delete(id);
 
         this.showSnackbar(
@@ -723,11 +772,22 @@ export default {
       }
     },
 
+    getCardKey(item) {
+      return (
+        item?.antrian_dokter_id ||
+        item?.antrian_id ||
+        item?.queue_id ||
+        item?.id ||
+        `${this.getKodeRegistrasi(item)}-${this.getPasienName(item)}`
+      );
+    },
+
     getAntrianId(item) {
       return (
         item?.antrian_dokter_id ||
         item?.antrian_id ||
         item?.queue_id ||
+        item?.antrian?.id ||
         item?.id
       );
     },
@@ -745,6 +805,46 @@ export default {
       );
     },
 
+    getNomorAntrian(item) {
+      const value =
+        item?.kode_nomor ||
+        item?.nomor_antrian_dokter ||
+        item?.nomor_antrian ||
+        item?.no_antrian ||
+        item?.antrian?.kode_nomor ||
+        item?.antrian?.nomor ||
+        item?.queue_number ||
+        "";
+
+      return String(value || "");
+    },
+
+    getDisplayQueueNumber(item) {
+      const raw = this.getNomorAntrian(item);
+
+      if (!raw) return "-";
+
+      const cleanRaw = String(raw).trim();
+
+      if (cleanRaw.length <= 4 && !cleanRaw.includes("-")) {
+        return cleanRaw;
+      }
+
+      const matches = cleanRaw.match(/\d+/g);
+
+      if (matches && matches.length) {
+        let last = matches[matches.length - 1];
+
+        if (last.length > 3) {
+          last = last.slice(-3);
+        }
+
+        return last.padStart(3, "0");
+      }
+
+      return cleanRaw;
+    },
+
     getPasienName(item) {
       return (
         item?.pasien?.nama ||
@@ -755,30 +855,140 @@ export default {
       );
     },
 
-    getPasienMeta(item) {
-      const pasien = item?.pasien || {};
-      const noRm = pasien.no_rm || item.no_rm;
-      const noHp = pasien.no_hp || item.no_hp;
-
-      return [noRm, noHp].filter(Boolean).join(" • ") || "-";
+    getPatientRm(item) {
+      return item?.pasien?.no_rm || item?.no_rm || item?.pasien_no_rm || "RM -";
     },
 
     getDokterName(item) {
-      return (
+      const dokter =
         item?.dokter_awal?.nama ||
         item?.dokterAwal?.nama ||
         item?.dokter?.nama ||
+        item?.registrasi?.dokter_awal?.nama ||
         item?.nama_dokter ||
         item?.dokter_nama ||
-        "Belum ditentukan"
+        "";
+
+      return dokter || "Belum ditentukan";
+    },
+
+    getTanggalKunjungan(item) {
+      return (
+        item?.tanggal_kunjungan ||
+        item?.tanggal ||
+        item?.registrasi?.tanggal_kunjungan ||
+        item?.antrian?.tanggal ||
+        item?.created_at
       );
     },
 
     getWaktuKunjungan(item) {
       if (item?.waktu_kunjungan) return item.waktu_kunjungan;
       if (item?.jam_kunjungan) return item.jam_kunjungan;
+      if (item?.antrian?.checkin_at)
+        return this.formatTime(item.antrian.checkin_at);
+      if (item?.checkin_at) return this.formatTime(item.checkin_at);
 
-      return this.formatTime(item?.registered_at || item?.created_at);
+      return this.formatTime(
+        item?.registered_at ||
+          item?.registrasi?.registered_at ||
+          item?.created_at ||
+          item?.antrian?.created_at,
+      );
+    },
+
+    getQueueStartAt(item) {
+      const directValue =
+        item?.checkin_at ||
+        item?.antrian?.checkin_at ||
+        item?.registered_at ||
+        item?.registrasi?.registered_at ||
+        item?.created_at ||
+        item?.antrian?.created_at;
+
+      if (directValue) {
+        return this.parseDateTime(directValue);
+      }
+
+      return this.parseDateTime(
+        this.getTanggalKunjungan(item),
+        this.getWaktuKunjungan(item),
+      );
+    },
+
+    getWaitingMinutes(item) {
+      const startAt = this.getQueueStartAt(item);
+
+      if (!startAt) return null;
+
+      const status = this.getStatusValue(item);
+      const endAt = this.getQueueEndAt(item, status) || new Date();
+
+      return Math.max(
+        0,
+        Math.floor((endAt.getTime() - startAt.getTime()) / 60000),
+      );
+    },
+
+    getQueueEndAt(item, status) {
+      if (status === "selesai") {
+        return this.parseDateTime(
+          item?.finished_at ||
+            item?.antrian?.finished_at ||
+            item?.updated_at ||
+            item?.registrasi?.updated_at,
+        );
+      }
+
+      if (status === "batal") {
+        return this.parseDateTime(
+          item?.cancelled_at ||
+            item?.antrian?.cancelled_at ||
+            item?.updated_at ||
+            item?.registrasi?.updated_at,
+        );
+      }
+
+      return null;
+    },
+
+    getWaitingLabel(item) {
+      const status = this.getStatusValue(item);
+
+      if (status === "selesai") return "Selesai";
+      if (status === "batal") return "Batal";
+      if (status === "dilewati") return "Dilewati";
+      if (status === "proses") return "Sedang diproses";
+      if (status === "dipanggil") return "Sudah dipanggil";
+
+      const minutes = this.getWaitingMinutes(item);
+
+      if (minutes === null) return "-";
+      if (minutes < 1) return "Baru masuk";
+      if (minutes < 60) return `Menunggu ${minutes} menit`;
+
+      const hours = Math.floor(minutes / 60);
+      const rest = minutes % 60;
+
+      return rest
+        ? `Menunggu ${hours} jam ${rest} menit`
+        : `Menunggu ${hours} jam`;
+    },
+
+    getWaitingTextClass(item) {
+      const status = this.getStatusValue(item);
+
+      if (status === "selesai") return "text-success";
+      if (status === "batal" || status === "dilewati") return "text-error";
+      if (status === "proses" || status === "dipanggil") return "text-primary";
+
+      const minutes = this.getWaitingMinutes(item);
+
+      if (minutes === null) return "";
+      if (minutes >= 60) return "text-error";
+      if (minutes >= 30) return "text-warning";
+
+      return "text-success";
     },
 
     normalizeStatus(raw) {
@@ -789,15 +999,33 @@ export default {
 
       const value = String(raw || "menunggu").toLowerCase();
 
-      if (["waiting", "menunggu"].includes(value)) return "menunggu";
-      if (["called", "dipanggil"].includes(value)) return "dipanggil";
-      if (["process", "processing", "proses", "diproses"].includes(value)) {
+      if (["waiting", "wait", "menunggu"].includes(value)) return "menunggu";
+      if (["called", "call", "dipanggil"].includes(value)) return "dipanggil";
+
+      if (
+        [
+          "serve",
+          "serving",
+          "process",
+          "processing",
+          "proses",
+          "diproses",
+        ].includes(value)
+      ) {
         return "proses";
       }
+
       if (["done", "finish", "finished", "selesai"].includes(value)) {
         return "selesai";
       }
-      if (["cancel", "cancelled", "batal"].includes(value)) return "batal";
+
+      if (["skip", "skipped", "lewat", "dilewati"].includes(value)) {
+        return "dilewati";
+      }
+
+      if (["cancel", "cancelled", "canceled", "batal"].includes(value)) {
+        return "batal";
+      }
 
       return value;
     },
@@ -814,6 +1042,7 @@ export default {
 
       const raw =
         item?.status_antrian ||
+        item?.antrian?.status ||
         item?.queue_status ||
         item?.status_task ||
         item?.status;
@@ -829,6 +1058,7 @@ export default {
         dipanggil: "Dipanggil",
         proses: "Diproses",
         selesai: "Selesai",
+        dilewati: "Dilewati",
         batal: "Batal",
       };
 
@@ -843,10 +1073,11 @@ export default {
         dipanggil: "info",
         proses: "primary",
         selesai: "success",
+        dilewati: "error",
         batal: "error",
       };
 
-      return map[status] || "grey";
+      return map[status] || "secondary";
     },
 
     getStatusIcon(item) {
@@ -857,10 +1088,21 @@ export default {
         dipanggil: "mdi-bell-ring-outline",
         proses: "mdi-progress-clock",
         selesai: "mdi-check-circle-outline",
+        dilewati: "mdi-debug-step-over",
         batal: "mdi-close-circle-outline",
       };
 
       return map[status] || "mdi-help-circle-outline";
+    },
+
+    getActionLabel(item) {
+      const status = this.getStatusValue(item);
+
+      if (status === "selesai") return "Lihat";
+      if (status === "proses") return "Lanjutkan";
+      if (status === "dipanggil") return "Proses";
+
+      return "Proses";
     },
 
     getKonsultasiSourceCode(item) {
@@ -897,10 +1139,7 @@ export default {
 
     formatChannel(item) {
       const sourceName = this.getKonsultasiSourceName(item);
-
-      if (sourceName) {
-        return sourceName;
-      }
+      if (sourceName) return sourceName;
 
       const sourceCode = String(
         this.getKonsultasiSourceCode(item) || "",
@@ -909,6 +1148,7 @@ export default {
       if (sourceCode.includes("ONLINE")) return "Konsultasi Online";
       if (sourceCode.includes("SPPG")) return "Konsultasi SPPG";
       if (sourceCode.includes("SPKK")) return "Konsultasi SPKK";
+
       if (sourceCode.includes("OFFLINE") || sourceCode.includes("DOKTER")) {
         return "Konsultasi Dokter";
       }
@@ -929,12 +1169,10 @@ export default {
       if (sourceCode.includes("ONLINE")) return "info";
       if (sourceCode.includes("SPPG")) return "success";
       if (sourceCode.includes("SPKK")) return "deep-purple";
-      if (sourceCode.includes("OFFLINE") || sourceCode.includes("DOKTER")) {
+      if (sourceCode.includes("OFFLINE") || sourceCode.includes("DOKTER"))
         return "primary";
-      }
 
       const value = this.getKonsultasiChannelValue(item);
-
       if (value === "1" || value === "offline") return "primary";
       if (value === "2" || value === "online") return "info";
 
@@ -949,19 +1187,12 @@ export default {
       if (sourceCode.includes("ONLINE")) return "mdi-monitor-account";
       if (sourceCode.includes("SPPG")) return "mdi-account-heart-outline";
       if (sourceCode.includes("SPKK")) return "mdi-doctor";
-      if (sourceCode.includes("OFFLINE") || sourceCode.includes("DOKTER")) {
+      if (sourceCode.includes("OFFLINE") || sourceCode.includes("DOKTER"))
         return "mdi-hospital-building";
-      }
 
       const value = this.getKonsultasiChannelValue(item);
-
-      if (value === "1" || value === "offline") {
-        return "mdi-hospital-building";
-      }
-
-      if (value === "2" || value === "online") {
-        return "mdi-monitor-account";
-      }
+      if (value === "1" || value === "offline") return "mdi-hospital-building";
+      if (value === "2" || value === "online") return "mdi-monitor-account";
 
       return "mdi-minus-circle-outline";
     },
@@ -971,21 +1202,14 @@ export default {
       const hasTreatment = this.hasTreatment(item);
       const hasPenjualan = this.hasPenjualan(item);
 
-      if (hasKonsultasi && hasTreatment && hasPenjualan) {
-        return "Konsultasi + Treatment + Penjualan";
-      }
-
-      if (hasKonsultasi && hasTreatment) {
-        return "Konsultasi + Treatment";
-      }
-
-      if (hasKonsultasi && hasPenjualan) {
-        return "Konsultasi + Penjualan";
-      }
-
-      if (hasKonsultasi) return "Konsultasi";
-      if (hasTreatment) return "Treatment Dokter";
-      if (hasPenjualan) return "Penjualan";
+      if (hasKonsultasi && hasTreatment && hasPenjualan)
+        return "Konsultasi Dokter • Treatment • Produk";
+      if (hasKonsultasi && hasTreatment) return "Konsultasi Dokter • Treatment";
+      if (hasKonsultasi && hasPenjualan) return "Konsultasi Dokter • Produk";
+      if (hasTreatment && hasPenjualan) return "Treatment • Produk";
+      if (hasKonsultasi) return "Konsultasi Dokter";
+      if (hasTreatment) return "Treatment";
+      if (hasPenjualan) return "Produk";
 
       return "Pelayanan Dokter";
     },
@@ -1004,24 +1228,24 @@ export default {
       if (this.hasTreatment(item)) {
         chips.push({
           label: "Treatment",
-          color: "secondary",
+          color: "deep-purple",
           icon: "mdi-face-woman-shimmer-outline",
         });
       }
 
       if (this.hasPenjualan(item)) {
         chips.push({
-          label: "Penjualan",
-          color: "success",
-          icon: "mdi-cart-outline",
+          label: "Produk",
+          color: "teal",
+          icon: "mdi-package-variant-closed",
         });
       }
 
       if (!chips.length) {
         chips.push({
-          label: "Dokter",
-          color: "info",
-          icon: "mdi-doctor",
+          label: "Pelayanan Dokter",
+          color: "secondary",
+          icon: "mdi-stethoscope",
         });
       }
 
@@ -1029,93 +1253,138 @@ export default {
     },
 
     hasKonsultasi(item) {
+      const channelValue = this.getKonsultasiChannelValue(item);
+      const sourceCode = this.getKonsultasiSourceCode(item);
+      const sourceName = this.getKonsultasiSourceName(item);
+
       return (
-        this.isTrue(item?.ada_konsultasi) ||
-        this.isTrue(item?.layanan?.ada_konsultasi) ||
-        Boolean(this.getKonsultasiSourceCode(item)) ||
-        Number(
-          item?.channel_konsultasi ?? item?.layanan?.channel_konsultasi ?? 0,
-        ) > 0
+        this.isTruthy(item?.is_konsul) ||
+        this.isTruthy(item?.is_konsultasi) ||
+        this.isTruthy(item?.has_konsultasi) ||
+        this.isTruthy(item?.registrasi?.is_konsul) ||
+        this.isTruthy(item?.registrasi?.is_konsultasi) ||
+        this.toNumber(item?.total_konsultasi, 0) > 0 ||
+        this.toNumber(item?.registrasi?.total_konsultasi, 0) > 0 ||
+        Boolean(item?.konsultasi || item?.konsultasi_id) ||
+        Boolean(sourceCode || sourceName) ||
+        ["1", "2", "offline", "online"].includes(channelValue)
       );
     },
 
     hasTreatment(item) {
       return (
-        this.isTrue(item?.ada_treatment) || this.isTrue(item?.is_treatment)
+        this.isTruthy(item?.is_treatment) ||
+        this.isTruthy(item?.registrasi?.is_treatment) ||
+        this.toNumber(item?.total_treatment, 0) > 0 ||
+        this.toNumber(item?.registrasi?.total_treatment, 0) > 0 ||
+        this.hasArrayData(item?.treatments) ||
+        this.hasArrayData(item?.treatment_items) ||
+        this.hasArrayData(item?.registrasi?.treatments) ||
+        this.hasArrayData(item?.registrasi?.treatment_items)
       );
     },
 
     hasPenjualan(item) {
       return (
-        this.isTrue(item?.ada_penjualan) || this.isTrue(item?.is_penjualan)
+        this.isTruthy(item?.is_penjualan) ||
+        this.isTruthy(item?.registrasi?.is_penjualan) ||
+        this.isTruthy(item?.is_pembelian_online) ||
+        this.isTruthy(item?.registrasi?.is_pembelian_online) ||
+        this.toNumber(item?.total_penjualan, 0) > 0 ||
+        this.toNumber(item?.registrasi?.total_penjualan, 0) > 0 ||
+        this.hasArrayData(item?.produk) ||
+        this.hasArrayData(item?.produks) ||
+        this.hasArrayData(item?.penjualan_items) ||
+        this.hasArrayData(item?.registrasi?.penjualan_items)
       );
     },
 
-    isTrue(value) {
-      return value === true || value === 1 || value === "1";
+    hasArrayData(value) {
+      return Array.isArray(value) && value.length > 0;
     },
 
-    formatDate(value) {
-      if (!value) return "-";
+    isTruthy(value) {
+      if (value === true) return true;
+      if (typeof value === "number") return value > 0;
 
-      if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) {
-        const [year, month, day] = String(value).split("-").map(Number);
-        const date = new Date(year, month - 1, day);
-
-        return date.toLocaleDateString("id-ID", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        });
+      if (typeof value === "string") {
+        const normalized = value.trim().toLowerCase();
+        return !["", "0", "false", "null", "undefined", "tidak"].includes(
+          normalized,
+        );
       }
 
-      const date = new Date(value);
+      return Boolean(value);
+    },
 
-      if (Number.isNaN(date.getTime())) return value;
+    toNumber(value, fallback = 0) {
+      const number = Number(value);
+      return Number.isFinite(number) ? number : fallback;
+    },
 
-      return date.toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
+    parseDateTime(value, fallbackTime = null) {
+      if (!value) return null;
+      if (value instanceof Date)
+        return Number.isNaN(value.getTime()) ? null : value;
+
+      const text = String(value).trim();
+      if (!text) return null;
+
+      let normalized = text;
+
+      if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+        normalized = fallbackTime
+          ? `${normalized}T${fallbackTime}`
+          : `${normalized}T00:00:00`;
+      } else {
+        normalized = normalized.replace(" ", "T");
+      }
+
+      const date = new Date(normalized);
+      return Number.isNaN(date.getTime()) ? null : date;
     },
 
     formatTime(value) {
-      if (!value) return "-";
+      if (!value) return "";
 
-      const date = new Date(value);
+      const text = String(value).trim();
 
-      if (Number.isNaN(date.getTime())) return "-";
+      if (/^\d{2}:\d{2}/.test(text)) {
+        return text.slice(0, 5);
+      }
 
-      return date.toLocaleTimeString("id-ID", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    },
+      const timePart = text.includes("T")
+        ? text.split("T")[1]
+        : text.includes(" ")
+          ? text.split(" ")[1]
+          : "";
 
-    showSnackbar(text, color = "success") {
-      this.snackbar.show = true;
-      this.snackbar.text = text;
-      this.snackbar.color = color;
+      if (timePart && /^\d{2}:\d{2}/.test(timePart)) {
+        return timePart.slice(0, 5);
+      }
+
+      const date = this.parseDateTime(value);
+      if (!date) return "";
+
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+
+      return `${hours}:${minutes}`;
     },
 
     getErrorMessage(error) {
-      const response = error?.response?.data;
-
-      if (response?.errors) {
-        const firstKey = Object.keys(response.errors)[0];
-
-        if (firstKey && Array.isArray(response.errors[firstKey])) {
-          return response.errors[firstKey][0];
-        }
-      }
-
       return (
-        response?.message ||
-        response?.error ||
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
         error?.message ||
-        "Terjadi kesalahan pada data antrian dokter"
+        "Terjadi kesalahan saat memuat data antrian dokter"
       );
+    },
+
+    showSnackbar(text, color = "success") {
+      this.snackbar.text = text;
+      this.snackbar.color = color;
+      this.snackbar.show = true;
     },
   },
 };
