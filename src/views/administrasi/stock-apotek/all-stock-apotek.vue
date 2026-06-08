@@ -44,13 +44,10 @@
     <div class="mb-4">
       <StockProductTable
         v-model:search="filter.search"
-        v-model:tempatProdukId="filter.tempat_produk_id"
         v-model:showOnlyAttention="filter.showOnlyAttention"
         v-model:showOnlyEmpty="filter.showOnlyEmpty"
         :items="filteredStockRows"
         :loading="loading.stock"
-        :tempat-produk-options="tempatProdukOptions"
-        :selected-tempat-name="selectedTempatName"
         :headers="stockHeaders"
         :total-items="pagination.stock.total"
         :items-per-page="pagination.stock.itemsPerPage"
@@ -126,7 +123,6 @@
     <StockPenerimaanDialog
       v-model="penerimaanDialog"
       :form="penerimaanForm"
-      :tempat-produk-options="tempatProdukOptions"
       :supplier-options="supplierOptions"
       :produk-options="produkOptions"
       :loading="loading.submitPenerimaan"
@@ -142,7 +138,6 @@
     <StockPenyesuaianDialog
       v-model="penyesuaianDialog"
       :form="penyesuaianForm"
-      :tempat-produk-options="tempatProdukOptions"
       :produk-options="produkOptions"
       :jenis-penyesuaian-options="jenisPenyesuaianOptions"
       :loading="loading.submitPenyesuaian"
@@ -255,7 +250,6 @@ export default {
 
       filter: {
         search: "",
-        tempat_produk_id: null,
         showOnlyAttention: false,
         showOnlyEmpty: false,
       },
@@ -273,12 +267,10 @@ export default {
 
       kartuFilter: {
         produk_toko_id: null,
-        tempat_produk_id: null,
         tanggal_awal: "",
         tanggal_akhir: "",
       },
 
-      tempatProdukOptions: [],
       supplierOptions: [],
       produkOptions: [],
 
@@ -293,7 +285,6 @@ export default {
 
       penerimaanForm: {
         tanggal: "",
-        tempat_produk_id: null,
         supplier_id: null,
         no_faktur_supplier: "",
         tanggal_faktur: "",
@@ -303,7 +294,6 @@ export default {
 
       penyesuaianForm: {
         tanggal: "",
-        tempat_produk_id: null,
         jenis_penyesuaian: "KOREKSI",
         catatan: "",
         details: [],
@@ -449,14 +439,6 @@ export default {
         perluPerhatian,
       };
     },
-
-    selectedTempatName() {
-      const selected = this.tempatProdukOptions.find((item) => {
-        return String(item.id) === String(this.filter.tempat_produk_id);
-      });
-
-      return selected?.nama_tempat_produk || "-";
-    },
   },
 
   async mounted() {
@@ -471,10 +453,6 @@ export default {
 
       try {
         this.selectedTokoId = this.getSelectedTokoId();
-
-        await this.fetchTempatProduk();
-
-        this.filter.tempat_produk_id = this.getApotekTempatId();
 
         this.pagination.stock.page = 1;
         this.pagination.stock.itemsPerPage = 10;
@@ -503,42 +481,11 @@ export default {
         per_page: this.pagination.stock.itemsPerPage,
       };
 
-      if (this.filter.tempat_produk_id) {
-        params.tempat_produk_id = this.filter.tempat_produk_id;
-      }
-
       if (this.filter.search) {
         params.search = this.filter.search;
       }
 
       return params;
-    },
-
-    async fetchTempatProduk() {
-      try {
-        if (typeof referenceService.tempatProduk !== "function") {
-          this.tempatProdukOptions = [
-            { id: 1, nama_tempat_produk: "Apotek" },
-            { id: 2, nama_tempat_produk: "Kabin" },
-          ];
-          return;
-        }
-
-        const response = await referenceService.tempatProduk();
-        const rows = this.extractArray(response);
-
-        this.tempatProdukOptions = rows.length
-          ? rows
-          : [
-              { id: 1, nama_tempat_produk: "Apotek" },
-              { id: 2, nama_tempat_produk: "Kabin" },
-            ];
-      } catch (error) {
-        this.tempatProdukOptions = [
-          { id: 1, nama_tempat_produk: "Apotek" },
-          { id: 2, nama_tempat_produk: "Kabin" },
-        ];
-      }
     },
 
     async fetchSupplierOptions() {
@@ -599,10 +546,6 @@ export default {
         return;
       }
 
-      if (!this.filter.tempat_produk_id) {
-        this.filter.tempat_produk_id = this.getApotekTempatId();
-      }
-
       this.loading.stock = true;
 
       try {
@@ -633,15 +576,6 @@ export default {
       }
 
       let rows = this.buildZeroStockRowsFromProdukOptions(this.produkOptions);
-
-      if (this.filter.tempat_produk_id) {
-        rows = rows.filter((row) => {
-          return (
-            String(row.tempat_produk_id) ===
-            String(this.filter.tempat_produk_id)
-          );
-        });
-      }
 
       const keyword = String(this.filter.search || "")
         .toLowerCase()
@@ -684,7 +618,6 @@ export default {
         const response = await stockService.getKartuStok({
           toko_id: this.selectedTokoId,
           produk_toko_id: this.kartuFilter.produk_toko_id,
-          tempat_produk_id: this.kartuFilter.tempat_produk_id,
           tanggal_awal: this.kartuFilter.tanggal_awal,
           tanggal_akhir: this.kartuFilter.tanggal_akhir,
         });
@@ -707,7 +640,6 @@ export default {
       try {
         const response = await stockService.getPenerimaan({
           toko_id: this.selectedTokoId,
-          tempat_produk_id: this.filter.tempat_produk_id,
           search: this.penerimaanFilter.search,
           status: this.penerimaanFilter.status,
           page: this.pagination.penerimaan.page,
@@ -740,7 +672,6 @@ export default {
       try {
         const response = await stockService.getPenyesuaian({
           toko_id: this.selectedTokoId,
-          tempat_produk_id: this.filter.tempat_produk_id,
           search: this.penyesuaianFilter.search,
           status: this.penyesuaianFilter.status,
           jenis_penyesuaian: this.penyesuaianFilter.jenis_penyesuaian,
@@ -841,8 +772,6 @@ export default {
       };
 
       this.kartuFilter.produk_toko_id = item.produk_toko_id;
-      this.kartuFilter.tempat_produk_id =
-        item.tempat_produk_id || this.filter.tempat_produk_id;
       this.kartuRows = [];
 
       this.$nextTick(() => {
@@ -852,8 +781,6 @@ export default {
 
     openPenerimaanDialog() {
       this.penerimaanForm = this.getDefaultPenerimaanForm();
-      this.penerimaanForm.tempat_produk_id =
-        this.filter.tempat_produk_id || this.getApotekTempatId();
       this.penerimaanDialog = true;
     },
 
@@ -961,11 +888,6 @@ export default {
 
     openPenyesuaianDialog(item = null) {
       this.penyesuaianForm = this.getDefaultPenyesuaianForm();
-      this.penyesuaianForm.tempat_produk_id =
-        item?.tempat_produk_id ||
-        this.filter.tempat_produk_id ||
-        this.getApotekTempatId();
-
       if (item?.produk_toko_id) {
         this.penyesuaianForm.details = [
           {
@@ -999,13 +921,7 @@ export default {
       row.produk_id = selected.produk_id;
 
       const localStock = [...this.stockRows, ...this.allFallbackStockRows].find(
-        (item) => {
-          return (
-            String(item.produk_toko_id) === String(row.produk_toko_id) &&
-            String(item.tempat_produk_id) ===
-              String(this.penyesuaianForm.tempat_produk_id)
-          );
-        },
+        (item) => String(item.produk_toko_id) === String(row.produk_toko_id),
       );
 
       if (localStock) {
@@ -1018,7 +934,6 @@ export default {
         const response = await stockService.getStokTersedia({
           toko_id: this.selectedTokoId,
           produk_toko_id: row.produk_toko_id,
-          tempat_produk_id: this.penyesuaianForm.tempat_produk_id,
         });
 
         const stock = this.extractObject(response) || {};
@@ -1126,11 +1041,6 @@ export default {
         return null;
       }
 
-      if (!this.penerimaanForm.tempat_produk_id) {
-        this.showError("Tempat stok wajib dipilih.");
-        return null;
-      }
-
       const details = this.penerimaanForm.details
         .filter(
           (row) =>
@@ -1155,7 +1065,6 @@ export default {
       return {
         tanggal: this.penerimaanForm.tanggal,
         toko_id: this.selectedTokoId,
-        tempat_produk_id: this.penerimaanForm.tempat_produk_id,
         supplier_id: this.penerimaanForm.supplier_id || null,
         no_faktur_supplier: this.penerimaanForm.no_faktur_supplier || null,
         tanggal_faktur: this.penerimaanForm.tanggal_faktur || null,
@@ -1172,11 +1081,6 @@ export default {
 
       if (!this.penyesuaianForm.tanggal) {
         this.showError("Tanggal penyesuaian wajib diisi.");
-        return null;
-      }
-
-      if (!this.penyesuaianForm.tempat_produk_id) {
-        this.showError("Tempat stok wajib dipilih.");
         return null;
       }
 
@@ -1197,7 +1101,6 @@ export default {
       return {
         tanggal: this.penyesuaianForm.tanggal,
         toko_id: this.selectedTokoId,
-        tempat_produk_id: this.penyesuaianForm.tempat_produk_id,
         jenis_penyesuaian: this.penyesuaianForm.jenis_penyesuaian,
         catatan: this.penyesuaianForm.catatan || null,
         details,
@@ -1207,8 +1110,6 @@ export default {
     getDefaultPenerimaanForm() {
       return {
         tanggal: this.today(),
-        tempat_produk_id:
-          this.filter.tempat_produk_id || this.getApotekTempatId(),
         supplier_id: null,
         no_faktur_supplier: "",
         tanggal_faktur: "",
@@ -1233,8 +1134,6 @@ export default {
     getDefaultPenyesuaianForm() {
       return {
         tanggal: this.today(),
-        tempat_produk_id:
-          this.filter.tempat_produk_id || this.getApotekTempatId(),
         jenis_penyesuaian: "KOREKSI",
         catatan: "",
         details: [this.getDefaultPenyesuaianDetail()],
@@ -1257,7 +1156,6 @@ export default {
           row.produk_toko || row.produkToko || row.master_produk_toko || {};
         const produk =
           row.produk || produkToko.produk || row.master_produk || {};
-        const tempatProduk = row.tempat_produk || row.tempatProduk || {};
 
         const kodeProduk =
           row.kode_produk ||
@@ -1289,13 +1187,6 @@ export default {
           row.master_produk_id ||
           produk.id ||
           produkToko.produk_id;
-
-        const tempatProdukId =
-          row.tempat_produk_id ||
-          tempatProduk.id ||
-          produk.tempat_produk_id ||
-          produkToko.tempat_produk_id ||
-          this.getApotekTempatId();
 
         const stokAkhir = Number(row.stok_akhir ?? row.stok ?? row.stock ?? 0);
         const stokReserved = Number(row.stok_reserved ?? row.reserved ?? 0);
@@ -1336,16 +1227,10 @@ export default {
           id:
             row.id ||
             row.stock_produk_toko_id ||
-            `${produkTokoId || "produk"}-${tempatProdukId || "tempat"}-${index}`,
+            `${produkTokoId || "produk"}-${index}`,
 
           produk_toko_id: produkTokoId,
           produk_id: produkId,
-          tempat_produk_id: tempatProdukId,
-
-          tempat_produk_nama:
-            tempatProduk.nama_tempat_produk ||
-            row.nama_tempat_produk ||
-            this.getTempatName(tempatProdukId),
 
           kode_produk: kodeProduk,
           nama_produk: namaProduk,
@@ -1388,12 +1273,6 @@ export default {
           produk.id ||
           produkToko.produk_id;
 
-        const tempatProdukId =
-          row.tempat_produk_id ||
-          produk.tempat_produk_id ||
-          produkToko.tempat_produk_id ||
-          this.getApotekTempatId();
-
         const kodeProduk =
           row.kode_produk ||
           row.kode_accurate ||
@@ -1423,8 +1302,6 @@ export default {
           id: row.id || produkTokoId || `produk-option-${index}`,
           produk_toko_id: produkTokoId,
           produk_id: produkId,
-          tempat_produk_id: tempatProdukId,
-
           kode_produk: kodeProduk,
           nama_produk: namaProduk,
           label_produk: `${kodeProduk} - ${namaProduk}`,
@@ -1459,11 +1336,9 @@ export default {
 
     buildZeroStockRowsFromProdukOptions(rows = []) {
       return rows.map((row) => ({
-        id: `fallback-${row.produk_toko_id}-${row.tempat_produk_id}`,
+        id: `fallback-${row.produk_toko_id}`,
         produk_toko_id: row.produk_toko_id,
         produk_id: row.produk_id,
-        tempat_produk_id: row.tempat_produk_id,
-        tempat_produk_nama: this.getTempatName(row.tempat_produk_id),
         kode_produk: row.kode_produk,
         nama_produk: row.nama_produk,
         label_produk: row.label_produk,
@@ -1604,13 +1479,6 @@ export default {
       return "Masih draft";
     },
 
-    getTempatName(id) {
-      const item = this.tempatProdukOptions.find(
-        (row) => String(row.id) === String(id),
-      );
-      return item?.nama_tempat_produk || "-";
-    },
-
     resetLocalFilter() {
       this.filter.search = "";
       this.filter.showOnlyAttention = false;
@@ -1727,16 +1595,6 @@ export default {
       }
 
       return null;
-    },
-
-    getApotekTempatId() {
-      const apotek = this.tempatProdukOptions.find((item) => {
-        return String(item.nama_tempat_produk || "")
-          .toLowerCase()
-          .includes("apotek");
-      });
-
-      return apotek?.id || 1;
     },
 
     clearCabangAlertIfNeeded() {

@@ -5,7 +5,7 @@
         <div>
           <div class="section-title">Daftar Stok Produk</div>
           <div class="section-subtitle">
-            Lokasi aktif: {{ selectedTempatName }}
+            Pantau stok produk berdasarkan cabang aktif.
           </div>
         </div>
 
@@ -22,19 +22,6 @@
             @update:model-value="$emit('update:search', $event)"
             @keyup.enter="$emit('refresh')"
             @click:clear="$emit('refresh')"
-          />
-
-          <v-select
-            :model-value="tempatProdukId"
-            :items="tempatProdukOptions"
-            item-title="nama_tempat_produk"
-            item-value="id"
-            label="Tempat"
-            variant="outlined"
-            density="compact"
-            hide-details
-            class="select-input"
-            @update:model-value="handleTempatChanged"
           />
         </div>
       </div>
@@ -81,9 +68,7 @@
         <template #item.produk="{ item }">
           <div class="product-cell">
             <div class="product-name">{{ item.nama_produk }}</div>
-            <div class="product-code">
-              {{ item.kode_produk }} · {{ item.tempat_produk_nama }}
-            </div>
+            <div class="product-code">{{ item.kode_produk }}</div>
           </div>
         </template>
 
@@ -168,10 +153,6 @@ export default {
       type: String,
       default: "",
     },
-    tempatProdukId: {
-      type: [String, Number, null],
-      default: null,
-    },
     showOnlyAttention: {
       type: Boolean,
       default: false,
@@ -187,14 +168,6 @@ export default {
     headers: {
       type: Array,
       default: () => [],
-    },
-    tempatProdukOptions: {
-      type: Array,
-      default: () => [],
-    },
-    selectedTempatName: {
-      type: String,
-      default: "-",
     },
     loading: {
       type: Boolean,
@@ -232,7 +205,6 @@ export default {
 
   emits: [
     "update:search",
-    "update:tempatProdukId",
     "update:showOnlyAttention",
     "update:showOnlyEmpty",
     "refresh",
@@ -241,13 +213,6 @@ export default {
     "open-penyesuaian",
     "update-options",
   ],
-
-  methods: {
-    handleTempatChanged(value) {
-      this.$emit("update:tempatProdukId", value);
-      this.$emit("refresh");
-    },
-  },
 };
 </script>
 
@@ -276,11 +241,6 @@ export default {
 
 .search-input {
   width: 320px;
-  max-width: 100%;
-}
-
-.select-input {
-  width: 190px;
   max-width: 100%;
 }
 
@@ -346,8 +306,7 @@ export default {
     flex-direction: column;
   }
 
-  .search-input,
-  .select-input {
+  .search-input {
     width: 100%;
   }
 }

@@ -25,7 +25,7 @@
 
       <v-card-text>
         <v-row>
-          <v-col cols="12" md="3">
+          <v-col cols="12" md="4">
             <v-text-field
               v-model="form.tanggal"
               type="date"
@@ -35,19 +35,7 @@
             />
           </v-col>
 
-          <v-col cols="12" md="3">
-            <v-select
-              v-model="form.tempat_produk_id"
-              :items="tempatProdukOptions"
-              item-title="nama_tempat_produk"
-              item-value="id"
-              label="Tempat Stok"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
-
-          <v-col cols="12" md="3">
+          <v-col cols="12" md="4">
             <v-autocomplete
               v-model="form.supplier_id"
               :items="supplierOptions"
@@ -60,10 +48,20 @@
             />
           </v-col>
 
-          <v-col cols="12" md="3">
+          <v-col cols="12" md="4">
             <v-text-field
               v-model="form.no_faktur_supplier"
               label="No Faktur Supplier"
+              variant="outlined"
+              density="compact"
+            />
+          </v-col>
+
+          <v-col cols="12" md="4">
+            <v-text-field
+              v-model="form.tanggal_faktur"
+              type="date"
+              label="Tanggal Faktur"
               variant="outlined"
               density="compact"
             />
@@ -189,15 +187,14 @@
         <v-btn variant="text" @click="$emit('update:modelValue', false)">
           Batal
         </v-btn>
-
         <v-btn
           color="primary"
+          variant="tonal"
           :loading="loading"
           @click="$emit('submit-draft')"
         >
           Simpan Draft
         </v-btn>
-
         <v-btn color="success" :loading="loading" @click="$emit('submit-post')">
           Simpan & Posting
         </v-btn>
@@ -218,10 +215,6 @@ export default {
     form: {
       type: Object,
       required: true,
-    },
-    tempatProdukOptions: {
-      type: Array,
-      default: () => [],
     },
     supplierOptions: {
       type: Array,
@@ -260,11 +253,19 @@ export default {
   gap: 16px;
 }
 
-.dialog-subtitle,
-.section-subtitle {
+.dialog-subtitle {
   font-size: 13px;
   color: #6b7280;
   line-height: 1.5;
+}
+
+.form-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 18px 0 12px;
 }
 
 .section-title {
@@ -273,23 +274,20 @@ export default {
   color: #111827;
 }
 
-.form-section-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: 12px;
-  margin: 10px 0 12px;
+.section-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
 }
 
 .form-table {
   border: 1px solid #e5e7eb;
   border-radius: 10px;
+  overflow: hidden;
 }
 
-@media (max-width: 768px) {
-  .form-section-head {
-    align-items: stretch;
-    flex-direction: column;
-  }
+.form-table th {
+  background: #f9fafb;
+  font-weight: 700;
 }
 </style>

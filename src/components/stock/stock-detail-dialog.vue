@@ -22,26 +22,19 @@
 
       <v-card-text>
         <v-row class="mb-3">
-          <v-col cols="12" md="3">
+          <v-col cols="12" md="4">
             <div class="info-label">Tanggal</div>
             <div class="info-value">{{ formatDate(dialog.data?.tanggal) }}</div>
           </v-col>
 
-          <v-col cols="12" md="3">
+          <v-col cols="12" md="4">
             <div class="info-label">Status</div>
             <v-chip size="small" :color="getStatusColor(dialog.data?.status)">
               {{ dialog.data?.status || "-" }}
             </v-chip>
           </v-col>
 
-          <v-col cols="12" md="3">
-            <div class="info-label">Tempat</div>
-            <div class="info-value">
-              {{ dialog.data?.tempat_produk?.nama_tempat_produk || "-" }}
-            </div>
-          </v-col>
-
-          <v-col cols="12" md="3">
+          <v-col cols="12" md="4">
             <div class="info-label">Catatan</div>
             <div class="info-value">{{ dialog.data?.catatan || "-" }}</div>
           </v-col>
@@ -54,7 +47,6 @@
               <th v-if="dialog.type === 'penerimaan'">Qty</th>
               <th v-if="dialog.type === 'penerimaan'">Harga Beli</th>
               <th v-if="dialog.type === 'penerimaan'">Subtotal</th>
-
               <th v-if="dialog.type === 'penyesuaian'">Stok Sistem</th>
               <th v-if="dialog.type === 'penyesuaian'">Stok Fisik</th>
               <th v-if="dialog.type === 'penyesuaian'">Selisih</th>
