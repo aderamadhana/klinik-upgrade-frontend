@@ -233,11 +233,29 @@
             class="mb-5"
           >
             <v-card-text class="pa-4 pb-2">
-              <div class="text-subtitle-1 font-weight-bold">
-                Informasi Medis Pendaftaran
-              </div>
-              <div class="text-caption text-medium-emphasis">
-                Data awal dari pendaftaran konsultasi online.
+              <div
+                class="d-flex align-start justify-space-between flex-wrap ga-3"
+              >
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">
+                    Informasi Medis Pendaftaran
+                  </div>
+                  <div class="text-caption text-medium-emphasis">
+                    Data awal dari pendaftaran konsultasi online.
+                  </div>
+                </div>
+
+                <v-chip color="primary" variant="tonal" size="small">
+                  {{
+                    displayMedicalText(
+                      onlineRegistration.jenis_konsultasi_label ||
+                        onlineRegistration.konsultasi_source_name ||
+                        onlineRegistration.source_name ||
+                        onlineRegistration.channel_label ||
+                        "Konsultasi Online",
+                    )
+                  }}
+                </v-chip>
               </div>
             </v-card-text>
 
@@ -245,49 +263,101 @@
 
             <v-card-text class="pa-4">
               <v-row dense>
-                <v-col cols="12" md="6">
-                  <div class="text-caption text-medium-emphasis">
-                    Keluhan Utama
-                  </div>
-                  <div class="text-body-2 font-weight-medium">
-                    {{ onlineRegistration.keluhan_utama || "-" }}
-                  </div>
-                </v-col>
+                <v-col
+                  v-for="item in onlineRegistrationItems"
+                  :key="item.key"
+                  cols="12"
+                  :md="item.cols || 6"
+                >
+                  <v-sheet border rounded="lg" class="pa-3 h-100">
+                    <div class="text-caption text-medium-emphasis mb-1">
+                      {{ item.label }}
+                    </div>
 
-                <v-col cols="12" md="6">
-                  <div class="text-caption text-medium-emphasis">
-                    Riwayat Penyakit
-                  </div>
-                  <div class="text-body-2 font-weight-medium">
-                    {{ onlineRegistration.riwayat_penyakit || "-" }}
-                  </div>
-                </v-col>
-
-                <v-col cols="12" md="6">
-                  <div class="text-caption text-medium-emphasis">Alergi</div>
-                  <div class="text-body-2 font-weight-medium">
-                    {{ onlineRegistration.alergi || "-" }}
-                  </div>
-                </v-col>
-
-                <v-col cols="12" md="6">
-                  <div class="text-caption text-medium-emphasis">
-                    Obat Dikonsumsi
-                  </div>
-                  <div class="text-body-2 font-weight-medium">
-                    {{ onlineRegistration.obat_dikonsumsi || "-" }}
-                  </div>
-                </v-col>
-
-                <v-col cols="12">
-                  <div class="text-caption text-medium-emphasis">
-                    Catatan Pendaftaran
-                  </div>
-                  <div class="text-body-2 font-weight-medium">
-                    {{ onlineRegistration.catatan_pendaftaran || "-" }}
-                  </div>
+                    <div class="text-body-2 font-weight-medium">
+                      {{ displayMedicalText(item.value) }}
+                    </div>
+                  </v-sheet>
                 </v-col>
               </v-row>
+
+              <template v-if="onlineRegistrationPhotos.length">
+                <v-divider class="my-4" />
+
+                <div
+                  class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3"
+                >
+                  <div>
+                    <div class="text-subtitle-2 font-weight-bold">
+                      Dokumentasi Foto Pendaftaran
+                    </div>
+                    <div class="text-caption text-medium-emphasis">
+                      Foto kiri, depan, dan kanan dari pendaftaran konsultasi
+                      online.
+                    </div>
+                  </div>
+
+                  <v-chip color="success" variant="tonal" size="small">
+                    {{ onlineRegistrationPhotos.length }} Foto
+                  </v-chip>
+                </div>
+
+                <v-row dense>
+                  <v-col
+                    v-for="photo in onlineRegistrationPhotos"
+                    :key="photo.key"
+                    cols="12"
+                    md="4"
+                  >
+                    <v-card variant="outlined" rounded="lg" class="h-100">
+                      <v-card-text class="pa-3">
+                        <div class="text-caption text-medium-emphasis mb-2">
+                          {{ photo.label }}
+                        </div>
+
+                        <v-img
+                          v-if="photo.url"
+                          :src="photo.url"
+                          height="180"
+                          cover
+                          rounded="lg"
+                          class="border"
+                        />
+
+                        <v-sheet
+                          v-else
+                          border
+                          rounded="lg"
+                          class="pa-6 text-center text-medium-emphasis"
+                        >
+                          <v-icon size="32" class="mb-2">
+                            mdi-image-off-outline
+                          </v-icon>
+                          <div class="text-caption">Foto belum tersedia</div>
+                        </v-sheet>
+
+                        <div
+                          v-if="photo.file_name"
+                          class="text-caption text-medium-emphasis mt-2 text-truncate"
+                        >
+                          {{ photo.file_name }}
+                        </div>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                </v-row>
+              </template>
+
+              <v-alert
+                v-else
+                type="warning"
+                variant="tonal"
+                density="compact"
+                class="mt-4"
+              >
+                Data medis sudah ada, tetapi foto pendaftaran belum diterima
+                dari API atau URL foto belum valid.
+              </v-alert>
             </v-card-text>
           </v-card>
 
@@ -625,36 +695,38 @@
           </div>
 
           <v-card variant="outlined" rounded="lg" class="mb-5">
-            <v-card-text class="pa-4 pb-2">
+            <v-card-text class="pa-4">
               <div
-                class="d-flex align-center justify-space-between flex-wrap ga-2"
+                class="d-flex align-start justify-space-between flex-wrap ga-3 mb-4"
               >
                 <div>
-                  <div class="text-subtitle-1 font-weight-bold">
-                    Obat / Produk
+                  <div class="d-flex align-center ga-2 mb-1">
+                    <v-avatar color="primary" variant="tonal" size="32">
+                      <v-icon size="18">mdi-pill</v-icon>
+                    </v-avatar>
+
+                    <div class="text-subtitle-1 font-weight-bold">
+                      Obat / Produk
+                    </div>
                   </div>
 
-                  <div class="text-caption text-medium-emphasis">
-                    Pilihan produk diambil dari reference produk cabang aktif
-                    dan qty tidak boleh melebihi stok.
+                  <div class="text-body-2 text-medium-emphasis">
+                    Pilih produk dari stok cabang aktif. Qty dikunci agar tidak
+                    melebihi stok tersedia.
                   </div>
                 </div>
 
                 <v-btn
                   color="primary"
-                  variant="tonal"
-                  size="small"
+                  variant="flat"
                   prepend-icon="mdi-plus"
+                  :disabled="loadingReference"
                   @click="addObatRow"
                 >
-                  Tambah
+                  Tambah Produk
                 </v-btn>
               </div>
-            </v-card-text>
 
-            <v-divider />
-
-            <v-card-text class="pa-4">
               <v-alert
                 v-if="!obatOptions.length && !loadingReference"
                 type="warning"
@@ -675,69 +747,48 @@
                 {{ obatStockValidation.message }}
               </v-alert>
 
-              <v-row
+              <v-sheet
                 v-for="(item, index) in obatItems"
                 :key="`obat-${index}`"
-                dense
-                align="center"
-                class="mb-2"
+                border
+                rounded="lg"
+                class="pa-4 mb-3"
               >
-                <v-col cols="12" md="5">
-                  <v-autocomplete
-                    v-model="item.produk_toko_id"
-                    :items="obatOptions"
-                    item-title="display_label"
-                    item-value="value"
-                    label="Obat / Produk"
-                    placeholder="Pilih obat / produk"
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                    clearable
-                    :loading="loadingReference"
-                    @update:model-value="onSelectObat(index, $event)"
-                  />
-                </v-col>
+                <div
+                  class="d-flex align-start justify-space-between flex-wrap ga-3 mb-4"
+                >
+                  <div class="d-flex align-start ga-3">
+                    <v-avatar color="primary" variant="tonal" size="34">
+                      <span class="text-body-2 font-weight-bold">
+                        {{ index + 1 }}
+                      </span>
+                    </v-avatar>
 
-                <v-col cols="6" md="2">
-                  <v-text-field
-                    v-model.number="item.jumlah"
-                    label="Qty"
-                    type="number"
-                    min="1"
-                    :max="item.stok_terbaca ? item.stok_tersedia : undefined"
-                    variant="outlined"
-                    density="compact"
-                    :error-messages="getObatStockError(item)"
-                    @update:model-value="recalculateObat(index)"
-                  />
-                </v-col>
+                    <div>
+                      <div class="text-subtitle-2 font-weight-bold">
+                        {{ item.nama || "Produk belum dipilih" }}
+                      </div>
 
-                <v-col cols="6" md="2">
-                  <v-text-field
-                    v-model.number="item.harga"
-                    label="Harga"
-                    type="number"
-                    min="0"
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                    readonly
-                  />
-                </v-col>
+                      <div class="d-flex flex-wrap ga-2 mt-2">
+                        <v-chip size="small" variant="tonal" color="primary">
+                          Qty {{ formatNumber(item.jumlah || 0) }}
+                        </v-chip>
 
-                <v-col cols="10" md="2">
-                  <v-text-field
-                    :model-value="formatNumber(item.subtotal)"
-                    label="Subtotal"
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                    readonly
-                  />
-                </v-col>
+                        <v-chip
+                          size="small"
+                          variant="tonal"
+                          :color="getObatStockError(item) ? 'error' : 'success'"
+                        >
+                          Stok {{ getStokText(item) }}
+                        </v-chip>
 
-                <v-col cols="2" md="1">
+                        <v-chip size="small" variant="tonal" color="blue-grey">
+                          Subtotal Rp {{ formatNumber(item.subtotal) }}
+                        </v-chip>
+                      </div>
+                    </div>
+                  </div>
+
                   <v-btn
                     icon="mdi-delete-outline"
                     color="error"
@@ -746,81 +797,142 @@
                     :disabled="obatItems.length === 1"
                     @click="removeObatRow(index)"
                   />
-                </v-col>
+                </div>
 
-                <v-col cols="12" md="4">
-                  <v-select
-                    v-model="item.frekuensi_penggunaan"
-                    :items="frekuensiPenggunaanOptions"
-                    item-title="title"
-                    item-value="value"
-                    label="Frekuensi Penggunaan"
-                    placeholder="Pilih frekuensi"
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                    clearable
-                  />
-                </v-col>
+                <v-alert
+                  v-if="getObatStockError(item)"
+                  type="error"
+                  variant="tonal"
+                  density="compact"
+                  class="mb-4"
+                >
+                  {{ getObatStockError(item) }}
+                </v-alert>
 
-                <v-col cols="12" md="4">
-                  <v-select
-                    v-model="item.waktu_penggunaan"
-                    :items="waktuPenggunaanOptions"
-                    item-title="title"
-                    item-value="value"
-                    label="Penggunaan"
-                    placeholder="Pilih waktu penggunaan"
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                    clearable
-                  />
-                </v-col>
+                <v-row dense>
+                  <v-col cols="12" md="6">
+                    <v-autocomplete
+                      v-model="item.produk_toko_id"
+                      :items="obatOptions"
+                      item-title="label"
+                      item-value="value"
+                      label="Obat / Produk"
+                      placeholder="Pilih obat / produk"
+                      variant="outlined"
+                      density="compact"
+                      hide-details="auto"
+                      clearable
+                      :loading="loadingReference"
+                      @update:model-value="onSelectObat(index, $event)"
+                    />
+                  </v-col>
 
-                <v-col cols="12" md="4">
-                  <v-text-field
-                    :model-value="getStokText(item)"
-                    label="Stok Tersedia"
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                    readonly
-                  />
-                </v-col>
-              </v-row>
+                  <v-col cols="12" sm="4" md="2">
+                    <v-text-field
+                      v-model.number="item.jumlah"
+                      label="Qty"
+                      type="number"
+                      min="1"
+                      :max="item.stok_terbaca ? item.stok_tersedia : undefined"
+                      variant="outlined"
+                      density="compact"
+                      hide-details="auto"
+                      :error-messages="getObatStockError(item)"
+                      @update:model-value="recalculateObat(index)"
+                    />
+                  </v-col>
+
+                  <v-col cols="12" sm="4" md="2">
+                    <v-text-field
+                      v-model.number="item.harga"
+                      label="Harga"
+                      type="number"
+                      min="0"
+                      variant="outlined"
+                      density="compact"
+                      hide-details="auto"
+                      readonly
+                    />
+                  </v-col>
+
+                  <v-col cols="12" sm="4" md="2">
+                    <v-text-field
+                      :model-value="formatNumber(item.subtotal)"
+                      label="Subtotal"
+                      variant="outlined"
+                      density="compact"
+                      hide-details="auto"
+                      readonly
+                    />
+                  </v-col>
+
+                  <v-col cols="12" md="6">
+                    <v-select
+                      v-model="item.frekuensi_penggunaan"
+                      :items="frekuensiPenggunaanOptions"
+                      item-title="title"
+                      item-value="value"
+                      label="Frekuensi Penggunaan"
+                      placeholder="Pilih frekuensi"
+                      variant="outlined"
+                      density="compact"
+                      hide-details="auto"
+                      clearable
+                    />
+                  </v-col>
+
+                  <v-col cols="12" md="6">
+                    <v-select
+                      v-model="item.waktu_penggunaan"
+                      :items="waktuPenggunaanOptions"
+                      item-title="title"
+                      item-value="value"
+                      label="Waktu Penggunaan"
+                      placeholder="Pilih waktu penggunaan"
+                      variant="outlined"
+                      density="compact"
+                      hide-details="auto"
+                      clearable
+                    />
+                  </v-col>
+                </v-row>
+              </v-sheet>
             </v-card-text>
           </v-card>
 
           <v-card variant="outlined" rounded="lg" class="mb-5">
-            <v-card-text class="pa-4 pb-2">
+            <v-card-text class="pa-4">
               <div
-                class="d-flex align-center justify-space-between flex-wrap ga-2"
+                class="d-flex align-start justify-space-between flex-wrap ga-3 mb-4"
               >
                 <div>
-                  <div class="text-subtitle-1 font-weight-bold">Treatment</div>
+                  <div class="d-flex align-center ga-2 mb-1">
+                    <v-avatar color="deep-purple" variant="tonal" size="32">
+                      <v-icon size="18">mdi-face-woman-shimmer-outline</v-icon>
+                    </v-avatar>
 
-                  <div class="text-caption text-medium-emphasis">
-                    Pilihan treatment diambil dari reference treatment cabang
-                    aktif.
+                    <div class="text-subtitle-1 font-weight-bold">
+                      Treatment
+                    </div>
+                  </div>
+
+                  <div class="text-body-2 text-medium-emphasis">
+                    Pilih treatment dari reference cabang aktif. Catatan dibuat
+                    per treatment agar tidak tercampur.
                   </div>
                 </div>
 
                 <v-btn
                   color="primary"
-                  variant="tonal"
-                  size="small"
+                  variant="flat"
                   prepend-icon="mdi-plus"
+                  :disabled="loadingReference"
                   @click="addTreatmentRow"
                 >
-                  Tambah
+                  Tambah Treatment
                 </v-btn>
               </div>
-            </v-card-text>
 
-            <v-divider />
-
-            <v-card-text class="pa-4">
               <v-alert
                 v-if="!treatmentOptions.length && !loadingReference"
                 type="warning"
@@ -831,68 +943,40 @@
                 Reference treatment belum tersedia untuk cabang ini.
               </v-alert>
 
-              <v-row
+              <v-sheet
                 v-for="(item, index) in treatmentItems"
                 :key="`treatment-${index}`"
-                dense
-                align="center"
-                class="mb-2"
+                border
+                rounded="lg"
+                class="pa-4 mb-3"
               >
-                <v-col cols="12" md="5">
-                  <v-autocomplete
-                    v-model="item.treatment_toko_id"
-                    :items="treatmentOptions"
-                    item-title="label"
-                    item-value="value"
-                    label="Treatment"
-                    placeholder="Pilih treatment"
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                    clearable
-                    :loading="loadingReference"
-                    @update:model-value="onSelectTreatment(index, $event)"
-                  />
-                </v-col>
+                <div
+                  class="d-flex align-start justify-space-between flex-wrap ga-3 mb-4"
+                >
+                  <div class="d-flex align-start ga-3">
+                    <v-avatar color="deep-purple" variant="tonal" size="34">
+                      <span class="text-body-2 font-weight-bold">
+                        {{ index + 1 }}
+                      </span>
+                    </v-avatar>
 
-                <v-col cols="6" md="2">
-                  <v-text-field
-                    v-model.number="item.jumlah"
-                    label="Qty"
-                    type="number"
-                    min="1"
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                    @update:model-value="recalculateTreatment(index)"
-                  />
-                </v-col>
+                    <div>
+                      <div class="text-subtitle-2 font-weight-bold">
+                        {{ item.nama || "Treatment belum dipilih" }}
+                      </div>
 
-                <v-col cols="6" md="2">
-                  <v-text-field
-                    v-model.number="item.harga"
-                    label="Harga"
-                    type="number"
-                    min="0"
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                    readonly
-                  />
-                </v-col>
+                      <div class="d-flex flex-wrap ga-2 mt-2">
+                        <v-chip size="small" variant="tonal" color="primary">
+                          Qty {{ formatNumber(item.jumlah || 0) }}
+                        </v-chip>
 
-                <v-col cols="10" md="2">
-                  <v-text-field
-                    :model-value="formatNumber(item.total)"
-                    label="Total"
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                    readonly
-                  />
-                </v-col>
+                        <v-chip size="small" variant="tonal" color="blue-grey">
+                          Total Rp {{ formatNumber(item.total) }}
+                        </v-chip>
+                      </div>
+                    </div>
+                  </div>
 
-                <v-col cols="2" md="1">
                   <v-btn
                     icon="mdi-delete-outline"
                     color="error"
@@ -901,76 +985,146 @@
                     :disabled="treatmentItems.length === 1"
                     @click="removeTreatmentRow(index)"
                   />
-                </v-col>
+                </div>
 
-                <v-col cols="12">
-                  <v-text-field
-                    v-model="item.catatan"
-                    label="Catatan Treatment"
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                  />
-                </v-col>
-              </v-row>
+                <v-row dense>
+                  <v-col cols="12" md="6">
+                    <v-autocomplete
+                      v-model="item.treatment_toko_id"
+                      :items="treatmentOptions"
+                      item-title="label"
+                      item-value="value"
+                      label="Treatment"
+                      placeholder="Pilih treatment"
+                      variant="outlined"
+                      density="compact"
+                      hide-details="auto"
+                      clearable
+                      :loading="loadingReference"
+                      @update:model-value="onSelectTreatment(index, $event)"
+                    />
+                  </v-col>
+
+                  <v-col cols="12" sm="4" md="2">
+                    <v-text-field
+                      v-model.number="item.jumlah"
+                      label="Qty"
+                      type="number"
+                      min="1"
+                      variant="outlined"
+                      density="compact"
+                      hide-details="auto"
+                      @update:model-value="recalculateTreatment(index)"
+                    />
+                  </v-col>
+
+                  <v-col cols="12" sm="4" md="2">
+                    <v-text-field
+                      v-model.number="item.harga"
+                      label="Harga"
+                      type="number"
+                      min="0"
+                      variant="outlined"
+                      density="compact"
+                      hide-details="auto"
+                      readonly
+                    />
+                  </v-col>
+
+                  <v-col cols="12" sm="4" md="2">
+                    <v-text-field
+                      :model-value="formatNumber(item.total)"
+                      label="Total"
+                      variant="outlined"
+                      density="compact"
+                      hide-details="auto"
+                      readonly
+                    />
+                  </v-col>
+                </v-row>
+              </v-sheet>
             </v-card-text>
           </v-card>
         </v-col>
 
         <v-col cols="12" lg="4">
           <v-card variant="outlined" rounded="lg" class="mb-5">
-            <v-card-text class="pa-4 pb-2">
-              <div class="text-subtitle-1 font-weight-bold">Ringkasan</div>
-              <div class="text-caption text-medium-emphasis">
-                Ringkasan biaya layanan pasien.
-              </div>
-            </v-card-text>
-
-            <v-divider />
-
             <v-card-text class="pa-4">
-              <div class="d-flex justify-space-between align-center mb-2">
-                <div class="text-body-2 text-medium-emphasis">
-                  Obat / Produk
-                </div>
-                <div class="text-body-2 font-weight-bold">
-                  Rp {{ formatNumber(totalObat) }}
+              <div class="d-flex align-start ga-3 mb-4">
+                <v-avatar color="success" variant="tonal" size="36">
+                  <v-icon size="20">mdi-calculator-variant-outline</v-icon>
+                </v-avatar>
+
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">Ringkasan</div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Estimasi biaya dari produk, treatment, dan konsultasi.
+                  </div>
                 </div>
               </div>
 
-              <div class="d-flex justify-space-between align-center mb-2">
-                <div class="text-body-2 text-medium-emphasis">Treatment</div>
-                <div class="text-body-2 font-weight-bold">
-                  Rp {{ formatNumber(totalTreatment) }}
-                </div>
-              </div>
+              <v-sheet border rounded="lg" class="pa-3 mb-3">
+                <div class="d-flex justify-space-between align-center mb-3">
+                  <div class="d-flex align-center ga-2">
+                    <v-icon size="18" color="primary">mdi-pill</v-icon>
+                    <div class="text-body-2 text-medium-emphasis">
+                      Obat / Produk
+                    </div>
+                  </div>
 
-              <div class="d-flex justify-space-between align-center mb-2">
-                <div class="text-body-2 text-medium-emphasis">
-                  {{ consultationLabel }}
+                  <div class="text-body-2 font-weight-bold">
+                    Rp {{ formatNumber(totalObat) }}
+                  </div>
                 </div>
-                <div class="text-body-2 font-weight-bold">
-                  Rp {{ formatNumber(consultationFee) }}
+
+                <div class="d-flex justify-space-between align-center mb-3">
+                  <div class="d-flex align-center ga-2">
+                    <v-icon size="18" color="deep-purple">
+                      mdi-face-woman-shimmer-outline
+                    </v-icon>
+                    <div class="text-body-2 text-medium-emphasis">
+                      Treatment
+                    </div>
+                  </div>
+
+                  <div class="text-body-2 font-weight-bold">
+                    Rp {{ formatNumber(totalTreatment) }}
+                  </div>
                 </div>
-              </div>
 
-              <v-divider class="my-3" />
+                <div class="d-flex justify-space-between align-center">
+                  <div class="d-flex align-center ga-2">
+                    <v-icon size="18" color="success">mdi-stethoscope</v-icon>
+                    <div class="text-body-2 text-medium-emphasis">
+                      {{ consultationLabel }}
+                    </div>
+                  </div>
 
-              <div class="d-flex justify-space-between align-center">
-                <div class="text-subtitle-2 font-weight-bold">Grand Total</div>
-                <div class="text-subtitle-1 font-weight-bold">
+                  <div class="text-body-2 font-weight-bold">
+                    Rp {{ formatNumber(consultationFee) }}
+                  </div>
+                </div>
+              </v-sheet>
+
+              <v-sheet border rounded="lg" color="grey-lighten-5" class="pa-4">
+                <div class="text-caption text-medium-emphasis mb-1">
+                  Grand Total
+                </div>
+
+                <div class="text-h5 font-weight-bold">
                   Rp {{ formatNumber(grandTotal) }}
                 </div>
-              </div>
+              </v-sheet>
 
               <v-alert
+                v-if="hasTreatment"
                 type="info"
                 variant="tonal"
                 density="compact"
                 class="mt-4"
               >
-                Biaya {{ consultationLabel }} menjadi Rp 0 jika pasien mengambil
-                treatment.
+                Biaya {{ consultationLabel }} menjadi Rp 0 karena pasien
+                mengambil treatment.
               </v-alert>
             </v-card-text>
 
@@ -979,6 +1133,7 @@
                 color="success"
                 variant="flat"
                 block
+                size="large"
                 prepend-icon="mdi-content-save-outline"
                 :loading="submitLoading"
                 :disabled="hasInvalidObatStock"
@@ -1302,7 +1457,25 @@ export default {
     },
 
     showOnlineMedicalInfo() {
-      return this.hasOriginalConsultation && this.isOnlineConsultation;
+      const data = this.onlineRegistration || {};
+      const source = this.onlineRegistrationSource || {};
+
+      return (
+        Number(data.channel_konsultasi || source.channel_konsultasi || 0) ===
+          2 ||
+        Boolean(data.request_dokter) ||
+        Boolean(data.keluhan) ||
+        Boolean(data.keluhan_utama) ||
+        Boolean(data.alergi) ||
+        Boolean(data.produk_sebelumnya) ||
+        Boolean(data.produk_obat_sebelumnya) ||
+        Boolean(data.sedang_hamil) ||
+        Boolean(data.sedang_menyusui) ||
+        Boolean(data.catatan_cs) ||
+        Boolean(data.catatan_awal) ||
+        Boolean(data.catatan_registrasi) ||
+        this.onlineRegistrationPhotos.length > 0
+      );
     },
 
     showSoapForm() {
@@ -1468,6 +1641,302 @@ export default {
         title: "",
         message: "",
       };
+    },
+    onlineRegistrationSource() {
+      return (
+        this.detail || this.queue || this.antrian || this.antrianDetail || {}
+      );
+    },
+
+    onlineRegistration() {
+      const source = this.onlineRegistrationSource || {};
+
+      const intake =
+        source.online_registration ||
+        source.onlineRegistration ||
+        source.konsultasi_intake ||
+        source.konsultasiIntake ||
+        {};
+
+      return {
+        ...intake,
+        channel_konsultasi:
+          intake.channel_konsultasi || source.channel_konsultasi || null,
+        channel_label:
+          intake.channel_label ||
+          source.channel_label ||
+          source.channel_konsultasi_label ||
+          null,
+        jenis_konsultasi_label:
+          intake.jenis_konsultasi_label ||
+          source.jenis_konsultasi_label ||
+          null,
+        source_name:
+          intake.source_name || source.konsultasi_source_name || null,
+        bukti_chat_konsultasi_online:
+          intake.bukti_chat_konsultasi_online ||
+          source.bukti_chat_konsultasi_online ||
+          null,
+        fotos:
+          intake.fotos ||
+          source.konsultasi_fotos ||
+          source.konsultasiFotos ||
+          [],
+      };
+    },
+    onlineRegistrationItems() {
+      const data = this.onlineRegistration || {};
+
+      return [
+        {
+          key: "request_dokter_nama",
+          label: "Request Dokter Khusus",
+          value: data.request_dokter_nama,
+        },
+        {
+          key: "keluhan_utama",
+          label: "Keluhan Utama",
+          value: data.keluhan_utama || data.keluhan_awal,
+          cols: 12,
+        },
+        {
+          key: "alergi",
+          label: "Alergi",
+          value: data.alergi,
+        },
+        {
+          key: "produk_obat_sebelumnya",
+          label: "Produk / Obat Sebelumnya",
+          value: data.produk_obat_sebelumnya,
+        },
+        {
+          key: "sedang_hamil",
+          label: "Sedang Hamil",
+          value: this.normalizeMedicalYesNo(data.sedang_hamil),
+        },
+        {
+          key: "sedang_menyusui",
+          label: "Sedang Menyusui",
+          value: this.normalizeMedicalYesNo(data.sedang_menyusui),
+        },
+        {
+          key: "catatan_cs",
+          label: "Catatan CS",
+          value: data.catatan_cs,
+          cols: 12,
+        },
+        {
+          key: "catatan_awal",
+          label: "Catatan Awal",
+          value: data.catatan_awal,
+          cols: 12,
+        },
+        {
+          key: "catatan_registrasi",
+          label: "Catatan Registrasi",
+          value: data.catatan_registrasi,
+          cols: 12,
+        },
+      ];
+    },
+
+    onlineRegistrationPhotos() {
+      const data = this.onlineRegistration || {};
+
+      const normalize = (photo, label, key) => {
+        if (!photo) {
+          return null;
+        }
+
+        if (typeof photo === "string") {
+          return {
+            key,
+            label,
+            url: this.resolvePhotoUrl(photo),
+            file_name: "",
+            posisi_foto: null,
+          };
+        }
+
+        const rawUrl = photo.file_url || photo.url || photo.file_path || "";
+
+        return {
+          key: photo.key || key,
+          label: photo.label || label,
+          url: this.resolvePhotoUrl(rawUrl),
+          file_name: photo.file_name || "",
+          posisi_foto: photo.posisi_foto || null,
+        };
+      };
+
+      const photos = [
+        normalize(data.foto_kiri, "Foto Kiri", "foto_kiri"),
+        normalize(data.foto_depan, "Foto Depan", "foto_depan"),
+        normalize(data.foto_kanan, "Foto Kanan", "foto_kanan"),
+        ...(Array.isArray(data.fotos)
+          ? data.fotos.map((photo, index) => {
+              const position = Number(photo?.posisi_foto || 0);
+
+              const label =
+                photo?.label ||
+                (position === 1
+                  ? "Foto Kiri"
+                  : position === 2
+                    ? "Foto Depan"
+                    : position === 3
+                      ? "Foto Kanan"
+                      : `Foto ${index + 1}`);
+
+              const key =
+                position === 1
+                  ? "foto_kiri"
+                  : position === 2
+                    ? "foto_depan"
+                    : position === 3
+                      ? "foto_kanan"
+                      : `foto_${index + 1}`;
+
+              return normalize(photo, label, key);
+            })
+          : []),
+      ].filter(Boolean);
+
+      return photos.filter((photo, index, list) => {
+        const currentKey = photo.posisi_foto || photo.key || photo.url || index;
+
+        return (
+          list.findIndex((item, itemIndex) => {
+            const itemKey =
+              item.posisi_foto || item.key || item.url || itemIndex;
+
+            return itemKey === currentKey;
+          }) === index
+        );
+      });
+    },
+
+    onlineRegistration() {
+      const source =
+        this.detail || this.antrian || this.queue || this.queueDetail || {};
+
+      const data =
+        source.online_registration ||
+        source.onlineRegistration ||
+        source.konsultasi_intake ||
+        source.konsultasiIntake ||
+        {};
+
+      return {
+        ...data,
+
+        request_dokter_id:
+          data.request_dokter_id ?? source.request_dokter_id ?? null,
+        request_dokter_nama:
+          data.request_dokter_nama ||
+          data.request_dokter ||
+          source.request_dokter_nama ||
+          source.request_dokter ||
+          null,
+
+        alergi: data.alergi ?? source.alergi ?? null,
+
+        keluhan_utama:
+          data.keluhan_utama ||
+          data.keluhan ||
+          data.keluhan_awal ||
+          source.keluhan_utama ||
+          source.keluhan ||
+          source.keluhan_awal ||
+          null,
+
+        keluhan_awal: data.keluhan_awal || source.keluhan_awal || null,
+
+        produk_obat_sebelumnya:
+          data.produk_obat_sebelumnya ||
+          data.produk_sebelumnya ||
+          source.produk_obat_sebelumnya ||
+          source.produk_sebelumnya ||
+          null,
+
+        sedang_hamil:
+          data.sedang_hamil ??
+          data.sedang_hamil_raw ??
+          source.sedang_hamil ??
+          null,
+
+        sedang_menyusui:
+          data.sedang_menyusui ??
+          data.sedang_menyusui_raw ??
+          source.sedang_menyusui ??
+          null,
+
+        catatan_cs: data.catatan_cs || source.catatan_cs || null,
+
+        catatan_awal: data.catatan_awal || source.catatan_awal || null,
+
+        catatan_registrasi:
+          data.catatan_registrasi || source.catatan_registrasi || null,
+
+        jenis_konsultasi:
+          data.jenis_konsultasi ?? source.jenis_konsultasi ?? null,
+
+        jenis_konsultasi_label:
+          data.jenis_konsultasi_label || source.jenis_konsultasi_label || null,
+
+        channel_konsultasi:
+          data.channel_konsultasi ?? source.channel_konsultasi ?? null,
+
+        channel_label:
+          data.channel_label ||
+          source.channel_konsultasi_label ||
+          source.channel_label ||
+          null,
+
+        konsultasi_source_code:
+          data.konsultasi_source_code || source.konsultasi_source_code || null,
+
+        konsultasi_source_name:
+          data.konsultasi_source_name ||
+          data.source_name ||
+          source.konsultasi_source_name ||
+          null,
+
+        foto_kiri: data.foto_kiri || source.foto_kiri || null,
+
+        foto_depan: data.foto_depan || source.foto_depan || null,
+
+        foto_kanan: data.foto_kanan || source.foto_kanan || null,
+
+        fotos:
+          data.fotos ||
+          source.konsultasi_fotos ||
+          source.konsultasiFotos ||
+          source.fotos ||
+          [],
+      };
+    },
+
+    showOnlineMedicalInfo() {
+      const data = this.onlineRegistration || {};
+
+      return (
+        Number(data.channel_konsultasi || 0) === 2 ||
+        Boolean(data.konsultasi_source_code) ||
+        Boolean(data.konsultasi_source_name) ||
+        Boolean(data.request_dokter_nama) ||
+        Boolean(data.keluhan_utama) ||
+        Boolean(data.keluhan_awal) ||
+        Boolean(data.alergi) ||
+        Boolean(data.produk_obat_sebelumnya) ||
+        data.sedang_hamil !== null ||
+        data.sedang_hamil !== undefined ||
+        data.sedang_menyusui !== null ||
+        data.sedang_menyusui !== undefined ||
+        Boolean(data.catatan_cs) ||
+        Boolean(data.catatan_awal) ||
+        Boolean(data.catatan_registrasi) ||
+        this.onlineRegistrationPhotos.length > 0
+      );
     },
   },
 
@@ -1889,7 +2358,6 @@ export default {
               harga,
               total,
               perawat_id: item?.perawat_id || item?.karyawan_id || null,
-              catatan: item?.catatan || "",
             };
           })
         : [this.createEmptyTreatmentRow()];
@@ -1932,7 +2400,6 @@ export default {
         harga: 0,
         total: 0,
         perawat_id: null,
-        catatan: "",
       };
     },
 
@@ -2170,13 +2637,8 @@ export default {
           const stokTerbaca = stockRaw !== null;
           const stokTersedia = stokTerbaca ? this.toNumber(stockRaw) : null;
 
-          const displayLabel = stokTerbaca
-            ? `${label} - Stok: ${this.formatNumber(stokTersedia)}`
-            : `${label} - Stok: tidak terbaca`;
-
           return {
             label,
-            display_label: displayLabel,
             value: produkTokoId || produkId,
             produk_toko_id: produkTokoId || null,
             produk_id: produkId,
@@ -2636,7 +3098,6 @@ export default {
             harga: this.toNumber(item.harga),
             total: this.toNumber(item.total),
             perawat_id: item.perawat_id || null,
-            catatan: item.catatan || null,
           })),
       };
     },
@@ -3071,6 +3532,103 @@ export default {
       this.snackbar.message = message;
       this.snackbar.color = color;
       this.snackbar.show = true;
+    },
+
+    displayMedicalText(value) {
+      if (value === null || value === undefined || value === "") {
+        return "-";
+      }
+
+      return value;
+    },
+
+    formatBooleanMedicalValue(value) {
+      if (value === null || value === undefined || value === "") {
+        return "";
+      }
+
+      const normalized = String(value).toLowerCase();
+
+      if (
+        value === true ||
+        value === 1 ||
+        normalized === "1" ||
+        normalized === "ya" ||
+        normalized === "true"
+      ) {
+        return "Ya";
+      }
+
+      if (
+        value === false ||
+        value === 0 ||
+        normalized === "0" ||
+        normalized === "tidak" ||
+        normalized === "false"
+      ) {
+        return "Tidak";
+      }
+
+      return value;
+    },
+    displayMedicalText(value) {
+      if (value === null || value === undefined || value === "") {
+        return "-";
+      }
+
+      return value;
+    },
+
+    normalizeMedicalYesNo(value) {
+      if (value === null || value === undefined || value === "") {
+        return "-";
+      }
+
+      const normalized = String(value).toLowerCase().trim();
+
+      if (
+        value === true ||
+        value === 1 ||
+        ["1", "true", "ya", "yes"].includes(normalized)
+      ) {
+        return "Ya";
+      }
+
+      if (
+        value === false ||
+        value === 0 ||
+        ["0", "false", "tidak", "no"].includes(normalized)
+      ) {
+        return "Tidak";
+      }
+
+      return value;
+    },
+
+    resolvePhotoUrl(value) {
+      if (!value) {
+        return "";
+      }
+
+      const url = String(value);
+
+      if (/^https?:\/\//i.test(url) || url.startsWith("blob:")) {
+        return url;
+      }
+
+      if (url.startsWith("/storage/")) {
+        return url;
+      }
+
+      if (url.startsWith("storage/")) {
+        return `/${url}`;
+      }
+
+      if (url.startsWith("/")) {
+        return url;
+      }
+
+      return `/storage/${url.replace(/^public\//, "")}`;
     },
   },
 };

@@ -386,6 +386,8 @@ export default {
       loading: false,
       dragActive: null,
       consultationHistory: [],
+      loadingConsultationHistory: false,
+      consultationHistoryRequestId: 0,
       accurateMappingList: [],
       mappingWarning: "",
 
@@ -645,6 +647,50 @@ export default {
       this.snackbar.show = true;
       this.snackbar.text = text;
       this.snackbar.color = color;
+    },
+
+    async loadConsultationHistory(pasienNewId = null) {
+      const selectedPasienId =
+        pasienNewId || this.form?.pasien_new_id || this.form?.pasien_id || null;
+
+      this.consultationHistoryRequestId += 1;
+      const requestId = this.consultationHistoryRequestId;
+
+      if (!selectedPasienId) {
+        this.consultationHistory = [];
+        this.loadingConsultationHistory = false;
+        return;
+      }
+
+      this.loadingConsultationHistory = true;
+
+      try {
+        const response = await registrasiLayananService.getConsultationHistory(
+          selectedPasienId,
+          {
+            limit: 10,
+          },
+        );
+
+        if (requestId !== this.consultationHistoryRequestId) {
+          return;
+        }
+
+        this.consultationHistory = Array.isArray(response?.data)
+          ? response.data
+          : [];
+      } catch (error) {
+        if (requestId !== this.consultationHistoryRequestId) {
+          return;
+        }
+
+        console.error("Gagal memuat riwayat konsultasi pasien:", error);
+        this.consultationHistory = [];
+      } finally {
+        if (requestId === this.consultationHistoryRequestId) {
+          this.loadingConsultationHistory = false;
+        }
+      }
     },
 
     getToday() {
@@ -1656,7 +1702,9 @@ export default {
       this.currentStepKey = "registrasi";
       this.form = this.getInitialForm();
       this.dragActive = null;
+      this.consultationHistoryRequestId += 1;
       this.consultationHistory = [];
+      this.loadingConsultationHistory = false;
       this.mappingWarning = "";
 
       this.syncRegistrasiAccurateMapping();
@@ -1664,12 +1712,7 @@ export default {
     },
 
     onPatientChange(value) {
-      if (!value) {
-        this.consultationHistory = [];
-        return;
-      }
-
-      this.consultationHistory = [];
+      this.loadConsultationHistory(value);
     },
 
     onDragOver(key) {

@@ -528,6 +528,12 @@ const registrasiLayananService = {
   toFormData(payload) {
     return toFormData(payload);
   },
+
+  getConsultationHistory(pasienId, params = {}) {
+    return api
+      .get(`${BASE_URL}/pasien/${pasienId}/riwayat-konsultasi`, { params })
+      .then((response) => response.data);
+  },
 };
 
 export default registrasiLayananService;
