@@ -1,13 +1,13 @@
 <template>
-  <div class="before-after-page">
-    <!-- HEADER -->
-    <div class="page-header">
+  <v-container fluid class="pa-0">
+    <div
+      class="d-flex flex-column flex-md-row align-md-start justify-space-between ga-3 mb-4"
+    >
       <div>
-        <h1 class="page-title">Input Before & After</h1>
-        <p class="page-subtitle">
-          Upload dokumentasi before dan after pasien dengan alur yang lebih
-          jelas dan mudah digunakan
-        </p>
+        <div class="text-h5 font-weight-bold">Input Before & After</div>
+        <div class="text-body-2 text-medium-emphasis mt-1">
+          Dokumentasi kondisi pasien sebelum dan setelah tindakan perawat.
+        </div>
       </div>
 
       <v-btn
@@ -20,271 +20,437 @@
       </v-btn>
     </div>
 
-    <!-- RINGKASAN -->
-    <v-card rounded="lg" elevation="0" border class="mb-5">
-      <v-card-text class="pa-4 pa-md-5">
-        <div class="section-top mb-4">
+    <v-alert
+      v-if="errorMessage"
+      type="error"
+      variant="tonal"
+      border="start"
+      closable
+      class="mb-4"
+      @click:close="errorMessage = ''"
+    >
+      <div
+        class="d-flex flex-column flex-sm-row align-sm-center justify-space-between ga-3"
+      >
+        <span>{{ errorMessage }}</span>
+        <v-btn
+          size="small"
+          variant="outlined"
+          color="error"
+          :loading="loading"
+          @click="fetchPage"
+        >
+          Muat Ulang
+        </v-btn>
+      </div>
+    </v-alert>
+
+    <v-skeleton-loader
+      v-if="loading"
+      type="heading, paragraph, card, card, actions"
+    />
+
+    <template v-else-if="detail">
+      <v-card variant="outlined" rounded="lg" class="mb-4">
+        <v-card-title
+          class="d-flex flex-column flex-sm-row align-sm-center justify-space-between ga-3 py-4"
+        >
           <div>
-            <div class="section-title">Ringkasan Pasien</div>
-            <div class="section-subtitle">
-              Pastikan data pasien dan kunjungan sudah sesuai sebelum upload
-              foto
-            </div>
-          </div>
-        </div>
-
-        <v-row>
-          <v-col
-            v-for="item in patientSummary"
-            :key="item.label"
-            cols="12"
-            sm="6"
-            md="3"
-          >
-            <div class="summary-box">
-              <div class="summary-label">{{ item.label }}</div>
-              <div class="summary-value">{{ item.value }}</div>
-            </div>
-          </v-col>
-        </v-row>
-      </v-card-text>
-    </v-card>
-
-    <!-- FORM -->
-    <v-card rounded="lg" elevation="0" border>
-      <v-card-title class="form-card-title">
-        Form Upload Before & After
-      </v-card-title>
-      <v-divider />
-
-      <v-card-text class="pa-4 pa-md-5">
-        <v-alert type="info" density="comfortable" class="mb-5">
-          Upload masing-masing 3 foto untuk tahap Before dan After. Klik tahap
-          yang ingin dikerjakan, lalu upload foto pada slot yang tersedia.
-        </v-alert>
-
-        <!-- STEP SWITCH -->
-        <div class="section-title mb-2">Tahap Upload</div>
-        <div class="section-subtitle mb-4">
-          Pilih tahap yang ingin dibuka. Tahap aktif akan ditampilkan di bawah.
-        </div>
-
-        <div class="step-switch mb-5">
-          <button
-            type="button"
-            class="step-card"
-            :class="{ active: currentStep === 'before' }"
-            @click="setStep('before')"
-          >
-            <div class="step-card-top">
-              <div class="step-badge">1</div>
-              <div class="step-text-wrap">
-                <div class="step-title">Foto Before</div>
-                <div class="step-subtitle">
-                  {{ beforeUploadedCount }}/3 foto terupload
-                </div>
-              </div>
-            </div>
-            <div class="step-hint">
-              Klik untuk membuka slot upload foto before
-            </div>
-          </button>
-
-          <button
-            type="button"
-            class="step-card"
-            :class="{ active: currentStep === 'after' }"
-            @click="setStep('after')"
-          >
-            <div class="step-card-top">
-              <div class="step-badge">2</div>
-              <div class="step-text-wrap">
-                <div class="step-title">Foto After</div>
-                <div class="step-subtitle">
-                  {{ afterUploadedCount }}/3 foto terupload
-                </div>
-              </div>
-            </div>
-            <div class="step-hint">
-              Klik untuk membuka slot upload foto after
-            </div>
-          </button>
-        </div>
-
-        <!-- CURRENT STEP HEADER -->
-        <div class="current-step-head mb-4">
-          <div class="soap-title-wrap">
-            <div class="soap-badge photo-badge">
-              {{ currentStep === "before" ? "B" : "A" }}
-            </div>
-            <div>
-              <div class="soap-title">
-                {{
-                  currentStep === "before"
-                    ? "Upload Foto Before"
-                    : "Upload Foto After"
-                }}
-              </div>
-              <div class="soap-subtitle">
-                {{
-                  currentStep === "before"
-                    ? "Upload kondisi pasien sebelum tindakan"
-                    : "Upload kondisi pasien setelah tindakan"
-                }}
-              </div>
+            <div class="text-subtitle-1 font-weight-bold">Ringkasan Pasien</div>
+            <div class="text-caption text-medium-emphasis mt-1">
+              Pastikan pasien, kunjungan, dan treatment sudah sesuai.
             </div>
           </div>
 
           <v-chip
+            :color="statusColor"
+            variant="tonal"
             size="small"
-            :color="isCurrentStepComplete ? 'success' : 'default'"
+            prepend-icon="mdi-circle-medium"
           >
-            {{ currentUploadedCount }}/3 terupload
+            {{ statusLabel }}
           </v-chip>
-        </div>
+        </v-card-title>
 
-        <!-- UPLOAD GRID -->
-        <v-row>
-          <v-col
-            v-for="(slot, index) in currentSlots"
-            :key="slot.key"
-            cols="12"
-            md="4"
+        <v-divider />
+
+        <v-card-text>
+          <v-row>
+            <v-col
+              v-for="item in registrationSummary"
+              :key="item.label"
+              cols="12"
+              sm="6"
+              md="4"
+              lg="3"
+            >
+              <v-sheet border rounded="lg" class="pa-3 h-100 bg-grey-lighten-5">
+                <div class="text-caption text-medium-emphasis">
+                  {{ item.label }}
+                </div>
+                <div class="text-body-2 font-weight-bold mt-1">
+                  {{ item.value || "-" }}
+                </div>
+              </v-sheet>
+            </v-col>
+          </v-row>
+
+          <v-divider class="my-4" />
+
+          <div class="text-caption text-medium-emphasis mb-2">Treatment</div>
+          <div v-if="treatmentNames.length" class="d-flex flex-wrap ga-2">
+            <v-chip
+              v-for="treatment in treatmentNames"
+              :key="treatment"
+              color="primary"
+              variant="tonal"
+              size="small"
+            >
+              {{ treatment }}
+            </v-chip>
+          </div>
+          <div v-else class="text-body-2 text-medium-emphasis">
+            Treatment belum tercatat.
+          </div>
+        </v-card-text>
+      </v-card>
+
+      <v-alert
+        v-if="isWaiting"
+        type="warning"
+        variant="tonal"
+        border="start"
+        class="mb-4"
+      >
+        Mulai proses antrian perawat terlebih dahulu. Foto belum dapat diubah
+        selama task masih berstatus menunggu.
+      </v-alert>
+
+      <v-alert
+        v-else-if="isReadOnly"
+        :type="taskStatus === 9 ? 'error' : 'info'"
+        variant="tonal"
+        border="start"
+        class="mb-4"
+      >
+        Dokumentasi ditampilkan dalam mode baca karena task perawat sudah
+        {{ taskStatus === 9 ? "dibatalkan" : "selesai" }}.
+      </v-alert>
+
+      <v-alert
+        v-else-if="canEdit"
+        type="info"
+        variant="tonal"
+        border="start"
+        class="mb-4"
+      >
+        Wajib tersedia 3 foto Before dan 3 foto After. Format yang didukung:
+        JPG, JPEG, PNG, atau WEBP dengan ukuran maksimal 5 MB per foto.
+      </v-alert>
+
+      <v-card variant="outlined" rounded="lg">
+        <v-card-title
+          class="d-flex flex-column flex-md-row align-md-center justify-space-between ga-3 py-4"
+        >
+          <div>
+            <div class="text-subtitle-1 font-weight-bold">
+              Dokumentasi Before & After
+            </div>
+            <div class="text-caption text-medium-emphasis mt-1">
+              {{ totalUploadedCount }}/6 slot terisi
+              <span v-if="changedCount">
+                • {{ changedCount }} perubahan belum disimpan
+              </span>
+            </div>
+          </div>
+
+          <v-progress-circular
+            :model-value="completionPercentage"
+            :color="isAllComplete ? 'success' : 'primary'"
+            :size="44"
+            :width="5"
           >
-            <div class="upload-slot-card">
-              <div class="upload-slot-head">
-                <div class="upload-slot-title">
-                  {{ slot.title }}
-                </div>
+            <span class="text-caption font-weight-bold">
+              {{ completionPercentage }}%
+            </span>
+          </v-progress-circular>
+        </v-card-title>
 
-                <v-chip
-                  size="x-small"
-                  :color="slot.previewUrl ? 'success' : 'default'"
-                >
-                  {{ slot.previewUrl ? "Terupload" : "Kosong" }}
-                </v-chip>
-              </div>
+        <v-divider />
 
-              <div
-                class="drop-zone"
-                :class="{ dragging: dragIndex === index }"
-                @click="openPicker(index)"
-                @dragover.prevent="handleDragOver(index)"
-                @dragleave.prevent="handleDragLeave"
-                @drop.prevent="handleDrop($event, index)"
+        <v-card-text>
+          <v-tabs
+            v-model="currentStep"
+            color="primary"
+            grow
+            show-arrows
+            class="mb-5"
+          >
+            <v-tab value="before">
+              <v-icon start>mdi-camera-outline</v-icon>
+              Foto Before
+              <v-chip
+                size="x-small"
+                class="ml-2"
+                :color="beforeUploadedCount === 3 ? 'success' : 'grey'"
+                variant="tonal"
               >
-                <input
-                  :ref="setFileInputRef(index)"
-                  type="file"
-                  accept="image/*"
-                  class="d-none"
-                  @change="handleFileChange($event, index)"
-                />
+                {{ beforeUploadedCount }}/3
+              </v-chip>
+            </v-tab>
 
-                <div class="drop-zone-inner">
-                  <v-icon size="22">mdi-cloud-upload-outline</v-icon>
-                  <span v-if="!slot.fileName">
-                    Klik atau drag gambar ke sini
-                  </span>
-                  <span v-else class="file-name">
-                    {{ slot.fileName }}
-                  </span>
-                </div>
+            <v-tab value="after">
+              <v-icon start>mdi-camera-check-outline</v-icon>
+              Foto After
+              <v-chip
+                size="x-small"
+                class="ml-2"
+                :color="afterUploadedCount === 3 ? 'success' : 'grey'"
+                variant="tonal"
+              >
+                {{ afterUploadedCount }}/3
+              </v-chip>
+            </v-tab>
+          </v-tabs>
+
+          <div
+            class="d-flex flex-column flex-sm-row align-sm-center justify-space-between ga-3 mb-4"
+          >
+            <div>
+              <div class="text-subtitle-1 font-weight-bold">
+                {{ currentStep === "before" ? "Foto Before" : "Foto After" }}
               </div>
-
-              <div class="preview-frame">
-                <template v-if="slot.previewUrl">
-                  <img
-                    :src="slot.previewUrl"
-                    :alt="slot.title"
-                    class="preview-image"
-                  />
-
-                  <div class="preview-actions">
-                    <v-btn
-                      size="small"
-                      color="error"
-                      variant="flat"
-                      icon="mdi-close"
-                      @click.stop="removeImage(index)"
-                    />
-                  </div>
-                </template>
-
-                <template v-else>
-                  <div class="preview-placeholder">
-                    <div class="placeholder-avatar">
-                      <v-icon size="72" color="#c7ced8">
-                        mdi-image-outline
-                      </v-icon>
-                    </div>
-                    <div class="placeholder-text">Preview {{ slot.title }}</div>
-                  </div>
-                </template>
+              <div class="text-caption text-medium-emphasis mt-1">
+                {{
+                  currentStep === "before"
+                    ? "Dokumentasikan kondisi pasien sebelum tindakan dilakukan."
+                    : "Dokumentasikan hasil pasien setelah tindakan selesai."
+                }}
               </div>
             </div>
-          </v-col>
-        </v-row>
-      </v-card-text>
 
-      <v-divider />
-
-      <!-- ACTION BAR -->
-      <div class="action-bar">
-        <div class="action-bar-left">
-          <span class="action-hint">
-            {{ totalUploadedCount }}/6 foto sudah terupload
-          </span>
-        </div>
-
-        <div class="action-bar-right">
-          <v-btn variant="text" color="secondary" @click="resetCurrentStep">
-            Reset Tahap Ini
-          </v-btn>
-
-          <v-btn
-            v-if="currentStep === 'before'"
-            color="primary"
-            append-icon="mdi-arrow-right"
-            :disabled="!isCurrentStepComplete"
-            @click="setStep('after')"
-          >
-            Lanjut ke After
-          </v-btn>
-
-          <template v-else>
-            <v-btn
-              variant="outlined"
-              color="primary"
-              prepend-icon="mdi-arrow-left"
-              @click="setStep('before')"
+            <v-chip
+              :color="currentUploadedCount === 3 ? 'success' : 'warning'"
+              variant="tonal"
+              size="small"
             >
-              Kembali Before
+              {{ currentUploadedCount }}/3 foto tersedia
+            </v-chip>
+          </div>
+
+          <v-row>
+            <v-col
+              v-for="(slot, index) in currentSlots"
+              :key="slot.key"
+              cols="12"
+              md="4"
+            >
+              <v-card variant="outlined" rounded="lg" class="h-100">
+                <v-card-title
+                  class="d-flex align-center justify-space-between ga-2 py-3"
+                >
+                  <span class="text-subtitle-2 font-weight-bold">
+                    {{ slot.title }}
+                  </span>
+                  <v-chip
+                    :color="slotStatusColor(slot)"
+                    variant="tonal"
+                    size="x-small"
+                  >
+                    {{ slotStatusText(slot) }}
+                  </v-chip>
+                </v-card-title>
+
+                <v-divider />
+
+                <v-img
+                  v-if="slotDisplayUrl(slot)"
+                  :src="slotDisplayUrl(slot)"
+                  :alt="slot.title"
+                  :aspect-ratio="4 / 3"
+                  cover
+                  class="bg-grey-lighten-4"
+                >
+                  <template #placeholder>
+                    <div class="d-flex align-center justify-center fill-height">
+                      <v-progress-circular color="primary" indeterminate />
+                    </div>
+                  </template>
+                </v-img>
+
+                <v-sheet
+                  v-else
+                  :height="260"
+                  class="d-flex flex-column align-center justify-center text-center pa-4 bg-grey-lighten-4"
+                >
+                  <v-icon
+                    :color="slot.previewError ? 'error' : 'grey'"
+                    size="64"
+                  >
+                    {{
+                      slot.previewError
+                        ? "mdi-image-off-outline"
+                        : "mdi-image-outline"
+                    }}
+                  </v-icon>
+                  <div
+                    class="text-body-2 font-weight-medium mt-3"
+                    :class="slot.previewError ? 'text-error' : ''"
+                  >
+                    {{
+                      slot.previewError
+                        ? "Preview foto gagal dimuat"
+                        : `Belum ada ${slot.title}`
+                    }}
+                  </div>
+                </v-sheet>
+
+                <v-card-text>
+                  <v-file-input
+                    :model-value="slot.file ? [slot.file] : []"
+                    :label="slot.persistedPhoto ? 'Ganti foto' : 'Pilih foto'"
+                    accept="image/jpeg,image/png,image/webp"
+                    variant="outlined"
+                    density="comfortable"
+                    prepend-icon="mdi-camera"
+                    clearable
+                    show-size
+                    :disabled="!canEdit || saving"
+                    :rules="photoRules"
+                    @update:model-value="handleFileChange($event, index)"
+                  />
+
+                  <div
+                    v-if="slot.file"
+                    class="d-flex align-start ga-2 text-caption text-primary"
+                  >
+                    <v-icon size="16">mdi-content-save-alert-outline</v-icon>
+                    <span>
+                      {{ slot.file.name }} siap menggantikan foto tersimpan.
+                    </span>
+                  </div>
+
+                  <div
+                    v-else-if="slot.persistedPhoto"
+                    class="d-flex flex-column ga-1 text-caption text-medium-emphasis"
+                  >
+                    <div class="d-flex align-start ga-2">
+                      <v-icon size="16" color="success">
+                        mdi-check-circle-outline
+                      </v-icon>
+                      <span>{{
+                        slot.persistedPhoto.file_name || slot.title
+                      }}</span>
+                    </div>
+                    <div v-if="slot.persistedPhoto.tanggal_upload" class="ml-6">
+                      Diunggah
+                      {{ formatDateTime(slot.persistedPhoto.tanggal_upload) }}
+                    </div>
+                  </div>
+
+                  <div
+                    v-else
+                    class="d-flex align-start ga-2 text-caption text-medium-emphasis"
+                  >
+                    <v-icon size="16">mdi-information-outline</v-icon>
+                    <span>Slot ini wajib diisi sebelum data disimpan.</span>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions
+          class="d-flex flex-column flex-md-row align-md-center justify-space-between ga-3 pa-4"
+        >
+          <div class="text-caption text-medium-emphasis">
+            <span v-if="changedCount">
+              Terdapat {{ changedCount }} foto baru yang belum disimpan.
+            </span>
+            <span v-else-if="isAllComplete">
+              Seluruh foto sudah tersimpan lengkap.
+            </span>
+            <span v-else>
+              Lengkapi seluruh 6 slot foto untuk menyimpan dokumentasi.
+            </span>
+          </div>
+
+          <div class="d-flex flex-wrap justify-end ga-2">
+            <v-btn
+              variant="text"
+              color="secondary"
+              :disabled="!canEdit || saving || currentChangedCount === 0"
+              @click="resetCurrentStep"
+            >
+              Batalkan Perubahan Tahap Ini
+            </v-btn>
+
+            <v-btn
+              v-if="currentStep === 'before'"
+              color="primary"
+              variant="tonal"
+              append-icon="mdi-arrow-right"
+              :disabled="beforeUploadedCount !== 3"
+              @click="currentStep = 'after'"
+            >
+              Lanjut ke After
+            </v-btn>
+
+            <v-btn
+              v-else
+              color="primary"
+              variant="tonal"
+              prepend-icon="mdi-arrow-left"
+              @click="currentStep = 'before'"
+            >
+              Kembali ke Before
             </v-btn>
 
             <v-btn
               color="primary"
               prepend-icon="mdi-content-save"
-              :disabled="!isAllComplete"
+              :loading="saving"
+              :disabled="!canSave"
               @click="saveBeforeAfter"
             >
               Simpan Foto
             </v-btn>
-          </template>
-        </div>
-      </div>
-    </v-card>
-  </div>
+          </div>
+        </v-card-actions>
+      </v-card>
+    </template>
+
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      location="top right"
+      timeout="3500"
+    >
+      {{ snackbar.message }}
+      <template #actions>
+        <v-btn variant="text" @click="snackbar.show = false">Tutup</v-btn>
+      </template>
+    </v-snackbar>
+  </v-container>
 </template>
 
 <script>
-const createSlots = (label) =>
-  [1, 2, 3].map((num) => ({
-    key: `${label.toLowerCase()}-${num}`,
-    title: `${label} ${num}`,
+import antrianPerawatService from "@/services/pelayanan-medis/antrianPerawatService";
+
+const createSlots = (type) =>
+  [1, 2, 3].map((order) => ({
+    key: `${type}-${order}`,
+    type,
+    order,
+    title: `${type === "before" ? "Before" : "After"} ${order}`,
+    persistedPhoto: null,
+    persistedPreviewUrl: "",
     file: null,
-    fileName: "",
-    previewUrl: "",
+    selectedPreviewUrl: "",
+    previewError: false,
   }));
 
 export default {
@@ -292,569 +458,578 @@ export default {
 
   data() {
     return {
+      loading: false,
+      saving: false,
+      errorMessage: "",
+      detail: null,
+      beforeAfterMeta: null,
       currentStep: "before",
-      dragIndex: null,
-
-      patient: {
-        nama_pasien: "ADE RAMADHANA PRATAMA",
-        no_rm: "M20260307001",
-        cabang: "MALANG",
-        dokter: "Dr. Rayi Vialita Poetri",
-        tanggal_kunjungan: "2026-04-20",
-        waktu_kunjungan: "09:00",
-        channel: "Online",
-        treatment: "Facial Barbie Light",
-      },
-
-      beforeSlots: createSlots("Before"),
-      afterSlots: createSlots("After"),
-
-      fileInputRefs: {
-        before: [],
-        after: [],
+      beforeSlots: createSlots("before"),
+      afterSlots: createSlots("after"),
+      snackbar: {
+        show: false,
+        message: "",
+        color: "success",
       },
     };
   },
 
   computed: {
-    patientSummary() {
-      return [
-        { label: "Nama Pasien", value: this.patient.nama_pasien },
-        { label: "No. RM", value: this.patient.no_rm },
-        { label: "Cabang", value: this.patient.cabang },
-        { label: "Dokter", value: this.patient.dokter },
-        { label: "Tanggal Kunjungan", value: this.patient.tanggal_kunjungan },
-        { label: "Waktu Kunjungan", value: this.patient.waktu_kunjungan },
-        { label: "Channel", value: this.patient.channel },
-        { label: "Treatment", value: this.patient.treatment },
-      ];
+    registrationId() {
+      return Number(this.$route.params.id || 0);
+    },
+
+    tasks() {
+      const tasks = this.detail?.tasks || this.detail?.registrasi_tasks || [];
+      return Array.isArray(tasks) ? tasks : [];
+    },
+
+    nurseTask() {
+      return (
+        this.tasks
+          .filter(
+            (task) =>
+              Number(task?.task_type) === 3 &&
+              Number(task?.is_delete || 0) === 0,
+          )
+          .sort(
+            (a, b) => Number(a?.task_order || 0) - Number(b?.task_order || 0),
+          )[0] || null
+      );
+    },
+
+    taskStatus() {
+      return Number(
+        this.beforeAfterMeta?.task_status ??
+          this.detail?.status_task ??
+          this.nurseTask?.status ??
+          -1,
+      );
+    },
+
+    isWaiting() {
+      return this.taskStatus === 0;
+    },
+
+    canEdit() {
+      return Boolean(this.beforeAfterMeta?.editable) && this.taskStatus === 1;
+    },
+
+    isReadOnly() {
+      return this.taskStatus === 2 || this.taskStatus === 9;
+    },
+
+    statusLabel() {
+      const labels = {
+        0: "Menunggu",
+        1: "Sedang Diproses",
+        2: "Selesai",
+        9: "Batal",
+      };
+
+      return labels[this.taskStatus] || "Status Tidak Dikenal";
+    },
+
+    statusColor() {
+      const colors = {
+        0: "warning",
+        1: "primary",
+        2: "success",
+        9: "error",
+      };
+
+      return colors[this.taskStatus] || "grey";
     },
 
     currentSlots() {
       return this.currentStep === "before" ? this.beforeSlots : this.afterSlots;
     },
 
-    currentUploadedCount() {
-      return this.currentSlots.filter((item) => item.previewUrl).length;
-    },
-
     beforeUploadedCount() {
-      return this.beforeSlots.filter((item) => item.previewUrl).length;
+      return this.beforeSlots.filter((slot) => this.slotHasPhoto(slot)).length;
     },
 
     afterUploadedCount() {
-      return this.afterSlots.filter((item) => item.previewUrl).length;
+      return this.afterSlots.filter((slot) => this.slotHasPhoto(slot)).length;
+    },
+
+    currentUploadedCount() {
+      return this.currentSlots.filter((slot) => this.slotHasPhoto(slot)).length;
     },
 
     totalUploadedCount() {
       return this.beforeUploadedCount + this.afterUploadedCount;
     },
 
-    isCurrentStepComplete() {
-      return this.currentSlots.every((item) => !!item.previewUrl);
+    changedCount() {
+      return [...this.beforeSlots, ...this.afterSlots].filter(
+        (slot) => !!slot.file,
+      ).length;
+    },
+
+    currentChangedCount() {
+      return this.currentSlots.filter((slot) => !!slot.file).length;
     },
 
     isAllComplete() {
+      return this.totalUploadedCount === 6;
+    },
+
+    completionPercentage() {
+      return Math.round((this.totalUploadedCount / 6) * 100);
+    },
+
+    canSave() {
       return (
-        this.beforeSlots.every((item) => !!item.previewUrl) &&
-        this.afterSlots.every((item) => !!item.previewUrl)
+        this.canEdit &&
+        !this.saving &&
+        this.isAllComplete &&
+        this.changedCount > 0
       );
+    },
+
+    photoRules() {
+      return [this.validateFile];
+    },
+
+    patientName() {
+      return this.firstValue(
+        this.detail?.nama_pasien,
+        this.detail?.pasien?.nama,
+      );
+    },
+
+    medicalRecordNumber() {
+      return this.firstValue(this.detail?.no_rm, this.detail?.pasien?.no_rm);
+    },
+
+    phoneNumber() {
+      return this.firstValue(
+        this.detail?.no_hp,
+        this.detail?.pasien?.no_hp,
+        this.detail?.pasien?.no_wa,
+      );
+    },
+
+    doctorName() {
+      return this.firstValue(
+        this.detail?.nama_dokter,
+        this.detail?.dokter_awal?.nama,
+        this.detail?.dokterAwal?.nama,
+      );
+    },
+
+    assignedNurseName() {
+      return this.firstValue(
+        this.nurseTask?.assigned_karyawan?.nama,
+        this.nurseTask?.assignedKaryawan?.nama,
+        this.detail?.nama_perawat,
+        this.detail?.perawat_awal?.nama,
+        this.detail?.perawatAwal?.nama,
+      );
+    },
+
+    clinicName() {
+      return this.firstValue(
+        this.detail?.toko?.nama_toko,
+        this.detail?.toko?.nama,
+        this.detail?.nama_toko,
+        this.detail?.klinik,
+      );
+    },
+
+    consultationChannel() {
+      return this.firstValue(
+        this.detail?.jenis_konsultasi_label,
+        this.detail?.channel_konsultasi_label,
+        this.detail?.channel,
+      );
+    },
+
+    treatmentNames() {
+      const details =
+        this.detail?.treatment_details || this.detail?.treatmentDetails || [];
+
+      if (Array.isArray(details) && details.length) {
+        const names = details
+          .filter((item) => Number(item?.is_delete || 0) === 0)
+          .map((item) =>
+            this.firstValue(
+              item?.nama_treatment,
+              item?.treatment?.nama,
+              item?.treatment?.nama_treatment,
+              item?.treatment_toko?.nama_treatment,
+              item?.treatmentToko?.nama_treatment,
+            ),
+          )
+          .filter(Boolean);
+
+        return [...new Set(names)];
+      }
+
+      const fallback = this.detail?.nama_tindakan;
+      return fallback && fallback !== "-" ? [String(fallback)] : [];
+    },
+
+    registrationSummary() {
+      const visitDate = this.formatDate(
+        this.detail?.tanggal_kunjungan || this.detail?.tanggal,
+      );
+      const visitTime = this.firstValue(
+        this.detail?.waktu_kunjungan,
+        this.formatTime(this.detail?.registered_at),
+      );
+
+      return [
+        {
+          label: "No. Registrasi",
+          value: this.firstValue(
+            this.detail?.kode_registrasi,
+            this.detail?.nomor_antrian,
+          ),
+        },
+        { label: "Nama Pasien", value: this.patientName },
+        { label: "No. RM", value: this.medicalRecordNumber },
+        { label: "No. Telepon", value: this.phoneNumber },
+        {
+          label: "Tanggal Kunjungan",
+          value: [visitDate, visitTime].filter(Boolean).join(" • "),
+        },
+        { label: "Klinik", value: this.clinicName },
+        { label: "Dokter", value: this.doctorName },
+        { label: "Perawat", value: this.assignedNurseName },
+        { label: "Channel", value: this.consultationChannel },
+      ];
     },
   },
 
+  watch: {
+    registrationId() {
+      this.fetchPage();
+    },
+  },
+
+  mounted() {
+    this.fetchPage();
+  },
+
+  beforeUnmount() {
+    this.cleanupAllObjectUrls();
+  },
+
   methods: {
-    setStep(step) {
-      this.currentStep = step;
-      this.dragIndex = null;
+    async fetchPage() {
+      if (!this.registrationId) {
+        this.errorMessage = "ID registrasi tidak ditemukan pada URL.";
+        return;
+      }
+
+      this.loading = true;
+      this.errorMessage = "";
+
+      try {
+        const [detailResponse, beforeAfterResponse] = await Promise.all([
+          antrianPerawatService.getById(this.registrationId),
+          antrianPerawatService.getBeforeAfter(this.registrationId),
+        ]);
+
+        this.detail = detailResponse?.data || detailResponse;
+        await this.applyBeforeAfterData(
+          beforeAfterResponse?.data || beforeAfterResponse,
+        );
+      } catch (error) {
+        this.errorMessage = this.getErrorMessage(
+          error,
+          "Detail registrasi atau dokumentasi before-after gagal dimuat.",
+        );
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async applyBeforeAfterData(data) {
+      this.cleanupAllObjectUrls();
+      this.beforeSlots = createSlots("before");
+      this.afterSlots = createSlots("after");
+      this.beforeAfterMeta = data || null;
+
+      const previewJobs = [];
+
+      [
+        { type: "before", photos: data?.before },
+        { type: "after", photos: data?.after },
+      ].forEach(({ type, photos }) => {
+        const targetSlots =
+          type === "before" ? this.beforeSlots : this.afterSlots;
+
+        (Array.isArray(photos) ? photos : []).forEach((photo) => {
+          const index = Number(photo?.urutan || 0) - 1;
+          if (index < 0 || index >= targetSlots.length) return;
+
+          targetSlots[index].persistedPhoto = photo;
+          targetSlots[index].previewError = false;
+          previewJobs.push(
+            this.loadPersistedPreview(targetSlots[index], photo),
+          );
+        });
+      });
+
+      await Promise.allSettled(previewJobs);
+    },
+
+    async loadPersistedPreview(slot, photo) {
+      if (!photo?.id) return;
+
+      try {
+        const blob = await antrianPerawatService.getBeforeAfterPhoto(
+          this.registrationId,
+          photo.id,
+        );
+
+        if (!(blob instanceof Blob)) {
+          throw new Error("Respons foto bukan file gambar.");
+        }
+
+        slot.persistedPreviewUrl = URL.createObjectURL(blob);
+        slot.previewError = false;
+      } catch (error) {
+        slot.persistedPreviewUrl = "";
+        slot.previewError = true;
+      }
+    },
+
+    handleFileChange(value, index) {
+      const file = this.normalizeFile(value);
+      const targetSlots =
+        this.currentStep === "before" ? this.beforeSlots : this.afterSlots;
+      const slot = targetSlots[index];
+
+      if (!slot) return;
+
+      if (!file) {
+        this.clearSelectedFile(slot);
+        return;
+      }
+
+      const validation = this.validateFile(file);
+      if (validation !== true) {
+        this.showSnackbar(validation, "error");
+        this.clearSelectedFile(slot);
+        return;
+      }
+
+      if (slot.selectedPreviewUrl) {
+        URL.revokeObjectURL(slot.selectedPreviewUrl);
+      }
+
+      slot.file = file;
+      slot.selectedPreviewUrl = URL.createObjectURL(file);
+      slot.previewError = false;
+    },
+
+    normalizeFile(value) {
+      if (Array.isArray(value)) return value[0] || null;
+      return value instanceof File ? value : null;
+    },
+
+    validateFile(value) {
+      const file = this.normalizeFile(value) || value;
+      if (!file) return true;
+
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+      if (!allowedTypes.includes(file.type)) {
+        return "File harus berformat JPG, JPEG, PNG, atau WEBP.";
+      }
+
+      if (Number(file.size || 0) > 5 * 1024 * 1024) {
+        return "Ukuran file maksimal 5 MB.";
+      }
+
+      return true;
+    },
+
+    clearSelectedFile(slot) {
+      if (slot.selectedPreviewUrl) {
+        URL.revokeObjectURL(slot.selectedPreviewUrl);
+      }
+
+      slot.file = null;
+      slot.selectedPreviewUrl = "";
+      slot.previewError = Boolean(
+        slot.persistedPhoto && !slot.persistedPreviewUrl,
+      );
+    },
+
+    resetCurrentStep() {
+      this.currentSlots.forEach((slot) => this.clearSelectedFile(slot));
+    },
+
+    slotHasPhoto(slot) {
+      return Boolean(slot?.file || slot?.persistedPhoto);
+    },
+
+    slotDisplayUrl(slot) {
+      return slot?.selectedPreviewUrl || slot?.persistedPreviewUrl || "";
+    },
+
+    slotStatusText(slot) {
+      if (slot?.file) return "Belum Disimpan";
+      if (slot?.persistedPhoto) return "Tersimpan";
+      return "Wajib Diisi";
+    },
+
+    slotStatusColor(slot) {
+      if (slot?.file) return "warning";
+      if (slot?.persistedPhoto) return "success";
+      return "error";
+    },
+
+    async saveBeforeAfter() {
+      if (!this.canEdit || this.saving) return;
+
+      if (!this.isAllComplete) {
+        this.showSnackbar(
+          "Lengkapi 3 foto Before dan 3 foto After sebelum menyimpan.",
+          "error",
+        );
+        return;
+      }
+
+      if (!this.changedCount) {
+        this.showSnackbar(
+          "Tidak ada perubahan foto untuk disimpan.",
+          "warning",
+        );
+        return;
+      }
+
+      const formData = new FormData();
+
+      [...this.beforeSlots, ...this.afterSlots].forEach((slot) => {
+        if (slot.file instanceof File) {
+          formData.append(`${slot.type}_${slot.order}`, slot.file);
+        }
+      });
+
+      this.saving = true;
+      this.errorMessage = "";
+
+      try {
+        const response = await antrianPerawatService.saveBeforeAfter(
+          this.registrationId,
+          formData,
+        );
+
+        this.showSnackbar(
+          response?.message || "Foto before dan after berhasil disimpan.",
+          "success",
+        );
+
+        await this.$router.push({
+          path: "/pelayanan-medis/antrian-perawat",
+        });
+      } catch (error) {
+        const message = this.getErrorMessage(
+          error,
+          "Foto before dan after gagal disimpan.",
+        );
+
+        this.errorMessage = message;
+        this.showSnackbar(message, "error");
+      } finally {
+        this.saving = false;
+      }
+    },
+
+    cleanupAllObjectUrls() {
+      [...this.beforeSlots, ...this.afterSlots].forEach((slot) => {
+        if (slot.persistedPreviewUrl) {
+          URL.revokeObjectURL(slot.persistedPreviewUrl);
+        }
+
+        if (slot.selectedPreviewUrl) {
+          URL.revokeObjectURL(slot.selectedPreviewUrl);
+        }
+      });
+    },
+
+    firstValue(...values) {
+      const value = values.find(
+        (item) =>
+          item !== null && item !== undefined && String(item).trim().length > 0,
+      );
+
+      return value === undefined ? "" : String(value);
+    },
+
+    formatDate(value) {
+      if (!value) return "";
+
+      const raw = String(value).slice(0, 10);
+      const date = new Date(`${raw}T00:00:00`);
+      if (Number.isNaN(date.getTime())) return raw;
+
+      return new Intl.DateTimeFormat("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }).format(date);
+    },
+
+    formatTime(value) {
+      if (!value) return "";
+
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        const match = String(value).match(/(\d{2}):(\d{2})/);
+        return match ? `${match[1]}:${match[2]}` : "";
+      }
+
+      return new Intl.DateTimeFormat("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).format(date);
+    },
+
+    formatDateTime(value) {
+      if (!value) return "-";
+
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+
+      return new Intl.DateTimeFormat("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).format(date);
+    },
+
+    getErrorMessage(error, fallback = "Terjadi kesalahan.") {
+      const errors = error?.response?.data?.errors;
+
+      if (errors && typeof errors === "object") {
+        const firstError = Object.values(errors).flat().find(Boolean);
+        if (firstError) return String(firstError);
+      }
+
+      return error?.response?.data?.message || error?.message || fallback;
+    },
+
+    showSnackbar(message, color = "success") {
+      this.snackbar = {
+        show: true,
+        message,
+        color,
+      };
     },
 
     goBack() {
       this.$router.back();
     },
-
-    setFileInputRef(index) {
-      return (el) => {
-        if (!this.fileInputRefs[this.currentStep]) {
-          this.fileInputRefs[this.currentStep] = [];
-        }
-        this.fileInputRefs[this.currentStep][index] = el;
-      };
-    },
-
-    openPicker(index) {
-      const input = this.fileInputRefs[this.currentStep]?.[index];
-      if (input) input.click();
-    },
-
-    handleDragOver(index) {
-      this.dragIndex = index;
-    },
-
-    handleDragLeave() {
-      this.dragIndex = null;
-    },
-
-    handleDrop(event, index) {
-      this.dragIndex = null;
-      const file = event.dataTransfer.files?.[0];
-      if (file) {
-        this.setFileToSlot(file, index);
-      }
-    },
-
-    handleFileChange(event, index) {
-      const file = event.target.files?.[0];
-      if (file) {
-        this.setFileToSlot(file, index);
-      }
-
-      event.target.value = "";
-    },
-
-    setFileToSlot(file, index) {
-      if (!file.type.startsWith("image/")) {
-        alert("File harus berupa gambar.");
-        return;
-      }
-
-      const targetSlots =
-        this.currentStep === "before" ? this.beforeSlots : this.afterSlots;
-
-      const oldPreview = targetSlots[index].previewUrl;
-      if (oldPreview) {
-        URL.revokeObjectURL(oldPreview);
-      }
-
-      const previewUrl = URL.createObjectURL(file);
-
-      targetSlots[index] = {
-        ...targetSlots[index],
-        file,
-        fileName: file.name,
-        previewUrl,
-      };
-    },
-
-    removeImage(index) {
-      const targetSlots =
-        this.currentStep === "before" ? this.beforeSlots : this.afterSlots;
-
-      if (targetSlots[index].previewUrl) {
-        URL.revokeObjectURL(targetSlots[index].previewUrl);
-      }
-
-      targetSlots[index] = {
-        ...targetSlots[index],
-        file: null,
-        fileName: "",
-        previewUrl: "",
-      };
-    },
-
-    resetCurrentStep() {
-      const targetSlots =
-        this.currentStep === "before" ? this.beforeSlots : this.afterSlots;
-
-      targetSlots.forEach((item) => {
-        if (item.previewUrl) {
-          URL.revokeObjectURL(item.previewUrl);
-        }
-      });
-
-      if (this.currentStep === "before") {
-        this.beforeSlots = createSlots("Before");
-      } else {
-        this.afterSlots = createSlots("After");
-      }
-    },
-
-    saveBeforeAfter() {
-      const payload = {
-        before: this.beforeSlots.map((item, index) => ({
-          urutan: index + 1,
-          title: item.title,
-          file: item.file,
-          fileName: item.fileName,
-        })),
-        after: this.afterSlots.map((item, index) => ({
-          urutan: index + 1,
-          title: item.title,
-          file: item.file,
-          fileName: item.fileName,
-        })),
-      };
-
-      console.log("payload before after:", payload);
-
-      // Contoh:
-      // const formData = new FormData();
-      // this.beforeSlots.forEach((item, i) => formData.append(`before_${i + 1}`, item.file));
-      // this.afterSlots.forEach((item, i) => formData.append(`after_${i + 1}`, item.file));
-      // this.$axios.post('/before-after/store', formData);
-    },
-  },
-
-  beforeUnmount() {
-    [...this.beforeSlots, ...this.afterSlots].forEach((item) => {
-      if (item.previewUrl) {
-        URL.revokeObjectURL(item.previewUrl);
-      }
-    });
   },
 };
 </script>
-
-<style scoped>
-.before-after-page {
-  padding: 4px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  color: #172b4d;
-  line-height: 1.2;
-}
-
-.page-subtitle {
-  margin: 6px 0 0;
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.section-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.section-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: #172b4d;
-  line-height: 1.2;
-}
-
-.section-subtitle {
-  margin-top: 4px;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.summary-box {
-  border: 1px solid #e5e7eb;
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 14px 14px 12px;
-  height: 100%;
-}
-
-.summary-label {
-  font-size: 12px;
-  color: #64748b;
-  margin-bottom: 8px;
-}
-
-.summary-value {
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.4;
-  word-break: break-word;
-}
-
-.form-card-title {
-  padding: 18px 20px;
-  font-size: 18px;
-  font-weight: 700;
-  color: #172b4d;
-}
-
-.step-switch {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.step-card {
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  border-radius: 14px;
-  padding: 16px;
-  text-align: left;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.step-card:hover {
-  border-color: #cfd8e6;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
-}
-
-.step-card.active {
-  border-color: #bfdbfe;
-  background: #f8fbff;
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.08);
-}
-
-.step-card-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.step-badge {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: #e8f1ff;
-  color: #2563eb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.step-text-wrap {
-  min-width: 0;
-}
-
-.step-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #172b4d;
-  line-height: 1.2;
-}
-
-.step-subtitle {
-  margin-top: 4px;
-  font-size: 13px;
-  color: #64748b;
-}
-
-.step-hint {
-  margin-top: 10px;
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.current-step-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.soap-title-wrap {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.soap-badge {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: #e8f1ff;
-  color: #2563eb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.photo-badge {
-  background: #f3e8ff;
-  color: #9333ea;
-}
-
-.soap-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #172b4d;
-  line-height: 1.2;
-}
-
-.soap-subtitle {
-  margin-top: 2px;
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.upload-slot-card {
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  border-radius: 14px;
-  padding: 16px;
-  height: 100%;
-}
-
-.upload-slot-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-}
-
-.upload-slot-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #172b4d;
-}
-
-.drop-zone {
-  border: 2px dashed #cbd5e1;
-  border-radius: 14px;
-  padding: 14px;
-  background: #fbfdff;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-bottom: 16px;
-}
-
-.drop-zone:hover,
-.drop-zone.dragging {
-  border-color: #7aa6ff;
-  background: #f4f8ff;
-}
-
-.drop-zone-inner {
-  min-height: 54px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  text-align: center;
-  color: #334155;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 0 8px;
-}
-
-.file-name {
-  color: #2563eb;
-  word-break: break-word;
-}
-
-.preview-frame {
-  position: relative;
-  min-height: 240px;
-  border: 1px solid #d9e1ea;
-  border-radius: 14px;
-  overflow: hidden;
-  background: linear-gradient(180deg, #fafafa 0%, #f1f4f8 100%);
-}
-
-.preview-image {
-  width: 100%;
-  height: 240px;
-  object-fit: cover;
-  display: block;
-}
-
-.preview-actions {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-}
-
-.preview-placeholder {
-  min-height: 240px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  color: #94a3b8;
-  padding: 16px;
-}
-
-.placeholder-avatar {
-  width: 112px;
-  height: 112px;
-  border-radius: 999px;
-  background: #f8fafc;
-  border: 1px dashed #d6dde8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.placeholder-text {
-  font-size: 14px;
-  font-weight: 700;
-  text-align: center;
-}
-
-.action-bar {
-  padding: 16px 20px;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-  background: #fff;
-}
-
-.action-bar-left {
-  display: flex;
-  align-items: center;
-}
-
-.action-bar-right {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.action-hint {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-@media (max-width: 960px) {
-  .page-title {
-    font-size: 22px;
-  }
-
-  .step-switch {
-    grid-template-columns: 1fr;
-  }
-
-  .preview-frame,
-  .preview-placeholder,
-  .preview-image {
-    min-height: 220px;
-    height: 220px;
-  }
-
-  .action-bar {
-    align-items: stretch;
-  }
-
-  .action-bar-right {
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
-</style>

@@ -11,6 +11,36 @@ export default {
     return api.get(`${BASE_URL}/${id}`).then((response) => response.data);
   },
 
+  getBeforeAfter(id) {
+    return api
+      .get(`${BASE_URL}/${id}/before-after`)
+      .then((response) => response.data);
+  },
+
+  getBeforeAfterPhoto(id, photoId) {
+    return api
+      .get(`${BASE_URL}/${id}/before-after/photo/${photoId}`, {
+        responseType: "blob",
+      })
+      .then((response) => response.data);
+  },
+
+  saveBeforeAfter(id, formData) {
+    if (!(formData instanceof FormData)) {
+      return Promise.reject(
+        new TypeError("Payload before-after harus berupa FormData."),
+      );
+    }
+
+    return api
+      .post(`${BASE_URL}/${id}/before-after`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      .then((response) => response.data);
+  },
+
   start(id) {
     return api
       .post(`${BASE_URL}/${id}/start`)
