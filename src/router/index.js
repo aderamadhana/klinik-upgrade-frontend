@@ -7,6 +7,7 @@ import resepsionisRoutes from "./modules/resepsionis";
 import masterRoutes from "./modules/master";
 import kasirRoutes from "./modules/kasir";
 import pelayananMedisRoutes from "./modules/pelayanan-medis";
+import farmasiRoutes from "./modules/farmasi";
 
 const routes = [
   ...masterRoutes,
@@ -14,6 +15,7 @@ const routes = [
   ...resepsionisRoutes,
   ...kasirRoutes,
   ...pelayananMedisRoutes,
+  ...farmasiRoutes,
   {
     path: "/",
     redirect: "/login",
