@@ -13,6 +13,18 @@ export default {
       .then((response) => response.data);
   },
 
+  getHistory(params = {}) {
+    return api
+      .get("/farmasi/riwayat-resep", { params })
+      .then((response) => response.data);
+  },
+
+  getHistoryPetugas(params = {}) {
+    return api
+      .get("/farmasi/riwayat-resep/petugas", { params })
+      .then((response) => response.data);
+  },
+
   print(id, params = {}) {
     return api
       .get(`${BASE_URL}/${id}/print`, {

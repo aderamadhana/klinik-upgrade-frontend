@@ -1,21 +1,22 @@
 <template>
-  <div class="patient-history-page">
-    <!-- HEADER -->
-    <div class="page-header history-page-header">
+  <div class="pa-4 pa-md-6">
+    <div
+      class="d-flex flex-column flex-md-row justify-space-between align-start ga-4 mb-4"
+    >
       <div>
         <div class="d-flex align-center ga-2 mb-2">
           <v-btn
             icon="mdi-arrow-left"
             variant="text"
             size="small"
-            :to="{ path: '/master/pasien' }"
+            :to="{ name: 'Master Pasien' }"
           />
-          <div class="text-caption text-medium-emphasis">Master Pasien</div>
+          <span class="text-caption text-medium-emphasis">Master Pasien</span>
         </div>
-
-        <h1 class="page-title">Riwayat Pasien</h1>
-        <p class="page-subtitle">
-          Ringkasan identitas, benefit, dan riwayat kunjungan pasien
+        <h1 class="text-h5 text-md-h4 font-weight-bold mb-1">Riwayat Pasien</h1>
+        <p class="text-body-2 text-medium-emphasis mb-0">
+          Identitas, membership, saldo, catatan medis, tindakan, obat, dan
+          transaksi pasien.
         </p>
       </div>
 
@@ -27,25 +28,42 @@
       type="error"
       variant="tonal"
       border="start"
-      class="mb-4"
       closable
+      class="mb-4"
       @click:close="errorMessage = ''"
     >
       {{ errorMessage }}
     </v-alert>
 
-    <v-card class="main-card mb-4 overflow-hidden" variant="outlined">
+    <v-alert
+      v-if="importantWarnings.length"
+      type="warning"
+      variant="tonal"
+      border="start"
+      class="mb-4"
+    >
+      <div class="font-weight-bold mb-1">Data pasien perlu diperhatikan</div>
+      <div class="text-body-2">
+        {{ importantWarnings.join(" • ") }}
+      </div>
+    </v-alert>
+
+    <v-card variant="outlined" rounded="lg" class="mb-4">
       <v-progress-linear v-if="loading" indeterminate color="primary" />
 
       <v-card-text class="pa-4 pa-md-5">
-        <div class="hero-layout">
-          <div class="hero-profile">
-            <v-avatar color="primary" size="64" class="hero-avatar">
-              <span>{{ patientInitial }}</span>
+        <div
+          class="d-flex flex-column flex-lg-row justify-space-between align-start ga-5"
+        >
+          <div
+            class="d-flex flex-column flex-sm-row align-start ga-4 flex-grow-1"
+          >
+            <v-avatar color="primary" size="72">
+              <span class="text-h6 font-weight-bold">{{ patientInitial }}</span>
             </v-avatar>
 
-            <div class="hero-content">
-              <div class="patient-chip-row mb-2">
+            <div class="flex-grow-1">
+              <div class="d-flex flex-wrap align-center ga-2 mb-2">
                 <v-chip size="small" color="primary" variant="tonal">
                   {{ patient.noRm }}
                 </v-chip>
@@ -56,53 +74,76 @@
                 >
                   {{ patient.gender }}
                 </v-chip>
-                <v-chip size="small" color="grey" variant="tonal">
-                  {{ patient.kategori }}
+                <v-chip
+                  size="small"
+                  :color="patient.member.isMember ? 'success' : 'grey'"
+                  variant="tonal"
+                >
+                  {{ patient.member.isMember ? "Member" : "Non Member" }}
+                </v-chip>
+                <v-chip
+                  v-if="currentTierName !== '-'"
+                  size="small"
+                  color="amber-darken-2"
+                  variant="tonal"
+                  prepend-icon="mdi-crown-outline"
+                >
+                  {{ currentTierName }}
                 </v-chip>
               </div>
 
-              <div class="patient-name-main">
+              <div class="text-h5 font-weight-bold text-high-emphasis">
                 {{ patient.name }}
               </div>
 
-              <div class="patient-subtitle-main">
+              <div class="text-body-2 text-medium-emphasis mt-1">
                 {{ patient.birthPlace }}, {{ formatDate(patient.birthDate) }}
-                <span v-if="patient.age !== '-'"
-                  >• {{ patient.age }} tahun</span
+                <span v-if="patient.age !== '-'">
+                  • {{ patient.age }} tahun</span
                 >
               </div>
 
-              <div class="patient-meta-line mt-3">
-                <div class="meta-inline-item">
-                  <v-icon icon="mdi-phone" size="16" />
-                  <span>{{ patient.phone }}</span>
-                </div>
-                <div class="meta-inline-item">
-                  <v-icon icon="mdi-map-marker-outline" size="16" />
-                  <span>{{ patient.address }}</span>
-                </div>
+              <div
+                class="d-flex flex-wrap ga-4 mt-3 text-body-2 text-medium-emphasis"
+              >
+                <span class="d-flex align-center ga-1">
+                  <v-icon icon="mdi-phone-outline" size="17" />
+                  {{ patient.phone }}
+                </span>
+                <span class="d-flex align-center ga-1">
+                  <v-icon icon="mdi-map-marker-outline" size="17" />
+                  {{ patient.address }}
+                </span>
               </div>
             </div>
           </div>
 
-          <div class="hero-actions">
+          <div class="d-flex flex-wrap justify-start justify-lg-end ga-2">
             <v-btn
               color="primary"
+              variant="flat"
               prepend-icon="mdi-clipboard-text-outline"
-              class="action-btn-clean"
               :to="{ name: 'Pengkajian Pasien', params: { id: patient.id } }"
             >
               Pengkajian Awal
             </v-btn>
 
             <v-btn
-              variant="outlined"
               color="primary"
+              variant="outlined"
               prepend-icon="mdi-wallet-outline"
-              class="action-btn-clean"
               :to="{ name: 'Saldo Deposit', params: { id: patient.id } }"
             >
               Saldo Deposit
+            </v-btn>
+
+            <v-btn
+              color="deep-purple"
+              variant="tonal"
+              prepend-icon="mdi-image-multiple-outline"
+              @click="openBeforeAfterDialog"
+            >
+              Foto Before After
             </v-btn>
 
             <v-menu location="bottom end">
@@ -110,34 +151,37 @@
                 <v-btn
                   v-bind="props"
                   variant="tonal"
-                  color="grey"
                   prepend-icon="mdi-dots-horizontal"
-                  class="action-btn-clean"
                 >
                   Aksi Lainnya
                 </v-btn>
               </template>
 
-              <v-list density="comfortable" min-width="250">
+              <v-list density="comfortable" min-width="260">
                 <v-list-item
                   prepend-icon="mdi-card-account-details"
-                  title="Cetak Kartu Depan"
-                  @click="handlePrintFrontCard"
+                  title="Kartu Member Depan"
+                  @click="openMemberCard('front')"
                 />
                 <v-list-item
                   prepend-icon="mdi-card-account-details-outline"
-                  title="Cetak Kartu Belakang"
-                  @click="handlePrintBackCard"
+                  title="Kartu Member Belakang"
+                  @click="openMemberCard('back')"
                 />
                 <v-list-item
                   prepend-icon="mdi-printer-outline"
                   title="Cetak Label Rekam Medis"
-                  @click="handlePrintRmLabel"
+                  @click="printRmLabel"
                 />
                 <v-list-item
                   prepend-icon="mdi-face-recognition"
                   title="Skin Analyzer"
-                  @click="handleSkinAnalyzer"
+                  @click="openSkinAnalyzer"
+                />
+                <v-list-item
+                  prepend-icon="mdi-map-marker-outline"
+                  title="Alamat Pengiriman"
+                  @click="shippingAddressDialog = true"
                 />
               </v-list>
             </v-menu>
@@ -146,228 +190,405 @@
       </v-card-text>
     </v-card>
 
-    <v-row class="mb-4" dense>
-      <v-col cols="12" sm="6" lg="3">
-        <v-card class="metric-card" variant="outlined">
+    <v-row dense class="mb-4">
+      <v-col cols="12" sm="6" lg="4" xl="2">
+        <v-card variant="outlined" rounded="lg" height="100%">
           <v-card-text>
-            <div class="metric-icon bg-blue-soft">
-              <v-icon icon="mdi-calendar-check-outline" size="22" />
+            <div class="d-flex align-center justify-space-between mb-3">
+              <span class="text-caption text-medium-emphasis font-weight-bold">
+                TOTAL KUNJUNGAN
+              </span>
+              <v-icon icon="mdi-calendar-check-outline" color="primary" />
             </div>
-            <div class="metric-label">Total Kunjungan</div>
-            <div class="metric-value">{{ formatNumber(totalKunjungan) }}</div>
-            <div class="metric-subtitle">Kunjungan tercatat</div>
+            <div class="text-h5 font-weight-bold">
+              {{ formatNumber(summary.totalKunjungan) }}
+            </div>
+            <div class="text-caption text-medium-emphasis mt-1">
+              Seluruh registrasi pasien
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
 
-      <v-col cols="12" sm="6" lg="3">
-        <v-card class="metric-card" variant="outlined">
+      <v-col cols="12" sm="6" lg="4" xl="2">
+        <v-card variant="outlined" rounded="lg" height="100%">
           <v-card-text>
-            <div class="metric-icon bg-green-soft">
-              <v-icon icon="mdi-star-circle-outline" size="22" />
+            <div class="d-flex align-center justify-space-between mb-3">
+              <span class="text-caption text-medium-emphasis font-weight-bold">
+                TOTAL TRANSAKSI
+              </span>
+              <v-icon icon="mdi-cash-multiple" color="success" />
             </div>
-            <div class="metric-label">Poin Pasien</div>
-            <div class="metric-value">{{ formatNumber(patient.points) }}</div>
-            <div class="metric-subtitle">
+            <div class="text-h6 font-weight-bold">
+              {{ formatCurrency(summary.totalTransaksi) }}
+            </div>
+            <div class="text-caption text-medium-emphasis mt-1">
+              Invoice lunas
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" lg="4" xl="2">
+        <v-card variant="outlined" rounded="lg" height="100%">
+          <v-card-text>
+            <div class="d-flex align-center justify-space-between mb-3">
+              <span class="text-caption text-medium-emphasis font-weight-bold">
+                POIN PASIEN
+              </span>
+              <v-icon icon="mdi-star-circle-outline" color="amber-darken-2" />
+            </div>
+            <div class="text-h5 font-weight-bold">
+              {{ formatNumber(patient.points) }}
+            </div>
+            <div class="text-caption text-medium-emphasis mt-1">
               Nilai {{ formatCurrency(patient.pointsValue) }}
             </div>
           </v-card-text>
         </v-card>
       </v-col>
 
-      <v-col cols="12" sm="6" lg="3">
-        <v-card class="metric-card" variant="outlined">
+      <v-col cols="12" sm="6" lg="4" xl="2">
+        <v-card variant="outlined" rounded="lg" height="100%">
           <v-card-text>
-            <div class="metric-icon bg-purple-soft">
-              <v-icon icon="mdi-wallet-outline" size="22" />
+            <div class="d-flex align-center justify-space-between mb-3">
+              <span class="text-caption text-medium-emphasis font-weight-bold">
+                SALDO DEPOSIT
+              </span>
+              <v-icon icon="mdi-wallet-outline" color="deep-purple" />
             </div>
-            <div class="metric-label">Saldo Deposit</div>
-            <div class="metric-value metric-currency">
-              {{ formatCurrency(patient.depositBalance) }}
+            <div class="text-h6 font-weight-bold">
+              {{ formatCurrency(summary.depositBalance) }}
             </div>
-            <div class="metric-subtitle">Sisa saldo aktif</div>
+            <div class="text-caption text-medium-emphasis mt-1">
+              {{ formatQty(summary.depositQty) }} treatment tersisa
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
 
-      <v-col cols="12" sm="6" lg="3">
-        <v-card class="metric-card" variant="outlined">
+      <v-col cols="12" sm="6" lg="4" xl="2">
+        <v-card variant="outlined" rounded="lg" height="100%">
           <v-card-text>
-            <div class="metric-icon bg-orange-soft">
-              <v-icon icon="mdi-clock-outline" size="22" />
+            <div class="d-flex align-center justify-space-between mb-3">
+              <span class="text-caption text-medium-emphasis font-weight-bold">
+                TRANSAKSI HARI INI
+              </span>
+              <v-icon icon="mdi-calendar-today-outline" color="info" />
             </div>
-            <div class="metric-label">Kunjungan Terakhir</div>
-            <div class="metric-value metric-date">
-              {{ formatDate(lastVisitDate) }}
+            <div class="text-h6 font-weight-bold">
+              {{ formatCurrency(todayTransactionValue) }}
             </div>
-            <div class="metric-subtitle">Berdasarkan riwayat terbaru</div>
+            <div class="text-caption text-medium-emphasis mt-1">
+              {{ todayTransactions.length }} transaksi
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" lg="4" xl="2">
+        <v-card variant="outlined" rounded="lg" height="100%">
+          <v-card-text>
+            <div class="d-flex align-center justify-space-between mb-3">
+              <span class="text-caption text-medium-emphasis font-weight-bold">
+                KUNJUNGAN TERAKHIR
+              </span>
+              <v-icon icon="mdi-clock-outline" color="orange-darken-2" />
+            </div>
+            <div class="text-body-1 font-weight-bold">
+              {{ formatDate(summary.lastVisitDate) }}
+            </div>
+            <div class="text-caption text-medium-emphasis mt-1">
+              {{ summary.lastVisitAt || "Belum ada waktu kunjungan" }}
+            </div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
-    <v-alert
-      v-if="importantWarnings.length"
-      class="mb-4"
-      type="warning"
-      variant="tonal"
-      border="start"
-    >
-      <div class="font-weight-bold mb-1">Perlu perhatian</div>
-      <div class="text-body-2">
-        {{ importantWarnings.join(" • ") }}
-      </div>
-    </v-alert>
-
-    <v-row class="mb-4" dense>
+    <v-row dense class="mb-4">
       <v-col cols="12" lg="4">
-        <v-card class="info-card fill-height" variant="outlined">
-          <v-card-title class="info-card-title">
-            <v-icon icon="mdi-account-box-outline" size="20" />
+        <v-card variant="outlined" rounded="lg" height="100%">
+          <v-card-title
+            class="d-flex align-center ga-2 text-subtitle-1 font-weight-bold"
+          >
+            <v-icon icon="mdi-account-box-outline" size="21" />
             Data Utama
           </v-card-title>
-          <v-card-text class="pt-0">
-            <div class="info-row">
-              <span>NIK</span>
-              <strong>{{ patient.nik }}</strong>
-            </div>
-            <div class="info-row">
-              <span>Nomor IHS</span>
-              <strong>{{ patient.ihsNumber || "-" }}</strong>
-            </div>
-            <div class="info-row">
-              <span>Agama</span>
-              <strong>{{ patient.religion }}</strong>
-            </div>
-            <div class="info-row">
-              <span>Pekerjaan</span>
-              <strong>{{ patient.job }}</strong>
-            </div>
-            <div class="info-row">
-              <span>Status Pernikahan</span>
-              <strong>{{ patient.maritalStatus }}</strong>
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="12" lg="4">
-        <v-card class="info-card fill-height" variant="outlined">
-          <v-card-title class="info-card-title">
-            <v-icon icon="mdi-card-account-phone-outline" size="20" />
-            Kontak & Alamat
-          </v-card-title>
-          <v-card-text class="pt-0">
-            <div class="info-row">
-              <span>No. HP</span>
-              <strong>{{ patient.phone }}</strong>
-            </div>
-            <div class="info-address-box">
-              <div class="info-address-label">Alamat Utama</div>
-              <div class="info-address-value">{{ patient.address }}</div>
-            </div>
-            <v-btn
-              block
-              size="small"
-              variant="tonal"
-              color="success"
-              prepend-icon="mdi-map-marker-outline"
-              class="mt-3 action-btn-clean"
-              @click="shippingAddressDialog = true"
-            >
-              Lihat Alamat Pengiriman
-            </v-btn>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="12" lg="4">
-        <v-card class="info-card fill-height" variant="outlined">
-          <v-card-title class="info-card-title">
-            <v-icon icon="mdi-shield-check-outline" size="20" />
-            Status Data
-          </v-card-title>
-          <v-card-text class="pt-0">
-            <div class="status-list">
-              <div class="status-item">
-                <div>
-                  <div class="status-title">Validasi NIK</div>
-                  <div class="status-subtitle">
-                    {{
-                      patient.nikInvalid
-                        ? "Perlu diperbaiki"
-                        : "Format sudah sesuai"
-                    }}
-                  </div>
-                </div>
+          <v-divider />
+          <v-list density="compact" lines="two">
+            <v-list-item title="NIK" :subtitle="patient.nik">
+              <template #append>
                 <v-chip
-                  size="small"
+                  size="x-small"
                   :color="patient.nikInvalid ? 'error' : 'success'"
                   variant="tonal"
                 >
-                  {{ patient.nikInvalid ? "Invalid" : "Valid" }}
+                  {{ patient.nikInvalid ? "Tidak valid" : "Valid" }}
                 </v-chip>
-              </div>
-
-              <div class="status-item">
-                <div>
-                  <div class="status-title">Nomor IHS</div>
-                  <div class="status-subtitle">
-                    {{
-                      patient.ihsNumber ? "Sudah tersedia" : "Belum tersedia"
-                    }}
-                  </div>
-                </div>
+              </template>
+            </v-list-item>
+            <v-list-item
+              title="Nomor IHS"
+              :subtitle="patient.ihsNumber || 'Belum tersedia'"
+            >
+              <template #append>
                 <v-chip
-                  size="small"
+                  size="x-small"
                   :color="patient.ihsNumber ? 'success' : 'warning'"
                   variant="tonal"
                 >
                   {{ patient.ihsNumber ? "Terhubung" : "Belum" }}
                 </v-chip>
-              </div>
+              </template>
+            </v-list-item>
+            <v-list-item title="Agama" :subtitle="patient.religion" />
+            <v-list-item title="Pekerjaan" :subtitle="patient.job" />
+            <v-list-item
+              title="Status Pernikahan"
+              :subtitle="patient.maritalStatus"
+            />
+          </v-list>
+        </v-card>
+      </v-col>
 
-              <div class="status-item">
-                <div>
-                  <div class="status-title">Kategori Pasien</div>
-                  <div class="status-subtitle">
-                    Status / tipe pasien saat ini
-                  </div>
-                </div>
-                <v-chip size="small" color="primary" variant="tonal">
-                  {{ patient.kategori }}
-                </v-chip>
-              </div>
-            </div>
+      <v-col cols="12" lg="4">
+        <v-card variant="outlined" rounded="lg" height="100%">
+          <v-card-title
+            class="d-flex align-center ga-2 text-subtitle-1 font-weight-bold"
+          >
+            <v-icon icon="mdi-card-account-phone-outline" size="21" />
+            Kontak & Alamat
+          </v-card-title>
+          <v-divider />
+          <v-list density="compact" lines="two">
+            <v-list-item title="Nomor HP" :subtitle="patient.phone" />
+            <v-list-item title="Nomor WhatsApp" :subtitle="patient.whatsapp" />
+            <v-list-item title="Nomor Telepon" :subtitle="patient.telephone" />
+            <v-list-item title="Email" :subtitle="patient.email" />
+            <v-list-item title="Alamat Utama" :subtitle="patient.address" />
+          </v-list>
+          <v-card-actions class="px-4 pb-4">
+            <v-btn
+              block
+              color="success"
+              variant="tonal"
+              prepend-icon="mdi-map-marker-outline"
+              @click="shippingAddressDialog = true"
+            >
+              Lihat Alamat Pengiriman
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" lg="4">
+        <v-card variant="outlined" rounded="lg" height="100%">
+          <v-card-title class="d-flex align-center justify-space-between ga-2">
+            <span
+              class="d-flex align-center ga-2 text-subtitle-1 font-weight-bold"
+            >
+              <v-icon icon="mdi-crown-outline" size="21" />
+              Membership & Tier
+            </span>
+            <v-btn
+              size="small"
+              variant="text"
+              color="primary"
+              prepend-icon="mdi-history"
+              :disabled="tierLoading"
+              @click="tierHistoryDialog = true"
+            >
+              Riwayat
+            </v-btn>
+          </v-card-title>
+          <v-divider />
+
+          <v-progress-linear v-if="tierLoading" indeterminate color="primary" />
+
+          <v-alert
+            v-if="tierError"
+            type="error"
+            variant="tonal"
+            density="compact"
+            border="start"
+            class="ma-4 mb-0"
+          >
+            {{ tierError }}
+          </v-alert>
+
+          <template v-if="patient.member.isMember">
+            <v-list density="compact" lines="two">
+              <v-list-item
+                title="Nomor Member"
+                :subtitle="patient.member.noMember"
+              />
+              <v-list-item title="Tier Saat Ini" :subtitle="currentTierName">
+                <template #append>
+                  <v-chip
+                    size="x-small"
+                    :color="
+                      tierState.member?.tier_mode === 'manual'
+                        ? 'warning'
+                        : 'success'
+                    "
+                    variant="tonal"
+                  >
+                    {{ tierState.member?.tier_mode_text || "Otomatis" }}
+                  </v-chip>
+                </template>
+              </v-list-item>
+              <v-list-item
+                title="Status Member"
+                :subtitle="patient.member.statusText"
+              />
+              <v-list-item
+                title="Tanggal Daftar"
+                :subtitle="formatDate(patient.member.registeredAt)"
+              />
+              <v-list-item
+                title="Tanggal Kedaluwarsa"
+                :subtitle="formatDate(patient.member.expiredAt)"
+              />
+              <v-list-item
+                title="Total Spending"
+                :subtitle="formatCurrency(patient.member.totalSpending)"
+              />
+              <v-list-item
+                v-if="tierState.automatic_tier"
+                title="Tier Berdasarkan Spending"
+                :subtitle="tierState.automatic_tier.name"
+              >
+                <template #append>
+                  <v-icon
+                    :icon="
+                      tierState.is_automatic_match
+                        ? 'mdi-check-circle-outline'
+                        : 'mdi-alert-circle-outline'
+                    "
+                    :color="
+                      tierState.is_automatic_match ? 'success' : 'warning'
+                    "
+                    size="20"
+                  />
+                </template>
+              </v-list-item>
+            </v-list>
+
+            <v-alert
+              v-if="tierState.member?.tier_mode === 'manual'"
+              type="warning"
+              variant="tonal"
+              density="compact"
+              class="mx-4 mb-3"
+              border="start"
+            >
+              Tier dikunci manual. Proses pembayaran tidak akan mengubah tier
+              sampai mode otomatis diaktifkan kembali.
+            </v-alert>
+
+            <v-card-actions class="d-flex flex-wrap ga-2 px-4 pb-4">
+              <v-btn
+                color="warning"
+                variant="flat"
+                prepend-icon="mdi-arrow-up-bold"
+                :disabled="
+                  !tierState.can_upgrade || tierLoading || tierActionLoading
+                "
+                @click="openTierAction('upgrade')"
+              >
+                Upgrade<span v-if="tierState.next_tier">
+                  ke {{ tierState.next_tier.name }}</span
+                >
+              </v-btn>
+              <v-btn
+                color="grey-darken-1"
+                variant="tonal"
+                prepend-icon="mdi-arrow-down-bold"
+                :disabled="
+                  !tierState.can_downgrade || tierLoading || tierActionLoading
+                "
+                @click="openTierAction('downgrade')"
+              >
+                Downgrade<span v-if="tierState.previous_tier">
+                  ke {{ tierState.previous_tier.name }}</span
+                >
+              </v-btn>
+              <v-btn
+                v-if="tierState.can_reset_automatic"
+                color="primary"
+                variant="outlined"
+                prepend-icon="mdi-sync"
+                :disabled="tierLoading || tierActionLoading"
+                @click="openTierAction('automatic')"
+              >
+                Gunakan Mode Otomatis
+              </v-btn>
+            </v-card-actions>
+          </template>
+
+          <v-card-text v-else>
+            <v-alert type="info" variant="tonal" border="start">
+              Pasien belum terdaftar sebagai member. Upgrade atau downgrade tier
+              belum dapat dilakukan.
+            </v-alert>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
-    <v-card class="history-card" variant="outlined">
+    <v-card variant="outlined" rounded="lg">
       <v-card-text class="pa-4 pa-md-5">
-        <div class="history-section-header">
+        <div
+          class="d-flex flex-column flex-lg-row justify-space-between align-start ga-4 mb-4"
+        >
           <div>
-            <div class="section-kicker">Riwayat Klinik</div>
-            <div class="section-title-main">Riwayat Kunjungan</div>
-            <div class="section-subtitle-main">
-              Ditampilkan per kunjungan agar dokter, perawat, tindakan, produk,
-              dan catatan lebih mudah dibaca.
+            <div class="text-overline text-primary font-weight-bold">
+              Riwayat Klinik
+            </div>
+            <div class="text-h6 font-weight-bold">
+              Riwayat Kunjungan & Transaksi
+            </div>
+            <div class="text-body-2 text-medium-emphasis mt-1">
+              Mencakup dokter, perawat, pengkajian awal, SOAP, CPPT, treatment,
+              obat, aturan pakai, dan pembayaran.
             </div>
           </div>
 
-          <div class="history-toolbar">
+          <div class="d-flex flex-column flex-sm-row ga-2 w-100 w-lg-auto">
             <v-text-field
               v-model="search"
               label="Cari riwayat"
-              placeholder="Tindakan, dokter, perawat, catatan"
+              placeholder="Dokter, treatment, obat, catatan, invoice"
               prepend-inner-icon="mdi-magnify"
               density="compact"
               variant="outlined"
               hide-details
               clearable
-              class="search-field"
-              @update:model-value="onSearch"
+              class="flex-grow-1"
+              @update:model-value="resetPage"
+            />
+            <v-select
+              v-model="transactionFilter"
+              :items="transactionOptions"
+              label="Jenis transaksi"
+              density="compact"
+              variant="outlined"
+              hide-details
+              clearable
+              min-width="190"
+              @update:model-value="resetPage"
+            />
+            <v-select
+              v-model="clinicFilter"
+              :items="clinicOptions"
+              label="Klinik"
+              density="compact"
+              variant="outlined"
+              hide-details
+              clearable
+              min-width="190"
+              @update:model-value="resetPage"
             />
           </div>
         </div>
@@ -375,169 +596,688 @@
         <v-skeleton-loader
           v-if="loading"
           type="list-item-two-line, list-item-two-line, list-item-two-line"
-          class="mt-4"
         />
 
         <template v-else>
-          <div v-if="paginatedRiwayat.length" class="history-list">
-            <v-expansion-panels variant="accordion" class="history-panels">
-              <v-expansion-panel
-                v-for="item in paginatedRiwayat"
-                :key="item.id"
-                elevation="0"
-                class="history-panel"
-              >
-                <v-expansion-panel-title class="history-panel-title">
-                  <div class="history-item-header">
-                    <div class="history-date-box">
-                      <div class="history-day">{{ formatDay(item.tgl) }}</div>
-                      <div class="history-month">
-                        {{ formatMonth(item.tgl) }}
-                      </div>
-                    </div>
-
-                    <div class="history-main">
-                      <div class="d-flex align-center flex-wrap ga-2 mb-1">
-                        <div class="history-title">
-                          {{ item.klinik }}
+          <v-expansion-panels
+            v-if="paginatedRiwayat.length"
+            variant="accordion"
+          >
+            <v-expansion-panel
+              v-for="item in paginatedRiwayat"
+              :key="item.id"
+              rounded="lg"
+              class="mb-3 border"
+            >
+              <v-expansion-panel-title class="py-4">
+                <div
+                  class="d-flex flex-column flex-md-row align-start align-md-center justify-space-between ga-3 w-100 pr-3"
+                >
+                  <div class="d-flex align-start ga-3">
+                    <v-avatar
+                      color="primary"
+                      variant="tonal"
+                      rounded="lg"
+                      size="52"
+                    >
+                      <div class="text-center">
+                        <div class="text-subtitle-2 font-weight-bold">
+                          {{ formatDay(item.date) }}
                         </div>
+                        <div class="text-caption">
+                          {{ formatMonth(item.date) }}
+                        </div>
+                      </div>
+                    </v-avatar>
+
+                    <div>
+                      <div class="d-flex flex-wrap align-center ga-2 mb-1">
+                        <span class="font-weight-bold text-body-1">{{
+                          item.clinic
+                        }}</span>
                         <v-chip size="x-small" color="primary" variant="tonal">
-                          {{ item.transaksi }}
+                          {{ item.transactionType }}
+                        </v-chip>
+                        <v-chip
+                          size="x-small"
+                          :color="item.status.color"
+                          variant="tonal"
+                        >
+                          {{ item.status.text }}
                         </v-chip>
                       </div>
-
-                      <div class="history-subline">
-                        <span>
+                      <div class="text-caption text-medium-emphasis">
+                        {{ item.registrationCode }} •
+                        {{ item.payment.invoiceNumber }}
+                      </div>
+                      <div
+                        class="d-flex flex-wrap ga-3 mt-2 text-caption text-medium-emphasis"
+                      >
+                        <span class="d-flex align-center ga-1">
                           <v-icon icon="mdi-doctor" size="15" />
-                          {{ item.dokter }}
+                          {{ item.doctor }}
                         </span>
-                        <span>
+                        <span class="d-flex align-center ga-1">
                           <v-icon icon="mdi-account-heart-outline" size="15" />
-                          {{ item.perawat }}
+                          {{ item.nurseNames.join(", ") || "-" }}
                         </span>
-                      </div>
-                    </div>
-
-                    <div class="history-meta">
-                      <div class="history-full-date">
-                        {{ formatDate(item.tgl) }}
-                      </div>
-                      <div class="history-count">
-                        {{ item.tindakan.length }} tindakan
                       </div>
                     </div>
                   </div>
-                </v-expansion-panel-title>
 
-                <v-expansion-panel-text>
-                  <v-row dense>
-                    <v-col cols="12" md="5">
-                      <div class="detail-block detail-block-treatment">
-                        <div class="detail-title-row">
-                          <div class="detail-title">
-                            <v-icon
-                              icon="mdi-face-woman-shimmer-outline"
-                              size="18"
-                            />
-                            Tindakan
-                          </div>
-                          <v-chip
-                            size="x-small"
-                            variant="tonal"
-                            color="primary"
-                          >
-                            {{ item.tindakan.length }} item
-                          </v-chip>
-                        </div>
+                  <div class="text-left text-md-right">
+                    <div class="font-weight-bold">
+                      {{ formatCurrency(item.payment.grandTotal) }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis">
+                      {{ formatDate(item.date) }}
+                      {{ item.time ? `• ${item.time}` : "" }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis mt-1">
+                      {{ item.treatments.length }} treatment •
+                      {{ item.products.length }} obat/produk
+                    </div>
+                  </div>
+                </div>
+              </v-expansion-panel-title>
 
-                        <div v-if="item.tindakan.length">
-                          <div
-                            v-for="(t, idx) in item.tindakan"
-                            :key="idx"
-                            class="treatment-row"
+              <v-expansion-panel-text>
+                <div class="d-flex flex-wrap ga-2 mb-4">
+                  <v-chip
+                    v-for="service in item.services"
+                    :key="service"
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                  >
+                    {{ service }}
+                  </v-chip>
+                </div>
+
+                <v-row dense>
+                  <v-col cols="12" lg="6">
+                    <v-card
+                      variant="tonal"
+                      color="primary"
+                      rounded="lg"
+                      height="100%"
+                    >
+                      <v-card-title
+                        class="d-flex align-center justify-space-between text-subtitle-2 font-weight-bold"
+                      >
+                        <span class="d-flex align-center ga-2">
+                          <v-icon
+                            icon="mdi-face-woman-shimmer-outline"
+                            size="19"
+                          />
+                          Tindakan / Treatment
+                        </span>
+                        <v-chip size="x-small" color="primary" variant="flat">
+                          {{ item.treatments.length }} item
+                        </v-chip>
+                      </v-card-title>
+                      <v-card-text>
+                        <v-list
+                          v-if="item.treatments.length"
+                          bg-color="transparent"
+                          density="compact"
+                        >
+                          <v-list-item
+                            v-for="treatment in item.treatments"
+                            :key="treatment.id"
+                            class="px-0"
                           >
-                            <div>
-                              <div class="treatment-name">{{ t.nama }}</div>
-                              <div class="treatment-staff">
-                                Pelaksana: {{ t.perawat }}
+                            <template #prepend>
+                              <v-avatar
+                                size="30"
+                                color="primary"
+                                variant="tonal"
+                              >
+                                <v-icon icon="mdi-sparkles" size="17" />
+                              </v-avatar>
+                            </template>
+                            <v-list-item-title class="font-weight-bold">
+                              {{ treatment.name }}
+                            </v-list-item-title>
+                            <v-list-item-subtitle>
+                              Pelaksana: {{ treatment.staff }}
+                            </v-list-item-subtitle>
+                            <template #append>
+                              <div class="text-right">
+                                <v-chip size="x-small" variant="outlined">
+                                  x{{ formatQty(treatment.qty) }}
+                                </v-chip>
+                                <div class="text-caption mt-1">
+                                  {{ formatCurrency(treatment.subtotal) }}
+                                </div>
                               </div>
-                            </div>
-                            <v-chip size="x-small" variant="outlined">
-                              x{{ t.qty }}
-                            </v-chip>
-                          </div>
-                        </div>
+                            </template>
+                          </v-list-item>
+                        </v-list>
+                        <v-empty-state
+                          v-else
+                          icon="mdi-sparkles"
+                          title="Tidak ada treatment"
+                          text="Kunjungan ini tidak memiliki item treatment."
+                        />
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
 
-                        <div v-else class="detail-empty">
-                          Tidak ada tindakan pada kunjungan ini.
-                        </div>
+                  <v-col cols="12" lg="6">
+                    <v-card
+                      variant="tonal"
+                      color="success"
+                      rounded="lg"
+                      height="100%"
+                    >
+                      <v-card-title
+                        class="d-flex align-center justify-space-between text-subtitle-2 font-weight-bold"
+                      >
+                        <span class="d-flex align-center ga-2">
+                          <v-icon icon="mdi-pill" size="19" />
+                          Obat / Produk & Aturan Pakai
+                        </span>
+                        <v-chip size="x-small" color="success" variant="flat">
+                          {{ item.products.length }} item
+                        </v-chip>
+                      </v-card-title>
+                      <v-card-text>
+                        <v-list
+                          v-if="item.products.length"
+                          bg-color="transparent"
+                          density="compact"
+                        >
+                          <v-list-item
+                            v-for="product in item.products"
+                            :key="product.id"
+                            class="px-0"
+                          >
+                            <template #prepend>
+                              <v-avatar
+                                size="30"
+                                color="success"
+                                variant="tonal"
+                              >
+                                <v-icon
+                                  icon="mdi-medication-outline"
+                                  size="17"
+                                />
+                              </v-avatar>
+                            </template>
+                            <v-list-item-title class="font-weight-bold">
+                              {{ product.name }}
+                            </v-list-item-title>
+                            <v-list-item-subtitle>
+                              <div>
+                                Jumlah: {{ formatQty(product.qty) }}
+                                {{ product.unit }}
+                              </div>
+                              <div v-if="product.usage">
+                                Aturan pakai: {{ product.usage }}
+                              </div>
+                              <div v-if="product.expiredAt">
+                                Expired: {{ formatDate(product.expiredAt) }}
+                              </div>
+                            </v-list-item-subtitle>
+                            <template #append>
+                              <div class="text-right text-caption">
+                                {{ formatCurrency(product.subtotal) }}
+                              </div>
+                            </template>
+                          </v-list-item>
+                        </v-list>
+                        <v-empty-state
+                          v-else
+                          icon="mdi-pill-off"
+                          title="Tidak ada obat / produk"
+                          text="Kunjungan ini tidak memiliki item obat atau produk."
+                        />
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                </v-row>
+
+                <v-expansion-panels multiple variant="accordion" class="mt-4">
+                  <v-expansion-panel
+                    v-if="item.intake"
+                    rounded="lg"
+                    class="mb-2 border"
+                  >
+                    <v-expansion-panel-title>
+                      <span class="d-flex align-center ga-2 font-weight-bold">
+                        <v-icon
+                          icon="mdi-clipboard-text-outline"
+                          color="info"
+                        />
+                        Pengkajian Awal
+                      </span>
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                      <v-row dense>
+                        <v-col cols="12" md="6">
+                          <v-list density="compact" lines="two">
+                            <v-list-item
+                              title="Jenis Konsultasi"
+                              :subtitle="item.intake.consultationType"
+                            />
+                            <v-list-item
+                              title="Dokter yang Diminta"
+                              :subtitle="item.intake.requestDoctor"
+                            />
+                            <v-list-item
+                              title="Keluhan Utama"
+                              :subtitle="item.intake.mainComplaint"
+                            />
+                            <v-list-item
+                              title="Keluhan Awal"
+                              :subtitle="item.intake.initialComplaint"
+                            />
+                          </v-list>
+                        </v-col>
+                        <v-col cols="12" md="6">
+                          <v-list density="compact" lines="two">
+                            <v-list-item
+                              title="Alergi"
+                              :subtitle="item.intake.allergy"
+                            />
+                            <v-list-item
+                              title="Produk / Obat Sebelumnya"
+                              :subtitle="item.intake.previousProduct"
+                            />
+                            <v-list-item
+                              title="Hamil / Menyusui"
+                              :subtitle="`${item.intake.pregnant} / ${item.intake.breastfeeding}`"
+                            />
+                            <v-list-item
+                              title="Catatan Awal / CS"
+                              :subtitle="item.intake.notes"
+                            />
+                          </v-list>
+                        </v-col>
+                      </v-row>
+                    </v-expansion-panel-text>
+                  </v-expansion-panel>
+
+                  <v-expansion-panel
+                    v-if="item.soap"
+                    rounded="lg"
+                    class="mb-2 border"
+                  >
+                    <v-expansion-panel-title>
+                      <span class="d-flex align-center ga-2 font-weight-bold">
+                        <v-icon icon="mdi-stethoscope" color="primary" />
+                        SOAP Dokter
+                      </span>
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                      <div class="d-flex flex-wrap align-center ga-2 mb-3">
+                        <v-chip
+                          size="small"
+                          color="primary"
+                          variant="tonal"
+                          prepend-icon="mdi-doctor"
+                        >
+                          {{ item.soap.doctor }}
+                        </v-chip>
+                        <v-chip
+                          size="small"
+                          :color="item.soap.statusColor"
+                          variant="tonal"
+                        >
+                          {{ item.soap.statusText }}
+                        </v-chip>
+                        <v-chip
+                          v-if="item.soap.nextConsultationDate"
+                          size="small"
+                          variant="outlined"
+                          prepend-icon="mdi-calendar-clock"
+                        >
+                          Kontrol
+                          {{ formatDate(item.soap.nextConsultationDate) }}
+                        </v-chip>
                       </div>
-                    </v-col>
 
-                    <v-col cols="12" md="3">
-                      <div class="detail-block">
-                        <div class="detail-title">
-                          <v-icon icon="mdi-pill" size="18" />
-                          Obat / Produk
-                        </div>
-                        <div class="detail-text">
-                          {{ item.obat || "-" }}
-                        </div>
-                      </div>
-                    </v-col>
+                      <v-row dense>
+                        <v-col cols="12" md="6">
+                          <v-card variant="outlined" rounded="lg" height="100%">
+                            <v-card-title
+                              class="text-subtitle-2 font-weight-bold"
+                              >Subjective</v-card-title
+                            >
+                            <v-card-text class="text-body-2">
+                              <div
+                                v-if="item.soap.subjective.length"
+                                class="d-flex flex-wrap ga-2"
+                              >
+                                <v-chip
+                                  v-for="subjective in item.soap.subjective"
+                                  :key="subjective"
+                                  size="small"
+                                  variant="tonal"
+                                >
+                                  {{ subjective }}
+                                </v-chip>
+                              </div>
+                              <span v-else>-</span>
+                            </v-card-text>
+                          </v-card>
+                        </v-col>
+                        <v-col cols="12" md="6">
+                          <v-card variant="outlined" rounded="lg" height="100%">
+                            <v-card-title
+                              class="text-subtitle-2 font-weight-bold"
+                              >Objective</v-card-title
+                            >
+                            <v-card-text class="text-body-2">{{
+                              item.soap.objective
+                            }}</v-card-text>
+                          </v-card>
+                        </v-col>
+                        <v-col cols="12" md="6">
+                          <v-card variant="outlined" rounded="lg" height="100%">
+                            <v-card-title
+                              class="text-subtitle-2 font-weight-bold"
+                              >Assessment / Diagnosa</v-card-title
+                            >
+                            <v-card-text class="text-body-2">
+                              <div
+                                v-if="item.soap.assessment.length"
+                                class="d-flex flex-wrap ga-2 mb-2"
+                              >
+                                <v-chip
+                                  v-for="assessment in item.soap.assessment"
+                                  :key="assessment"
+                                  size="small"
+                                  color="warning"
+                                  variant="tonal"
+                                >
+                                  {{ assessment }}
+                                </v-chip>
+                              </div>
+                              <div>{{ item.soap.otherAssessment }}</div>
+                            </v-card-text>
+                          </v-card>
+                        </v-col>
+                        <v-col cols="12" md="6">
+                          <v-card variant="outlined" rounded="lg" height="100%">
+                            <v-card-title
+                              class="text-subtitle-2 font-weight-bold"
+                              >Plan</v-card-title
+                            >
+                            <v-card-text class="text-body-2">{{
+                              item.soap.plan
+                            }}</v-card-text>
+                          </v-card>
+                        </v-col>
+                      </v-row>
+                    </v-expansion-panel-text>
+                  </v-expansion-panel>
 
-                    <v-col cols="12" md="4">
-                      <div class="detail-block">
-                        <div class="detail-title">
-                          <v-icon icon="mdi-note-text-outline" size="18" />
-                          Catatan
-                        </div>
-                        <div class="detail-text">
-                          {{ item.catatan || "-" }}
-                        </div>
-                      </div>
-                    </v-col>
-                  </v-row>
-                </v-expansion-panel-text>
-              </v-expansion-panel>
-            </v-expansion-panels>
+                  <v-expansion-panel
+                    v-if="item.cppt.length"
+                    rounded="lg"
+                    class="mb-2 border"
+                  >
+                    <v-expansion-panel-title>
+                      <span class="d-flex align-center ga-2 font-weight-bold">
+                        <v-icon
+                          icon="mdi-notebook-heart-outline"
+                          color="deep-purple"
+                        />
+                        CPPT Perawat ({{ item.cppt.length }})
+                      </span>
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                      <v-timeline
+                        side="end"
+                        density="compact"
+                        truncate-line="both"
+                      >
+                        <v-timeline-item
+                          v-for="cppt in item.cppt"
+                          :key="cppt.id"
+                          dot-color="deep-purple"
+                          size="small"
+                        >
+                          <v-card variant="outlined" rounded="lg">
+                            <v-card-title
+                              class="d-flex flex-wrap align-center justify-space-between ga-2 text-subtitle-2"
+                            >
+                              <span class="font-weight-bold">{{
+                                cppt.nurse
+                              }}</span>
+                              <span class="text-caption text-medium-emphasis">{{
+                                cppt.date
+                              }}</span>
+                            </v-card-title>
+                            <v-card-text>
+                              <v-row dense>
+                                <v-col cols="12" sm="6"
+                                  ><strong>S:</strong>
+                                  {{ cppt.subjective }}</v-col
+                                >
+                                <v-col cols="12" sm="6"
+                                  ><strong>O:</strong>
+                                  {{ cppt.objective }}</v-col
+                                >
+                                <v-col cols="12" sm="6"
+                                  ><strong>A:</strong>
+                                  {{ cppt.assessment }}</v-col
+                                >
+                                <v-col cols="12" sm="6"
+                                  ><strong>P:</strong> {{ cppt.plan }}</v-col
+                                >
+                                <v-col cols="12"
+                                  ><strong>Tindakan/Evaluasi:</strong>
+                                  {{ cppt.action }}</v-col
+                                >
+                              </v-row>
+                            </v-card-text>
+                          </v-card>
+                        </v-timeline-item>
+                      </v-timeline>
+                    </v-expansion-panel-text>
+                  </v-expansion-panel>
 
-            <div class="pagination-wrapper">
-              <div class="pagination-info">
-                Menampilkan {{ paginationLabel.start }}–{{
-                  paginationLabel.end
-                }}
-                dari {{ filteredRiwayat.length }} kunjungan
-              </div>
+                  <v-expansion-panel rounded="lg" class="mb-2 border">
+                    <v-expansion-panel-title>
+                      <span class="d-flex align-center ga-2 font-weight-bold">
+                        <v-icon icon="mdi-cash-register" color="success" />
+                        Detail Pembayaran
+                      </span>
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                      <v-row dense>
+                        <v-col cols="12" md="7">
+                          <v-table density="compact">
+                            <thead>
+                              <tr>
+                                <th>Komponen</th>
+                                <th class="text-end">Nominal</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td>Subtotal Treatment</td>
+                                <td class="text-end">
+                                  {{
+                                    formatCurrency(
+                                      item.payment.subtotalTreatment,
+                                    )
+                                  }}
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Subtotal Obat / Produk</td>
+                                <td class="text-end">
+                                  {{
+                                    formatCurrency(item.payment.subtotalProduct)
+                                  }}
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Subtotal Konsultasi</td>
+                                <td class="text-end">
+                                  {{
+                                    formatCurrency(
+                                      item.payment.subtotalConsultation,
+                                    )
+                                  }}
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Diskon Item</td>
+                                <td class="text-end">
+                                  -
+                                  {{
+                                    formatCurrency(item.payment.itemDiscount)
+                                  }}
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Diskon Subtotal</td>
+                                <td class="text-end">
+                                  -
+                                  {{
+                                    formatCurrency(
+                                      item.payment.subtotalDiscount,
+                                    )
+                                  }}
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Promo</td>
+                                <td class="text-end">
+                                  -
+                                  {{
+                                    formatCurrency(item.payment.promoDiscount)
+                                  }}
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Diskon Member</td>
+                                <td class="text-end">
+                                  -
+                                  {{
+                                    formatCurrency(item.payment.memberDiscount)
+                                  }}
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Redeem Poin</td>
+                                <td class="text-end">
+                                  -
+                                  {{
+                                    formatCurrency(
+                                      item.payment.pointRedeemValue,
+                                    )
+                                  }}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </v-table>
+                        </v-col>
+                        <v-col cols="12" md="5">
+                          <v-card color="primary" variant="tonal" rounded="lg">
+                            <v-card-text>
+                              <div class="text-caption font-weight-bold">
+                                GRAND TOTAL
+                              </div>
+                              <div class="text-h5 font-weight-bold mt-1">
+                                {{ formatCurrency(item.payment.grandTotal) }}
+                              </div>
+                              <v-divider class="my-3" />
+                              <div
+                                class="d-flex justify-space-between text-body-2 mb-2"
+                              >
+                                <span>Total Bayar</span
+                                ><strong>{{
+                                  formatCurrency(item.payment.totalPaid)
+                                }}</strong>
+                              </div>
+                              <div
+                                class="d-flex justify-space-between text-body-2 mb-2"
+                              >
+                                <span>Kembalian</span
+                                ><strong>{{
+                                  formatCurrency(item.payment.change)
+                                }}</strong>
+                              </div>
+                              <div
+                                class="d-flex justify-space-between text-body-2 mb-2"
+                              >
+                                <span>Poin Diperoleh</span
+                                ><strong>{{
+                                  formatQty(item.payment.pointEarned)
+                                }}</strong>
+                              </div>
+                              <div
+                                class="d-flex justify-space-between text-body-2"
+                              >
+                                <span>Tanggal Lunas</span
+                                ><strong>{{ item.payment.paidAt }}</strong>
+                              </div>
+                            </v-card-text>
+                          </v-card>
+                        </v-col>
+                      </v-row>
+                    </v-expansion-panel-text>
+                  </v-expansion-panel>
 
-              <v-pagination
-                v-model="page"
-                :length="pageCount"
-                :total-visible="6"
-                density="comfortable"
-              />
-            </div>
-          </div>
+                  <v-expansion-panel rounded="lg" class="border">
+                    <v-expansion-panel-title>
+                      <span class="d-flex align-center ga-2 font-weight-bold">
+                        <v-icon
+                          icon="mdi-note-text-outline"
+                          color="orange-darken-2"
+                        />
+                        Catatan Kunjungan
+                      </span>
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                      <v-alert type="info" variant="tonal" border="start">
+                        {{ item.notes }}
+                      </v-alert>
+                    </v-expansion-panel-text>
+                  </v-expansion-panel>
+                </v-expansion-panels>
+              </v-expansion-panel-text>
+            </v-expansion-panel>
+          </v-expansion-panels>
 
           <v-empty-state
             v-else
             icon="mdi-file-search-outline"
             title="Riwayat tidak ditemukan"
-            text="Coba ubah kata kunci pencarian atau periksa kembali data kunjungan."
+            text="Ubah kata kunci atau filter untuk melihat riwayat lainnya."
           />
+
+          <div
+            v-if="filteredRiwayat.length"
+            class="d-flex flex-column flex-md-row justify-space-between align-center ga-3 mt-4"
+          >
+            <div class="text-body-2 text-medium-emphasis">
+              Menampilkan {{ paginationLabel.start }}–{{
+                paginationLabel.end
+              }}
+              dari {{ filteredRiwayat.length }} kunjungan
+            </div>
+            <v-pagination
+              v-model="page"
+              :length="pageCount"
+              :total-visible="6"
+              density="comfortable"
+            />
+          </div>
         </template>
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="shippingAddressDialog" max-width="520">
-      <v-card class="dialog-card">
-        <v-card-title class="dialog-title-row">
-          <div>
-            <div class="dialog-title-main">Alamat Pengiriman</div>
-            <div class="dialog-title-sub">
-              Alamat yang digunakan untuk pengiriman pasien
-            </div>
-          </div>
+    <v-dialog v-model="shippingAddressDialog" max-width="560">
+      <v-card rounded="lg">
+        <v-card-title class="d-flex align-center justify-space-between">
+          <span class="font-weight-bold">Alamat Pengiriman</span>
           <v-btn
             icon="mdi-close"
             variant="text"
@@ -545,36 +1285,439 @@
             @click="shippingAddressDialog = false"
           />
         </v-card-title>
-
         <v-divider />
-
-        <v-card-text class="pt-4">
-          <div class="shipping-box">
-            <v-icon icon="mdi-map-marker-outline" size="22" />
-            <div>{{ patient.shippingAddress }}</div>
-          </div>
+        <v-card-text>
+          <v-alert
+            type="success"
+            variant="tonal"
+            border="start"
+            icon="mdi-map-marker-outline"
+          >
+            {{ patient.shippingAddress }}
+          </v-alert>
         </v-card-text>
-
         <v-card-actions class="px-4 pb-4">
           <v-spacer />
-          <v-btn variant="outlined" @click="shippingAddressDialog = false">
-            Tutup
-          </v-btn>
+          <v-btn variant="outlined" @click="shippingAddressDialog = false"
+            >Tutup</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="tierHistoryDialog" max-width="760">
+      <v-card rounded="lg">
+        <v-card-title class="d-flex align-center justify-space-between">
+          <div>
+            <div class="font-weight-bold">Riwayat Tier Pasien</div>
+            <div class="text-caption text-medium-emphasis">
+              Audit perubahan tier otomatis dan manual.
+            </div>
+          </div>
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            @click="tierHistoryDialog = false"
+          />
+        </v-card-title>
+        <v-divider />
+        <v-progress-linear v-if="tierLoading" indeterminate color="primary" />
+        <v-card-text>
+          <v-timeline
+            v-if="tierHistory.length"
+            side="end"
+            density="compact"
+            truncate-line="both"
+          >
+            <v-timeline-item
+              v-for="entry in tierHistory"
+              :key="entry.id"
+              :dot-color="tierHistoryColor(entry.action)"
+              size="small"
+            >
+              <v-card variant="outlined" rounded="lg">
+                <v-card-text>
+                  <div
+                    class="d-flex flex-column flex-sm-row justify-space-between align-start ga-3"
+                  >
+                    <div>
+                      <div class="d-flex align-center flex-wrap ga-2 mb-1">
+                        <span class="font-weight-bold">{{
+                          entry.action_text
+                        }}</span>
+                        <v-chip
+                          size="x-small"
+                          :color="
+                            entry.source === 'manual' ? 'warning' : 'info'
+                          "
+                          variant="tonal"
+                        >
+                          {{ entry.source_text }}
+                        </v-chip>
+                      </div>
+                      <div class="text-body-2">
+                        {{ entry.old_tier?.name || "Belum ada tier" }}
+                        <v-icon icon="mdi-arrow-right" size="15" class="mx-1" />
+                        <strong>{{
+                          entry.new_tier?.name || "Tanpa tier"
+                        }}</strong>
+                      </div>
+                      <div class="text-body-2 text-medium-emphasis mt-2">
+                        {{ entry.reason }}
+                      </div>
+                      <div class="text-caption text-medium-emphasis mt-2">
+                        Spending saat perubahan:
+                        {{ formatCurrency(entry.total_spending_snapshot) }} •
+                        Oleh: {{ entry.created_by }}
+                      </div>
+                    </div>
+                    <div class="text-body-2 text-medium-emphasis text-sm-right">
+                      {{ formatDateTime(entry.effective_at) }}
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-timeline-item>
+          </v-timeline>
+          <v-empty-state
+            v-else
+            icon="mdi-crown-outline"
+            title="Belum ada riwayat tier"
+            text="Belum ada perubahan tier yang tercatat pada tabel audit tier."
+          />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="tierActionDialog" max-width="560" persistent>
+      <v-card rounded="lg">
+        <v-card-title class="d-flex align-center justify-space-between">
+          <div>
+            <div class="font-weight-bold">{{ tierActionTitle }}</div>
+            <div class="text-caption text-medium-emphasis">
+              Perubahan disimpan sebagai audit dan berlaku pada transaksi
+              berikutnya.
+            </div>
+          </div>
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            :disabled="tierActionLoading"
+            @click="closeTierAction"
+          />
+        </v-card-title>
+        <v-divider />
+        <v-form ref="tierActionForm" @submit.prevent="submitTierAction">
+          <v-card-text>
+            <v-alert
+              :type="tierActionType === 'downgrade' ? 'warning' : 'info'"
+              variant="tonal"
+              border="start"
+              class="mb-4"
+            >
+              <div class="font-weight-bold mb-1">
+                {{ currentTierName }}
+                <v-icon icon="mdi-arrow-right" size="16" class="mx-1" />
+                {{ tierActionTarget?.name || currentTierName }}
+              </div>
+              <div class="text-body-2">
+                {{ tierActionDescription }}
+              </div>
+            </v-alert>
+
+            <v-textarea
+              v-model="tierReason"
+              label="Alasan perubahan tier"
+              placeholder="Contoh: Penyesuaian keputusan manajemen berdasarkan evaluasi membership"
+              variant="outlined"
+              rows="3"
+              counter="500"
+              :rules="tierReasonRules"
+              :disabled="tierActionLoading"
+              autofocus
+            />
+          </v-card-text>
+          <v-card-actions class="px-4 pb-4">
+            <v-spacer />
+            <v-btn
+              variant="outlined"
+              :disabled="tierActionLoading"
+              @click="closeTierAction"
+            >
+              Batal
+            </v-btn>
+            <v-btn
+              :color="tierActionType === 'downgrade' ? 'warning' : 'primary'"
+              variant="flat"
+              type="submit"
+              :loading="tierActionLoading"
+            >
+              Konfirmasi
+            </v-btn>
+          </v-card-actions>
+        </v-form>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="memberCardDialog" max-width="620">
+      <v-card rounded="lg">
+        <v-card-title class="d-flex align-center justify-space-between">
+          <div>
+            <div class="font-weight-bold">
+              Kartu Member
+              {{ memberCardSide === "front" ? "Depan" : "Belakang" }}
+            </div>
+            <div class="text-caption text-medium-emphasis">
+              Preview sebelum dicetak.
+            </div>
+          </div>
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            @click="memberCardDialog = false"
+          />
+        </v-card-title>
+        <v-divider />
+        <v-card-text>
+          <v-card
+            v-if="memberCardSide === 'front'"
+            color="primary"
+            variant="flat"
+            rounded="xl"
+          >
+            <v-card-text class="pa-6 text-white">
+              <div class="d-flex justify-space-between align-start ga-4 mb-8">
+                <div>
+                  <div class="text-overline">MS GLOW AESTHETIC CLINIC</div>
+                  <div class="text-h5 font-weight-bold">MEMBER CARD</div>
+                </div>
+                <v-icon icon="mdi-crown" size="34" />
+              </div>
+              <div class="text-h6 font-weight-bold">{{ patient.name }}</div>
+              <div class="text-body-2 mt-1">{{ patient.member.noMember }}</div>
+              <div class="d-flex justify-space-between align-end mt-6">
+                <div>
+                  <div class="text-caption">Tier</div>
+                  <div class="font-weight-bold">{{ currentTierName }}</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-caption">No. RM</div>
+                  <div class="font-weight-bold">{{ patient.noRm }}</div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+
+          <v-card v-else variant="outlined" rounded="xl">
+            <v-card-text class="pa-6">
+              <div class="text-subtitle-1 font-weight-bold mb-3">
+                Informasi Member
+              </div>
+              <v-divider class="mb-4" />
+              <div class="text-body-2 mb-2">
+                Kartu ini milik {{ patient.name }}.
+              </div>
+              <div class="text-body-2 mb-2">
+                Nomor member: {{ patient.member.noMember }}
+              </div>
+              <div class="text-body-2 mb-2">
+                Berlaku sampai: {{ formatDate(patient.member.expiredAt) }}
+              </div>
+              <div class="text-caption text-medium-emphasis mt-5">
+                Tunjukkan kartu ini pada saat transaksi di MS Glow Aesthetic
+                Clinic.
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-card-text>
+        <v-card-actions class="px-4 pb-4">
+          <v-spacer />
+          <v-btn variant="outlined" @click="memberCardDialog = false"
+            >Tutup</v-btn
+          >
+          <v-btn
+            color="primary"
+            prepend-icon="mdi-printer"
+            @click="printMemberCard"
+            >Cetak</v-btn
+          >
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="beforeAfterDialog" max-width="980">
+      <v-card rounded="lg">
+        <v-card-title class="d-flex align-center justify-space-between">
+          <div>
+            <div class="font-weight-bold">Foto Before After</div>
+            <div class="text-caption text-medium-emphasis">
+              Pilih kunjungan treatment untuk melihat dokumentasi foto.
+            </div>
+          </div>
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            @click="beforeAfterDialog = false"
+          />
+        </v-card-title>
+        <v-divider />
+        <v-card-text>
+          <v-select
+            v-model="photoVisitId"
+            :items="photoVisitOptions"
+            item-title="title"
+            item-value="value"
+            label="Kunjungan treatment"
+            variant="outlined"
+            density="comfortable"
+            prepend-inner-icon="mdi-calendar-search"
+            :disabled="photoLoading"
+            @update:model-value="loadBeforeAfterPhotos"
+          />
+
+          <v-progress-linear
+            v-if="photoLoading"
+            indeterminate
+            color="deep-purple"
+            class="mb-4"
+          />
+
+          <v-alert
+            v-if="photoError"
+            type="warning"
+            variant="tonal"
+            border="start"
+            class="mb-4"
+          >
+            {{ photoError }}
+          </v-alert>
+
+          <v-row v-if="hasBeforeAfterPhotos" dense>
+            <v-col cols="12" md="6">
+              <v-card variant="outlined" rounded="lg" height="100%">
+                <v-card-title class="text-subtitle-1 font-weight-bold"
+                  >Before</v-card-title
+                >
+                <v-divider />
+                <v-card-text>
+                  <v-row dense>
+                    <v-col
+                      v-for="photo in beforeAfterPhotos.before"
+                      :key="photo.id"
+                      cols="12"
+                      sm="4"
+                    >
+                      <v-img :src="photo.url" height="190" cover rounded="lg">
+                        <template #error>
+                          <div
+                            class="d-flex align-center justify-center fill-height bg-grey-lighten-3 text-caption"
+                          >
+                            Foto tidak dapat dimuat
+                          </div>
+                        </template>
+                      </v-img>
+                      <div
+                        class="text-caption text-center text-medium-emphasis mt-2"
+                      >
+                        Foto {{ photo.order }}
+                      </div>
+                    </v-col>
+                  </v-row>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-card variant="outlined" rounded="lg" height="100%">
+                <v-card-title class="text-subtitle-1 font-weight-bold"
+                  >After</v-card-title
+                >
+                <v-divider />
+                <v-card-text>
+                  <v-row dense>
+                    <v-col
+                      v-for="photo in beforeAfterPhotos.after"
+                      :key="photo.id"
+                      cols="12"
+                      sm="4"
+                    >
+                      <v-img :src="photo.url" height="190" cover rounded="lg">
+                        <template #error>
+                          <div
+                            class="d-flex align-center justify-center fill-height bg-grey-lighten-3 text-caption"
+                          >
+                            Foto tidak dapat dimuat
+                          </div>
+                        </template>
+                      </v-img>
+                      <div
+                        class="text-caption text-center text-medium-emphasis mt-2"
+                      >
+                        Foto {{ photo.order }}
+                      </div>
+                    </v-col>
+                  </v-row>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <v-empty-state
+            v-else-if="!photoLoading && !photoError"
+            icon="mdi-image-off-outline"
+            title="Foto belum tersedia"
+            text="Belum ada dokumentasi before dan after pada kunjungan yang dipilih."
+          />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3500">
+      {{ snackbar.message }}
+      <template #actions>
+        <v-btn variant="text" @click="snackbar.show = false">Tutup</v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
 <script>
 import api from "@/services/api";
+import antrianPerawatService from "@/services/pelayanan-medis/antrianPerawatService";
+
+const defaultSummary = () => ({
+  totalKunjungan: 0,
+  totalTransaksi: 0,
+  lastVisitDate: null,
+  lastVisitAt: null,
+  depositQty: 0,
+  depositBalance: 0,
+});
+
+const defaultTierState = () => ({
+  is_member: false,
+  member: null,
+  current_tier: null,
+  previous_tier: null,
+  next_tier: null,
+  automatic_tier: null,
+  can_upgrade: false,
+  can_downgrade: false,
+  can_reset_automatic: false,
+  is_automatic_match: true,
+  tiers: [],
+  history: [],
+});
 
 const defaultPatient = (id = null) => ({
   id,
   noRm: "-",
   name: "-",
   gender: "-",
-  kategori: "-",
+  category: "-",
   birthPlace: "-",
   birthDate: null,
   age: "-",
@@ -585,31 +1728,86 @@ const defaultPatient = (id = null) => ({
   job: "-",
   maritalStatus: "-",
   phone: "-",
+  whatsapp: "-",
+  telephone: "-",
+  email: "-",
   address: "-",
   shippingAddress: "-",
   points: 0,
   pointsValue: 0,
-  depositBalance: 0,
+  skinAnalyzerUrl: "",
+  member: {
+    isMember: false,
+    id: null,
+    noMember: "-",
+    tierId: null,
+    tierName: "-",
+    status: null,
+    statusText: "Belum menjadi member",
+    registeredAt: null,
+    expiredAt: null,
+    totalSpending: 0,
+    totalPoint: 0,
+    pointUsed: 0,
+    pointBalance: 0,
+  },
 });
 
 export default {
-  name: "PatientHistoryImproved",
+  name: "RiwayatPasien",
 
   data() {
     return {
       breadcrumbs: [
         { title: "Administrasi", disabled: true },
-        { title: "Pasien", disabled: false, to: "/administrasi/pasien" },
+        { title: "Pasien", disabled: false, to: { name: "Master Pasien" } },
         { title: "Riwayat", disabled: true },
       ],
       loading: false,
       errorMessage: "",
       search: "",
+      transactionFilter: null,
+      clinicFilter: null,
       page: 1,
       itemsPerPage: 5,
-      shippingAddressDialog: false,
       patient: defaultPatient(this.$route.params.id),
+      summary: defaultSummary(),
       riwayat: [],
+      tierState: defaultTierState(),
+      tierLoading: false,
+      tierError: "",
+      tierActionLoading: false,
+      tierActionDialog: false,
+      tierActionType: "upgrade",
+      tierReason: "",
+      tierReasonRules: [
+        (value) =>
+          Boolean(String(value || "").trim()) ||
+          "Alasan perubahan wajib diisi.",
+        (value) =>
+          String(value || "").trim().length >= 5 ||
+          "Alasan minimal 5 karakter.",
+        (value) =>
+          String(value || "").length <= 500 || "Alasan maksimal 500 karakter.",
+      ],
+      shippingAddressDialog: false,
+      tierHistoryDialog: false,
+      memberCardDialog: false,
+      memberCardSide: "front",
+      beforeAfterDialog: false,
+      photoVisitId: null,
+      photoLoading: false,
+      photoError: "",
+      beforeAfterPhotos: {
+        before: [],
+        after: [],
+      },
+      photoObjectUrls: [],
+      snackbar: {
+        show: false,
+        message: "",
+        color: "info",
+      },
     };
   },
 
@@ -620,10 +1818,7 @@ export default {
 
     patientInitial() {
       const name = String(this.patient.name || "").trim();
-
-      if (!name || name === "-") {
-        return "P";
-      }
+      if (!name || name === "-") return "P";
 
       return name
         .split(" ")
@@ -640,48 +1835,74 @@ export default {
       ].filter(Boolean);
     },
 
-    totalKunjungan() {
-      return this.riwayat.length;
-    },
-
-    lastVisitDate() {
-      if (!this.riwayat.length) {
-        return null;
+    currentTierName() {
+      if (this.tierState.current_tier?.name) {
+        return this.tierState.current_tier.name;
       }
 
-      return this.riwayat[0]?.tgl || null;
+      if (
+        this.patient.member.tierName &&
+        this.patient.member.tierName !== "-"
+      ) {
+        return this.patient.member.tierName;
+      }
+
+      const latestTier = this.riwayat.find(
+        (item) =>
+          item.payment.memberTierName && item.payment.memberTierName !== "-",
+      );
+
+      return latestTier?.payment?.memberTierName || "-";
+    },
+
+    todayTransactions() {
+      const today = this.toLocalDateKey(new Date());
+      return this.riwayat.filter(
+        (item) => this.toLocalDateKey(item.date) === today,
+      );
+    },
+
+    todayTransactionValue() {
+      return this.todayTransactions.reduce(
+        (total, item) => total + Number(item.payment.grandTotal || 0),
+        0,
+      );
+    },
+
+    clinicOptions() {
+      return [
+        ...new Set(this.riwayat.map((item) => item.clinic).filter(Boolean)),
+      ].sort();
+    },
+
+    transactionOptions() {
+      return [
+        ...new Set(
+          this.riwayat.map((item) => item.transactionType).filter(Boolean),
+        ),
+      ].sort();
     },
 
     filteredRiwayat() {
-      if (!this.search) return this.riwayat;
-
       const keyword = String(this.search || "")
-        .toLowerCase()
-        .trim();
+        .trim()
+        .toLowerCase();
 
       return this.riwayat.filter((item) => {
-        const tindakanText = Array.isArray(item.tindakan)
-          ? item.tindakan
-              .map((t) => `${t.nama || ""} ${t.perawat || ""} ${t.qty || ""}`)
-              .join(" ")
-              .toLowerCase()
-          : "";
+        if (
+          this.transactionFilter &&
+          item.transactionType !== this.transactionFilter
+        ) {
+          return false;
+        }
 
-        const haystack = [
-          item.tgl,
-          item.dokter,
-          item.perawat,
-          item.obat,
-          item.catatan,
-          item.transaksi,
-          item.klinik,
-          tindakanText,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
+        if (this.clinicFilter && item.clinic !== this.clinicFilter) {
+          return false;
+        }
 
-        return haystack.includes(keyword);
+        if (!keyword) return true;
+
+        return item.searchText.includes(keyword);
       });
     },
 
@@ -694,40 +1915,63 @@ export default {
 
     paginatedRiwayat() {
       const start = (this.page - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-
-      return this.filteredRiwayat.slice(start, end);
+      return this.filteredRiwayat.slice(start, start + this.itemsPerPage);
     },
 
     paginationLabel() {
-      if (!this.filteredRiwayat.length) {
-        return { start: 0, end: 0 };
+      if (!this.filteredRiwayat.length) return { start: 0, end: 0 };
+
+      return {
+        start: (this.page - 1) * this.itemsPerPage + 1,
+        end: Math.min(
+          this.page * this.itemsPerPage,
+          this.filteredRiwayat.length,
+        ),
+      };
+    },
+
+    tierHistory() {
+      return Array.isArray(this.tierState.history)
+        ? this.tierState.history
+        : [];
+    },
+
+    tierActionTarget() {
+      if (this.tierActionType === "upgrade") return this.tierState.next_tier;
+      if (this.tierActionType === "downgrade")
+        return this.tierState.previous_tier;
+      return this.tierState.automatic_tier;
+    },
+
+    tierActionTitle() {
+      if (this.tierActionType === "upgrade") return "Konfirmasi Upgrade Tier";
+      if (this.tierActionType === "downgrade")
+        return "Konfirmasi Downgrade Tier";
+      return "Kembalikan Tier ke Mode Otomatis";
+    },
+
+    tierActionDescription() {
+      if (this.tierActionType === "automatic") {
+        return "Tier akan kembali mengikuti total spending. Perubahan otomatis berikutnya dapat mengubah tier tanpa konfirmasi manual.";
       }
 
-      const start = (this.page - 1) * this.itemsPerPage + 1;
-      const end = Math.min(
-        this.page * this.itemsPerPage,
-        this.filteredRiwayat.length,
+      return "Tier akan dikunci dalam mode manual agar tidak ditimpa proses perhitungan tier otomatis saat pembayaran.";
+    },
+
+    photoVisitOptions() {
+      return this.riwayat
+        .filter((item) => item.treatments.length > 0)
+        .map((item) => ({
+          title: `${this.formatDate(item.date)} • ${item.clinic} • ${item.registrationCode}`,
+          value: item.registrationId,
+        }));
+    },
+
+    hasBeforeAfterPhotos() {
+      return Boolean(
+        this.beforeAfterPhotos.before.length ||
+        this.beforeAfterPhotos.after.length,
       );
-
-      return { start, end };
-    },
-
-    pointSisa() {
-      const fromSummary = Number(this.summary?.member_point_sisa || 0);
-      const fromPatient = Number(this.patient?.member?.point_sisa || 0);
-
-      return fromSummary || fromPatient || 0;
-    },
-
-    pointValue() {
-      const fromSummary = Number(this.summary?.member_point_value || 0);
-
-      if (fromSummary > 0) {
-        return fromSummary;
-      }
-
-      return this.pointSisa * 2500;
     },
   },
 
@@ -736,9 +1980,14 @@ export default {
       this.loadData();
     },
 
-    page(val) {
-      if (val > this.pageCount) {
-        this.page = this.pageCount;
+    page(value) {
+      if (value > this.pageCount) this.page = this.pageCount;
+    },
+
+    beforeAfterDialog(value) {
+      if (!value) {
+        this.cleanupPhotoObjectUrls();
+        this.beforeAfterPhotos = { before: [], after: [] };
       }
     },
   },
@@ -747,11 +1996,17 @@ export default {
     this.loadData();
   },
 
+  beforeUnmount() {
+    this.cleanupPhotoObjectUrls();
+  },
+
   methods: {
     async loadData() {
       if (!this.pasienId) {
         this.patient = defaultPatient();
+        this.summary = defaultSummary();
         this.riwayat = [];
+        this.tierState = defaultTierState();
         this.errorMessage = "ID pasien tidak valid.";
         return;
       }
@@ -762,11 +2017,7 @@ export default {
       try {
         const response = await api.get(
           `/administrasi/pasien/${this.pasienId}/riwayat`,
-          {
-            params: {
-              limit: 100,
-            },
-          },
+          { params: { limit: 200 } },
         );
 
         if (!response.data?.status) {
@@ -776,31 +2027,232 @@ export default {
         }
 
         const payload = response.data?.data || {};
-        const patient = payload.patient || {};
-        const summary = payload.summary || {};
-        const riwayat = Array.isArray(payload.riwayat) ? payload.riwayat : [];
+        const rawHistory = Array.isArray(payload.riwayat)
+          ? payload.riwayat
+          : [];
+        const mappedHistory = rawHistory.map((item) =>
+          this.mapHistoryItem(item),
+        );
+        const latestTierName = mappedHistory.find(
+          (item) =>
+            item.payment.memberTierName && item.payment.memberTierName !== "-",
+        )?.payment?.memberTierName;
 
-        this.patient = this.mapPatient(patient, summary);
-        this.riwayat = riwayat.map((item) => this.mapRiwayatItem(item));
+        this.riwayat = mappedHistory;
+        this.summary = this.mapSummary(payload.summary || {});
+        this.patient = this.mapPatient(
+          payload.patient || {},
+          payload.summary || {},
+          latestTierName,
+        );
+        await this.loadTierState(true);
         this.page = 1;
       } catch (error) {
         this.errorMessage =
           error?.response?.data?.message ||
           error?.message ||
           "Gagal mengambil riwayat pasien.";
-
         this.patient = defaultPatient(this.pasienId);
+        this.summary = defaultSummary();
         this.riwayat = [];
-
+        this.tierState = defaultTierState();
         console.error("Gagal mengambil riwayat pasien:", error);
       } finally {
         this.loading = false;
       }
     },
 
-    mapPatient(patient, summary = {}) {
-      const member = patient.member || {};
+    async loadTierState(silent = false) {
+      if (!this.pasienId) {
+        this.tierState = defaultTierState();
+        return;
+      }
+
+      this.tierLoading = true;
+      this.tierError = "";
+
+      try {
+        const response = await api.get(
+          `/administrasi/pasien/${this.pasienId}/tier`,
+        );
+
+        if (!response.data?.status) {
+          throw new Error(
+            response.data?.message || "Gagal mengambil data tier pasien.",
+          );
+        }
+
+        this.applyTierState(response.data?.data || {});
+      } catch (error) {
+        this.tierState = defaultTierState();
+        const message = this.getErrorMessage(
+          error,
+          "Gagal mengambil data tier pasien.",
+        );
+        this.tierError = message;
+
+        if (!silent) {
+          this.showSnackbar(message, "error");
+        } else {
+          console.error("Gagal mengambil data tier pasien:", error);
+        }
+      } finally {
+        this.tierLoading = false;
+      }
+    },
+
+    applyTierState(payload = {}) {
+      this.tierState = {
+        ...defaultTierState(),
+        ...payload,
+        tiers: Array.isArray(payload.tiers) ? payload.tiers : [],
+        history: Array.isArray(payload.history) ? payload.history : [],
+      };
+
+      const member = payload.member;
+      if (!member) {
+        return;
+      }
+
+      this.patient = {
+        ...this.patient,
+        points: Number(member.point_sisa ?? this.patient.points ?? 0),
+        member: {
+          ...this.patient.member,
+          isMember: true,
+          id: member.id,
+          noMember: member.no_member || this.patient.member.noMember,
+          tierId: payload.current_tier?.id || member.member_tier_id || null,
+          tierName: payload.current_tier?.name || "-",
+          status: member.status,
+          statusText: member.status_text || this.patient.member.statusText,
+          registeredAt:
+            member.tanggal_daftar || this.patient.member.registeredAt,
+          expiredAt: member.tanggal_expired || this.patient.member.expiredAt,
+          totalSpending: Number(member.total_spending || 0),
+          totalPoint: Number(member.total_point || 0),
+          pointUsed: Number(member.point_terpakai || 0),
+          pointBalance: Number(member.point_sisa || 0),
+        },
+      };
+    },
+
+    openTierAction(action) {
+      const allowed = {
+        upgrade: this.tierState.can_upgrade,
+        downgrade: this.tierState.can_downgrade,
+        automatic: this.tierState.can_reset_automatic,
+      };
+
+      if (!allowed[action]) {
+        this.showSnackbar(
+          "Aksi tier tidak tersedia untuk kondisi member saat ini.",
+          "warning",
+        );
+        return;
+      }
+
+      this.tierActionType = action;
+      this.tierReason = "";
+      this.tierActionDialog = true;
+      this.$nextTick(() => this.$refs.tierActionForm?.resetValidation());
+    },
+
+    closeTierAction() {
+      if (this.tierActionLoading) return;
+      this.tierActionDialog = false;
+      this.tierReason = "";
+      this.$refs.tierActionForm?.resetValidation();
+    },
+
+    async submitTierAction() {
+      if (this.tierActionLoading) return;
+
+      const validation = await this.$refs.tierActionForm?.validate();
+      if (!validation?.valid) {
+        this.showSnackbar("Lengkapi alasan perubahan tier.", "error");
+        return;
+      }
+
+      const endpointAction =
+        this.tierActionType === "automatic" ? "automatic" : this.tierActionType;
+
+      this.tierActionLoading = true;
+
+      try {
+        const response = await api.post(
+          `/administrasi/pasien/${this.pasienId}/tier/${endpointAction}`,
+          { alasan: String(this.tierReason || "").trim() },
+        );
+
+        if (!response.data?.status) {
+          throw new Error(
+            response.data?.message || "Perubahan tier gagal diproses.",
+          );
+        }
+
+        this.applyTierState(response.data?.data || {});
+        this.tierActionDialog = false;
+        this.tierReason = "";
+        this.showSnackbar(
+          response.data?.message || "Tier pasien berhasil diperbarui.",
+          "success",
+        );
+      } catch (error) {
+        this.showSnackbar(
+          this.getErrorMessage(error, "Perubahan tier gagal diproses."),
+          "error",
+        );
+      } finally {
+        this.tierActionLoading = false;
+      }
+    },
+
+    tierHistoryColor(action) {
+      if (action === "upgrade" || action === "assign") return "success";
+      if (action === "downgrade" || action === "remove") return "warning";
+      if (action === "sync") return "primary";
+      return "info";
+    },
+
+    getErrorMessage(error, fallback) {
+      const errors = error?.response?.data?.errors;
+      const firstError =
+        errors && typeof errors === "object"
+          ? Object.values(errors).flat().find(Boolean)
+          : null;
+
+      return (
+        firstError ||
+        error?.response?.data?.message ||
+        error?.message ||
+        fallback
+      );
+    },
+
+    mapSummary(summary = {}) {
+      return {
+        totalKunjungan: Number(summary.total_kunjungan || 0),
+        totalTransaksi: Number(summary.total_transaksi || 0),
+        lastVisitDate: summary.last_visit_date || null,
+        lastVisitAt: summary.last_visit_at || null,
+        depositQty: Number(summary.deposit_qty_sisa || 0),
+        depositBalance: Number(summary.deposit_nilai_sisa || 0),
+      };
+    },
+
+    mapPatient(patient, summary = {}, latestTierName = null) {
+      const member = patient.member || null;
       const birthDate = patient.tanggal_lahir || null;
+      const pointBalance = Number(
+        member?.point_sisa ??
+          summary.member_point_sisa ??
+          summary.member_total_point ??
+          0,
+      );
+      const pointValue = Number(
+        summary.member_point_value ?? pointBalance * 2500,
+      );
 
       return {
         id: patient.id || this.pasienId,
@@ -808,11 +2260,7 @@ export default {
         name: patient.nama || patient.nama_pasien || "-",
         gender:
           patient.jenis_kelamin_text || this.genderText(patient.jenis_kelamin),
-        kategori:
-          patient.tipe_pasien_text ||
-          member.status_text ||
-          summary.member_status ||
-          "-",
+        category: patient.tipe_pasien_text || "-",
         birthPlace: patient.tempat_lahir || "-",
         birthDate,
         age: this.calculateAge(birthDate),
@@ -824,93 +2272,456 @@ export default {
           patient.pekerjaan?.nama_pekerjaan || patient.pekerjaan?.label || "-",
         maritalStatus: patient.status_pernikahan_text || "-",
         phone: patient.no_hp || patient.no_wa || patient.no_telp || "-",
+        whatsapp: patient.no_wa || "-",
+        telephone: patient.no_telp || "-",
+        email: patient.email || "-",
         address: patient.alamat_detail || patient.alamat || "-",
         shippingAddress:
           patient.alamat_pengiriman ||
           patient.alamat_detail ||
           patient.alamat ||
           "-",
-        points: Number(
-          member.point_sisa ??
-            member.total_point ??
-            summary.member_point_sisa ??
-            summary.member_total_point ??
-            0,
-        ),
-        pointsValue: Number(
-          member.nilai_point ??
-            member.point_value ??
-            summary.member_point_value ??
-            0,
-        ),
-        depositBalance: Number(summary.deposit_nilai_sisa || 0),
+        points: pointBalance,
+        pointsValue: pointValue,
+        skinAnalyzerUrl:
+          patient.skin_analyzer_url || patient.skinAnalyzerUrl || "",
+        member: {
+          isMember: Boolean(member),
+          id: member?.id || null,
+          noMember: member?.no_member || summary.member_no || "-",
+          tierId: member?.member_tier_id || null,
+          tierName: member?.member_tier_nama || latestTierName || "-",
+          status: member?.status ?? null,
+          statusText:
+            member?.status_text ||
+            summary.member_status ||
+            "Belum menjadi member",
+          registeredAt: member?.tanggal_daftar || null,
+          expiredAt: member?.tanggal_expired || null,
+          totalSpending: Number(member?.total_spending || 0),
+          totalPoint: Number(member?.total_point || 0),
+          pointUsed: Number(member?.point_terpakai || 0),
+          pointBalance,
+        },
       };
     },
 
-    mapRiwayatItem(item) {
-      const items = Array.isArray(item.items) ? item.items : [];
-
-      const treatmentItems = items.filter((detail) =>
-        [2, 4].includes(Number(detail.item_type)),
-      );
-
-      const productItems = items.filter((detail) =>
-        [3].includes(Number(detail.item_type)),
-      );
-
-      const tindakan = treatmentItems.map((detail) => ({
-        nama: detail.nama_item || "-",
-        qty: this.cleanQty(detail.qty),
-        perawat: item.perawat?.nama || detail.perawat_nama || "-",
-      }));
-
-      const obat = productItems
-        .map((detail) => {
-          const qty = this.cleanQty(detail.qty);
-          const satuan = detail.satuan ? ` ${detail.satuan}` : "";
-          return `${detail.nama_item || "-"} x${qty}${satuan}`;
-        })
-        .join(", ");
-
-      const catatanParts = [
-        item.catatan,
-        item.soap?.assessment_note
-          ? `Assessment: ${item.soap.assessment_note}`
-          : null,
-        item.soap?.plan_note ? `Plan: ${item.soap.plan_note}` : null,
-        item.intake?.keluhan_utama
-          ? `Keluhan: ${item.intake.keluhan_utama}`
-          : null,
+    mapHistoryItem(item) {
+      const rawItems = Array.isArray(item.items) ? item.items : [];
+      const rawCppt = Array.isArray(item.cppt) ? item.cppt : [];
+      const doctor = item.soap?.dokter?.nama || item.dokter?.nama || "-";
+      const nurseNames = [
+        item.perawat?.nama,
+        ...rawCppt.map((cppt) => cppt?.perawat?.nama),
       ].filter(Boolean);
+      const uniqueNurseNames = [...new Set(nurseNames)];
+
+      const mappedItems = rawItems.map((detail) => this.mapInvoiceItem(detail));
+      const treatments = mappedItems
+        .filter((detail) => [2, 4].includes(detail.type))
+        .map((detail) => ({
+          ...detail,
+          staff:
+            detail.nurseName ||
+            uniqueNurseNames.join(", ") ||
+            item.perawat?.nama ||
+            "-",
+        }));
+      const products = mappedItems.filter((detail) => detail.type === 3);
+      const consultations = mappedItems.filter((detail) => detail.type === 1);
+      const payment = this.mapPayment(item.pembayaran || {});
+      const soap = this.mapSoap(item.soap);
+      const cppt = rawCppt.map((entry) => this.mapCppt(entry));
+      const intake = this.mapIntake(item.intake);
+      const notes =
+        [item.catatan, payment.notes, intake?.notes]
+          .filter((value) => value && value !== "-")
+          .join(" • ") || "Tidak ada catatan kunjungan.";
+
+      const mapped = {
+        id: item.id || item.registrasi_id || item.kode_registrasi,
+        registrationId: Number(item.registrasi_id || item.id || 0),
+        registrationCode: item.kode_registrasi || "-",
+        date: item.tanggal || item.tanggal_kunjungan || null,
+        time: item.waktu || "",
+        registeredAt: item.registered_at || "",
+        clinic: item.toko?.nama_toko || "-",
+        doctor,
+        nurseNames: uniqueNurseNames,
+        services:
+          Array.isArray(item.layanan) && item.layanan.length
+            ? item.layanan
+            : ["Registrasi"],
+        transactionType: payment.transactionType,
+        status: {
+          text: item.status?.text || item.status?.invoice_text || "Lunas",
+          color: this.normalizeStatusColor(item.status?.color),
+        },
+        treatments,
+        products,
+        consultations,
+        soap,
+        cppt,
+        intake,
+        payment,
+        notes,
+      };
+
+      mapped.searchText = JSON.stringify(mapped).toLowerCase();
+      return mapped;
+    },
+
+    mapInvoiceItem(item) {
+      const frequency = item.frekuensi || item.frekuensi_penggunaan || "";
+      const usageTime = item.waktu_pakai || item.waktu_penggunaan || "";
+      const instruction = item.instruksi_pemakaian || "";
 
       return {
-        id: item.id || item.registrasi_id || item.kode_registrasi,
-        tgl: item.tanggal || item.tanggal_kunjungan || null,
-        dokter: item.dokter?.nama || "-",
-        perawat: item.perawat?.nama || "-",
-        tindakan,
-        obat: obat || "-",
-        catatan: catatanParts.join(" | ") || "-",
-        transaksi:
-          item.pembayaran?.jenis_transaksi_text ||
-          item.status?.text ||
-          "Reguler",
-        klinik: item.toko?.nama_toko || "-",
+        id: item.id,
+        type: Number(item.item_type || 0),
+        typeText: item.item_type_text || "Item",
+        name: item.nama_item || "-",
+        unit: item.satuan || "",
+        qty: Number(item.qty || 0),
+        price: Number(item.harga || 0),
+        discount: Number(item.diskon_amount || 0),
+        subtotalDiscount: Number(item.diskon_subtotal_amount || 0),
+        subtotal: Number(item.subtotal || 0),
+        doctorId: item.dokter_id || null,
+        nurseId: item.perawat_id || null,
+        doctorName: item.dokter_nama || "",
+        nurseName: item.perawat_nama || "",
+        usage: [frequency, usageTime, instruction].filter(Boolean).join(" • "),
+        expiredAt: item.expired_at || null,
+        isDoctorRecommendation: Number(item.is_saran_dokter || 0) === 1,
       };
     },
 
-    onSearch() {
+    mapPayment(payment) {
+      return {
+        id: payment.id || null,
+        invoiceNumber: payment.no_invoice || "-",
+        memberNumber: payment.member_no || "-",
+        memberTierName: payment.member_tier_nama || "-",
+        invoiceAt: payment.tanggal_invoice || "-",
+        paidAt: payment.tanggal_lunas || "-",
+        transactionType: payment.jenis_transaksi_text || "Umum",
+        subtotalProduct: Number(payment.subtotal_produk || 0),
+        subtotalTreatment: Number(payment.subtotal_treatment || 0),
+        subtotalConsultation: Number(payment.subtotal_konsultasi || 0),
+        subtotal: Number(payment.subtotal || 0),
+        itemDiscount: Number(payment.total_diskon_item || 0),
+        subtotalDiscount: Number(payment.diskon_subtotal_amount || 0),
+        promoDiscount: Number(payment.total_promo || 0),
+        memberDiscount: Number(payment.diskon_member_amount || 0),
+        pointEarned: Number(payment.point_earned || 0),
+        pointRedeemed: Number(payment.point_redeemed || 0),
+        pointRedeemValue: Number(payment.point_redeem_value || 0),
+        grandTotal: Number(payment.grand_total || 0),
+        totalPaid: Number(payment.total_bayar || 0),
+        change: Number(payment.total_kembalian || 0),
+        remaining: Number(payment.sisa_tagihan || 0),
+        notes: payment.catatan || "",
+      };
+    },
+
+    mapSoap(soap) {
+      if (!soap) return null;
+
+      return {
+        id: soap.id,
+        doctor: soap.dokter?.nama || "-",
+        subjective: Array.isArray(soap.subjective)
+          ? soap.subjective.filter(Boolean)
+          : [],
+        objective: soap.objective || "-",
+        assessment: Array.isArray(soap.assessment)
+          ? soap.assessment.filter(Boolean)
+          : [],
+        otherAssessment: soap.assessment_lainnya || "-",
+        plan: soap.plan || "-",
+        nextConsultationDate: soap.next_konsultasi_date || null,
+        statusText: soap.status_text || "-",
+        statusColor: Number(soap.status) === 1 ? "success" : "warning",
+        finalizedAt: soap.finalized_at || "-",
+      };
+    },
+
+    mapCppt(cppt) {
+      return {
+        id: cppt.id,
+        date: cppt.tanggal_pengisian || cppt.tanggal_jam || "-",
+        doctor: cppt.dokter?.nama || "-",
+        nurse: cppt.perawat?.nama || "-",
+        subjective: cppt.subjective || cppt.subjective_note || "-",
+        objective: cppt.objective || cppt.objective_note || "-",
+        assessment: cppt.assessment || cppt.assessment_note || "-",
+        plan: cppt.plan || cppt.plan_note || "-",
+        action: cppt.tindakan || cppt.tindakan_evaluasi_note || "-",
+        statusText: cppt.status_text || "-",
+      };
+    },
+
+    mapIntake(intake) {
+      if (!intake) return null;
+
+      return {
+        id: intake.id,
+        consultationType: intake.jenis_konsultasi_text || "-",
+        requestDoctor: intake.request_dokter_nama || "-",
+        allergy: intake.alergi || "-",
+        mainComplaint: intake.keluhan_utama || "-",
+        initialComplaint: intake.keluhan_awal || "-",
+        previousProduct: intake.produk_obat_sebelumnya || "-",
+        pregnant: intake.sedang_hamil || "-",
+        breastfeeding: intake.sedang_menyusui || "-",
+        notes:
+          [intake.catatan_awal, intake.catatan_cs]
+            .filter(Boolean)
+            .join(" • ") || "-",
+        statusText: intake.status_text || "-",
+      };
+    },
+
+    resetPage() {
       this.page = 1;
+    },
+
+    normalizeStatusColor(value) {
+      const color = String(value || "").toLowerCase();
+      if (
+        ["success", "primary", "warning", "error", "info", "grey"].includes(
+          color,
+        )
+      ) {
+        return color;
+      }
+      return "success";
+    },
+
+    openMemberCard(side) {
+      if (!this.patient.member.isMember) {
+        this.showSnackbar("Pasien belum memiliki membership aktif.", "warning");
+        return;
+      }
+
+      this.memberCardSide = side;
+      this.memberCardDialog = true;
+    },
+
+    printMemberCard() {
+      const isFront = this.memberCardSide === "front";
+      const content = isFront
+        ? `
+          <div class="card front">
+            <div class="brand">MS GLOW AESTHETIC CLINIC</div>
+            <div class="title">MEMBER CARD</div>
+            <div class="name">${this.escapeHtml(this.patient.name)}</div>
+            <div class="member">${this.escapeHtml(this.patient.member.noMember)}</div>
+            <div class="footer"><span>Tier: ${this.escapeHtml(this.currentTierName)}</span><span>RM: ${this.escapeHtml(this.patient.noRm)}</span></div>
+          </div>`
+        : `
+          <div class="card back">
+            <div class="title">INFORMASI MEMBER</div>
+            <p>Kartu ini milik <strong>${this.escapeHtml(this.patient.name)}</strong>.</p>
+            <p>Nomor member: ${this.escapeHtml(this.patient.member.noMember)}</p>
+            <p>Berlaku sampai: ${this.escapeHtml(this.formatDate(this.patient.member.expiredAt))}</p>
+            <div class="note">Tunjukkan kartu ini pada saat transaksi di MS Glow Aesthetic Clinic.</div>
+          </div>`;
+
+      this.printDocument(
+        "Kartu Member",
+        content,
+        `
+        @page { size: 86mm 54mm; margin: 0; }
+        body { margin: 0; font-family: Arial, sans-serif; }
+        .card { width: 86mm; height: 54mm; box-sizing: border-box; padding: 7mm; border-radius: 4mm; }
+        .front { color: white; background: #1867c0; }
+        .back { color: #111827; border: 1px solid #d1d5db; }
+        .brand { font-size: 8pt; letter-spacing: .08em; }
+        .title { margin-top: 2mm; font-size: 15pt; font-weight: 700; }
+        .name { margin-top: 10mm; font-size: 13pt; font-weight: 700; }
+        .member { margin-top: 1mm; font-size: 9pt; }
+        .footer { display: flex; justify-content: space-between; margin-top: 7mm; font-size: 8pt; font-weight: 700; }
+        .back p { margin: 3mm 0; font-size: 9pt; }
+        .note { margin-top: 7mm; font-size: 8pt; color: #4b5563; }
+      `,
+      );
+    },
+
+    printRmLabel() {
+      const content = `
+        <div class="label">
+          <div class="clinic">MS GLOW AESTHETIC CLINIC</div>
+          <div class="rm">${this.escapeHtml(this.patient.noRm)}</div>
+          <div class="name">${this.escapeHtml(this.patient.name)}</div>
+          <div class="meta">${this.escapeHtml(this.patient.gender)} • ${this.escapeHtml(this.formatDate(this.patient.birthDate))}</div>
+          <div class="meta">${this.escapeHtml(this.patient.phone)}</div>
+        </div>`;
+
+      this.printDocument(
+        "Label Rekam Medis",
+        content,
+        `
+        @page { size: 70mm 35mm; margin: 0; }
+        body { margin: 0; font-family: Arial, sans-serif; }
+        .label { width: 70mm; height: 35mm; box-sizing: border-box; padding: 4mm; border: 1px solid #111827; }
+        .clinic { font-size: 7pt; font-weight: 700; }
+        .rm { margin-top: 2mm; font-size: 14pt; font-weight: 800; }
+        .name { margin-top: 1mm; font-size: 10pt; font-weight: 700; }
+        .meta { margin-top: 1mm; font-size: 8pt; }
+      `,
+      );
+    },
+
+    printDocument(title, content, extraStyle = "") {
+      const popup = window.open("", "_blank", "width=900,height=650");
+      if (!popup) {
+        this.showSnackbar("Popup cetak diblokir browser.", "error");
+        return;
+      }
+
+      popup.document.open();
+      popup.document.write(
+        `<!doctype html><html><head><title>${this.escapeHtml(title)}</title><style>${extraStyle}</style></head><body>${content}<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();}}<\/script></body></html>`,
+      );
+      popup.document.close();
+    },
+
+    openSkinAnalyzer() {
+      if (this.patient.skinAnalyzerUrl) {
+        window.open(
+          this.patient.skinAnalyzerUrl,
+          "_blank",
+          "noopener,noreferrer",
+        );
+        return;
+      }
+
+      this.showSnackbar(
+        "URL atau endpoint Skin Analyzer belum dikirim oleh API pasien.",
+        "warning",
+      );
+    },
+
+    async openBeforeAfterDialog() {
+      this.beforeAfterDialog = true;
+      this.photoError = "";
+      this.beforeAfterPhotos = { before: [], after: [] };
+
+      if (!this.photoVisitOptions.length) {
+        this.photoVisitId = null;
+        return;
+      }
+
+      this.photoVisitId = this.photoVisitOptions[0].value;
+      await this.loadBeforeAfterPhotos(this.photoVisitId);
+    },
+
+    async loadBeforeAfterPhotos(registrationId) {
+      this.cleanupPhotoObjectUrls();
+      this.beforeAfterPhotos = { before: [], after: [] };
+
+      if (!registrationId) {
+        return;
+      }
+
+      this.photoLoading = true;
+      this.photoError = "";
+
+      try {
+        const response =
+          await antrianPerawatService.getBeforeAfter(registrationId);
+        const payload = response?.data || response || {};
+        const beforeMetadata = Array.isArray(payload.before)
+          ? [...payload.before].sort(
+              (a, b) => Number(a?.urutan || 0) - Number(b?.urutan || 0),
+            )
+          : [];
+        const afterMetadata = Array.isArray(payload.after)
+          ? [...payload.after].sort(
+              (a, b) => Number(a?.urutan || 0) - Number(b?.urutan || 0),
+            )
+          : [];
+
+        const [before, after] = await Promise.all([
+          Promise.all(
+            beforeMetadata.map((photo) =>
+              this.loadBeforeAfterPhoto(registrationId, photo),
+            ),
+          ),
+          Promise.all(
+            afterMetadata.map((photo) =>
+              this.loadBeforeAfterPhoto(registrationId, photo),
+            ),
+          ),
+        ]);
+
+        this.beforeAfterPhotos = {
+          before: before.filter(Boolean),
+          after: after.filter(Boolean),
+        };
+
+        const metadataCount = beforeMetadata.length + afterMetadata.length;
+        const loadedCount =
+          this.beforeAfterPhotos.before.length +
+          this.beforeAfterPhotos.after.length;
+
+        if (metadataCount > 0 && loadedCount === 0) {
+          this.photoError =
+            "Metadata foto tersedia, tetapi seluruh file foto gagal dimuat.";
+        } else if (loadedCount < metadataCount) {
+          this.photoError =
+            "Sebagian file foto tidak dapat dimuat. Foto yang tersedia tetap ditampilkan.";
+        }
+      } catch (error) {
+        this.photoError =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Dokumentasi foto tidak dapat diambil dari kunjungan ini.";
+      } finally {
+        this.photoLoading = false;
+      }
+    },
+
+    async loadBeforeAfterPhoto(registrationId, photo) {
+      if (!photo?.id) return null;
+
+      try {
+        const blob = await antrianPerawatService.getBeforeAfterPhoto(
+          registrationId,
+          photo.id,
+        );
+
+        if (!(blob instanceof Blob)) return null;
+
+        const url = URL.createObjectURL(blob);
+        this.photoObjectUrls.push(url);
+
+        return {
+          id: photo.id,
+          order: Number(photo.urutan || 0),
+          url,
+        };
+      } catch (error) {
+        console.error(`Gagal mengambil foto before/after ${photo.id}:`, error);
+        return null;
+      }
+    },
+
+    cleanupPhotoObjectUrls() {
+      this.photoObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+      this.photoObjectUrls = [];
+    },
+
+    showSnackbar(message, color = "info") {
+      this.snackbar = { show: true, message, color };
     },
 
     formatDate(value) {
       if (!value) return "-";
-
-      const date = new Date(value);
-
-      if (Number.isNaN(date.getTime())) {
-        return value;
-      }
+      const date = this.parseDate(value);
+      if (!date) return String(value);
 
       return new Intl.DateTimeFormat("id-ID", {
         day: "2-digit",
@@ -919,36 +2730,61 @@ export default {
       }).format(date);
     },
 
-    formatDay(value) {
-      if (!value) return "--";
-
-      const date = new Date(value);
-
-      if (Number.isNaN(date.getTime())) {
-        return "--";
-      }
+    formatDateTime(value) {
+      if (!value) return "-";
+      const date = this.parseDate(value);
+      if (!date) return String(value);
 
       return new Intl.DateTimeFormat("id-ID", {
         day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       }).format(date);
     },
 
+    formatDay(value) {
+      const date = this.parseDate(value);
+      if (!date) return "--";
+      return new Intl.DateTimeFormat("id-ID", { day: "2-digit" }).format(date);
+    },
+
     formatMonth(value) {
-      if (!value) return "---";
+      const date = this.parseDate(value);
+      if (!date) return "---";
+      return new Intl.DateTimeFormat("id-ID", { month: "short" }).format(date);
+    },
 
-      const date = new Date(value);
+    parseDate(value) {
+      if (!value) return null;
+      if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
 
-      if (Number.isNaN(date.getTime())) {
-        return "---";
-      }
+      const normalized = /^\d{4}-\d{2}-\d{2}$/.test(String(value))
+        ? `${value}T00:00:00`
+        : String(value).replace(" ", "T");
+      const date = new Date(normalized);
+      return Number.isNaN(date.getTime()) ? null : date;
+    },
 
-      return new Intl.DateTimeFormat("id-ID", {
-        month: "short",
-      }).format(date);
+    toLocalDateKey(value) {
+      const date = this.parseDate(value);
+      if (!date) return "";
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
     },
 
     formatNumber(value) {
       return new Intl.NumberFormat("id-ID").format(Number(value || 0));
+    },
+
+    formatQty(value) {
+      const number = Number(value || 0);
+      return new Intl.NumberFormat("id-ID", {
+        maximumFractionDigits: 4,
+      }).format(number);
     },
 
     formatCurrency(value) {
@@ -966,673 +2802,34 @@ export default {
     },
 
     calculateAge(value) {
-      if (!value) return "-";
-
-      const birthDate = new Date(value);
-
-      if (Number.isNaN(birthDate.getTime())) {
-        return "-";
-      }
+      const birthDate = this.parseDate(value);
+      if (!birthDate) return "-";
 
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
-
       if (
         monthDiff < 0 ||
         (monthDiff === 0 && today.getDate() < birthDate.getDate())
       ) {
         age -= 1;
       }
-
       return age;
     },
 
     isNikInvalid(value) {
       const digits = String(value || "").replace(/\D/g, "");
-      return digits.length > 0 && digits.length !== 16;
+      return digits.length !== 16;
     },
 
-    cleanQty(value) {
-      const numberValue = Number(value || 0);
-
-      if (Number.isInteger(numberValue)) {
-        return numberValue;
-      }
-
-      return numberValue;
-    },
-
-    handlePrintFrontCard() {
-      console.log("Cetak kartu depan");
-    },
-
-    handlePrintBackCard() {
-      console.log("Cetak kartu belakang");
-    },
-
-    handlePrintRmLabel() {
-      console.log("Cetak label rekam medis");
-    },
-
-    handleSkinAnalyzer() {
-      console.log("Open skin analyzer");
+    escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
     },
   },
 };
 </script>
-
-<style scoped>
-.patient-history-page {
-  padding: 16px;
-}
-
-.history-page-header {
-  align-items: flex-start;
-}
-
-.main-card,
-.metric-card,
-.info-card,
-.history-card,
-.dialog-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px !important;
-  box-shadow: none !important;
-  background: #ffffff;
-}
-
-.hero-layout {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.hero-profile {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  flex: 1 1 560px;
-  min-width: 280px;
-}
-
-.hero-avatar {
-  flex: 0 0 auto;
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.hero-content {
-  min-width: 0;
-}
-
-.patient-chip-row,
-.patient-meta-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.patient-name-main {
-  color: #111827;
-  font-size: 26px;
-  font-weight: 800;
-  line-height: 1.2;
-}
-
-.patient-subtitle-main {
-  margin-top: 6px;
-  color: #64748b;
-  font-size: 14px;
-}
-
-.patient-meta-line {
-  color: #475569;
-  font-size: 13px;
-}
-
-.meta-inline-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  max-width: 520px;
-}
-
-.meta-inline-item span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.hero-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-start;
-  gap: 10px;
-  flex-wrap: wrap;
-  flex: 0 0 auto;
-  max-width: 420px;
-}
-
-.action-btn-clean {
-  text-transform: none !important;
-  font-weight: 700;
-  letter-spacing: 0;
-}
-
-.metric-card {
-  height: 100%;
-}
-
-.metric-card .v-card-text {
-  padding: 16px;
-}
-
-.metric-icon {
-  width: 42px;
-  height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  margin-bottom: 12px;
-}
-
-.bg-blue-soft {
-  color: #1d4ed8;
-  background: #eff6ff;
-}
-
-.bg-green-soft {
-  color: #15803d;
-  background: #ecfdf3;
-}
-
-.bg-purple-soft {
-  color: #7e22ce;
-  background: #faf5ff;
-}
-
-.bg-orange-soft {
-  color: #c2410c;
-  background: #fff7ed;
-}
-
-.metric-label {
-  color: #64748b;
-  font-size: 12.5px;
-  font-weight: 700;
-}
-
-.metric-value {
-  margin-top: 6px;
-  color: #111827;
-  font-size: 25px;
-  font-weight: 850;
-  line-height: 1.15;
-}
-
-.metric-currency {
-  font-size: 20px;
-}
-
-.metric-date {
-  font-size: 17px;
-  line-height: 1.25;
-}
-
-.metric-subtitle {
-  margin-top: 5px;
-  color: #94a3b8;
-  font-size: 12.5px;
-}
-
-.info-card-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #111827;
-  font-size: 16px;
-  font-weight: 800;
-  padding: 16px 16px 10px;
-}
-
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 11px 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.info-row:last-child {
-  border-bottom: none;
-}
-
-.info-row span {
-  min-width: 125px;
-  color: #64748b;
-  font-size: 13px;
-}
-
-.info-row strong {
-  flex: 1;
-  color: #111827;
-  font-size: 13.5px;
-  font-weight: 750;
-  line-height: 1.45;
-  text-align: right;
-  word-break: break-word;
-}
-
-.info-address-box {
-  padding: 12px;
-  border: 1px solid #eef2f7;
-  border-radius: 10px;
-  background: #f8fafc;
-}
-
-.info-address-label {
-  margin-bottom: 5px;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.info-address-value {
-  color: #111827;
-  font-size: 13.5px;
-  font-weight: 650;
-  line-height: 1.55;
-}
-
-.status-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.status-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid #eef2f7;
-  border-radius: 10px;
-  background: #f8fafc;
-}
-
-.status-title {
-  color: #111827;
-  font-size: 13.5px;
-  font-weight: 750;
-}
-
-.status-subtitle {
-  margin-top: 2px;
-  color: #64748b;
-  font-size: 12px;
-}
-
-.history-section-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
-}
-
-.section-kicker {
-  margin-bottom: 4px;
-  color: #2563eb;
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.section-title-main {
-  color: #111827;
-  font-size: 20px;
-  font-weight: 850;
-  line-height: 1.25;
-}
-
-.section-subtitle-main {
-  margin-top: 5px;
-  color: #64748b;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.history-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.search-field {
-  width: 360px;
-  max-width: 100%;
-}
-
-.history-list {
-  margin-top: 8px;
-}
-
-.history-panels {
-  background: transparent !important;
-}
-
-.history-panel {
-  margin-bottom: 12px;
-  overflow: hidden;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px !important;
-  background: #ffffff;
-}
-
-.history-panel-title {
-  padding: 14px 16px !important;
-}
-
-.history-item-header {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 58px minmax(0, 1fr) auto;
-  gap: 14px;
-  align-items: center;
-}
-
-.history-date-box {
-  width: 52px;
-  min-height: 58px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: #f8fafc;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.history-day {
-  color: #111827;
-  font-size: 18px;
-  font-weight: 850;
-  line-height: 1;
-}
-
-.history-month {
-  margin-top: 5px;
-  color: #64748b;
-  font-size: 11px;
-  font-weight: 750;
-  text-transform: uppercase;
-}
-
-.history-main {
-  min-width: 0;
-}
-
-.history-title {
-  color: #111827;
-  font-size: 15px;
-  font-weight: 800;
-  line-height: 1.3;
-}
-
-.history-subline {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  color: #64748b;
-  font-size: 12.8px;
-}
-
-.history-subline span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.history-meta {
-  text-align: right;
-}
-
-.history-full-date {
-  color: #111827;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.history-count {
-  margin-top: 4px;
-  color: #64748b;
-  font-size: 12px;
-}
-
-.detail-block {
-  min-height: 100%;
-  padding: 14px;
-  border: 1px solid #eef2f7;
-  border-radius: 12px;
-  background: #f8fafc;
-}
-
-.detail-block-treatment {
-  background: #ffffff;
-}
-
-.detail-title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.detail-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 12px;
-  color: #374151;
-  font-size: 12.5px;
-  font-weight: 850;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.detail-title-row .detail-title {
-  margin-bottom: 0;
-}
-
-.treatment-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: flex-start;
-  padding: 10px 0;
-  border-bottom: 1px solid #eef2f7;
-}
-
-.treatment-row:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.treatment-name {
-  color: #111827;
-  font-size: 14px;
-  font-weight: 750;
-  line-height: 1.35;
-}
-
-.treatment-staff {
-  margin-top: 4px;
-  color: #64748b;
-  font-size: 12px;
-}
-
-.detail-text {
-  color: #111827;
-  font-size: 13.5px;
-  line-height: 1.65;
-  white-space: pre-line;
-}
-
-.detail-empty {
-  padding: 14px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 10px;
-  color: #64748b;
-  font-size: 13px;
-  text-align: center;
-  background: #f8fafc;
-}
-
-.pagination-wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-top: 20px;
-  flex-wrap: wrap;
-}
-
-.pagination-info {
-  color: #64748b;
-  font-size: 13px;
-}
-
-.dialog-title-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px 18px;
-}
-
-.dialog-title-main {
-  color: #111827;
-  font-size: 18px;
-  font-weight: 800;
-}
-
-.dialog-title-sub {
-  margin-top: 3px;
-  color: #64748b;
-  font-size: 12.5px;
-}
-
-.shipping-box {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 14px;
-  border: 1px solid #eef2f7;
-  border-radius: 12px;
-  background: #f8fafc;
-  color: #111827;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-@media (max-width: 1264px) {
-  .hero-actions {
-    justify-content: flex-start;
-    max-width: none;
-  }
-}
-
-@media (max-width: 960px) {
-  .history-item-header {
-    grid-template-columns: 52px minmax(0, 1fr);
-  }
-
-  .history-meta {
-    grid-column: 2 / 3;
-    text-align: left;
-  }
-
-  .history-full-date {
-    white-space: normal;
-  }
-
-  .info-row {
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .info-row span {
-    min-width: 0;
-  }
-
-  .info-row strong {
-    text-align: left;
-  }
-}
-
-@media (max-width: 600px) {
-  .patient-history-page {
-    padding: 12px;
-  }
-
-  .page-title {
-    font-size: 22px;
-  }
-
-  .hero-profile {
-    flex-direction: column;
-  }
-
-  .patient-name-main {
-    font-size: 22px;
-  }
-
-  .hero-actions,
-  .hero-actions .v-btn {
-    width: 100%;
-  }
-
-  .hero-actions .v-btn {
-    justify-content: flex-start;
-  }
-
-  .search-field,
-  .history-toolbar {
-    width: 100%;
-  }
-
-  .history-section-header {
-    align-items: stretch;
-  }
-
-  .history-item-header {
-    grid-template-columns: 1fr;
-  }
-
-  .history-date-box {
-    width: 100%;
-    min-height: 46px;
-    flex-direction: row;
-    gap: 6px;
-  }
-
-  .history-meta {
-    grid-column: auto;
-  }
-
-  .pagination-wrapper {
-    align-items: flex-start;
-  }
-}
-</style>

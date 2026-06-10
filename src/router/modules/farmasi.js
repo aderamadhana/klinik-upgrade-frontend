@@ -8,18 +8,12 @@ const farmasiRoutes = [
         name: "Antrian Resep",
         component: () =>
           import("@/views/farmasi/antrian-resep/all-antrian-resep.vue"),
-        props: {
-          mode: "queue",
-        },
       },
       {
         path: "riwayat-resep",
         name: "Riwayat Resep",
         component: () =>
-          import("@/views/farmasi/antrian-resep/all-antrian-resep.vue"),
-        props: {
-          mode: "history",
-        },
+          import("@/views/farmasi/antrian-resep/all-riwayat-resep.vue"),
       },
     ],
   },
