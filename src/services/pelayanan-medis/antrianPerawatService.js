@@ -17,6 +17,12 @@ export default {
       .then((response) => response.data);
   },
 
+  saveCppt(id, payload) {
+    return api
+      .post(`${BASE_URL}/${id}/cppt`, payload)
+      .then((response) => response.data);
+  },
+
   finish(id) {
     return api
       .post(`${BASE_URL}/${id}/finish`)
