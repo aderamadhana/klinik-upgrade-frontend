@@ -491,24 +491,34 @@ export default {
     async fetchSupplierOptions() {
       try {
         let response = [];
+        const params = {
+          per_page: 100,
+        };
 
         if (typeof referenceService.supplier === "function") {
-          response = await referenceService.supplier();
+          response = await referenceService.supplier(params);
         } else if (typeof referenceService.suppliers === "function") {
-          response = await referenceService.suppliers();
+          response = await referenceService.suppliers(params);
         }
 
-        const rows = this.extractArray(response);
+        let rows = this.extractArray(response);
 
-        this.supplierOptions = rows.map((row) => ({
-          ...row,
-          nama_supplier:
-            row.nama_supplier ||
-            row.nama ||
-            row.name ||
-            row.supplier_name ||
-            "-",
-        }));
+        if (!rows.length && this.selectedTokoId) {
+          const scopedParams = {
+            toko_id: this.selectedTokoId,
+            per_page: 100,
+          };
+
+          if (typeof referenceService.supplier === "function") {
+            response = await referenceService.supplier(scopedParams);
+          } else if (typeof referenceService.suppliers === "function") {
+            response = await referenceService.suppliers(scopedParams);
+          }
+
+          rows = this.extractArray(response);
+        }
+
+        this.supplierOptions = this.normalizeSupplierOptions(rows);
       } catch (error) {
         this.supplierOptions = [];
       }
@@ -622,7 +632,10 @@ export default {
           tanggal_akhir: this.kartuFilter.tanggal_akhir,
         });
 
-        this.kartuRows = this.extractArray(response);
+        const payload = stockService.getResponseData(response);
+        this.kartuRows = Array.isArray(payload?.items)
+          ? payload.items
+          : this.extractArray(payload);
       } catch (error) {
         this.showError(
           stockService.getErrorMessage(error, "Gagal mengambil kartu stok"),
@@ -1253,6 +1266,41 @@ export default {
               : "AMAN",
         };
       });
+    },
+
+    normalizeSupplierOptions(rows = []) {
+      const mapped = rows.map((row) => {
+        const supplierId = row.id || row.supplier_id || row.master_supplier_id;
+        const namaSupplier =
+          row.nama_supplier ||
+          row.nama ||
+          row.name ||
+          row.supplier_name ||
+          row.nama_perusahaan ||
+          "-";
+
+        return {
+          ...row,
+          id: supplierId,
+          supplier_id: supplierId,
+          nama_supplier: namaSupplier,
+          title: namaSupplier,
+          subtitle: [row.kode, row.kontak_person, row.no_telp]
+            .filter(Boolean)
+            .join(" • "),
+        };
+      });
+
+      const unique = [];
+      const seen = new Set();
+
+      mapped.forEach((row) => {
+        if (!row.id || seen.has(String(row.id))) return;
+        seen.add(String(row.id));
+        unique.push(row);
+      });
+
+      return unique;
     },
 
     normalizeProdukOptions(rows = []) {

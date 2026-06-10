@@ -11,11 +11,11 @@
           </div>
         </div>
         <v-chip
-          :color="paymentCoverageStatus.color"
+          :color="displayPaymentCoverageStatus.color"
           variant="tonal"
           size="small"
         >
-          {{ paymentCoverageStatus.text }}
+          {{ displayPaymentCoverageStatus.text }}
         </v-chip>
       </div>
 
@@ -374,12 +374,12 @@
           >
             <span class="text-body-2 text-medium-emphasis">Status Tagihan</span>
             <v-chip
-              :color="paymentCoverageStatus.color"
+              :color="displayPaymentCoverageStatus.color"
               variant="tonal"
               size="small"
               class="payment-status-chip"
             >
-              {{ paymentCoverageStatus.text }}
+              {{ displayPaymentCoverageStatus.text }}
             </v-chip>
           </div>
 
@@ -479,32 +479,36 @@
 export default {
   name: "PembayaranSummaryCard",
   props: {
-    totalPenjualan: { type: Number, default: 0 },
-    totalTreatment: { type: Number, default: 0 },
-    totalKonsultasi: { type: Number, default: 0 },
+    totalPenjualan: { type: [Number, String], default: 0 },
+    totalTreatment: { type: [Number, String], default: 0 },
+    totalKonsultasi: { type: [Number, String], default: 0 },
     hasKonsultasi: { type: Boolean, default: false },
-    subtotal: { type: Number, default: 0 },
-    subtotalDiscountAmount: { type: Number, default: 0 },
-    promoDiscountAmount: { type: Number, default: 0 },
+    subtotal: { type: [Number, String], default: 0 },
+    subtotalDiscountAmount: { type: [Number, String], default: 0 },
+    promoDiscountAmount: { type: [Number, String], default: 0 },
     memberId: { type: [Number, String], default: null },
     memberNo: { type: String, default: "" },
     memberTierNama: { type: String, default: "" },
-    memberDiscountAmount: { type: Number, default: 0 },
+    memberDiscountAmount: { type: [Number, String], default: 0 },
     pointEarned: { type: [Number, String], default: 0 },
     poin: { type: [Number, String], default: 0 },
-    grandTotal: { type: Number, default: 0 },
+    grandTotal: { type: [Number, String], default: 0 },
+    invoiceSummary: {
+      type: Object,
+      default: () => ({}),
+    },
     pembayaran: { type: Array, default: () => [] },
     metodeList: { type: Array, default: () => [] },
-    totalBayar: { type: Number, default: 0 },
-    sisaTagihan: { type: Number, default: 0 },
+    totalBayar: { type: [Number, String], default: 0 },
+    sisaTagihan: { type: [Number, String], default: 0 },
     paymentCoverageStatus: {
       type: Object,
       default: () => ({ text: "Belum Lunas", color: "error" }),
     },
     hasCashMethod: { type: Boolean, default: false },
-    cashReceived: { type: Number, default: 0 },
-    cashAllocated: { type: Number, default: 0 },
-    cashChange: { type: Number, default: 0 },
+    cashReceived: { type: [Number, String], default: 0 },
+    cashAllocated: { type: [Number, String], default: 0 },
+    cashChange: { type: [Number, String], default: 0 },
     loadingSubmit: { type: Boolean, default: false },
     formatCurrency: { type: Function, default: null },
   },
@@ -531,29 +535,94 @@ export default {
           "-",
       }));
     },
+    invoiceSummaryData() {
+      return this.invoiceSummary && typeof this.invoiceSummary === "object"
+        ? this.invoiceSummary
+        : {};
+    },
+    useInvoiceSummaryFallback() {
+      const liveSubtotal = this.toAmount(this.subtotal);
+      const liveGrandTotal = this.toAmount(this.grandTotal);
+      const invoiceSubtotal = this.getInvoiceAmount(
+        "subtotal",
+        "subtotal_tagihan",
+      );
+      const invoiceGrandTotal = this.getInvoiceAmount(
+        "grand_total",
+        "total_tagihan",
+        "total_pembayaran",
+      );
+
+      return (
+        liveSubtotal <= 0 &&
+        liveGrandTotal <= 0 &&
+        (invoiceSubtotal > 0 || invoiceGrandTotal > 0)
+      );
+    },
     safeTotalPenjualan() {
-      return Number(this.totalPenjualan || 0);
+      if (this.useInvoiceSummaryFallback) {
+        return this.getInvoiceAmount("subtotal_produk", "subtotal_obat");
+      }
+
+      return this.toAmount(this.totalPenjualan);
     },
     safeTotalTreatment() {
-      return Number(this.totalTreatment || 0);
+      if (this.useInvoiceSummaryFallback) {
+        return this.getInvoiceAmount("subtotal_treatment");
+      }
+
+      return this.toAmount(this.totalTreatment);
     },
     safeTotalKonsultasi() {
-      return Number(this.totalKonsultasi || 0);
+      if (this.useInvoiceSummaryFallback) {
+        return this.getInvoiceAmount("subtotal_konsultasi");
+      }
+
+      return this.toAmount(this.totalKonsultasi);
     },
     safeSubtotal() {
-      return Number(this.subtotal || 0);
+      if (this.useInvoiceSummaryFallback) {
+        const invoiceSubtotal = this.getInvoiceAmount("subtotal");
+
+        if (invoiceSubtotal > 0) {
+          return invoiceSubtotal;
+        }
+
+        return (
+          this.safeTotalPenjualan +
+          this.safeTotalTreatment +
+          this.safeTotalKonsultasi
+        );
+      }
+
+      return this.toAmount(this.subtotal);
     },
     safeSubtotalDiscountAmount() {
-      return Number(this.subtotalDiscountAmount || 0);
+      if (this.useInvoiceSummaryFallback) {
+        return this.getInvoiceAmount(
+          "diskon_subtotal",
+          "diskon_subtotal_amount",
+        );
+      }
+
+      return this.toAmount(this.subtotalDiscountAmount);
     },
     safePromoDiscountAmount() {
-      return Number(this.promoDiscountAmount || 0);
+      if (this.useInvoiceSummaryFallback) {
+        return this.getInvoiceAmount("diskon_promo", "total_promo");
+      }
+
+      return this.toAmount(this.promoDiscountAmount);
     },
     safeMemberDiscountAmount() {
-      return Number(this.memberDiscountAmount || 0);
+      if (this.useInvoiceSummaryFallback) {
+        return this.getInvoiceAmount("diskon_member_amount");
+      }
+
+      return this.toAmount(this.memberDiscountAmount);
     },
     safePointEarned() {
-      return Number(this.pointEarned || 0);
+      return this.toAmount(this.pointEarned);
     },
     hasMemberInfo() {
       return Boolean(this.memberId || this.memberNo || this.memberTierNama);
@@ -567,19 +636,102 @@ export default {
       return `${this.memberNo || "Member aktif"}${tier}`;
     },
     safeGrandTotal() {
-      return Number(this.grandTotal || 0);
+      if (this.useInvoiceSummaryFallback) {
+        const invoiceGrandTotal = this.getInvoiceAmount(
+          "grand_total",
+          "total_tagihan",
+          "total_pembayaran",
+        );
+
+        if (invoiceGrandTotal > 0) {
+          return invoiceGrandTotal;
+        }
+
+        return Math.max(
+          this.safeSubtotal -
+            this.safeSubtotalDiscountAmount -
+            this.safePromoDiscountAmount -
+            this.safeMemberDiscountAmount,
+          0,
+        );
+      }
+
+      return this.toAmount(this.grandTotal);
     },
     safeTotalBayar() {
-      return Number(this.totalBayar || 0);
+      const liveTotalBayar = this.toAmount(this.totalBayar);
+
+      if (liveTotalBayar > 0 || !this.useInvoiceSummaryFallback) {
+        return liveTotalBayar;
+      }
+
+      return this.getInvoiceAmount("total_bayar");
     },
     safeSisaTagihan() {
-      return Number(this.sisaTagihan || 0);
+      return Math.max(this.safeGrandTotal - this.safeTotalBayar, 0);
+    },
+    displayPaymentCoverageStatus() {
+      if (this.safeTotalBayar < this.safeGrandTotal) {
+        return { text: "Belum Lunas", color: "error" };
+      }
+
+      if (this.safeTotalBayar === this.safeGrandTotal) {
+        return { text: "Pas", color: "success" };
+      }
+
+      return { text: "Lebih Input", color: "warning" };
     },
     overPaymentAmount() {
       return Math.max(this.safeTotalBayar - this.safeGrandTotal, 0);
     },
   },
   methods: {
+    toAmount(value) {
+      if (value === null || value === undefined || value === "") {
+        return 0;
+      }
+
+      if (typeof value === "number") {
+        return Number.isFinite(value) ? value : 0;
+      }
+
+      let text = String(value)
+        .trim()
+        .replace(/[^\d,.-]/g, "");
+
+      if (!text) {
+        return 0;
+      }
+
+      const hasComma = text.includes(",");
+      const hasDot = text.includes(".");
+
+      if (hasComma && hasDot) {
+        if (text.lastIndexOf(",") > text.lastIndexOf(".")) {
+          text = text.replace(/\./g, "").replace(",", ".");
+        } else {
+          text = text.replace(/,/g, "");
+        }
+      } else if (hasComma) {
+        text = text.replace(",", ".");
+      } else if (hasDot && /^\d{1,3}(\.\d{3})+$/.test(text)) {
+        text = text.replace(/\./g, "");
+      }
+
+      const amount = Number(text);
+      return Number.isFinite(amount) ? amount : 0;
+    },
+    getInvoiceAmount(...keys) {
+      for (const key of keys) {
+        const value = this.invoiceSummaryData?.[key];
+
+        if (value !== undefined && value !== null && value !== "") {
+          return this.toAmount(value);
+        }
+      }
+
+      return 0;
+    },
     isCashRow(item) {
       const text = [
         item?.metode_bayar_nama,
@@ -598,13 +750,13 @@ export default {
     },
     formatMoney(value) {
       if (this.formatCurrency) {
-        return this.formatCurrency(Number(value || 0));
+        return this.formatCurrency(this.toAmount(value));
       }
       return new Intl.NumberFormat("id-ID", {
         style: "currency",
         currency: "IDR",
         maximumFractionDigits: 0,
-      }).format(Number(value || 0));
+      }).format(this.toAmount(value));
     },
   },
 };

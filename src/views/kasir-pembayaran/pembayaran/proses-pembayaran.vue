@@ -105,6 +105,7 @@
             :point-earned="header.point_earned"
             :poin="header.poin"
             :grand-total="grandTotal"
+            :invoice-summary="invoiceSummarySnapshot"
             :pembayaran="pembayaran"
             :metode-list="metodeList"
             :total-bayar="totalBayar"
@@ -602,7 +603,7 @@ import PembayaranPromoCard from "@/components/pembayaran/pembayaran-promo-card.v
 import PembayaranPromoDrawer from "@/components/pembayaran/pembayaran-promo-drawer.vue";
 import PembayaranSummaryCard from "@/components/pembayaran/pembayaran-summary-card.vue";
 import PembayaranTreatmentCard from "@/components/pembayaran/pembayaran-treatment-card.vue";
-import registrasiLayananService from "@/services/registrasi/registrasiLayananService";
+import pembayaranService from "@/services/kasir/pembayaranService";
 import referenceService from "@/services/referenceService";
 import karyawanService from "@/services/master/karyawanService";
 
@@ -627,6 +628,19 @@ export default {
       pendingFinishRedirect: null,
       errorMessage: "",
       registrasiDetail: null,
+      useInvoiceSummarySnapshot: false,
+      invoiceSummarySnapshot: {
+        subtotal_produk: 0,
+        subtotal_treatment: 0,
+        subtotal_konsultasi: 0,
+        subtotal: 0,
+        diskon_subtotal: 0,
+        diskon_promo: 0,
+        diskon_member_amount: 0,
+        grand_total: 0,
+        total_bayar: 0,
+        sisa_tagihan: 0,
+      },
       promoDrawer: false,
       promoCode: "",
       depositTreatmentDialog: false,
@@ -652,6 +666,7 @@ export default {
       header: {
         registrasi_id: null,
         invoice_id: null,
+        invoice_no: "",
         kode_registrasi: "",
         toko_id: null,
         tanggal: "",
@@ -744,35 +759,71 @@ export default {
     isDepositTransaction() {
       return Number(this.header.jenis_transaksi_id || 0) === 4;
     },
-    totalPenjualan() {
+    calculatedTotalPenjualan() {
       return this.penjualanItems.reduce(
         (sum, item) => sum + this.getPenjualanSubtotal(item),
         0,
       );
     },
-    totalTreatment() {
+    calculatedTotalTreatment() {
       return this.treatmentItems.reduce(
         (sum, item) => sum + this.getTreatmentSubtotal(item),
         0,
       );
     },
+    totalPenjualan() {
+      if (this.useInvoiceSummarySnapshot) {
+        return Number(this.invoiceSummarySnapshot.subtotal_produk || 0);
+      }
+
+      return this.calculatedTotalPenjualan;
+    },
+    totalTreatment() {
+      if (this.useInvoiceSummarySnapshot) {
+        return Number(this.invoiceSummarySnapshot.subtotal_treatment || 0);
+      }
+
+      return this.calculatedTotalTreatment;
+    },
     hasKonsultasi() {
       return Boolean(this.header.has_konsultasi) || this.rawTotalKonsultasi > 0;
     },
     rawTotalKonsultasi() {
+      if (this.useInvoiceSummarySnapshot) {
+        return Number(this.invoiceSummarySnapshot.subtotal_konsultasi || 0);
+      }
+
       return Number(this.header.subtotal_konsultasi || 0);
     },
     totalKonsultasi() {
-      if (this.treatmentItems.length > 0 || this.totalTreatment > 0) {
+      if (this.useInvoiceSummarySnapshot) {
+        return Number(this.invoiceSummarySnapshot.subtotal_konsultasi || 0);
+      }
+
+      if (this.treatmentItems.length > 0 || this.calculatedTotalTreatment > 0) {
         return 0;
       }
 
       return this.rawTotalKonsultasi;
     },
     subtotal() {
+      if (this.useInvoiceSummarySnapshot) {
+        const snapshotSubtotal = Number(
+          this.invoiceSummarySnapshot.subtotal || 0,
+        );
+
+        if (snapshotSubtotal > 0) {
+          return snapshotSubtotal;
+        }
+      }
+
       return this.totalPenjualan + this.totalTreatment + this.totalKonsultasi;
     },
     subtotalDiscountAmount() {
+      if (this.useInvoiceSummarySnapshot) {
+        return Number(this.invoiceSummarySnapshot.diskon_subtotal || 0);
+      }
+
       const value = Number(this.diskonSubtotal.value || 0);
       if (this.diskonSubtotal.type === "%") {
         return Math.min((this.subtotal * value) / 100, this.subtotal);
@@ -783,6 +834,10 @@ export default {
       return Math.max(this.subtotal - this.subtotalDiscountAmount, 0);
     },
     promoDiscountAmount() {
+      if (this.useInvoiceSummarySnapshot) {
+        return Number(this.invoiceSummarySnapshot.diskon_promo || 0);
+      }
+
       let remainingBase = this.promoBaseAmount;
       let total = 0;
 
@@ -801,6 +856,10 @@ export default {
       return Math.min(total, this.promoBaseAmount);
     },
     memberDiscountAmount() {
+      if (this.useInvoiceSummarySnapshot) {
+        return Number(this.invoiceSummarySnapshot.diskon_member_amount || 0);
+      }
+
       return Math.min(
         Number(this.header.diskon_member_amount || 0),
         Math.max(
@@ -812,6 +871,10 @@ export default {
       );
     },
     grandTotal() {
+      if (this.useInvoiceSummarySnapshot) {
+        return Number(this.invoiceSummarySnapshot.grand_total || 0);
+      }
+
       return Math.max(
         this.subtotal -
           this.subtotalDiscountAmount -
@@ -868,9 +931,9 @@ export default {
   },
   methods: {
     async loadPage() {
-      const registrasiId = this.$route.params.id;
-      if (!registrasiId) {
-        this.errorMessage = "ID registrasi tidak ditemukan di URL.";
+      const invoiceId = this.$route.params.id;
+      if (!invoiceId) {
+        this.errorMessage = "ID invoice tidak ditemukan di URL.";
         return;
       }
 
@@ -880,28 +943,23 @@ export default {
       try {
         await this.fetchPaymentHeaderReferences();
 
-        const response = await registrasiLayananService.getById(registrasiId);
+        const response = await pembayaranService.getById(invoiceId);
         if (!response?.status) {
           this.errorMessage =
-            response?.message || "Gagal mengambil detail registrasi.";
+            response?.message || "Gagal mengambil detail invoice pembayaran.";
           return;
         }
 
-        const data = response.data || {};
-        const paymentInvoice = await this.generatePaymentInvoice(registrasiId);
-
-        if (paymentInvoice) {
-          data.invoice = paymentInvoice;
-          data.invoice_items = this.extractInvoiceItems({
-            invoice: paymentInvoice,
-          });
-        }
+        const data = this.normalizePaymentDetailData(response.data || {});
 
         this.registrasiDetail = data;
         this.mapHeaderFromRegistrasi(data);
         this.mapPenjualanFromRegistrasi(data);
         this.mapTreatmentFromRegistrasi(data);
+        this.mapInvoiceSummaryFromInvoice(data);
+        this.mapDiskonSubtotalFromInvoice(data);
         this.mapAppliedPromosFromInvoice(data);
+        this.mapPembayaranFromInvoice(data);
         this.updateHeaderVoucherInfo();
 
         await this.fetchMetodeBayar();
@@ -910,10 +968,409 @@ export default {
         this.setDefaultCashPayment();
       } catch (error) {
         console.error("LOAD PROSES PEMBAYARAN ERROR:", error);
-        this.errorMessage = "Gagal memuat data proses pembayaran.";
+        this.errorMessage =
+          error?.response?.data?.message ||
+          "Gagal memuat data proses pembayaran.";
       } finally {
         this.loadingPage = false;
       }
+    },
+
+    normalizePaymentDetailData(detail = {}) {
+      const invoiceSource =
+        detail.invoice || detail.pembayaran_invoice || detail.payment || {};
+      const registrasi =
+        invoiceSource.registrasi ||
+        detail.registrasi ||
+        detail.registration ||
+        {};
+
+      const pickArray = (...candidates) =>
+        candidates.find((value) => Array.isArray(value)) || [];
+
+      const items = pickArray(
+        detail.items,
+        detail.invoice_items,
+        invoiceSource.items,
+      );
+      const metode = pickArray(
+        detail.metode,
+        detail.payment_methods,
+        invoiceSource.metode,
+      );
+      const promo = pickArray(
+        detail.promo,
+        detail.promos,
+        invoiceSource.promo,
+        invoiceSource.promos,
+      );
+      const depositClaims = pickArray(
+        detail.deposit_claims,
+        invoiceSource.deposit_claims,
+      );
+
+      const registrasiId = this.firstDefined(
+        invoiceSource.registrasi_id,
+        detail.registrasi_id,
+        registrasi.id,
+        null,
+      );
+      const pasien =
+        invoiceSource.pasien || registrasi.pasien || detail.pasien || null;
+      const dokterAwal =
+        invoiceSource.dokter_awal ||
+        registrasi.dokter_awal ||
+        registrasi.dokterAwal ||
+        detail.dokter_awal ||
+        null;
+      const perawatAwal =
+        invoiceSource.perawat_awal ||
+        registrasi.perawat_awal ||
+        registrasi.perawatAwal ||
+        detail.perawat_awal ||
+        null;
+
+      const invoice = {
+        ...invoiceSource,
+        items,
+        metode,
+        promo,
+        promos: promo,
+        deposit_claims: depositClaims,
+      };
+
+      return {
+        ...registrasi,
+        ...invoiceSource,
+        id: registrasiId,
+        registrasi_id: registrasiId,
+        kode_registrasi: this.firstDefined(
+          invoiceSource.kode_registrasi,
+          detail.kode_registrasi,
+          registrasi.kode_registrasi,
+          "",
+        ),
+        toko_id: this.firstDefined(
+          invoiceSource.toko_id,
+          detail.toko_id,
+          registrasi.toko_id,
+          null,
+        ),
+        tanggal_kunjungan: this.firstDefined(
+          invoiceSource.tanggal_kunjungan,
+          detail.tanggal_kunjungan,
+          registrasi.tanggal_kunjungan,
+          invoiceSource.tanggal,
+          null,
+        ),
+        tanggal: this.firstDefined(
+          invoiceSource.tanggal,
+          invoiceSource.tanggal_kunjungan,
+          detail.tanggal,
+          registrasi.tanggal,
+          registrasi.tanggal_kunjungan,
+          null,
+        ),
+        registered_at: this.firstDefined(
+          invoiceSource.registered_at,
+          detail.registered_at,
+          registrasi.registered_at,
+          null,
+        ),
+        pasien_id: this.firstDefined(
+          invoiceSource.pasien_id,
+          detail.pasien_id,
+          registrasi.pasien_id,
+          pasien?.id,
+          null,
+        ),
+        pasien,
+        dokter_awal_id: this.firstDefined(
+          invoiceSource.dokter_id,
+          detail.dokter_awal_id,
+          registrasi.dokter_awal_id,
+          dokterAwal?.id,
+          null,
+        ),
+        dokter_awal: dokterAwal,
+        perawat_awal_id: this.firstDefined(
+          invoiceSource.perawat_id,
+          detail.perawat_awal_id,
+          registrasi.perawat_awal_id,
+          perawatAwal?.id,
+          null,
+        ),
+        perawat_awal: perawatAwal,
+        invoice,
+        pembayaran_invoice: invoice,
+        invoice_items: items,
+        items,
+        metode,
+        promo,
+        promos: promo,
+        deposit_claims: depositClaims,
+      };
+    },
+
+    resolveInvoiceItemSourceSubtotal(item = {}) {
+      const directSubtotal = this.toPromoNumber(item.subtotal);
+      if (directSubtotal > 0) {
+        return directSubtotal;
+      }
+
+      const afterSubtotalDiscount = this.toPromoNumber(
+        item.subtotal_after_diskon_subtotal,
+      );
+      if (afterSubtotalDiscount > 0) {
+        return afterSubtotalDiscount;
+      }
+
+      const beforeSubtotalDiscount = this.toPromoNumber(
+        item.subtotal_before_diskon_subtotal,
+      );
+      if (beforeSubtotalDiscount > 0) {
+        return beforeSubtotalDiscount;
+      }
+
+      const total = this.toPromoNumber(item.total);
+      if (total > 0) {
+        return total;
+      }
+
+      const qty = Math.max(this.toPromoNumber(item.qty ?? item.jumlah ?? 1), 1);
+      const harga = this.toPromoNumber(
+        item.harga ?? item.harga_jual ?? item.tarif ?? 0,
+      );
+      const gross = harga * qty;
+      const itemDiscount = this.toPromoNumber(
+        item.diskon_amount ?? item.total_diskon_item ?? 0,
+      );
+      const referralDiscount = this.toPromoNumber(item.diskon_referral ?? 0);
+
+      if (gross > 0) {
+        return Math.max(gross - itemDiscount - referralDiscount, 0);
+      }
+
+      const hasSubtotalField = [
+        item.subtotal,
+        item.subtotal_after_diskon_subtotal,
+        item.subtotal_before_diskon_subtotal,
+        item.total,
+      ].some((value) => value !== undefined && value !== null && value !== "");
+
+      return hasSubtotalField ? 0 : null;
+    },
+
+    mapInvoiceSummaryFromInvoice(data = {}) {
+      const invoice = data.invoice || data.pembayaran_invoice || data || {};
+      const items = this.extractInvoiceItems(data).filter(
+        (item) => Number(item?.is_delete || 0) !== 1,
+      );
+
+      const itemTotals = items.reduce(
+        (result, item) => {
+          const amount = Number(
+            this.resolveInvoiceItemSourceSubtotal(item) || 0,
+          );
+          const itemType = Number(item.item_type || 0);
+
+          if (itemType === 3) {
+            result.produk += amount;
+          } else if (itemType === 2 || itemType === 4) {
+            result.treatment += amount;
+          } else if (itemType === 1 || itemType === 5) {
+            result.konsultasi += amount;
+          }
+
+          return result;
+        },
+        {
+          produk: 0,
+          treatment: 0,
+          konsultasi: 0,
+        },
+      );
+
+      const subtotalProduk = Math.max(
+        this.toPromoNumber(
+          this.firstDefined(
+            invoice.subtotal_produk,
+            invoice.subtotal_obat,
+            data.subtotal_produk,
+            data.subtotal_obat,
+            0,
+          ),
+        ),
+        itemTotals.produk,
+      );
+      const subtotalTreatment = Math.max(
+        this.toPromoNumber(
+          this.firstDefined(
+            invoice.subtotal_treatment,
+            data.subtotal_treatment,
+            0,
+          ),
+        ),
+        itemTotals.treatment,
+      );
+      const subtotalKonsultasi = Math.max(
+        this.toPromoNumber(
+          this.firstDefined(
+            invoice.subtotal_konsultasi,
+            data.subtotal_konsultasi,
+            0,
+          ),
+        ),
+        itemTotals.konsultasi,
+      );
+
+      const subtotalFromItems =
+        subtotalProduk + subtotalTreatment + subtotalKonsultasi;
+      const subtotal = Math.max(
+        this.toPromoNumber(
+          this.firstDefined(invoice.subtotal, data.subtotal, 0),
+        ),
+        subtotalFromItems,
+      );
+      const diskonSubtotal = this.toPromoNumber(
+        this.firstDefined(
+          invoice.diskon_subtotal,
+          invoice.diskon_subtotal_amount,
+          data.diskon_subtotal,
+          data.diskon_subtotal_amount,
+          0,
+        ),
+      );
+      const diskonPromo = this.toPromoNumber(
+        this.firstDefined(
+          invoice.diskon_promo,
+          invoice.total_promo,
+          data.diskon_promo,
+          data.total_promo,
+          0,
+        ),
+      );
+      const diskonMember = this.toPromoNumber(
+        this.firstDefined(
+          invoice.diskon_member_amount,
+          data.diskon_member_amount,
+          0,
+        ),
+      );
+      const calculatedGrandTotal = Math.max(
+        subtotal - diskonSubtotal - diskonPromo - diskonMember,
+        0,
+      );
+      const invoiceGrandTotal = this.toPromoNumber(
+        this.firstDefined(
+          invoice.grand_total,
+          invoice.total_tagihan,
+          invoice.total_pembayaran,
+          data.grand_total,
+          data.total_tagihan,
+          0,
+        ),
+      );
+      const grandTotal =
+        invoiceGrandTotal > 0 ? invoiceGrandTotal : calculatedGrandTotal;
+      const totalBayar = this.toPromoNumber(
+        this.firstDefined(invoice.total_bayar, data.total_bayar, 0),
+      );
+
+      this.invoiceSummarySnapshot = {
+        subtotal_produk: subtotalProduk,
+        subtotal_treatment: subtotalTreatment,
+        subtotal_konsultasi: subtotalKonsultasi,
+        subtotal,
+        diskon_subtotal: diskonSubtotal,
+        diskon_promo: diskonPromo,
+        diskon_member_amount: diskonMember,
+        grand_total: grandTotal,
+        total_bayar: totalBayar,
+        sisa_tagihan: Math.max(grandTotal - totalBayar, 0),
+      };
+      this.useInvoiceSummarySnapshot =
+        grandTotal > 0 || subtotal > 0 || items.length > 0;
+    },
+
+    activateLiveSummaryCalculation() {
+      this.useInvoiceSummarySnapshot = false;
+    },
+
+    mapDiskonSubtotalFromInvoice(data = {}) {
+      const invoice = data.invoice || data.pembayaran_invoice || data || {};
+      const rawType = this.firstDefined(
+        invoice.diskon_subtotal_tipe,
+        data.diskon_subtotal_tipe,
+        null,
+      );
+      const rawValue = this.toPromoNumber(
+        this.firstDefined(
+          invoice.diskon_subtotal_nilai,
+          data.diskon_subtotal_nilai,
+          0,
+        ),
+      );
+      const amount = this.toPromoNumber(
+        this.firstDefined(
+          invoice.diskon_subtotal_amount,
+          invoice.diskon_subtotal,
+          data.diskon_subtotal_amount,
+          data.diskon_subtotal,
+          0,
+        ),
+      );
+
+      let type = this.resolveDiskonType(rawType);
+      let value = rawValue;
+
+      if (value <= 0 && amount > 0) {
+        type = "Rp";
+        value = amount;
+      }
+
+      this.diskonSubtotal = {
+        type,
+        value,
+      };
+    },
+
+    mapPembayaranFromInvoice(data = {}) {
+      const invoice = data.invoice || data.pembayaran_invoice || {};
+      const candidates = [data.metode, invoice.metode, data.payment_methods];
+      const methods = candidates.find((value) => Array.isArray(value)) || [];
+
+      this.pembayaran = methods
+        .filter((item) => Number(item?.is_delete || 0) !== 1)
+        .map((item) => ({
+          id: item.id || null,
+          metode_bayar_id: item.metode_bayar_id || null,
+          metode_bayar_nama:
+            item.metode_bayar_nama ||
+            item.nama_metode_bayar ||
+            item.nama ||
+            null,
+          metode_bayar_tipe: item.metode_bayar_tipe || item.tipe || null,
+          nominal: Number(
+            item.nominal_dialokasikan ?? item.nominal ?? item.amount ?? 0,
+          ),
+          nominal_diterima: Number(
+            item.nominal_diterima ??
+              item.nominal_dialokasikan ??
+              item.nominal ??
+              0,
+          ),
+          no_referensi: item.no_referensi || null,
+          catatan: item.catatan || null,
+        }));
+
+      this.cashReceived = this.pembayaran
+        .filter((item) => this.isCashPayment(item))
+        .reduce(
+          (sum, item) =>
+            sum + Number(item.nominal_diterima || item.nominal || 0),
+          0,
+        );
     },
     async fetchPaymentHeaderReferences() {
       this.loadingReference = true;
@@ -1294,20 +1751,6 @@ export default {
         this.promoBundlingList = [];
         this.promoValueList = [];
         this.updateHeaderVoucherInfo();
-      }
-    },
-    async generatePaymentInvoice(registrasiId) {
-      try {
-        const response = await api.post(
-          `/kasir/pembayaran/generate/${registrasiId}`,
-        );
-        if (!response?.data?.status) {
-          return null;
-        }
-        return response.data.data || null;
-      } catch (error) {
-        console.error("GENERATE PAYMENT INVOICE ERROR:", error);
-        return null;
       }
     },
     extractInvoiceItems(data = {}) {
@@ -1728,9 +2171,14 @@ export default {
 
       this.header = {
         ...this.header,
-        registrasi_id: data.id || null,
-        invoice_id: invoice.id || data.invoice_id || null,
-        kode_registrasi: data.kode_registrasi || "",
+        registrasi_id: data.registrasi_id || data.id || null,
+        invoice_id: invoice.id || invoice.invoice_id || data.invoice_id || null,
+        invoice_no:
+          invoice.no_invoice ||
+          invoice.nomor_invoice ||
+          invoice.invoice_number ||
+          "",
+        kode_registrasi: data.kode_registrasi || invoice.kode_registrasi || "",
         toko_id: data.toko_id || null,
         tanggal: this.getHeaderDateValue(data, invoice),
         pasien_id: data.pasien_id || data.pasien_new_id || null,
@@ -1872,7 +2320,13 @@ export default {
         voucher_diskon_nama: "",
         manual_diskon_type: diskonType,
         manual_diskon: diskonValue,
+        diskon_referral: Number(item.diskon_referral || 0),
         promo_diskon_amount: Number(item.promo_diskon_amount || 0),
+        source_subtotal: fromInvoice
+          ? this.resolveInvoiceItemSourceSubtotal(item)
+          : null,
+        use_source_subtotal:
+          fromInvoice && this.resolveInvoiceItemSourceSubtotal(item) !== null,
         diskon_type: diskonType,
         diskon: diskonValue,
         frekuensi,
@@ -1934,20 +2388,26 @@ export default {
         voucher_diskon_nama: "",
         manual_diskon_type: diskonType,
         manual_diskon: diskonValue,
+        diskon_referral: Number(item.diskon_referral || 0),
         promo_diskon_amount: Number(item.promo_diskon_amount || 0),
+        source_subtotal: fromInvoice
+          ? this.resolveInvoiceItemSourceSubtotal(item)
+          : null,
+        use_source_subtotal:
+          fromInvoice && this.resolveInvoiceItemSourceSubtotal(item) !== null,
         diskon_type: diskonType,
         diskon: diskonValue,
       };
     },
     resolveDiskonType(value) {
-      if (
-        value === "nominal" ||
-        value === "Rp" ||
-        value === "rp" ||
-        Number(value) === 1
-      ) {
+      const text = String(value ?? "")
+        .trim()
+        .toLowerCase();
+
+      if (["2", "rp", "rupiah", "nominal"].includes(text)) {
         return "Rp";
       }
+
       return "%";
     },
     getJenisTransaksiById(value) {
@@ -2053,11 +2513,13 @@ export default {
       }
     },
     updateDiskonSubtotal({ field, value }) {
+      this.activateLiveSummaryCalculation();
       this.diskonSubtotal[field] =
         field === "value" ? Number(value || 0) : value;
     },
     updatePenjualanItemField({ index, field, value }) {
       if (!this.penjualanItems[index]) return;
+      this.activateLiveSummaryCalculation();
       if (["diskon_type", "diskon"].includes(field)) return;
       if (field === "waktu_pakai") {
         this.penjualanItems[index][field] = this.normalizeWaktuPakai(value);
@@ -2066,6 +2528,12 @@ export default {
       this.penjualanItems[index][field] = ["harga", "qty"].includes(field)
         ? Number(value || 0)
         : value;
+      if (
+        ["harga", "qty", "produk_id", "produk_toko_id", "nama"].includes(field)
+      ) {
+        this.penjualanItems[index].source_subtotal = null;
+        this.penjualanItems[index].use_source_subtotal = false;
+      }
       if (["harga", "qty"].includes(field)) {
         this.recalculatePromoEffects();
       }
@@ -2076,6 +2544,7 @@ export default {
     },
     updateTreatmentItemField({ index, field, value }) {
       if (!this.treatmentItems[index]) return;
+      this.activateLiveSummaryCalculation();
       if (field === "beautician") {
         const selected = this.perawatList.find(
           (item) => String(item.title) === String(value),
@@ -2091,6 +2560,14 @@ export default {
       this.treatmentItems[index][field] = ["harga", "qty"].includes(field)
         ? Number(value || 0)
         : value;
+      if (
+        ["harga", "qty", "treatment_id", "treatment_toko_id", "nama"].includes(
+          field,
+        )
+      ) {
+        this.treatmentItems[index].source_subtotal = null;
+        this.treatmentItems[index].use_source_subtotal = false;
+      }
       if (["harga", "qty"].includes(field)) {
         this.recalculatePromoEffects();
       }
@@ -2100,6 +2577,7 @@ export default {
       }
     },
     addPenjualanItem() {
+      this.activateLiveSummaryCalculation();
       this.penjualanItems.push({
         registrasi_penjualan_detail_id: null,
         produk_toko_id: null,
@@ -2114,6 +2592,8 @@ export default {
         manual_diskon_type: "%",
         manual_diskon: 0,
         promo_diskon_amount: 0,
+        source_subtotal: null,
+        use_source_subtotal: false,
         diskon_type: "%",
         diskon: 0,
         frekuensi: "",
@@ -2122,11 +2602,13 @@ export default {
       });
     },
     removePenjualanItem(index) {
+      this.activateLiveSummaryCalculation();
       this.penjualanItems.splice(index, 1);
       this.resetPromo();
       this.fetchVoucherEligible();
     },
     fillObat(index) {
+      this.activateLiveSummaryCalculation();
       const item = this.penjualanItems[index];
       const selected = this.findObatOption(item?.nama, item);
       if (!selected) return;
@@ -2147,6 +2629,8 @@ export default {
         manual_diskon_type: "%",
         manual_diskon: 0,
         promo_diskon_amount: 0,
+        source_subtotal: null,
+        use_source_subtotal: false,
         diskon_type: "%",
         diskon: 0,
       };
@@ -2154,6 +2638,7 @@ export default {
       this.fetchVoucherEligible();
     },
     addTreatmentItem() {
+      this.activateLiveSummaryCalculation();
       this.treatmentItems.push({
         registrasi_treatment_detail_id: null,
         treatment_toko_id: null,
@@ -2169,16 +2654,20 @@ export default {
         manual_diskon_type: "%",
         manual_diskon: 0,
         promo_diskon_amount: 0,
+        source_subtotal: null,
+        use_source_subtotal: false,
         diskon_type: "%",
         diskon: 0,
       });
     },
     removeTreatmentItem(index) {
+      this.activateLiveSummaryCalculation();
       this.treatmentItems.splice(index, 1);
       this.resetPromo();
       this.fetchVoucherEligible();
     },
     fillTreatment(index) {
+      this.activateLiveSummaryCalculation();
       const item = this.treatmentItems[index];
       const selected = this.findTreatmentOption(item?.nama, item);
       if (!selected) return;
@@ -2204,6 +2693,8 @@ export default {
         manual_diskon_type: "%",
         manual_diskon: 0,
         promo_diskon_amount: 0,
+        source_subtotal: null,
+        use_source_subtotal: false,
         diskon_type: "%",
         diskon: 0,
       };
@@ -2219,10 +2710,19 @@ export default {
       return Math.min(value, gross);
     },
     getPenjualanSubtotal(item) {
+      if (
+        item?.use_source_subtotal &&
+        item?.source_subtotal !== null &&
+        item?.source_subtotal !== undefined
+      ) {
+        return Math.max(Number(item.source_subtotal || 0), 0);
+      }
+
       const gross = Number(item.harga || 0) * Number(item.qty || 0);
       return Math.max(
         gross -
           this.getItemDiscount(item) -
+          Number(item.diskon_referral || 0) -
           Number(item.promo_diskon_amount || 0),
         0,
       );
@@ -2489,11 +2989,20 @@ export default {
         .trim();
     },
     getTreatmentSubtotal(item) {
+      if (
+        item?.use_source_subtotal &&
+        item?.source_subtotal !== null &&
+        item?.source_subtotal !== undefined
+      ) {
+        return Math.max(Number(item.source_subtotal || 0), 0);
+      }
+
       const harga = this.resolveTreatmentHarga(item);
       const gross = Number(harga || 0) * Number(item.qty || 0);
       return Math.max(
         gross -
           this.getItemDiscount({ ...item, harga }) -
+          Number(item.diskon_referral || 0) -
           Number(item.promo_diskon_amount || 0),
         0,
       );
@@ -3015,6 +3524,7 @@ export default {
     },
     togglePromo(promo) {
       if (!promo) return;
+      this.activateLiveSummaryCalculation();
 
       const normalizedPromo = this.normalizeVoucherPromo(promo);
       const key = this.getPromoKey(normalizedPromo);
@@ -3033,6 +3543,7 @@ export default {
       this.updateHeaderVoucherInfo();
     },
     removeAppliedPromo(promoOrIndex) {
+      this.activateLiveSummaryCalculation();
       if (typeof promoOrIndex === "number") {
         this.appliedPromos = this.appliedPromos.filter(
           (_, index) => index !== promoOrIndex,
@@ -3048,6 +3559,7 @@ export default {
       this.updateHeaderVoucherInfo();
     },
     resetPromo() {
+      this.activateLiveSummaryCalculation();
       this.appliedPromos = [];
       this.promoCode = "";
       this.recalculatePromoEffects();

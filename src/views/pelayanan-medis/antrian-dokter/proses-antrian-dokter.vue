@@ -580,208 +580,464 @@
               </div>
             </div>
 
-            <v-data-table
-              :headers="riwayatHeaders"
-              :items="riwayatTransaksi"
-              :loading="loadingRiwayatTransaksi"
-              density="comfortable"
-              item-value="registrasi_id"
-              :hide-default-footer="riwayatTransaksi.length <= 5"
-              class="border"
+            <v-skeleton-loader
+              v-if="loadingRiwayatTransaksi"
+              type="card, card"
+              class="border rounded-lg"
+            />
+
+            <v-card
+              v-else-if="!riwayatTransaksi.length"
+              variant="outlined"
+              rounded="lg"
             >
-              <template #loading>
-                <div class="pa-6 text-center text-medium-emphasis">
-                  <v-progress-circular indeterminate size="28" class="mb-3" />
-                  <div class="text-body-2">
-                    Memuat riwayat transaksi pasien...
-                  </div>
-                </div>
-              </template>
-
-              <template #no-data>
-                <div
-                  class="d-flex flex-column align-center justify-center text-center pa-8"
+              <v-card-text
+                class="d-flex flex-column align-center justify-center text-center pa-8"
+              >
+                <v-avatar
+                  color="primary"
+                  variant="tonal"
+                  size="56"
+                  class="mb-3"
                 >
-                  <v-avatar
-                    color="primary"
-                    variant="tonal"
-                    size="56"
-                    class="mb-3"
-                  >
-                    <v-icon size="30">
-                      mdi-clipboard-text-clock-outline
-                    </v-icon>
-                  </v-avatar>
+                  <v-icon size="30">mdi-clipboard-text-clock-outline</v-icon>
+                </v-avatar>
 
-                  <div class="text-subtitle-2 font-weight-bold mb-1">
-                    Riwayat transaksi belum tersedia
-                  </div>
-
-                  <div class="text-body-2 text-medium-emphasis">
-                    Data akan muncul setelah pasien memiliki registrasi,
-                    pelayanan, atau transaksi yang tersimpan.
-                  </div>
+                <div class="text-subtitle-2 font-weight-bold mb-1">
+                  Riwayat transaksi belum tersedia
                 </div>
-              </template>
 
-              <template #item.tgl="{ item }">
-                <div class="py-1">
-                  <div class="text-body-2 font-weight-medium">
-                    {{ riwayatTanggal(item) }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ riwayatWaktu(item) }}
-                  </div>
-                  <div
-                    class="text-caption text-primary font-weight-medium mt-1"
-                  >
-                    {{ riwayatKodeRegistrasi(item) }}
-                  </div>
+                <div class="text-body-2 text-medium-emphasis">
+                  Data akan muncul setelah pasien memiliki registrasi,
+                  pelayanan, atau transaksi yang tersimpan.
                 </div>
-              </template>
+              </v-card-text>
+            </v-card>
 
-              <template #item.dokter="{ item }">
-                <div class="py-1">
-                  <div class="text-body-2 font-weight-medium">
-                    {{ riwayatDokterName(item) }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">
-                    Perawat: {{ riwayatPerawatName(item) }}
-                  </div>
-                </div>
-              </template>
-
-              <template #item.tindakan_perawat="{ item }">
-                <div class="py-1">
-                  <div
-                    v-if="riwayatTreatmentItems(item).length"
-                    class="d-flex flex-column ga-1"
-                  >
-                    <div
-                      v-for="row in riwayatTreatmentItems(item)"
-                      :key="row.key"
-                      class="text-body-2"
+            <div v-else class="d-flex flex-column ga-4">
+              <v-card
+                v-for="(item, index) in riwayatTransaksi"
+                :key="
+                  getRiwayatRaw(item)?.registrasi_id ||
+                  getRiwayatRaw(item)?.id ||
+                  `riwayat-${index}`
+                "
+                variant="outlined"
+                rounded="lg"
+              >
+                <v-card-text class="pa-4">
+                  <div class="d-flex align-start flex-wrap ga-4">
+                    <v-sheet
+                      border
+                      rounded="lg"
+                      color="grey-lighten-5"
+                      width="118"
+                      class="pa-4 text-center flex-shrink-0"
                     >
-                      <span class="font-weight-medium">{{ row.nama }}</span>
-                      <span class="text-medium-emphasis">
-                        x {{ formatNumber(row.qty) }}
-                      </span>
-                    </div>
-                  </div>
+                      <div class="text-h4 font-weight-bold">
+                        {{ riwayatSequence(index) }}
+                      </div>
+                      <div class="text-caption text-medium-emphasis">
+                        Registrasi
+                      </div>
+                    </v-sheet>
 
-                  <span v-else class="text-body-2 text-medium-emphasis">-</span>
-
-                  <div
-                    v-if="riwayatLayananLabels(item).length"
-                    class="d-flex flex-wrap ga-1 mt-2"
-                  >
-                    <v-chip
-                      v-for="label in riwayatLayananLabels(item)"
-                      :key="label"
-                      size="x-small"
-                      color="info"
-                      variant="tonal"
-                    >
-                      {{ label }}
-                    </v-chip>
-                  </div>
-                </div>
-              </template>
-
-              <template #item.obat="{ item }">
-                <div
-                  v-if="riwayatProdukItems(item).length"
-                  class="d-flex flex-column ga-2 py-1"
-                >
-                  <div
-                    v-for="row in riwayatProdukItems(item)"
-                    :key="row.key"
-                    class="text-body-2"
-                  >
-                    <div>
-                      <span class="font-weight-medium">{{ row.nama }}</span>
-                      <span class="text-medium-emphasis">
-                        x {{ formatNumber(row.qty) }}
-                      </span>
-                    </div>
-
-                    <div
-                      v-if="
-                        row.frekuensi ||
-                        row.waktu_pakai ||
-                        row.instruksi_pemakaian
-                      "
-                      class="text-caption text-medium-emphasis mt-1"
-                    >
-                      <span v-if="row.frekuensi">{{ row.frekuensi }}</span>
-                      <span v-if="row.frekuensi && row.waktu_pakai"> • </span>
-                      <span v-if="row.waktu_pakai">{{ row.waktu_pakai }}</span>
-                      <span
-                        v-if="
-                          (row.frekuensi || row.waktu_pakai) &&
-                          row.instruksi_pemakaian
-                        "
+                    <div class="flex-grow-1">
+                      <div
+                        class="d-flex align-start justify-space-between flex-wrap ga-3"
                       >
-                        •
-                      </span>
-                      <span v-if="row.instruksi_pemakaian">
-                        {{ row.instruksi_pemakaian }}
-                      </span>
+                        <div>
+                          <div class="text-subtitle-1 font-weight-bold">
+                            {{ patient.nama_pasien || "-" }}
+                          </div>
+                          <div class="text-body-2 text-medium-emphasis">
+                            {{ riwayatKodeRegistrasi(item) }} ·
+                            {{ riwayatInvoiceNo(item) }}
+                          </div>
+                        </div>
+
+                        <div class="d-flex align-center flex-wrap ga-2">
+                          <v-chip
+                            :color="riwayatStatusColor(item)"
+                            variant="tonal"
+                            size="small"
+                            prepend-icon="mdi-check-circle-outline"
+                          >
+                            {{ riwayatStatusText(item) }}
+                          </v-chip>
+
+                          <v-chip
+                            color="blue-grey"
+                            variant="tonal"
+                            size="small"
+                          >
+                            {{ riwayatJenisTransaksi(item) }}
+                          </v-chip>
+                        </div>
+                      </div>
+
+                      <v-row dense class="mt-3">
+                        <v-col cols="12" sm="6" md="3">
+                          <div class="text-caption text-medium-emphasis">
+                            Waktu
+                          </div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{ riwayatTanggal(item) }} ·
+                            {{ riwayatWaktu(item) }}
+                          </div>
+                        </v-col>
+
+                        <v-col cols="12" sm="6" md="3">
+                          <div class="text-caption text-medium-emphasis">
+                            Dokter
+                          </div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{ riwayatDokterName(item) }}
+                          </div>
+                        </v-col>
+
+                        <v-col cols="12" sm="6" md="3">
+                          <div class="text-caption text-medium-emphasis">
+                            Perawat
+                          </div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{ riwayatPerawatName(item) }}
+                          </div>
+                        </v-col>
+
+                        <v-col cols="12" sm="6" md="3">
+                          <div class="text-caption text-medium-emphasis">
+                            Klinik
+                          </div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{ riwayatTokoName(item) }}
+                          </div>
+                        </v-col>
+                      </v-row>
+
+                      <div class="d-flex align-center flex-wrap ga-2 mt-3">
+                        <v-chip
+                          v-for="label in riwayatLayananLabels(item)"
+                          :key="`${riwayatKodeRegistrasi(item)}-${label}`"
+                          color="info"
+                          variant="tonal"
+                          size="small"
+                        >
+                          {{ label }}
+                        </v-chip>
+
+                        <v-chip
+                          v-if="riwayatCpptCount(item)"
+                          color="deep-purple"
+                          variant="tonal"
+                          size="small"
+                          prepend-icon="mdi-clipboard-pulse-outline"
+                        >
+                          {{ riwayatCpptCount(item) }} CPPT
+                        </v-chip>
+                      </div>
+                    </div>
+
+                    <div class="d-flex flex-column align-end ga-1 ml-auto">
+                      <div class="text-caption text-medium-emphasis">
+                        Total Transaksi
+                      </div>
+                      <div class="text-h6 font-weight-bold text-no-wrap">
+                        Rp {{ formatNumber(riwayatGrandTotal(item)) }}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </v-card-text>
 
-                <span v-else class="text-body-2 text-medium-emphasis">-</span>
-              </template>
+                <v-divider />
 
-              <template #item.catatan="{ item }">
-                <div class="py-1">
-                  <div class="text-body-2">
-                    {{ riwayatCatatan(item) }}
-                  </div>
+                <v-card-text class="pa-4">
+                  <v-row dense>
+                    <template
+                      v-for="group in riwayatDetailGroups(item)"
+                      :key="`${riwayatKodeRegistrasi(item)}-${group.key}`"
+                    >
+                      <v-col cols="12" md="6">
+                        <v-sheet border rounded="lg" class="pa-4 h-100">
+                          <div
+                            class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3"
+                          >
+                            <div class="d-flex align-center ga-2">
+                              <v-avatar
+                                :color="group.color"
+                                variant="tonal"
+                                size="32"
+                              >
+                                <v-icon size="18">{{ group.icon }}</v-icon>
+                              </v-avatar>
 
-                  <div
-                    v-if="riwayatSoapSummary(item) !== '-'"
-                    class="text-caption text-medium-emphasis mt-1"
-                  >
-                    SOAP: {{ riwayatSoapSummary(item) }}
-                  </div>
-                </div>
-              </template>
+                              <div>
+                                <div class="text-subtitle-2 font-weight-bold">
+                                  {{ group.label }}
+                                </div>
+                                <div class="text-caption text-medium-emphasis">
+                                  Detail item pada transaksi ini
+                                </div>
+                              </div>
+                            </div>
 
-              <template #item.transaksi="{ item }">
-                <div class="py-1 text-right">
-                  <div class="text-body-2 font-weight-bold">
-                    {{ riwayatInvoiceNo(item) }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ riwayatJenisTransaksi(item) }}
-                  </div>
-                  <div class="text-body-2 font-weight-bold mt-1">
-                    Rp {{ formatNumber(riwayatGrandTotal(item)) }}
-                  </div>
-                  <v-chip
-                    size="x-small"
-                    :color="riwayatStatusColor(item)"
-                    variant="tonal"
-                    class="mt-1"
-                  >
-                    {{ riwayatStatusText(item) }}
-                  </v-chip>
-                </div>
-              </template>
+                            <v-chip
+                              :color="group.color"
+                              variant="tonal"
+                              size="small"
+                            >
+                              {{ group.items.length }} Item
+                            </v-chip>
+                          </div>
 
-              <template #item.klinik="{ item }">
-                <div class="py-1">
-                  <div class="text-body-2 font-weight-medium">
-                    {{ riwayatTokoName(item) }}
-                  </div>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ riwayatChannelLabel(item) }}
-                  </div>
-                </div>
-              </template>
-            </v-data-table>
+                          <v-sheet
+                            v-for="row in group.items"
+                            :key="row.key"
+                            border
+                            rounded="lg"
+                            class="pa-3 mb-3"
+                          >
+                            <div
+                              class="d-flex align-start justify-space-between flex-wrap ga-2"
+                            >
+                              <div class="flex-grow-1">
+                                <div class="text-body-2 font-weight-bold">
+                                  {{ row.nama }}
+                                </div>
+                                <div
+                                  v-if="row.kode_item !== '-'"
+                                  class="text-caption text-medium-emphasis mt-1"
+                                >
+                                  Kode: {{ row.kode_item }}
+                                </div>
+                              </div>
+
+                              <div class="d-flex align-center flex-wrap ga-1">
+                                <v-chip
+                                  :color="group.color"
+                                  variant="tonal"
+                                  size="x-small"
+                                >
+                                  {{ row.item_type_text }}
+                                </v-chip>
+
+                                <v-chip
+                                  v-if="row.is_saran_dokter"
+                                  color="success"
+                                  variant="tonal"
+                                  size="x-small"
+                                  prepend-icon="mdi-stethoscope"
+                                >
+                                  Saran Dokter
+                                </v-chip>
+                              </div>
+                            </div>
+
+                            <v-row dense class="mt-3">
+                              <v-col cols="6" sm="3">
+                                <div class="text-caption text-medium-emphasis">
+                                  Qty
+                                </div>
+                                <div class="text-body-2 font-weight-bold">
+                                  {{ formatNumber(row.qty) }}
+                                  {{ row.satuan !== "-" ? row.satuan : "" }}
+                                </div>
+                              </v-col>
+
+                              <v-col cols="6" sm="3">
+                                <div class="text-caption text-medium-emphasis">
+                                  Harga Satuan
+                                </div>
+                                <div class="text-body-2 font-weight-bold">
+                                  Rp {{ formatNumber(row.harga) }}
+                                </div>
+                              </v-col>
+
+                              <v-col cols="6" sm="3">
+                                <div class="text-caption text-medium-emphasis">
+                                  Total Awal
+                                </div>
+                                <div class="text-body-2 font-weight-bold">
+                                  Rp {{ formatNumber(riwayatItemGross(row)) }}
+                                </div>
+                              </v-col>
+
+                              <v-col cols="6" sm="3">
+                                <div class="text-caption text-medium-emphasis">
+                                  Subtotal Akhir
+                                </div>
+                                <div class="text-body-2 font-weight-bold">
+                                  Rp {{ formatNumber(row.subtotal) }}
+                                </div>
+                              </v-col>
+                            </v-row>
+
+                            <v-divider class="my-3" />
+
+                            <div class="d-flex flex-wrap ga-2">
+                              <v-chip
+                                color="warning"
+                                variant="tonal"
+                                size="small"
+                              >
+                                Diskon Item
+                                <span
+                                  v-if="riwayatDiskonMeta(row)"
+                                  class="ml-1"
+                                >
+                                  ({{ riwayatDiskonMeta(row) }})
+                                </span>
+                                : Rp {{ formatNumber(row.diskon_amount) }}
+                              </v-chip>
+
+                              <v-chip
+                                color="deep-purple"
+                                variant="tonal"
+                                size="small"
+                              >
+                                Referral: Rp
+                                {{ formatNumber(row.diskon_referral) }}
+                              </v-chip>
+
+                              <v-chip color="info" variant="tonal" size="small">
+                                Diskon Subtotal: Rp
+                                {{ formatNumber(row.diskon_subtotal_amount) }}
+                              </v-chip>
+                            </div>
+
+                            <v-row
+                              v-if="riwayatHasMedicationUsage(row)"
+                              dense
+                              class="mt-3"
+                            >
+                              <v-col cols="12" sm="4">
+                                <v-sheet
+                                  color="grey-lighten-5"
+                                  rounded="lg"
+                                  class="pa-3 h-100"
+                                >
+                                  <div
+                                    class="text-caption text-medium-emphasis"
+                                  >
+                                    Frekuensi
+                                  </div>
+                                  <div class="text-body-2 font-weight-medium">
+                                    {{ row.frekuensi || "-" }}
+                                  </div>
+                                </v-sheet>
+                              </v-col>
+
+                              <v-col cols="12" sm="4">
+                                <v-sheet
+                                  color="grey-lighten-5"
+                                  rounded="lg"
+                                  class="pa-3 h-100"
+                                >
+                                  <div
+                                    class="text-caption text-medium-emphasis"
+                                  >
+                                    Waktu Pakai
+                                  </div>
+                                  <div class="text-body-2 font-weight-medium">
+                                    {{ row.waktu_pakai || "-" }}
+                                  </div>
+                                </v-sheet>
+                              </v-col>
+
+                              <v-col cols="12" sm="4">
+                                <v-sheet
+                                  color="grey-lighten-5"
+                                  rounded="lg"
+                                  class="pa-3 h-100"
+                                >
+                                  <div
+                                    class="text-caption text-medium-emphasis"
+                                  >
+                                    Instruksi
+                                  </div>
+                                  <div class="text-body-2 font-weight-medium">
+                                    {{ row.instruksi_pemakaian || "-" }}
+                                  </div>
+                                </v-sheet>
+                              </v-col>
+                            </v-row>
+
+                            <div
+                              v-if="
+                                row.expired_at !== '-' || row.status !== '-'
+                              "
+                              class="d-flex align-center flex-wrap ga-2 mt-3"
+                            >
+                              <v-chip
+                                v-if="row.expired_at !== '-'"
+                                color="error"
+                                variant="tonal"
+                                size="small"
+                                prepend-icon="mdi-calendar-alert-outline"
+                              >
+                                Expired: {{ row.expired_at }}
+                              </v-chip>
+
+                              <v-chip
+                                v-if="row.status !== '-'"
+                                color="blue-grey"
+                                variant="tonal"
+                                size="small"
+                              >
+                                Status Item: {{ row.status_text }}
+                              </v-chip>
+                            </div>
+                          </v-sheet>
+                        </v-sheet>
+                      </v-col>
+                    </template>
+
+                    <v-col v-if="!riwayatDetailGroups(item).length" cols="12">
+                      <v-alert type="info" variant="tonal" density="compact">
+                        Transaksi ini tidak memiliki detail treatment atau obat
+                        / produk pada invoice.
+                      </v-alert>
+                    </v-col>
+                  </v-row>
+
+                  <v-divider class="my-4" />
+
+                  <v-row dense>
+                    <v-col cols="12" md="6">
+                      <v-sheet border rounded="lg" class="pa-3 h-100">
+                        <div class="d-flex align-center ga-2 mb-2">
+                          <v-icon size="18" color="primary">
+                            mdi-note-text-outline
+                          </v-icon>
+                          <div class="text-caption text-medium-emphasis">
+                            Catatan
+                          </div>
+                        </div>
+                        <div class="text-body-2">
+                          {{ riwayatCatatan(item) }}
+                        </div>
+                      </v-sheet>
+                    </v-col>
+
+                    <v-col cols="12" md="6">
+                      <v-sheet border rounded="lg" class="pa-3 h-100">
+                        <div class="d-flex align-center ga-2 mb-2">
+                          <v-icon size="18" color="deep-purple">
+                            mdi-clipboard-pulse-outline
+                          </v-icon>
+                          <div class="text-caption text-medium-emphasis">
+                            Ringkasan SOAP
+                          </div>
+                        </div>
+                        <div class="text-body-2">
+                          {{ riwayatSoapSummary(item) }}
+                        </div>
+                      </v-sheet>
+                    </v-col>
+                  </v-row>
+                </v-card-text>
+              </v-card>
+            </div>
           </div>
 
           <v-card variant="outlined" rounded="lg" class="mb-5">
@@ -1371,26 +1627,6 @@ export default {
           title: "Pagi - Siang - Sore - Malam",
           value: "pagi - siang - sore - malam",
         },
-      ],
-
-      riwayatHeaders: [
-        { title: "TGL", key: "tgl", sortable: false, minWidth: 120 },
-        { title: "DOKTER", key: "dokter", sortable: false, minWidth: 160 },
-        {
-          title: "TINDAKAN & PERAWAT",
-          key: "tindakan_perawat",
-          sortable: false,
-          minWidth: 240,
-        },
-        { title: "OBAT", key: "obat", sortable: false, minWidth: 220 },
-        { title: "CATATAN", key: "catatan", sortable: false, minWidth: 240 },
-        {
-          title: "TRANSAKSI",
-          key: "transaksi",
-          sortable: false,
-          minWidth: 160,
-        },
-        { title: "KLINIK", key: "klinik", sortable: false, minWidth: 140 },
       ],
 
       riwayatTransaksi: [],
@@ -3630,11 +3866,31 @@ export default {
     },
 
     normalizeRiwayatItem(row = {}, index = 0) {
+      const itemType = this.toNumber(
+        row?.item_type ?? row?.jenis_item ?? row?.type ?? 0,
+      );
+
+      const diskonTipe = this.toNumber(row?.diskon_tipe ?? 0);
+      const status = this.toNumber(row?.status ?? 1);
+
       return {
         key:
           row?.id ||
           row?.item_id ||
           `${row?.nama || row?.nama_item || index}-${index}`,
+        item_type: itemType,
+        item_type_text: this.displayText(
+          row?.item_type_text ||
+            row?.jenis_item_text ||
+            this.riwayatItemTypeText(itemType),
+        ),
+        kode_item: this.displayText(
+          row?.kode_item ||
+            row?.kode_produk ||
+            row?.kode_treatment ||
+            row?.kode ||
+            "",
+        ),
         nama:
           row?.nama_item ||
           row?.nama_produk ||
@@ -3642,7 +3898,23 @@ export default {
           row?.nama ||
           row?.description ||
           "-",
-        qty: this.toNumber(row?.jumlah || row?.qty || row?.quantity || 1),
+        satuan: this.displayText(row?.satuan || row?.nama_satuan || ""),
+        qty: this.toNumber(row?.jumlah ?? row?.qty ?? row?.quantity ?? 1),
+        harga: this.toNumber(
+          row?.harga ?? row?.harga_satuan ?? row?.unit_price ?? 0,
+        ),
+        diskon_tipe: diskonTipe,
+        diskon_nilai: this.toNumber(row?.diskon_nilai ?? 0),
+        diskon_amount: this.toNumber(row?.diskon_amount ?? 0),
+        diskon_referral: this.toNumber(row?.diskon_referral ?? 0),
+        diskon_subtotal_amount: this.toNumber(row?.diskon_subtotal_amount ?? 0),
+        subtotal: this.toNumber(
+          row?.subtotal_after_diskon_subtotal ??
+            row?.subtotal ??
+            row?.total_harga ??
+            row?.total ??
+            0,
+        ),
         frekuensi:
           row?.frekuensi || row?.frekuensi_penggunaan || row?.frequency || "",
         waktu_pakai:
@@ -3653,7 +3925,25 @@ export default {
           row?.cara_pakai ||
           row?.catatan_pemakaian ||
           "",
+        expired_at: row?.expired_at ? this.formatDate(row.expired_at) : "-",
+        status,
+        status_text: this.displayText(
+          row?.status_text || (status === 9 ? "Batal" : "Aktif"),
+        ),
+        is_saran_dokter: this.isTrue(row?.is_saran_dokter),
       };
+    },
+
+    riwayatItemTypeText(itemType) {
+      const labels = {
+        1: "Konsultasi",
+        2: "Treatment",
+        3: "Obat / Produk",
+        4: "Deposit Treatment",
+        5: "Layanan Non-Billing",
+      };
+
+      return labels[this.toNumber(itemType)] || "Item Lainnya";
     },
 
     riwayatTreatmentItems(item) {
@@ -3666,6 +3956,109 @@ export default {
       const rows = this.riwayatItems(item, ["produk", "obat", "penjualan"]);
 
       return rows.map((row, index) => this.normalizeRiwayatItem(row, index));
+    },
+
+    riwayatOtherItems(item) {
+      const rows = this.riwayatItems(item).filter((row) => {
+        const itemTypeNumber = this.toNumber(row?.item_type ?? 0);
+        const itemTypeText = String(
+          row?.item_type_text ||
+            row?.jenis_item_text ||
+            row?.jenis_item ||
+            row?.type ||
+            row?.kategori ||
+            "",
+        ).toLowerCase();
+        const sourceTypeText = String(
+          row?.source_type_text ||
+            row?.source_type ||
+            row?.accurate_source_type ||
+            "",
+        ).toLowerCase();
+
+        const isTreatment =
+          [2, 4].includes(itemTypeNumber) ||
+          itemTypeText.includes("treatment") ||
+          itemTypeText.includes("perawatan") ||
+          sourceTypeText.includes("treatment") ||
+          sourceTypeText.includes("perawatan");
+
+        const isProduk =
+          itemTypeNumber === 3 ||
+          itemTypeText.includes("produk") ||
+          itemTypeText.includes("obat") ||
+          itemTypeText.includes("penjualan") ||
+          sourceTypeText.includes("produk") ||
+          sourceTypeText.includes("obat") ||
+          sourceTypeText.includes("penjualan");
+
+        return !isTreatment && !isProduk;
+      });
+
+      return rows.map((row, index) => this.normalizeRiwayatItem(row, index));
+    },
+
+    riwayatDetailGroups(item) {
+      return [
+        {
+          key: "treatment",
+          label: "Treatment",
+          icon: "mdi-face-woman-shimmer-outline",
+          color: "deep-purple",
+          items: this.riwayatTreatmentItems(item),
+        },
+        {
+          key: "produk",
+          label: "Obat / Produk",
+          icon: "mdi-pill",
+          color: "primary",
+          items: this.riwayatProdukItems(item),
+        },
+        {
+          key: "lainnya",
+          label: "Konsultasi / Layanan Lain",
+          icon: "mdi-stethoscope",
+          color: "success",
+          items: this.riwayatOtherItems(item),
+        },
+      ].filter((group) => group.items.length > 0);
+    },
+
+    riwayatSequence(index) {
+      const number = Math.max(this.riwayatTransaksi.length - index, 1);
+
+      return String(number).padStart(3, "0");
+    },
+
+    riwayatItemGross(row = {}) {
+      return this.toNumber(row?.harga) * this.toNumber(row?.qty);
+    },
+
+    riwayatDiskonMeta(row = {}) {
+      const type = this.toNumber(row?.diskon_tipe);
+      const value = this.toNumber(row?.diskon_nilai);
+
+      if (type === 1) {
+        return `${this.formatNumber(value)}%`;
+      }
+
+      if (type === 2) {
+        return `Rp ${this.formatNumber(value)}`;
+      }
+
+      return "";
+    },
+
+    riwayatHasMedicationUsage(row = {}) {
+      return Boolean(
+        row?.frekuensi || row?.waktu_pakai || row?.instruksi_pemakaian,
+      );
+    },
+
+    riwayatCpptCount(item) {
+      const cppt = this.pickRiwayatValue(item, ["cppt"]);
+
+      return Array.isArray(cppt) ? cppt.length : 0;
     },
 
     riwayatCatatan(item) {
