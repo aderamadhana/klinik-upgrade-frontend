@@ -31,7 +31,7 @@ const pelayananMedisRoutes = [
 
       {
         path: "antrian-perawat",
-        name: "Antrian Perawat",
+        name: "Nurse Station",
         component: () =>
           import("@/views/pelayanan-medis/antrian-perawat/all-antrian-perawat.vue"),
       },

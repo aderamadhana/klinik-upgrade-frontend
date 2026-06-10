@@ -883,7 +883,7 @@ export default {
       } else if (this.layananState.ada_treatment) {
         antrianAwal =
           this.treatmentState.perlu_tindakan_perawat === true
-            ? "Antrian Perawat / Nurse Station"
+            ? "Nurse Station"
             : "Antrian Treatment";
       } else if (this.layananState.ada_penjualan) {
         antrianAwal = "Pembayaran / Kasir";

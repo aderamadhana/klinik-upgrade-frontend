@@ -2,7 +2,7 @@
   <div>
     <div class="page-header">
       <div>
-        <h1 class="page-title">Antrian Perawat</h1>
+        <h1 class="page-title">Nurse Station</h1>
         <p class="page-subtitle">
           Pantau pasien yang masuk ke jalur perawat, status pengerjaan, CPPT,
           foto before-after, dan bahan treatment.
@@ -445,7 +445,7 @@
     <v-dialog v-model="finishDialog.show" max-width="480">
       <v-card class="dialog-card">
         <v-card-title class="dialog-title">
-          Selesaikan Antrian Perawat?
+          Selesaikan Nurse Station?
         </v-card-title>
 
         <v-divider />
@@ -505,9 +505,7 @@
 
     <v-dialog v-model="deleteDialog.show" max-width="480">
       <v-card class="dialog-card">
-        <v-card-title class="dialog-title">
-          Hapus Antrian Perawat?
-        </v-card-title>
+        <v-card-title class="dialog-title"> Hapus Nurse Station? </v-card-title>
 
         <v-divider />
 
@@ -645,7 +643,7 @@ export default {
           disabled: true,
         },
         {
-          title: "Antrian Perawat",
+          title: "Nurse Station",
           disabled: true,
         },
       ],

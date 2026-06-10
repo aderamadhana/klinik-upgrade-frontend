@@ -1411,7 +1411,7 @@ export default {
       if (task === 3 && this.canAccessAction("proses_perawat"))
         return {
           key: "proses_perawat",
-          label: "Lihat Antrian Perawat",
+          label: "Lihat Nurse Station",
           icon: "mdi-account-heart-outline",
           color: "deep-purple",
           to: "/pelayanan-medis/antrian-perawat",

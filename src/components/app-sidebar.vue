@@ -538,7 +538,7 @@ export default {
             },
             {
               key: "medis-antrian-perawat",
-              title: "Antrian Perawat",
+              title: "Nurse Station",
               to: "/pelayanan-medis/antrian-perawat",
               roles: [
                 "administrator",

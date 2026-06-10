@@ -522,7 +522,7 @@ const dashboardConfigs = {
       },
       {
         key: "antrian_perawat",
-        title: "Antrian Perawat",
+        title: "Nurse Station",
         description: "Pasien menunggu tindakan",
         icon: "mdi-account-heart-outline",
         iconClass: "icon-cyan",
