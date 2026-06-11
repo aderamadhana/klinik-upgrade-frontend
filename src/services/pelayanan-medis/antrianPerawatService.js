@@ -41,6 +41,18 @@ export default {
       .then((response) => response.data);
   },
 
+  getBahanTreatment(id) {
+    return api
+      .get(`${BASE_URL}/${id}/bahan-treatment`)
+      .then((response) => response.data);
+  },
+
+  saveBahanTreatment(id, payload) {
+    return api
+      .post(`${BASE_URL}/${id}/bahan-treatment`, payload)
+      .then((response) => response.data);
+  },
+
   start(id) {
     return api
       .post(`${BASE_URL}/${id}/start`)

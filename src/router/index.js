@@ -8,6 +8,8 @@ import masterRoutes from "./modules/master";
 import kasirRoutes from "./modules/kasir";
 import pelayananMedisRoutes from "./modules/pelayanan-medis";
 import farmasiRoutes from "./modules/farmasi";
+import laporanRoutes from "./modules/laporan";
+import reportToAccurateRoutes from "./modules/report-to-accurate";
 
 const routes = [
   ...masterRoutes,
@@ -16,6 +18,8 @@ const routes = [
   ...kasirRoutes,
   ...pelayananMedisRoutes,
   ...farmasiRoutes,
+  ...laporanRoutes,
+  ...reportToAccurateRoutes,
   {
     path: "/",
     redirect: "/login",

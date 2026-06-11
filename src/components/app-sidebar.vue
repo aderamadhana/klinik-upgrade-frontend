@@ -722,7 +722,7 @@ export default {
             {
               key: "accurate-faktur-umum",
               title: "Upload Faktur Umum",
-              to: "/accurate/faktur-umum",
+              to: "/report-to-accurate/settlement-umum",
               roles: [
                 "administrator",
                 "superuser",
@@ -856,7 +856,7 @@ export default {
             {
               key: "laporan-detail",
               title: "Data Laporan Detail",
-              to: "/laporan/detail",
+              to: "/laporan/detail-pasien",
               roles: [
                 "administrator",
                 "superuser",
@@ -904,7 +904,7 @@ export default {
             {
               key: "laporan-top-treatment",
               title: "Pasien Treatment Terbanyak",
-              to: "/laporan/top-treatment",
+              to: "/laporan/pasien-treatment-terbanyak",
               roles: [
                 "administrator",
                 "superuser",
@@ -916,7 +916,7 @@ export default {
             {
               key: "laporan-top-nominal",
               title: "Top Nominal Terbanyak",
-              to: "/laporan/top-nominal",
+              to: "/laporan/top-nominal-pasien",
               roles: [
                 "administrator",
                 "superuser",
@@ -928,7 +928,7 @@ export default {
             {
               key: "laporan-terlaris",
               title: "Data Tindakan Terlaris",
-              to: "/laporan/terlaris",
+              to: "/laporan/tindakan-terlaris",
               roles: [
                 "administrator",
                 "superuser",

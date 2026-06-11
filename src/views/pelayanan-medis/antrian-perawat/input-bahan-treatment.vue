@@ -1,171 +1,249 @@
 <template>
-  <div class="bahan-treatment-page">
-    <!-- HEADER -->
-    <div class="page-header">
+  <div class="pa-4">
+    <div
+      class="d-flex flex-column flex-md-row justify-space-between align-start ga-4 mb-4"
+    >
       <div>
-        <h1 class="page-title">Input Bahan Treatment</h1>
-        <p class="page-subtitle">
-          Input pemakaian bahan treatment dengan tampilan yang lebih fokus dan
-          mudah dipahami
-        </p>
+        <div class="text-h5 font-weight-bold text-grey-darken-4">
+          Input Bahan Treatment
+        </div>
+        <div class="text-body-2 text-medium-emphasis mt-1">
+          Catat realisasi pemakaian bahan sesuai treatment yang dikerjakan.
+        </div>
       </div>
 
       <v-btn
         variant="outlined"
         color="primary"
         prepend-icon="mdi-arrow-left"
+        :disabled="loading || saving"
         @click="goBack"
       >
         Kembali
       </v-btn>
     </div>
 
-    <!-- RINGKASAN -->
-    <v-card rounded="lg" elevation="0" border class="mb-5">
+    <v-alert
+      v-if="errorMessage"
+      type="error"
+      variant="tonal"
+      density="comfortable"
+      class="mb-4"
+      closable
+      @click:close="errorMessage = ''"
+    >
+      {{ errorMessage }}
+    </v-alert>
+
+    <v-card rounded="lg" elevation="0" border class="mb-4">
       <v-card-text class="pa-4 pa-md-5">
-        <div class="section-top mb-4">
+        <div
+          class="d-flex flex-column flex-md-row justify-space-between align-start ga-3 mb-4"
+        >
           <div>
-            <div class="section-title">Ringkasan Treatment</div>
-            <div class="section-subtitle">
-              Pastikan treatment yang dipilih sesuai sebelum menginput bahan
+            <div class="text-subtitle-1 font-weight-bold text-grey-darken-4">
+              Ringkasan Treatment
+            </div>
+            <div class="text-body-2 text-medium-emphasis mt-1">
+              Pastikan pasien dan treatment sudah sesuai sebelum menyimpan.
             </div>
           </div>
+
+          <v-chip
+            :color="summaryStatusColor"
+            variant="tonal"
+            size="small"
+            class="font-weight-bold"
+          >
+            {{ summary.status || "Draft" }}
+          </v-chip>
         </div>
 
-        <v-row>
+        <v-skeleton-loader v-if="loading" type="article" />
+
+        <v-row v-else dense>
           <v-col
-            v-for="item in treatmentSummary"
+            v-for="item in summaryCards"
             :key="item.label"
             cols="12"
             sm="6"
             md="3"
           >
-            <div class="summary-box">
-              <div class="summary-label">{{ item.label }}</div>
-              <div class="summary-value">{{ item.value }}</div>
-            </div>
+            <v-card
+              variant="tonal"
+              color="grey-lighten-4"
+              rounded="lg"
+              height="100%"
+            >
+              <v-card-text class="pa-3">
+                <div class="text-caption text-medium-emphasis mb-1">
+                  {{ item.label }}
+                </div>
+                <div class="text-body-2 font-weight-bold text-grey-darken-4">
+                  {{ item.value }}
+                </div>
+              </v-card-text>
+            </v-card>
           </v-col>
         </v-row>
       </v-card-text>
     </v-card>
 
-    <!-- FORM -->
     <v-card rounded="lg" elevation="0" border>
-      <v-card-title class="form-card-title">
-        Form Input Pemakaian Bahan Treatment
+      <v-card-title
+        class="d-flex flex-column flex-md-row justify-space-between align-start ga-3 pa-4 pa-md-5"
+      >
+        <div>
+          <div class="text-subtitle-1 font-weight-bold">
+            Daftar Bahan per Treatment
+          </div>
+          <div class="text-body-2 text-medium-emphasis mt-1">
+            Qty awal mengikuti template bahan treatment dan jumlah treatment.
+          </div>
+        </div>
+
+        <v-chip
+          color="primary"
+          variant="tonal"
+          size="small"
+          class="font-weight-bold"
+        >
+          {{ totalFilledItems }}/{{ totalItems }} item terisi
+        </v-chip>
       </v-card-title>
+
       <v-divider />
 
       <v-card-text class="pa-4 pa-md-5">
-        <v-alert type="info" density="comfortable" class="mb-5">
-          Isi jumlah bahan yang digunakan pada setiap treatment untuk proses
-          pencatatan stok otomatis. Fokus hanya pada treatment yang benar-benar
-          dikerjakan.
+        <v-alert type="info" variant="tonal" density="comfortable" class="mb-4">
+          Simpan hanya setelah bahan benar-benar dipakai. Sistem akan menyimpan
+          nama bahan, qty default, qty terpakai, satuan, perawat, dan tanggal
+          pengisian.
         </v-alert>
 
-        <div class="section-title mb-2">Daftar Bahan per Treatment</div>
-        <div class="section-subtitle mb-4">
-          Klik salah satu treatment untuk membuka detail bahan dan mengisi qty
-          pemakaian
-        </div>
+        <v-skeleton-loader v-if="loading" type="list-item-three-line@4" />
+
+        <v-alert
+          v-else-if="!treatments.length"
+          type="warning"
+          variant="tonal"
+          density="comfortable"
+        >
+          Template bahan treatment belum tersedia untuk treatment pada
+          registrasi ini. Lengkapi master bahan treatment terlebih dahulu.
+        </v-alert>
 
         <v-expansion-panels
+          v-else
           v-model="openedPanels"
           multiple
           variant="accordion"
-          class="treatment-panel-list"
         >
           <v-expansion-panel
-            v-for="(treatment, tIndex) in treatments"
-            :key="treatment.id"
-            class="treatment-panel"
+            v-for="(treatment, treatmentIndex) in treatments"
+            :key="
+              treatment.treatment_detail_id || treatment.id || treatmentIndex
+            "
+            rounded="lg"
+            elevation="0"
+            class="border mb-3"
           >
-            <v-expansion-panel-title class="treatment-panel-title" ripple>
-              <div class="treatment-title-wrap">
-                <div class="left-info">
-                  <div class="soap-title-wrap">
-                    <div class="soap-badge treatment-badge">T</div>
-                    <div>
-                      <div class="soap-title">{{ treatment.nama }}</div>
-                      <div class="soap-subtitle">
-                        {{ treatment.items.length }} item bahan • Klik untuk
-                        lihat detail bahan
-                      </div>
+            <v-expansion-panel-title>
+              <div
+                class="d-flex flex-column flex-md-row justify-space-between align-start align-md-center ga-3 w-100 pr-3"
+              >
+                <div class="d-flex align-start ga-3">
+                  <v-avatar color="orange-lighten-5" size="40" rounded="lg">
+                    <span class="text-orange-darken-2 font-weight-black"
+                      >T</span
+                    >
+                  </v-avatar>
+
+                  <div>
+                    <div
+                      class="text-body-1 font-weight-bold text-grey-darken-4"
+                    >
+                      {{ treatment.nama || "Treatment" }}
+                    </div>
+                    <div class="text-body-2 text-medium-emphasis mt-1">
+                      Qty treatment: {{ treatment.jumlah || 1 }} •
+                      {{ treatment.items.length }} item bahan
                     </div>
                   </div>
                 </div>
 
-                <div class="right-info">
-                  <v-chip
-                    size="small"
-                    :color="
-                      getTreatmentFilledCount(treatment) > 0
-                        ? 'success'
-                        : 'default'
-                    "
-                    class="status-chip"
-                  >
-                    {{ getTreatmentFilledCount(treatment) }}/{{
-                      treatment.items.length
-                    }}
-                    terisi
-                  </v-chip>
-                </div>
+                <v-chip
+                  :color="
+                    getTreatmentFilledCount(treatment) > 0 ? 'success' : 'grey'
+                  "
+                  variant="tonal"
+                  size="small"
+                  class="font-weight-bold"
+                >
+                  {{ getTreatmentFilledCount(treatment) }}/{{
+                    treatment.items.length
+                  }}
+                  terisi
+                </v-chip>
               </div>
-
-              <template #actions="{ expanded }">
-                <div class="panel-action">
-                  <span class="panel-action-text">
-                    {{ expanded ? "Tutup" : "Buka" }}
-                  </span>
-                  <v-icon
-                    size="22"
-                    class="panel-chevron"
-                    :class="{ rotated: expanded }"
-                  >
-                    mdi-chevron-down
-                  </v-icon>
-                </div>
-              </template>
             </v-expansion-panel-title>
 
-            <v-expansion-panel-text class="panel-text-wrap">
-              <div class="treatment-table-wrap">
-                <div class="treatment-table-head">
-                  <div class="col-bahan">Nama Bahan</div>
-                  <div class="col-qty">Qty</div>
-                  <div class="col-satuan">Satuan</div>
-                </div>
-
-                <div class="treatment-table-body">
-                  <div
-                    v-for="(item, iIndex) in treatment.items"
-                    :key="`${treatment.id}-${item.id}-${iIndex}`"
-                    class="treatment-row"
+            <v-expansion-panel-text>
+              <v-table density="comfortable" class="border rounded-lg">
+                <thead>
+                  <tr>
+                    <th class="text-left font-weight-bold">Nama Bahan</th>
+                    <th
+                      class="text-right font-weight-bold"
+                      style="width: 130px"
+                    >
+                      Qty Default
+                    </th>
+                    <th class="text-left font-weight-bold" style="width: 180px">
+                      Qty Terpakai
+                    </th>
+                    <th class="text-left font-weight-bold" style="width: 110px">
+                      Satuan
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(item, itemIndex) in treatment.items"
+                    :key="`${treatment.treatment_detail_id}-${item.master_treatment_perawat_bahan_id}-${item.perawat_bahan_id}-${itemIndex}`"
                   >
-                    <div class="col-bahan bahan-name">
-                      {{ item.nama_bahan }}
-                    </div>
-
-                    <div class="col-qty">
+                    <td>
+                      <div
+                        class="text-body-2 font-weight-medium text-grey-darken-4"
+                      >
+                        {{ item.nama_bahan }}
+                      </div>
+                    </td>
+                    <td class="text-right">
+                      <span class="text-body-2 text-medium-emphasis">
+                        {{ formatQty(item.jumlah_default) }}
+                      </span>
+                    </td>
+                    <td>
                       <v-text-field
-                        v-model="item.qty"
+                        v-model="item.jumlah_terpakai"
                         type="number"
                         min="0"
                         step="0.01"
                         variant="outlined"
                         density="compact"
                         hide-details
-                        class="qty-input"
+                        :disabled="!canEdit || saving"
                       />
-                    </div>
-
-                    <div class="col-satuan satuan-text">
-                      {{ item.satuan }}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                    </td>
+                    <td>
+                      <span class="text-body-2 font-weight-bold">
+                        {{ item.satuan || "-" }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </v-table>
             </v-expansion-panel-text>
           </v-expansion-panel>
         </v-expansion-panels>
@@ -173,539 +251,281 @@
 
       <v-divider />
 
-      <!-- ACTION BAR -->
-      <div class="action-bar">
-        <div class="action-bar-left">
-          <span class="action-hint">
-            {{ totalFilledItems }}/{{ totalItems }} item bahan sudah terisi
-          </span>
+      <v-card-actions
+        class="d-flex flex-column flex-md-row justify-space-between align-stretch align-md-center ga-3 pa-4"
+      >
+        <div class="text-body-2 text-medium-emphasis">
+          {{ totalFilledItems }}/{{ totalItems }} item bahan sudah memiliki qty
+          terpakai.
         </div>
 
-        <div class="action-bar-right">
-          <v-btn variant="text" color="secondary" @click="resetQty">
+        <div class="d-flex ga-2 justify-end">
+          <v-btn
+            variant="text"
+            color="secondary"
+            :disabled="loading || saving || !canEdit"
+            @click="resetQty"
+          >
             Reset
           </v-btn>
 
           <v-btn
             color="primary"
             prepend-icon="mdi-content-save"
+            :loading="saving"
+            :disabled="loading || !canEdit || !treatments.length"
             @click="saveChanges"
           >
             Simpan Perubahan
           </v-btn>
         </div>
-      </div>
+      </v-card-actions>
     </v-card>
+
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000">
+      {{ snackbar.text }}
+    </v-snackbar>
   </div>
 </template>
 
 <script>
+import antrianPerawatService from "@/services/pelayanan-medis/antrianPerawatService";
+
 export default {
   name: "InputBahanTreatment",
+
   data() {
     return {
+      loading: false,
+      saving: false,
+      errorMessage: "",
       openedPanels: [0],
-
-      summary: {
-        pasien: "ADE RAMADHANA PRATAMA",
-        no_rm: "M20260307001",
-        cabang: "MALANG",
-        total_treatment: 2,
-        total_bahan: 38,
-        status: "Draft",
-        channel: "Online",
-        tanggal_kunjungan: "2026-04-20",
-      },
-
-      treatments: [
-        {
-          id: 1,
-          nama: "FACIAL BARBIE LIGHT",
-          items: [
-            {
-              id: 1,
-              nama_bahan: "Handscoon Nitrile Non Powder (L)",
-              qty: 4,
-              satuan: "pcs",
-            },
-            { id: 2, nama_bahan: "Nurse Cap ONEMED", qty: 1, satuan: "pcs" },
-            {
-              id: 3,
-              nama_bahan: "Alas Bed MS Glow Clinic",
-              qty: 1,
-              satuan: "pcs",
-            },
-            { id: 4, nama_bahan: "Spons Stick Kuning", qty: 2, satuan: "pcs" },
-            {
-              id: 5,
-              nama_bahan: "Handsanitizer Aseptic Plus 5 Liter ONEMED",
-              qty: 1,
-              satuan: "ml",
-            },
-            { id: 6, nama_bahan: "Facial Wash", qty: 3, satuan: "ml" },
-            { id: 7, nama_bahan: "Toner", qty: 2, satuan: "ml" },
-            { id: 8, nama_bahan: "Cotton Pad", qty: 4, satuan: "pcs" },
-            { id: 9, nama_bahan: "Serum Basic", qty: 1, satuan: "ml" },
-            { id: 10, nama_bahan: "Masker Wajah", qty: 1, satuan: "pcs" },
-            { id: 11, nama_bahan: "Spatula", qty: 1, satuan: "pcs" },
-            { id: 12, nama_bahan: "Tissue", qty: 3, satuan: "pcs" },
-            { id: 13, nama_bahan: "Kapas", qty: 2, satuan: "pcs" },
-            { id: 14, nama_bahan: "Alcohol Swab", qty: 1, satuan: "pcs" },
-            { id: 15, nama_bahan: "Micellar Water", qty: 2, satuan: "ml" },
-            { id: 16, nama_bahan: "Gel Treatment", qty: 1, satuan: "ml" },
-            { id: 17, nama_bahan: "Face Towel", qty: 1, satuan: "pcs" },
-            {
-              id: 18,
-              nama_bahan: "Disposable Headband",
-              qty: 1,
-              satuan: "pcs",
-            },
-            { id: 19, nama_bahan: "Gloves Cadangan", qty: 1, satuan: "pcs" },
-          ],
-        },
-        {
-          id: 2,
-          nama: "FACIAL ULTIMATE LIGHT",
-          items: [
-            {
-              id: 1,
-              nama_bahan: "Handscoon Nitrile Non Powder (L)",
-              qty: 2,
-              satuan: "pcs",
-            },
-            { id: 2, nama_bahan: "Nurse Cap ONEMED", qty: 1, satuan: "pcs" },
-            {
-              id: 3,
-              nama_bahan: "Alas Bed MS Glow Clinic",
-              qty: 1,
-              satuan: "pcs",
-            },
-            { id: 4, nama_bahan: "Serum Ultimate", qty: 2, satuan: "ml" },
-            { id: 5, nama_bahan: "Masker Premium", qty: 1, satuan: "pcs" },
-            { id: 6, nama_bahan: "Cotton Pad", qty: 4, satuan: "pcs" },
-            { id: 7, nama_bahan: "Tissue", qty: 2, satuan: "pcs" },
-            { id: 8, nama_bahan: "Toner", qty: 2, satuan: "ml" },
-            { id: 9, nama_bahan: "Handsanitizer", qty: 1, satuan: "ml" },
-            { id: 10, nama_bahan: "Face Towel", qty: 1, satuan: "pcs" },
-            {
-              id: 11,
-              nama_bahan: "Disposable Headband",
-              qty: 1,
-              satuan: "pcs",
-            },
-            { id: 12, nama_bahan: "Alcohol Swab", qty: 1, satuan: "pcs" },
-            { id: 13, nama_bahan: "Gel Treatment", qty: 1, satuan: "ml" },
-            { id: 14, nama_bahan: "Kapas", qty: 2, satuan: "pcs" },
-            { id: 15, nama_bahan: "Facial Wash", qty: 2, satuan: "ml" },
-            { id: 16, nama_bahan: "Spatula", qty: 1, satuan: "pcs" },
-            { id: 17, nama_bahan: "Spons Stick Kuning", qty: 2, satuan: "pcs" },
-            { id: 18, nama_bahan: "Micellar Water", qty: 1, satuan: "ml" },
-            { id: 19, nama_bahan: "Gloves Cadangan", qty: 1, satuan: "pcs" },
-          ],
-        },
-      ],
-
+      summary: {},
+      treatments: [],
       initialTreatments: [],
+      snackbar: {
+        show: false,
+        color: "success",
+        text: "",
+      },
     };
   },
 
   computed: {
-    treatmentSummary() {
+    registrationId() {
+      return this.$route.params.id;
+    },
+
+    canEdit() {
+      return Boolean(this.summary?.can_edit);
+    },
+
+    summaryCards() {
       return [
-        { label: "Nama Pasien", value: this.summary.pasien },
-        { label: "No. RM", value: this.summary.no_rm },
-        { label: "Cabang", value: this.summary.cabang },
-        { label: "Tanggal Kunjungan", value: this.summary.tanggal_kunjungan },
+        { label: "Nama Pasien", value: this.summary.pasien || "-" },
+        { label: "No. RM", value: this.summary.no_rm || "-" },
+        { label: "Cabang", value: this.summary.cabang || "-" },
+        {
+          label: "Tanggal Kunjungan",
+          value: this.summary.tanggal_kunjungan || "-",
+        },
         {
           label: "Jumlah Treatment",
-          value: `${this.summary.total_treatment} treatment`,
+          value: `${this.summary.total_treatment || 0} treatment`,
         },
         {
           label: "Jumlah Item Bahan",
-          value: `${this.summary.total_bahan} item`,
+          value: `${this.summary.total_bahan || 0} item`,
         },
-        { label: "Channel", value: this.summary.channel },
-        { label: "Status", value: this.summary.status },
+        { label: "Perawat", value: this.summary.perawat || "-" },
+        { label: "Channel", value: this.summary.channel || "-" },
       ];
     },
 
+    summaryStatusColor() {
+      const status = String(this.summary.status || "").toLowerCase();
+
+      if (status === "lengkap") return "success";
+      if (status === "sebagian") return "warning";
+      return "grey";
+    },
+
     totalItems() {
-      return this.treatments.reduce((acc, treatment) => {
-        return acc + treatment.items.length;
+      return this.treatments.reduce((total, treatment) => {
+        return total + (treatment.items?.length || 0);
       }, 0);
     },
 
     totalFilledItems() {
-      return this.treatments.reduce((acc, treatment) => {
+      return this.treatments.reduce((total, treatment) => {
         return (
-          acc + treatment.items.filter((item) => Number(item.qty) > 0).length
+          total +
+          (treatment.items || []).filter(
+            (item) => Number(item.jumlah_terpakai || 0) > 0,
+          ).length
         );
       }, 0);
     },
   },
 
   created() {
-    this.initialTreatments = JSON.parse(JSON.stringify(this.treatments));
+    this.loadData();
   },
 
   methods: {
+    async loadData() {
+      this.loading = true;
+      this.errorMessage = "";
+
+      try {
+        const response = await antrianPerawatService.getBahanTreatment(
+          this.registrationId,
+        );
+        const data = response?.data || response || {};
+
+        this.summary = data.summary || {};
+        this.treatments = this.normalizeTreatments(data.treatments || []);
+        this.initialTreatments = JSON.parse(JSON.stringify(this.treatments));
+        this.openedPanels = this.treatments.length ? [0] : [];
+      } catch (error) {
+        this.errorMessage = this.getErrorMessage(
+          error,
+          "Gagal mengambil data bahan treatment.",
+        );
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    normalizeTreatments(treatments) {
+      return treatments.map((treatment) => ({
+        ...treatment,
+        items: (treatment.items || []).map((item) => ({
+          ...item,
+          jumlah_default: Number(item.jumlah_default || 0),
+          jumlah_terpakai: Number(item.jumlah_terpakai || 0),
+        })),
+      }));
+    },
+
     getTreatmentFilledCount(treatment) {
-      return treatment.items.filter((item) => Number(item.qty) > 0).length;
+      return (treatment.items || []).filter(
+        (item) => Number(item.jumlah_terpakai || 0) > 0,
+      ).length;
     },
 
     resetQty() {
       this.treatments = JSON.parse(JSON.stringify(this.initialTreatments));
     },
 
-    goBack() {
-      this.$router.back();
+    buildPayloadItems() {
+      return this.treatments.flatMap((treatment) => {
+        return (treatment.items || []).map((item) => ({
+          id: item.id || null,
+          treatment_detail_id: Number(item.treatment_detail_id),
+          master_treatment_perawat_bahan_id: Number(
+            item.master_treatment_perawat_bahan_id,
+          ),
+          perawat_bahan_id: Number(item.perawat_bahan_id),
+          jumlah_terpakai: Number(item.jumlah_terpakai || 0),
+        }));
+      });
     },
 
-    saveChanges() {
-      const payload = this.treatments.map((treatment) => ({
-        id: treatment.id,
-        nama: treatment.nama,
-        items: treatment.items.map((item) => ({
-          id: item.id,
-          nama_bahan: item.nama_bahan,
-          qty: Number(item.qty) || 0,
-          satuan: item.satuan,
-        })),
-      }));
+    async saveChanges() {
+      if (!this.canEdit || this.saving) return;
 
-      console.log("payload bahan treatment:", payload);
+      if (!this.totalItems) {
+        this.showSnackbar(
+          "Tidak ada bahan treatment untuk disimpan.",
+          "warning",
+        );
+        return;
+      }
+
+      if (!this.totalFilledItems) {
+        this.showSnackbar(
+          "Isi minimal satu qty bahan yang benar-benar terpakai.",
+          "error",
+        );
+        return;
+      }
+
+      const perawatId = Number(this.summary.perawat_id || 0);
+      if (!perawatId) {
+        this.showSnackbar("Perawat penanggung jawab belum tersedia.", "error");
+        return;
+      }
+
+      this.saving = true;
+      this.errorMessage = "";
+
+      try {
+        const response = await antrianPerawatService.saveBahanTreatment(
+          this.registrationId,
+          {
+            tanggal_pengisian: new Date().toISOString(),
+            perawat_id: perawatId,
+            items: this.buildPayloadItems(),
+          },
+        );
+
+        const data = response?.data || response || {};
+        this.summary = data.summary || this.summary;
+        this.treatments = this.normalizeTreatments(data.treatments || []);
+        this.initialTreatments = JSON.parse(JSON.stringify(this.treatments));
+
+        this.showSnackbar(
+          response?.message || "Bahan treatment berhasil disimpan.",
+          "success",
+        );
+      } catch (error) {
+        this.errorMessage = this.getErrorMessage(
+          error,
+          "Gagal menyimpan bahan treatment.",
+        );
+      } finally {
+        this.saving = false;
+      }
+    },
+
+    formatQty(value) {
+      const numberValue = Number(value || 0);
+      return numberValue.toLocaleString("id-ID", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 4,
+      });
+    },
+
+    showSnackbar(text, color = "success") {
+      this.snackbar = {
+        show: true,
+        text,
+        color,
+      };
+    },
+
+    getErrorMessage(error, fallback) {
+      const response = error?.response?.data;
+
+      if (response?.message) return response.message;
+
+      const errors = response?.errors;
+      if (errors && typeof errors === "object") {
+        const firstKey = Object.keys(errors)[0];
+        const firstError = errors[firstKey];
+
+        if (Array.isArray(firstError) && firstError.length) {
+          return firstError[0];
+        }
+      }
+
+      return error?.message || fallback;
+    },
+
+    goBack() {
+      this.$router.back();
     },
   },
 };
 </script>
-
-<style scoped>
-.bahan-treatment-page {
-  padding: 4px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  color: #172b4d;
-  line-height: 1.2;
-}
-
-.page-subtitle {
-  margin: 6px 0 0;
-  font-size: 14px;
-  color: #6b7280;
-}
-
-.section-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.section-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: #172b4d;
-  line-height: 1.2;
-}
-
-.section-subtitle {
-  margin-top: 4px;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.summary-box {
-  border: 1px solid #e5e7eb;
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 14px 14px 12px;
-  height: 100%;
-}
-
-.summary-label {
-  font-size: 12px;
-  color: #64748b;
-  margin-bottom: 8px;
-}
-
-.summary-value {
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.4;
-  word-break: break-word;
-}
-
-.form-card-title {
-  padding: 18px 20px;
-  font-size: 18px;
-  font-weight: 700;
-  color: #172b4d;
-}
-
-.treatment-panel-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.treatment-panel {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px !important;
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-
-.treatment-panel:hover {
-  border-color: #cfd8e6;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
-}
-
-.treatment-panel-title {
-  padding: 0 16px !important;
-  min-height: 84px;
-  background: #fff;
-  cursor: pointer;
-}
-
-.treatment-title-wrap {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.left-info {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.right-info {
-  display: flex;
-  align-items: center;
-}
-
-.soap-title-wrap {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.soap-badge {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: #fff7e8;
-  color: #d97706;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.treatment-badge {
-  background: #fff7e8;
-  color: #d97706;
-}
-
-.soap-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #172b4d;
-  line-height: 1.25;
-}
-
-.soap-subtitle {
-  margin-top: 4px;
-  font-size: 13px;
-  color: #64748b;
-}
-
-.status-chip {
-  font-weight: 600;
-}
-
-.panel-action {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #475569;
-  font-weight: 600;
-}
-
-.panel-action-text {
-  font-size: 13px;
-}
-
-.panel-chevron {
-  transition: transform 0.2s ease;
-}
-
-.panel-chevron.rotated {
-  transform: rotate(180deg);
-}
-
-.panel-text-wrap {
-  background: #fff;
-}
-
-:deep(.panel-text-wrap .v-expansion-panel-text__wrapper) {
-  padding: 0 16px 16px !important;
-}
-
-.treatment-table-wrap {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #fff;
-}
-
-.treatment-table-head {
-  display: flex;
-  align-items: center;
-  background: #f8fafc;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 13px;
-  font-weight: 700;
-  color: #334155;
-  padding: 12px 14px;
-}
-
-.treatment-table-body {
-  max-height: 320px;
-  overflow-y: auto;
-}
-
-.treatment-row {
-  display: flex;
-  align-items: center;
-  padding: 12px 14px;
-  border-bottom: 1px solid #eef2f7;
-  gap: 12px;
-}
-
-.treatment-row:last-child {
-  border-bottom: none;
-}
-
-.col-bahan {
-  flex: 1 1 70%;
-}
-
-.col-qty {
-  flex: 0 0 150px;
-}
-
-.col-satuan {
-  flex: 0 0 90px;
-}
-
-.bahan-name {
-  font-size: 14px;
-  color: #0f172a;
-  line-height: 1.4;
-}
-
-.satuan-text {
-  font-size: 14px;
-  font-weight: 600;
-  color: #334155;
-}
-
-.qty-input {
-  width: 100%;
-}
-
-:deep(.qty-input .v-field) {
-  border-radius: 12px;
-  background: #fff;
-}
-
-:deep(.qty-input input) {
-  font-weight: 700;
-}
-
-.action-bar {
-  padding: 16px 20px;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-  background: #fff;
-}
-
-.action-bar-left {
-  display: flex;
-  align-items: center;
-}
-
-.action-bar-right {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.action-hint {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-@media (max-width: 960px) {
-  .page-title {
-    font-size: 22px;
-  }
-
-  .treatment-panel-title {
-    min-height: 92px;
-  }
-
-  .treatment-table-head {
-    display: none;
-  }
-
-  .treatment-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .col-bahan,
-  .col-qty,
-  .col-satuan {
-    flex: 1 1 100%;
-    width: 100%;
-  }
-
-  .panel-action-text {
-    display: none;
-  }
-
-  .action-bar {
-    align-items: stretch;
-  }
-
-  .action-bar-right {
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
-</style>

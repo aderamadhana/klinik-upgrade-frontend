@@ -299,89 +299,45 @@
 
                   <div class="queue-card-actions">
                     <v-btn
-                      v-if="getPrimaryAction(item)"
-                      :color="getPrimaryAction(item).color"
+                      color="primary"
                       variant="flat"
-                      :prepend-icon="getPrimaryAction(item).icon"
-                      class="text-none font-weight-bold"
-                      :loading="
-                        isActionLoading(item, getPrimaryAction(item).key)
-                      "
-                      @click="handlePrimaryAction(item)"
-                    >
-                      {{ getPrimaryAction(item).label }}
-                    </v-btn>
-
-                    <v-btn
-                      v-else
-                      color="secondary"
-                      variant="tonal"
-                      prepend-icon="mdi-eye-outline"
+                      prepend-icon="mdi-clipboard-text-outline"
                       class="text-none font-weight-bold"
                       @click="goToCppt(item)"
                     >
-                      Detail
+                      Input CPPT
                     </v-btn>
 
-                    <v-menu location="bottom end">
-                      <template #activator="{ props }">
-                        <v-btn
-                          v-bind="props"
-                          variant="outlined"
-                          color="secondary"
-                          prepend-icon="mdi-dots-horizontal"
-                          class="text-none font-weight-bold"
-                        >
-                          Lainnya
-                        </v-btn>
-                      </template>
+                    <v-btn
+                      color="info"
+                      variant="flat"
+                      prepend-icon="mdi-camera-outline"
+                      class="text-none font-weight-bold"
+                      @click="goToBeforeAfter(item)"
+                    >
+                      Foto Before After
+                    </v-btn>
 
-                      <v-list density="compact">
-                        <v-list-item
-                          prepend-icon="mdi-clipboard-text-outline"
-                          title="Input CPPT"
-                          @click="goToCppt(item)"
-                        />
+                    <v-btn
+                      color="deep-purple"
+                      variant="flat"
+                      prepend-icon="mdi-flask-outline"
+                      class="text-none font-weight-bold"
+                      @click="goToBahanTreatment(item)"
+                    >
+                      Bahan Treatment
+                    </v-btn>
 
-                        <v-list-item
-                          prepend-icon="mdi-camera-outline"
-                          title="Input Before After"
-                          @click="goToBeforeAfter(item)"
-                        />
-
-                        <v-list-item
-                          prepend-icon="mdi-flask-outline"
-                          title="Input Bahan Treatment"
-                          @click="goToBahanTreatment(item)"
-                        />
-
-                        <v-divider />
-
-                        <v-list-item
-                          v-if="canStart(item)"
-                          prepend-icon="mdi-play-circle-outline"
-                          title="Mulai Proses"
-                          @click="startQueue(item)"
-                        />
-
-                        <v-list-item
-                          v-if="canFinish(item)"
-                          prepend-icon="mdi-check-circle-outline"
-                          title="Tandai Selesai"
-                          @click="openFinishDialog(item)"
-                        />
-
-                        <v-divider v-if="canDelete(item)" />
-
-                        <v-list-item
-                          v-if="canDelete(item)"
-                          prepend-icon="mdi-delete-outline"
-                          title="Hapus Antrian"
-                          base-color="error"
-                          @click="openDeleteDialog(item)"
-                        />
-                      </v-list>
-                    </v-menu>
+                    <v-btn
+                      v-if="canDelete(item)"
+                      color="error"
+                      variant="outlined"
+                      prepend-icon="mdi-delete-outline"
+                      class="text-none font-weight-bold"
+                      @click="openDeleteDialog(item)"
+                    >
+                      Hapus
+                    </v-btn>
                   </div>
                 </div>
               </v-card-text>
