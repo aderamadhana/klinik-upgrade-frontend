@@ -1471,24 +1471,9 @@ export default {
           referenceService.treatmentByToko(params),
         ]);
 
-        this.obatList = this.extractRows(produk).map((item) => ({
-          id: item.produk_id || item.master_produk_id || item.id,
-          produk_toko_id:
-            item.produk_toko_id || item.master_produk_toko_id || item.id,
-          title:
-            item.nama_produk ||
-            item.produk_nama ||
-            item.nama ||
-            item.produk?.nama ||
-            "-",
-          harga: Number(item.harga_jual || item.harga || 0),
-          unit:
-            item.satuan ||
-            item.satuan_nama ||
-            item.produk?.satuan?.nama ||
-            "pcs",
-          raw: item,
-        }));
+        this.obatList = this.extractRows(produk)
+          .map((item) => this.normalizePaymentProdukOption(item))
+          .filter((item) => item.title && item.title !== "-");
 
         this.tindakanList = this.extractRows(treatment).map((item) => ({
           id: item.treatment_id || item.master_treatment_id || item.id,
@@ -1567,35 +1552,60 @@ export default {
       await this.fetchVoucherEligible();
     },
     findObatOption(value, row = {}) {
-      const candidates = [
-        value,
-        row?.nama,
-        row?.produk_id,
-        row?.produk_toko_id,
-        row?.id,
-      ]
-        .filter((item) => item !== null && item !== undefined && item !== "")
-        .map((item) => String(item));
+      const valueText = String(value || "").trim();
 
-      return this.obatList.find((option) => {
-        const optionCandidates = [
-          option?.id,
-          option?.produk_id,
-          option?.produk_toko_id,
-          option?.title,
-          option?.nama,
-          option?.raw?.produk_id,
-          option?.raw?.produk_toko_id,
-          option?.raw?.id,
-          option?.raw?.nama,
-          option?.raw?.nama_produk,
-          option?.raw?.produk?.nama,
-        ]
-          .filter((item) => item !== null && item !== undefined && item !== "")
-          .map((item) => String(item));
+      if (valueText) {
+        const byStableValue = this.obatList.find(
+          (option) => String(option?.value || "") === valueText,
+        );
 
-        return optionCandidates.some((item) => candidates.includes(item));
-      });
+        if (byStableValue) return byStableValue;
+      }
+
+      const rowProdukTokoId = this.resolveProdukTokoId(row);
+
+      if (rowProdukTokoId) {
+        const byProdukTokoId = this.obatList.find(
+          (option) =>
+            String(this.resolveProdukTokoId(option) || "") ===
+            String(rowProdukTokoId),
+        );
+
+        if (byProdukTokoId) return byProdukTokoId;
+      }
+
+      const rowProdukId = this.resolveProdukId(row);
+
+      if (rowProdukId) {
+        const byProdukId = this.obatList.find(
+          (option) =>
+            String(this.resolveProdukId(option) || "") === String(rowProdukId),
+        );
+
+        if (byProdukId) return byProdukId;
+      }
+
+      if (valueText) {
+        const normalizedValue = this.normalizeLookupText(valueText);
+
+        return (
+          this.obatList.find((option) => {
+            return (
+              this.normalizeLookupText(option?.title) === normalizedValue ||
+              this.normalizeLookupText(option?.nama) === normalizedValue ||
+              this.normalizeLookupText(option?.raw?.nama) === normalizedValue ||
+              this.normalizeLookupText(option?.raw?.nama_produk) ===
+                normalizedValue ||
+              this.normalizeLookupText(option?.raw?.produk_nama) ===
+                normalizedValue ||
+              this.normalizeLookupText(option?.raw?.produk?.nama) ===
+                normalizedValue
+            );
+          }) || null
+        );
+      }
+
+      return null;
     },
     findTreatmentOption(value, row = {}) {
       const candidates = [
@@ -1637,13 +1647,12 @@ export default {
           ...item,
           produk_id:
             Number(
-              selected.id || selected.raw?.produk_id || item.produk_id || 0,
+              this.resolveProdukId(selected) || this.resolveProdukId(item) || 0,
             ) || null,
           produk_toko_id:
             Number(
-              selected.produk_toko_id ||
-                selected.raw?.produk_toko_id ||
-                item.produk_toko_id ||
+              this.resolveProdukTokoId(selected) ||
+                this.resolveProdukTokoId(item) ||
                 0,
             ) || null,
           nama: selected.title || selected.nama || item.nama,
@@ -1696,7 +1705,11 @@ export default {
               }
 
               const selected = this.findObatOption(item?.nama, item);
-              return Number(selected?.id || selected?.raw?.produk_id || 0);
+              return Number(
+                this.resolveProdukId(selected) ||
+                  this.resolveProdukId(item) ||
+                  0,
+              );
             })
             .filter((id) => Number(id || 0) > 0),
         ),
@@ -2092,6 +2105,125 @@ export default {
         voucher_count: appliedNames.length || eligibleCount,
       };
     },
+    normalizePaymentProdukOption(item = {}) {
+      const raw = item?.raw || item || {};
+      const produk = raw?.produk || raw?.master_produk || {};
+      const produkToko =
+        raw?.produk_toko ||
+        raw?.produkToko ||
+        raw?.master_produk_toko ||
+        raw?.masterProdukToko ||
+        {};
+
+      const produkTokoId = this.firstDefined(
+        raw.produk_toko_id,
+        raw.master_produk_toko_id,
+        raw.obat_toko_id,
+        raw.toko_produk_id,
+        produkToko.id,
+        raw.id,
+        null,
+      );
+      const produkId = this.firstDefined(
+        raw.produk_id,
+        raw.obat_id,
+        raw.master_produk_id,
+        raw.product_id,
+        produk.id,
+        produk.master_produk_id,
+        null,
+      );
+      const title = this.firstDefined(
+        raw.nama_produk,
+        raw.produk_nama,
+        raw.nama_obat,
+        raw.nama,
+        produk.nama,
+        produk.nama_produk,
+        produk.nama_obat,
+        raw.title,
+        raw.label,
+        "-",
+      );
+      const value = produkTokoId
+        ? `pt:${produkTokoId}`
+        : produkId
+          ? `p:${produkId}`
+          : `n:${title}`;
+
+      return {
+        ...raw,
+        id: Number(produkId || 0) || null,
+        produk_id: Number(produkId || 0) || null,
+        produk_toko_id: Number(produkTokoId || 0) || null,
+        value,
+        title,
+        label: title,
+        harga: Number(raw.harga_jual || raw.harga || raw.harga_produk || 0),
+        unit:
+          raw.satuan ||
+          raw.satuan_nama ||
+          raw.nama_satuan ||
+          produk?.satuan?.nama ||
+          produk?.satuan?.nama_satuan ||
+          "pcs",
+        raw,
+      };
+    },
+
+    resolveProdukTokoId(source = {}) {
+      const row = source?.raw || source || {};
+      const produkToko =
+        row?.produk_toko ||
+        row?.produkToko ||
+        row?.master_produk_toko ||
+        row?.masterProdukToko ||
+        {};
+
+      const value = this.firstDefined(
+        source?.produk_toko_id,
+        source?.master_produk_toko_id,
+        source?.obat_toko_id,
+        source?.toko_produk_id,
+        row?.produk_toko_id,
+        row?.master_produk_toko_id,
+        row?.obat_toko_id,
+        row?.toko_produk_id,
+        produkToko?.id,
+        null,
+      );
+
+      return Number(value || 0) || null;
+    },
+
+    resolveProdukId(source = {}) {
+      const row = source?.raw || source || {};
+      const produk = row?.produk || row?.master_produk || {};
+
+      const value = this.firstDefined(
+        source?.produk_id,
+        source?.obat_id,
+        source?.master_produk_id,
+        source?.product_id,
+        row?.produk_id,
+        row?.obat_id,
+        row?.master_produk_id,
+        row?.product_id,
+        produk?.id,
+        produk?.master_produk_id,
+        null,
+      );
+
+      return Number(value || 0) || null;
+    },
+
+    normalizeLookupText(value) {
+      return String(value || "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ");
+    },
+
     normalizeMetodeBayar(item = {}) {
       return {
         id: item.id,
@@ -2615,11 +2747,8 @@ export default {
 
       this.penjualanItems[index] = {
         ...item,
-        produk_id: Number(selected.id || selected.raw?.produk_id || 0) || null,
-        produk_toko_id:
-          Number(
-            selected.produk_toko_id || selected.raw?.produk_toko_id || 0,
-          ) || null,
+        produk_id: Number(this.resolveProdukId(selected) || 0) || null,
+        produk_toko_id: Number(this.resolveProdukTokoId(selected) || 0) || null,
         nama: selected.title,
         harga: Number(selected.harga || selected.raw?.harga_jual || 0),
         unit: selected.unit || selected.raw?.nama_satuan || "pcs",

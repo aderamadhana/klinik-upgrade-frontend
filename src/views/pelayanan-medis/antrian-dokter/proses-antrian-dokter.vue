@@ -1059,17 +1059,32 @@
                     <v-autocomplete
                       v-model="item.produk_toko_id"
                       :items="obatOptions"
-                      item-title="label"
+                      item-title="label_dropdown"
                       item-value="value"
+                      :item-props="getObatItemProps"
+                      :custom-filter="filterObatOptions"
                       label="Obat / Produk"
                       placeholder="Pilih obat / produk"
                       variant="outlined"
                       density="compact"
                       hide-details="auto"
                       clearable
+                      menu-icon="mdi-chevron-down"
+                      auto-select-first
                       :loading="loadingReference"
                       @update:model-value="onSelectObat(index, $event)"
-                    />
+                    >
+                      <template #message>
+                        Produk stok kosong tetap tampil, tetapi tidak bisa
+                        dipilih.
+                      </template>
+
+                      <template #no-data>
+                        <div class="pa-3 text-body-2 text-medium-emphasis">
+                          Produk tidak ditemukan.
+                        </div>
+                      </template>
+                    </v-autocomplete>
                   </v-col>
 
                   <v-col cols="12" sm="4" md="2">
@@ -2675,13 +2690,16 @@ export default {
       );
 
       if (!option) {
-        row.produk_toko_id = null;
-        row.produk_id = null;
-        row.nama = "";
-        row.harga = 0;
-        row.subtotal = 0;
-        row.stok_tersedia = null;
-        row.stok_terbaca = false;
+        this.clearObatRow(row);
+        return;
+      }
+
+      if (this.isObatOptionDisabled(option)) {
+        this.showSnackbar(
+          `Produk ${option.nama || option.label || "-"} tidak bisa dipilih karena stok kosong.`,
+          "error",
+        );
+        this.clearObatRow(row);
         return;
       }
 
@@ -2847,8 +2865,7 @@ export default {
             produk?.id ||
             null;
 
-          const label =
-            item?.label ||
+          const nama =
             item?.nama_produk ||
             item?.produk_nama ||
             item?.nama_obat ||
@@ -2856,7 +2873,17 @@ export default {
             produk?.nama ||
             produk?.nama_produk ||
             produk?.nama_obat ||
+            item?.label ||
             "-";
+
+          const kode =
+            item?.kode_accurate ||
+            item?.kode ||
+            item?.kode_produk ||
+            item?.kode_obat ||
+            produk?.kode_accurate ||
+            produk?.kode ||
+            "";
 
           const harga = this.toNumber(
             item?.harga ||
@@ -2870,14 +2897,88 @@ export default {
           );
 
           const stockRaw = this.resolveStockValue(item, produkToko, produk);
-          const stokTerbaca = stockRaw !== null;
-          const stokTersedia = stokTerbaca ? this.toNumber(stockRaw) : null;
+          const statusRaw = String(item?.status_stok || "").toLowerCase();
+          const stokHabisFlag =
+            Number(item?.is_stok_habis || 0) === 1 ||
+            statusRaw.includes("habis") ||
+            statusRaw.includes("kosong");
+
+          const stokTerbaca = stockRaw !== null || stokHabisFlag;
+          const stokTersedia = stokTerbaca
+            ? this.toNumber(stockRaw !== null ? stockRaw : 0)
+            : null;
+          const stokAkhir = this.toNumber(
+            item?.stok_akhir ??
+              item?.stok_available ??
+              item?.stok_tersedia ??
+              produkToko?.stok_akhir ??
+              produkToko?.stok_available ??
+              produkToko?.stok_tersedia ??
+              stokTersedia ??
+              0,
+          );
+          const stokReserved = this.toNumber(
+            item?.stok_reserved ??
+              item?.reserved_stock ??
+              produkToko?.stok_reserved ??
+              produkToko?.reserved_stock ??
+              0,
+          );
+          const stokMinimum = this.toNumber(
+            item?.stok_minimum ??
+              produkToko?.stok_minimum ??
+              produk?.stok_minimum ??
+              0,
+          );
+
+          const isStokHabis = stokTerbaca && this.toNumber(stokTersedia) <= 0;
+          const isStokMinimum =
+            Number(item?.is_stok_minimum || 0) === 1 ||
+            (stokTerbaca &&
+              this.toNumber(stokTersedia) > 0 &&
+              stokMinimum > 0 &&
+              this.toNumber(stokTersedia) <= stokMinimum);
+
+          let statusStok = item?.status_stok || "TERSEDIA";
+
+          if (!stokTerbaca) {
+            statusStok = "STOK TIDAK TERBACA";
+          } else if (isStokHabis) {
+            statusStok = "HABIS";
+          } else if (isStokMinimum) {
+            statusStok = "STOK MINIMUM";
+          }
+
+          const disabled =
+            item?.disabled === true ||
+            Number(item?.disabled || 0) === 1 ||
+            !stokTerbaca ||
+            isStokHabis;
+
+          const labelSuffix = !stokTerbaca
+            ? " (stok tidak terbaca)"
+            : isStokHabis
+              ? " (kosong)"
+              : "";
+
+          const labelDropdown = `${nama}${labelSuffix}`;
 
           return {
-            label,
+            ...item,
+
+            label: nama,
+            label_dropdown: labelDropdown,
+            label_simple: labelDropdown,
+            text: labelDropdown,
+            title: labelDropdown,
             value: produkTokoId || produkId,
+
             produk_toko_id: produkTokoId || null,
             produk_id: produkId,
+            nama,
+            kode,
+            kode_accurate: item?.kode_accurate || kode,
+
             tempat_produk_id:
               item?.tempat_produk_id ||
               item?.master_tempat_produk_id ||
@@ -2900,9 +3001,20 @@ export default {
             harga,
             stok_tersedia: stokTersedia,
             stok_terbaca: stokTerbaca,
-            stok_akhir: item?.stok_akhir ?? null,
-            stok_reserved: item?.stok_reserved ?? null,
-            sumber_stok: item?.sumber_stok || null,
+            stok_akhir: stokAkhir,
+            stok_reserved: stokReserved,
+            stok_minimum: stokMinimum,
+            is_stok_habis: isStokHabis ? 1 : 0,
+            is_stok_minimum: isStokMinimum ? 1 : 0,
+            status_stok: statusStok,
+            disabled,
+            sumber_stok: item?.sumber_stok || produkToko?.sumber_stok || null,
+            search_text: [kode, nama, statusStok, stokTersedia]
+              .filter(
+                (value) =>
+                  value !== null && value !== undefined && value !== "",
+              )
+              .join(" "),
           };
         })
         .filter((item) => item.value);
@@ -3010,6 +3122,84 @@ export default {
       });
     },
 
+    getObatRawOption(option) {
+      if (!option) {
+        return {};
+      }
+
+      return option.raw || option || {};
+    },
+
+    getObatItemProps(option) {
+      const row = this.getObatRawOption(option);
+
+      return {
+        disabled: this.isObatOptionDisabled(row),
+        title:
+          row.label_dropdown ||
+          row.label_simple ||
+          row.label ||
+          row.nama ||
+          "-",
+      };
+    },
+
+    isObatOptionDisabled(option) {
+      const row = this.getObatRawOption(option);
+
+      return (
+        row.disabled === true ||
+        Number(row.disabled || 0) === 1 ||
+        !row.stok_terbaca ||
+        this.toNumber(row.stok_tersedia) <= 0
+      );
+    },
+
+    filterObatOptions(value, query, item) {
+      const keyword = String(query || "")
+        .toLowerCase()
+        .trim();
+
+      if (!keyword) {
+        return true;
+      }
+
+      const row = this.getObatRawOption(item);
+      const searchable = [
+        row.nama,
+        row.label,
+        row.label_dropdown,
+        row.label_simple,
+        row.kode,
+        row.kode_accurate,
+        row.kode_produk,
+        row.status_stok,
+        row.search_text,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchable.includes(keyword);
+    },
+
+    clearObatRow(row) {
+      if (!row) {
+        return;
+      }
+
+      row.produk_toko_id = null;
+      row.produk_id = null;
+      row.nama = "";
+      row.harga = 0;
+      row.subtotal = 0;
+      row.tempat_produk_id = null;
+      row.stock_produk_toko_id = null;
+      row.stok_tersedia = null;
+      row.stok_terbaca = false;
+      row.sumber_stok = null;
+    },
+
     findObatOption(item = {}) {
       if (!item?.produk_toko_id && !item?.produk_id) {
         return null;
@@ -3044,7 +3234,7 @@ export default {
       row.produk_toko_id =
         option.produk_toko_id || option.value || row.produk_toko_id || null;
       row.produk_id = option.produk_id || row.produk_id || null;
-      row.nama = option.label || row.nama || "";
+      row.nama = option.nama || option.label || row.nama || "";
       row.harga = this.toNumber(option.harga || row.harga);
       row.tempat_produk_id =
         option.tempat_produk_id || row.tempat_produk_id || null;
@@ -3171,34 +3361,67 @@ export default {
     },
 
     resolveStockValue(item = {}, produkToko = {}, produk = {}) {
+      const stockProdukToko =
+        item?.stock_produk_toko || item?.stockProdukToko || {};
+      const stockProduk = item?.stock_produk || item?.stockProduk || {};
+
       const candidates = [
         item?.stok_tersedia,
         item?.stok_available,
+        item?.stok_bisa_dijual,
         item?.stok_akhir,
         item?.sisa_stok,
         item?.stock_available,
-        item?.stock,
-        item?.stok,
         item?.qty_available,
+        item?.qty_stock,
+        item?.available_stock,
+        item?.available_qty,
+        stockProdukToko?.stok_tersedia,
+        stockProdukToko?.stok_available,
+        stockProdukToko?.stok_bisa_dijual,
+        stockProdukToko?.stok_akhir,
+        stockProdukToko?.sisa_stok,
+        stockProdukToko?.stock_available,
+        stockProdukToko?.qty_available,
+        stockProdukToko?.qty_stock,
+        stockProdukToko?.available_stock,
+        stockProdukToko?.available_qty,
+        stockProduk?.stok_tersedia,
+        stockProduk?.stok_available,
+        stockProduk?.stok_bisa_dijual,
+        stockProduk?.stok_akhir,
+        stockProduk?.sisa_stok,
+        stockProduk?.stock_available,
+        stockProduk?.qty_available,
+        stockProduk?.qty_stock,
         produkToko?.stok_tersedia,
         produkToko?.stok_available,
+        produkToko?.stok_bisa_dijual,
         produkToko?.stok_akhir,
         produkToko?.sisa_stok,
         produkToko?.stock_available,
-        produkToko?.stock,
-        produkToko?.stok,
         produkToko?.qty_available,
+        produkToko?.qty_stock,
+        produkToko?.available_stock,
+        produkToko?.available_qty,
         produk?.stok_tersedia,
         produk?.stok_available,
+        produk?.stok_bisa_dijual,
         produk?.stok_akhir,
         produk?.sisa_stok,
-        produk?.stock,
-        produk?.stok,
+        produk?.stock_available,
+        produk?.qty_available,
+        produk?.qty_stock,
       ];
 
-      const found = candidates.find(
-        (value) => value !== null && value !== undefined && value !== "",
-      );
+      const found = candidates.find((value) => {
+        return (
+          value !== null &&
+          value !== undefined &&
+          value !== "" &&
+          typeof value !== "object"
+        );
+      });
 
       return found === undefined ? null : found;
     },
