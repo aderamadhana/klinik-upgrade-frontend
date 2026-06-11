@@ -1964,3 +1964,431 @@ input.v-field__input[readonly] {
     width: 100%;
   }
 }
+/* =========================
+   MEMBERSHIP GEM COLOR THEME
+   Ruby / Sapphire / Diamond
+========================= */
+/* =========================
+   MEMBERSHIP GEM COLOR THEME
+   Ruby / Sapphire / Diamond
+   Hierarchy:
+   Ruby    = premium warm
+   Sapphire= stronger cool
+   Diamond = highest luxury / crystal
+========================= */
+
+.tier-gem-header,
+.tier-gem-panel {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.tier-gem-header::before,
+.tier-gem-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at 12% 18%,
+      rgba(255, 255, 255, 0.32),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 88% 8%,
+      rgba(255, 255, 255, 0.22),
+      transparent 22%
+    ),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 45%);
+}
+
+.tier-gem-header::after,
+.tier-gem-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.55;
+  background:
+    linear-gradient(
+      120deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.18) 18%,
+      transparent 36%
+    ),
+    linear-gradient(
+      300deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.12) 24%,
+      transparent 48%
+    );
+}
+
+/* =========================
+   BASE TEXT
+========================= */
+
+.tier-gem-header {
+  color: #ffffff !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22) !important;
+}
+
+.tier-gem-header .text-high-emphasis,
+.tier-gem-header .text-medium-emphasis,
+.tier-gem-panel .text-medium-emphasis {
+  color: rgba(255, 255, 255, 0.86) !important;
+}
+
+/* =========================
+   HEADER COLORS
+========================= */
+
+/* Ruby / Rose */
+.tier-gem-header--ruby,
+.tier-gem-header--rose {
+  background:
+    radial-gradient(
+      circle at 18% 20%,
+      rgba(251, 113, 133, 0.45),
+      transparent 28%
+    ),
+    linear-gradient(135deg, #4c0519 0%, #9f1239 44%, #e11d48 100%) !important;
+}
+
+/* Sapphire */
+.tier-gem-header--sapphire,
+.tier-gem-header--default {
+  background:
+    radial-gradient(
+      circle at 18% 20%,
+      rgba(96, 165, 250, 0.42),
+      transparent 30%
+    ),
+    linear-gradient(135deg, #020617 0%, #082f77 40%, #2563eb 100%) !important;
+}
+
+/* Diamond - highest tier */
+.tier-gem-header--diamond {
+  color: #082f49 !important;
+  border-bottom-color: rgba(14, 165, 233, 0.35) !important;
+  background:
+    radial-gradient(
+      circle at 14% 18%,
+      rgba(255, 255, 255, 0.95),
+      transparent 18%
+    ),
+    radial-gradient(
+      circle at 82% 12%,
+      rgba(186, 230, 253, 0.9),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 52% 92%,
+      rgba(56, 189, 248, 0.34),
+      transparent 34%
+    ),
+    linear-gradient(
+      135deg,
+      #f8fafc 0%,
+      #dff6ff 28%,
+      #bae6fd 54%,
+      #e0f2fe 78%,
+      #ffffff 100%
+    ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 18px 42px rgba(14, 165, 233, 0.18) !important;
+}
+
+.tier-gem-header--diamond::before {
+  opacity: 1;
+  background:
+    radial-gradient(
+      circle at 8% 18%,
+      rgba(255, 255, 255, 0.95),
+      transparent 16%
+    ),
+    radial-gradient(
+      circle at 92% 10%,
+      rgba(125, 211, 252, 0.5),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 45% 0%,
+      rgba(255, 255, 255, 0.75),
+      transparent 20%
+    ),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.4), transparent 48%) !important;
+}
+
+.tier-gem-header--diamond::after {
+  opacity: 0.9;
+  background:
+    linear-gradient(
+      118deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.95) 13%,
+      transparent 25%
+    ),
+    linear-gradient(
+      292deg,
+      transparent 0%,
+      rgba(14, 165, 233, 0.22) 20%,
+      transparent 42%
+    ),
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12) 0,
+      rgba(255, 255, 255, 0.12) 1px,
+      transparent 1px,
+      transparent 14px
+    );
+}
+
+/* Diamond text must stay dark */
+.tier-gem-header--diamond .text-high-emphasis,
+.tier-gem-header--diamond .text-medium-emphasis {
+  color: #0f172a !important;
+}
+
+/* =========================
+   AVATAR
+========================= */
+
+.tier-gem-avatar {
+  color: #ffffff !important;
+  border: 2px solid rgba(255, 255, 255, 0.56) !important;
+  background: rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.22) !important;
+  backdrop-filter: blur(8px);
+}
+
+.tier-gem-avatar--diamond {
+  color: #082f49 !important;
+  border-color: rgba(255, 255, 255, 0.9) !important;
+  background: radial-gradient(
+    circle at 30% 22%,
+    #ffffff 0%,
+    #e0f2fe 44%,
+    #bae6fd 100%
+  ) !important;
+  box-shadow:
+    0 14px 34px rgba(14, 165, 233, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+/* =========================
+   CHIPS
+========================= */
+
+.tier-gem-meta-chip,
+.tier-gem-contact-chip,
+.tier-gem-mode-chip {
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.24) !important;
+  background: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: none !important;
+  font-weight: 700 !important;
+  backdrop-filter: blur(8px);
+}
+
+.tier-gem-contact-chip {
+  background: rgba(255, 255, 255, 0.11) !important;
+}
+
+.tier-gem-tier-chip {
+  border: 1px solid rgba(255, 255, 255, 0.72) !important;
+  background: rgba(255, 255, 255, 0.94) !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.01em;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.18) !important;
+}
+
+.tier-gem-header--ruby .tier-gem-tier-chip,
+.tier-gem-header--rose .tier-gem-tier-chip {
+  color: #9f1239 !important;
+}
+
+.tier-gem-header--sapphire .tier-gem-tier-chip,
+.tier-gem-header--default .tier-gem-tier-chip {
+  color: #0f3f9f !important;
+}
+
+/* Diamond chips */
+.tier-gem-header--diamond .tier-gem-tier-chip {
+  color: #075985 !important;
+  border-color: rgba(14, 165, 233, 0.34) !important;
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #e0f2fe 48%,
+    #ffffff 100%
+  ) !important;
+  box-shadow:
+    0 10px 24px rgba(14, 165, 233, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+}
+
+.tier-gem-header--diamond .tier-gem-meta-chip,
+.tier-gem-header--diamond .tier-gem-contact-chip,
+.tier-gem-header--diamond .tier-gem-mode-chip {
+  color: #0f172a !important;
+  border-color: rgba(14, 165, 233, 0.22) !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+}
+
+/* =========================
+   PANEL BASE
+========================= */
+
+.tier-gem-panel {
+  border: 1px solid rgba(255, 255, 255, 0.26) !important;
+  color: #ffffff !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 14px 30px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Ruby / Rose panel */
+.tier-gem-panel--ruby,
+.tier-gem-panel--rose {
+  background:
+    radial-gradient(
+      circle at 20% 16%,
+      rgba(251, 113, 133, 0.42),
+      transparent 30%
+    ),
+    linear-gradient(135deg, #5f071d 0%, #be123c 52%, #fb7185 100%) !important;
+}
+
+/* Sapphire panel */
+.tier-gem-panel--sapphire,
+.tier-gem-panel--default {
+  background:
+    radial-gradient(
+      circle at 20% 16%,
+      rgba(96, 165, 250, 0.45),
+      transparent 30%
+    ),
+    linear-gradient(135deg, #061a4f 0%, #0f52ba 52%, #60a5fa 100%) !important;
+}
+
+/* Diamond panel - strongest */
+.tier-gem-panel--diamond {
+  color: #082f49 !important;
+  border-color: rgba(14, 165, 233, 0.3) !important;
+  background:
+    radial-gradient(
+      circle at 16% 18%,
+      rgba(255, 255, 255, 0.98),
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 88% 12%,
+      rgba(125, 211, 252, 0.58),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 52% 100%,
+      rgba(14, 165, 233, 0.22),
+      transparent 36%
+    ),
+    linear-gradient(135deg, #ffffff 0%, #e0f7ff 35%, #bae6fd 66%, #f8fafc 100%) !important;
+  box-shadow:
+    0 16px 38px rgba(14, 165, 233, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
+}
+
+.tier-gem-panel--diamond::before {
+  opacity: 1;
+  background:
+    radial-gradient(
+      circle at 10% 16%,
+      rgba(255, 255, 255, 0.95),
+      transparent 18%
+    ),
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(56, 189, 248, 0.3),
+      transparent 24%
+    ),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.5), transparent 48%) !important;
+}
+
+.tier-gem-panel--diamond::after {
+  opacity: 0.95;
+  background:
+    linear-gradient(
+      118deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.9) 14%,
+      transparent 27%
+    ),
+    repeating-linear-gradient(
+      135deg,
+      rgba(14, 165, 233, 0.08) 0,
+      rgba(14, 165, 233, 0.08) 1px,
+      transparent 1px,
+      transparent 13px
+    );
+}
+
+.tier-gem-panel--diamond .text-medium-emphasis {
+  color: #334155 !important;
+}
+
+/* =========================
+   EYEBROW / LABEL
+========================= */
+
+.tier-gem-eyebrow {
+  color: rgba(255, 255, 255, 0.88) !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.tier-gem-panel--diamond .tier-gem-eyebrow {
+  color: #0369a1 !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* =========================
+   PANEL CHIPS
+========================= */
+
+.tier-gem-panel .tier-gem-mode-chip {
+  background: rgba(255, 255, 255, 0.18) !important;
+}
+
+.tier-gem-panel--diamond .tier-gem-mode-chip {
+  color: #075985 !important;
+  border-color: rgba(14, 165, 233, 0.28) !important;
+  background: rgba(255, 255, 255, 0.82) !important;
+  box-shadow: 0 8px 18px rgba(14, 165, 233, 0.13) !important;
+}
+
+/* =========================
+   BUTTON CONTRAST ON DIAMOND HEADER
+========================= */
+
+.tier-gem-header--diamond .v-btn {
+  box-shadow: 0 8px 18px rgba(14, 165, 233, 0.12) !important;
+}
+
+.tier-gem-header--diamond .v-btn--variant-outlined {
+  background: rgba(255, 255, 255, 0.56) !important;
+}
+
+/* =========================
+   OPTIONAL: small premium lift
+========================= */
+
+.tier-gem-header--diamond .tier-gem-tier-chip::before,
+.tier-gem-panel--diamond .tier-gem-mode-chip::before {
+  opacity: 1;
+}

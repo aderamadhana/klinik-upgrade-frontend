@@ -1,7 +1,7 @@
 <template>
-  <div class="pa-4 pa-md-6">
+  <div>
     <div
-      class="d-flex flex-column flex-md-row justify-space-between align-start ga-4 mb-4"
+      class="d-flex flex-column flex-lg-row justify-space-between align-start ga-3 mb-4"
     >
       <div>
         <div class="d-flex align-center ga-2 mb-2">
@@ -15,8 +15,8 @@
         </div>
         <h1 class="text-h5 text-md-h4 font-weight-bold mb-1">Riwayat Pasien</h1>
         <p class="text-body-2 text-medium-emphasis mb-0">
-          Identitas, membership, saldo, catatan medis, tindakan, obat, dan
-          transaksi pasien.
+          Profil pasien, validasi identitas, membership, saldo, dan riwayat
+          klinik dalam satu tampilan ringkas.
         </p>
       </div>
 
@@ -40,59 +40,71 @@
       type="warning"
       variant="tonal"
       border="start"
+      density="compact"
       class="mb-4"
     >
-      <div class="font-weight-bold mb-1">Data pasien perlu diperhatikan</div>
-      <div class="text-body-2">
-        {{ importantWarnings.join(" • ") }}
+      <div
+        class="d-flex flex-column flex-md-row align-start align-md-center justify-space-between ga-3"
+      >
+        <div>
+          <div class="font-weight-bold">Data pasien perlu dilengkapi</div>
+          <div class="text-body-2 mt-1">
+            {{ importantWarnings.join(" • ") }}
+          </div>
+        </div>
+        <v-chip color="warning" variant="flat" size="small">
+          Prioritas administrasi
+        </v-chip>
       </div>
     </v-alert>
 
-    <v-card variant="outlined" rounded="lg" class="mb-4">
+    <v-card variant="outlined" rounded="xl" class="mb-4 overflow-hidden">
       <v-progress-linear v-if="loading" indeterminate color="primary" />
 
-      <v-card-text class="pa-4 pa-md-5">
+      <v-sheet :class="['tier-gem-header', tierGemHeaderClass, 'pa-4 pa-md-5']">
         <div
-          class="d-flex flex-column flex-lg-row justify-space-between align-start ga-5"
+          class="d-flex flex-column flex-xl-row justify-space-between align-start ga-4"
         >
           <div
             class="d-flex flex-column flex-sm-row align-start ga-4 flex-grow-1"
           >
-            <v-avatar color="primary" size="72">
+            <v-avatar size="72" :class="tierGemAvatarClass">
               <span class="text-h6 font-weight-bold">{{ patientInitial }}</span>
             </v-avatar>
 
             <div class="flex-grow-1">
               <div class="d-flex flex-wrap align-center ga-2 mb-2">
-                <v-chip size="small" color="primary" variant="tonal">
+                <v-chip size="small" class="tier-gem-meta-chip" variant="flat">
                   {{ patient.noRm }}
                 </v-chip>
-                <v-chip
-                  size="small"
-                  :color="patient.gender === 'Perempuan' ? 'pink' : 'blue'"
-                  variant="tonal"
-                >
+                <v-chip size="small" class="tier-gem-meta-chip" variant="flat">
                   {{ patient.gender }}
                 </v-chip>
-                <v-chip
-                  size="small"
-                  :color="patient.member.isMember ? 'success' : 'grey'"
-                  variant="tonal"
-                >
+                <v-chip size="small" class="tier-gem-meta-chip" variant="flat">
                   {{ patient.member.isMember ? "Member" : "Non Member" }}
                 </v-chip>
                 <v-chip
                   v-if="currentTierName !== '-'"
                   size="small"
-                  color="amber-darken-2"
-                  variant="tonal"
+                  class="tier-gem-tier-chip"
+                  variant="flat"
                   prepend-icon="mdi-crown-outline"
                 >
                   {{ currentTierName }}
                 </v-chip>
+                <v-chip
+                  v-if="tierState.member?.tier_mode"
+                  size="small"
+                  class="tier-gem-mode-chip"
+                  variant="flat"
+                >
+                  {{ tierState.member?.tier_mode_text || "Otomatis" }}
+                </v-chip>
               </div>
 
-              <div class="text-h5 font-weight-bold text-high-emphasis">
+              <div
+                class="text-h5 text-md-h4 font-weight-bold text-high-emphasis"
+              >
                 {{ patient.name }}
               </div>
 
@@ -103,25 +115,31 @@
                 >
               </div>
 
-              <div
-                class="d-flex flex-wrap ga-4 mt-3 text-body-2 text-medium-emphasis"
-              >
-                <span class="d-flex align-center ga-1">
-                  <v-icon icon="mdi-phone-outline" size="17" />
+              <div class="d-flex flex-wrap align-center ga-3 mt-3">
+                <v-chip
+                  size="small"
+                  class="tier-gem-contact-chip"
+                  variant="flat"
+                  prepend-icon="mdi-phone-outline"
+                >
                   {{ patient.phone }}
-                </span>
-                <span class="d-flex align-center ga-1">
-                  <v-icon icon="mdi-map-marker-outline" size="17" />
+                </v-chip>
+                <v-chip
+                  size="small"
+                  class="tier-gem-contact-chip"
+                  variant="flat"
+                  prepend-icon="mdi-map-marker-outline"
+                >
                   {{ patient.address }}
-                </span>
+                </v-chip>
               </div>
             </div>
           </div>
 
-          <div class="d-flex flex-wrap justify-start justify-lg-end ga-2">
+          <div class="d-flex flex-wrap justify-start justify-xl-end ga-2">
             <v-btn
-              color="primary"
-              variant="flat"
+              :color="isDiamondTier ? 'primary' : 'white'"
+              :variant="isDiamondTier ? 'flat' : 'tonal'"
               prepend-icon="mdi-clipboard-text-outline"
               :to="{ name: 'Pengkajian Pasien', params: { id: patient.id } }"
             >
@@ -129,7 +147,7 @@
             </v-btn>
 
             <v-btn
-              color="primary"
+              :color="isDiamondTier ? 'primary' : 'white'"
               variant="outlined"
               prepend-icon="mdi-wallet-outline"
               :to="{ name: 'Saldo Deposit', params: { id: patient.id } }"
@@ -138,7 +156,7 @@
             </v-btn>
 
             <v-btn
-              color="deep-purple"
+              :color="isDiamondTier ? 'deep-purple' : 'white'"
               variant="tonal"
               prepend-icon="mdi-image-multiple-outline"
               @click="openBeforeAfterDialog"
@@ -150,6 +168,7 @@
               <template #activator="{ props }">
                 <v-btn
                   v-bind="props"
+                  :color="isDiamondTier ? undefined : 'white'"
                   variant="tonal"
                   prepend-icon="mdi-dots-horizontal"
                 >
@@ -187,204 +206,315 @@
             </v-menu>
           </div>
         </div>
+      </v-sheet>
+
+      <v-card-text class="pa-4">
+        <v-row dense>
+          <v-col cols="12" sm="6" lg="4" xl="2">
+            <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+              <div class="d-flex align-center justify-space-between ga-3 mb-2">
+                <div class="text-caption text-medium-emphasis font-weight-bold">
+                  TOTAL KUNJUNGAN
+                </div>
+                <v-icon icon="mdi-calendar-check-outline" color="primary" />
+              </div>
+              <div class="text-h6 font-weight-bold">
+                {{ formatNumber(summary.totalKunjungan) }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                Seluruh registrasi
+              </div>
+            </v-sheet>
+          </v-col>
+
+          <v-col cols="12" sm="6" lg="4" xl="2">
+            <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+              <div class="d-flex align-center justify-space-between ga-3 mb-2">
+                <div class="text-caption text-medium-emphasis font-weight-bold">
+                  TOTAL TRANSAKSI
+                </div>
+                <v-icon icon="mdi-cash-multiple" color="success" />
+              </div>
+              <div class="text-h6 font-weight-bold">
+                {{ formatCurrency(summary.totalTransaksi) }}
+              </div>
+              <div class="text-caption text-medium-emphasis">Invoice lunas</div>
+            </v-sheet>
+          </v-col>
+
+          <v-col cols="12" sm="6" lg="4" xl="2">
+            <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+              <div class="d-flex align-center justify-space-between ga-3 mb-2">
+                <div class="text-caption text-medium-emphasis font-weight-bold">
+                  POIN PASIEN
+                </div>
+                <v-icon icon="mdi-star-circle-outline" color="amber-darken-2" />
+              </div>
+              <div class="text-h6 font-weight-bold">
+                {{ formatNumber(patient.points) }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                Nilai {{ formatCurrency(patient.pointsValue) }}
+              </div>
+            </v-sheet>
+          </v-col>
+
+          <v-col cols="12" sm="6" lg="4" xl="2">
+            <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+              <div class="d-flex align-center justify-space-between ga-3 mb-2">
+                <div class="text-caption text-medium-emphasis font-weight-bold">
+                  SALDO DEPOSIT
+                </div>
+                <v-icon icon="mdi-wallet-outline" color="deep-purple" />
+              </div>
+              <div class="text-h6 font-weight-bold">
+                {{ formatCurrency(summary.depositBalance) }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                {{ formatQty(summary.depositQty) }} treatment tersisa
+              </div>
+            </v-sheet>
+          </v-col>
+
+          <v-col cols="12" sm="6" lg="4" xl="2">
+            <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+              <div class="d-flex align-center justify-space-between ga-3 mb-2">
+                <div class="text-caption text-medium-emphasis font-weight-bold">
+                  TRANSAKSI HARI INI
+                </div>
+                <v-icon icon="mdi-calendar-today-outline" color="info" />
+              </div>
+              <div class="text-h6 font-weight-bold">
+                {{ formatCurrency(todayTransactionValue) }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                {{ todayTransactions.length }} transaksi
+              </div>
+            </v-sheet>
+          </v-col>
+
+          <v-col cols="12" sm="6" lg="4" xl="2">
+            <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+              <div class="d-flex align-center justify-space-between ga-3 mb-2">
+                <div class="text-caption text-medium-emphasis font-weight-bold">
+                  KUNJUNGAN TERAKHIR
+                </div>
+                <v-icon icon="mdi-clock-outline" color="orange-darken-2" />
+              </div>
+              <div class="text-body-1 font-weight-bold">
+                {{ formatDate(summary.lastVisitDate) }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                {{ summary.lastVisitAt || "Belum ada waktu" }}
+              </div>
+            </v-sheet>
+          </v-col>
+        </v-row>
       </v-card-text>
     </v-card>
 
-    <v-row dense class="mb-4">
-      <v-col cols="12" sm="6" lg="4" xl="2">
-        <v-card variant="outlined" rounded="lg" height="100%">
-          <v-card-text>
-            <div class="d-flex align-center justify-space-between mb-3">
-              <span class="text-caption text-medium-emphasis font-weight-bold">
-                TOTAL KUNJUNGAN
-              </span>
-              <v-icon icon="mdi-calendar-check-outline" color="primary" />
-            </div>
-            <div class="text-h5 font-weight-bold">
-              {{ formatNumber(summary.totalKunjungan) }}
-            </div>
-            <div class="text-caption text-medium-emphasis mt-1">
-              Seluruh registrasi pasien
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="12" sm="6" lg="4" xl="2">
-        <v-card variant="outlined" rounded="lg" height="100%">
-          <v-card-text>
-            <div class="d-flex align-center justify-space-between mb-3">
-              <span class="text-caption text-medium-emphasis font-weight-bold">
-                TOTAL TRANSAKSI
-              </span>
-              <v-icon icon="mdi-cash-multiple" color="success" />
-            </div>
-            <div class="text-h6 font-weight-bold">
-              {{ formatCurrency(summary.totalTransaksi) }}
-            </div>
-            <div class="text-caption text-medium-emphasis mt-1">
-              Invoice lunas
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="12" sm="6" lg="4" xl="2">
-        <v-card variant="outlined" rounded="lg" height="100%">
-          <v-card-text>
-            <div class="d-flex align-center justify-space-between mb-3">
-              <span class="text-caption text-medium-emphasis font-weight-bold">
-                POIN PASIEN
-              </span>
-              <v-icon icon="mdi-star-circle-outline" color="amber-darken-2" />
-            </div>
-            <div class="text-h5 font-weight-bold">
-              {{ formatNumber(patient.points) }}
-            </div>
-            <div class="text-caption text-medium-emphasis mt-1">
-              Nilai {{ formatCurrency(patient.pointsValue) }}
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="12" sm="6" lg="4" xl="2">
-        <v-card variant="outlined" rounded="lg" height="100%">
-          <v-card-text>
-            <div class="d-flex align-center justify-space-between mb-3">
-              <span class="text-caption text-medium-emphasis font-weight-bold">
-                SALDO DEPOSIT
-              </span>
-              <v-icon icon="mdi-wallet-outline" color="deep-purple" />
-            </div>
-            <div class="text-h6 font-weight-bold">
-              {{ formatCurrency(summary.depositBalance) }}
-            </div>
-            <div class="text-caption text-medium-emphasis mt-1">
-              {{ formatQty(summary.depositQty) }} treatment tersisa
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="12" sm="6" lg="4" xl="2">
-        <v-card variant="outlined" rounded="lg" height="100%">
-          <v-card-text>
-            <div class="d-flex align-center justify-space-between mb-3">
-              <span class="text-caption text-medium-emphasis font-weight-bold">
-                TRANSAKSI HARI INI
-              </span>
-              <v-icon icon="mdi-calendar-today-outline" color="info" />
-            </div>
-            <div class="text-h6 font-weight-bold">
-              {{ formatCurrency(todayTransactionValue) }}
-            </div>
-            <div class="text-caption text-medium-emphasis mt-1">
-              {{ todayTransactions.length }} transaksi
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="12" sm="6" lg="4" xl="2">
-        <v-card variant="outlined" rounded="lg" height="100%">
-          <v-card-text>
-            <div class="d-flex align-center justify-space-between mb-3">
-              <span class="text-caption text-medium-emphasis font-weight-bold">
-                KUNJUNGAN TERAKHIR
-              </span>
-              <v-icon icon="mdi-clock-outline" color="orange-darken-2" />
-            </div>
-            <div class="text-body-1 font-weight-bold">
-              {{ formatDate(summary.lastVisitDate) }}
-            </div>
-            <div class="text-caption text-medium-emphasis mt-1">
-              {{ summary.lastVisitAt || "Belum ada waktu kunjungan" }}
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <v-row dense class="mb-4">
-      <v-col cols="12" lg="4">
-        <v-card variant="outlined" rounded="lg" height="100%">
+    <v-row dense class="mb-4 align-start">
+      <v-col cols="12" lg="8">
+        <v-card variant="outlined" rounded="xl" height="100%">
           <v-card-title
-            class="d-flex align-center ga-2 text-subtitle-1 font-weight-bold"
+            class="d-flex align-center justify-space-between ga-3 py-4"
           >
-            <v-icon icon="mdi-account-box-outline" size="21" />
-            Data Utama
-          </v-card-title>
-          <v-divider />
-          <v-list density="compact" lines="two">
-            <v-list-item title="NIK" :subtitle="patient.nik">
-              <template #append>
-                <v-chip
-                  size="x-small"
-                  :color="patient.nikInvalid ? 'error' : 'success'"
-                  variant="tonal"
-                >
-                  {{ patient.nikInvalid ? "Tidak valid" : "Valid" }}
-                </v-chip>
-              </template>
-            </v-list-item>
-            <v-list-item
-              title="Nomor IHS"
-              :subtitle="patient.ihsNumber || 'Belum tersedia'"
+            <span
+              class="d-flex align-center ga-2 text-subtitle-1 font-weight-bold"
             >
-              <template #append>
-                <v-chip
-                  size="x-small"
-                  :color="patient.ihsNumber ? 'success' : 'warning'"
-                  variant="tonal"
-                >
-                  {{ patient.ihsNumber ? "Terhubung" : "Belum" }}
-                </v-chip>
-              </template>
-            </v-list-item>
-            <v-list-item title="Agama" :subtitle="patient.religion" />
-            <v-list-item title="Pekerjaan" :subtitle="patient.job" />
-            <v-list-item
-              title="Status Pernikahan"
-              :subtitle="patient.maritalStatus"
-            />
-          </v-list>
-        </v-card>
-      </v-col>
-
-      <v-col cols="12" lg="4">
-        <v-card variant="outlined" rounded="lg" height="100%">
-          <v-card-title
-            class="d-flex align-center ga-2 text-subtitle-1 font-weight-bold"
-          >
-            <v-icon icon="mdi-card-account-phone-outline" size="21" />
-            Kontak & Alamat
-          </v-card-title>
-          <v-divider />
-          <v-list density="compact" lines="two">
-            <v-list-item title="Nomor HP" :subtitle="patient.phone" />
-            <v-list-item title="Nomor WhatsApp" :subtitle="patient.whatsapp" />
-            <v-list-item title="Nomor Telepon" :subtitle="patient.telephone" />
-            <v-list-item title="Email" :subtitle="patient.email" />
-            <v-list-item title="Alamat Utama" :subtitle="patient.address" />
-          </v-list>
-          <v-card-actions class="px-4 pb-4">
-            <v-btn
-              block
-              color="success"
+              <v-icon icon="mdi-account-details-outline" size="21" />
+              Informasi Pasien
+            </span>
+            <v-chip
+              v-if="importantWarnings.length"
+              size="small"
+              color="warning"
               variant="tonal"
-              prepend-icon="mdi-map-marker-outline"
-              @click="shippingAddressDialog = true"
+              prepend-icon="mdi-alert-circle-outline"
             >
-              Lihat Alamat Pengiriman
-            </v-btn>
-          </v-card-actions>
+              {{ importantWarnings.length }} catatan
+            </v-chip>
+          </v-card-title>
+          <v-divider />
+
+          <v-card-text class="pa-4">
+            <div
+              class="text-caption text-medium-emphasis font-weight-bold mb-3"
+            >
+              IDENTITAS
+            </div>
+            <v-row dense class="mb-4">
+              <v-col cols="12" sm="6" md="4">
+                <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                  <div
+                    class="d-flex align-center justify-space-between ga-2 mb-1"
+                  >
+                    <div class="text-caption text-medium-emphasis">NIK</div>
+                    <v-chip
+                      size="x-small"
+                      :color="patient.nikInvalid ? 'error' : 'success'"
+                      variant="tonal"
+                    >
+                      {{ patient.nikInvalid ? "Tidak valid" : "Valid" }}
+                    </v-chip>
+                  </div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ patient.nik }}
+                  </div>
+                </v-sheet>
+              </v-col>
+
+              <v-col cols="12" sm="6" md="4">
+                <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                  <div
+                    class="d-flex align-center justify-space-between ga-2 mb-1"
+                  >
+                    <div class="text-caption text-medium-emphasis">
+                      Nomor IHS
+                    </div>
+                    <v-chip
+                      size="x-small"
+                      :color="patient.ihsNumber ? 'success' : 'warning'"
+                      variant="tonal"
+                    >
+                      {{ patient.ihsNumber ? "Terhubung" : "Belum" }}
+                    </v-chip>
+                  </div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ patient.ihsNumber || "Belum tersedia" }}
+                  </div>
+                </v-sheet>
+              </v-col>
+
+              <v-col cols="12" sm="6" md="4">
+                <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    Agama
+                  </div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ patient.religion }}
+                  </div>
+                </v-sheet>
+              </v-col>
+
+              <v-col cols="12" sm="6" md="4">
+                <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    Pekerjaan
+                  </div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ patient.job }}
+                  </div>
+                </v-sheet>
+              </v-col>
+
+              <v-col cols="12" sm="6" md="4">
+                <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    Status Pernikahan
+                  </div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ patient.maritalStatus }}
+                  </div>
+                </v-sheet>
+              </v-col>
+
+              <v-col cols="12" sm="6" md="4">
+                <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    No. RM
+                  </div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ patient.noRm }}
+                  </div>
+                </v-sheet>
+              </v-col>
+            </v-row>
+
+            <div
+              class="text-caption text-medium-emphasis font-weight-bold mb-3"
+            >
+              KONTAK & ALAMAT
+            </div>
+            <v-row dense>
+              <v-col cols="12" sm="6" md="4">
+                <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    Nomor HP
+                  </div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ patient.phone }}
+                  </div>
+                </v-sheet>
+              </v-col>
+
+              <v-col cols="12" sm="6" md="4">
+                <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    Nomor WhatsApp
+                  </div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ patient.whatsapp }}
+                  </div>
+                </v-sheet>
+              </v-col>
+
+              <v-col cols="12" sm="6" md="4">
+                <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    Nomor Telepon
+                  </div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ patient.telephone }}
+                  </div>
+                </v-sheet>
+              </v-col>
+
+              <v-col cols="12" sm="6" md="4">
+                <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                  <div class="text-caption text-medium-emphasis mb-1">
+                    Email
+                  </div>
+                  <div class="text-body-2 font-weight-bold">
+                    {{ patient.email }}
+                  </div>
+                </v-sheet>
+              </v-col>
+
+              <v-col cols="12" md="8">
+                <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                  <div
+                    class="d-flex flex-column flex-sm-row justify-space-between ga-3"
+                  >
+                    <div>
+                      <div class="text-caption text-medium-emphasis mb-1">
+                        Alamat Utama
+                      </div>
+                      <div class="text-body-2 font-weight-bold">
+                        {{ patient.address }}
+                      </div>
+                    </div>
+                    <v-btn
+                      color="success"
+                      variant="tonal"
+                      prepend-icon="mdi-map-marker-outline"
+                      @click="shippingAddressDialog = true"
+                    >
+                      Alamat Pengiriman
+                    </v-btn>
+                  </div>
+                </v-sheet>
+              </v-col>
+            </v-row>
+          </v-card-text>
         </v-card>
       </v-col>
 
       <v-col cols="12" lg="4">
-        <v-card variant="outlined" rounded="lg" height="100%">
-          <v-card-title class="d-flex align-center justify-space-between ga-2">
+        <v-card variant="outlined" rounded="xl" height="100%">
+          <v-card-title
+            class="d-flex align-center justify-space-between ga-2 py-4"
+          >
             <span
               class="d-flex align-center ga-2 text-subtitle-1 font-weight-bold"
             >
@@ -393,7 +523,7 @@
             </span>
             <v-btn
               size="small"
-              variant="text"
+              variant="tonal"
               color="primary"
               prepend-icon="mdi-history"
               :disabled="tierLoading"
@@ -418,113 +548,205 @@
           </v-alert>
 
           <template v-if="patient.member.isMember">
-            <v-list density="compact" lines="two">
-              <v-list-item
-                title="Nomor Member"
-                :subtitle="patient.member.noMember"
-              />
-              <v-list-item title="Tier Saat Ini" :subtitle="currentTierName">
-                <template #append>
+            <v-card-text class="pa-4">
+              <v-sheet
+                rounded="xl"
+                :class="['tier-gem-panel', tierGemPanelClass, 'pa-4 mb-4']"
+              >
+                <div class="d-flex align-start justify-space-between ga-3">
+                  <div>
+                    <div class="text-caption tier-gem-eyebrow">
+                      TIER SAAT INI
+                    </div>
+                    <div class="text-h4 font-weight-bold mt-1">
+                      {{ currentTierName }}
+                    </div>
+                    <div class="text-body-2 text-medium-emphasis mt-1">
+                      Berdasarkan spending:
+                      <strong>{{
+                        tierState.automatic_tier?.name || "-"
+                      }}</strong>
+                    </div>
+                  </div>
                   <v-chip
-                    size="x-small"
-                    :color="
-                      tierState.member?.tier_mode === 'manual'
-                        ? 'warning'
-                        : 'success'
-                    "
-                    variant="tonal"
+                    size="small"
+                    class="tier-gem-mode-chip"
+                    variant="flat"
                   >
                     {{ tierState.member?.tier_mode_text || "Otomatis" }}
                   </v-chip>
-                </template>
-              </v-list-item>
-              <v-list-item
-                title="Status Member"
-                :subtitle="patient.member.statusText"
-              />
-              <v-list-item
-                title="Tanggal Daftar"
-                :subtitle="formatDate(patient.member.registeredAt)"
-              />
-              <v-list-item
-                title="Tanggal Kedaluwarsa"
-                :subtitle="formatDate(patient.member.expiredAt)"
-              />
-              <v-list-item
-                title="Total Spending"
-                :subtitle="formatCurrency(patient.member.totalSpending)"
-              />
-              <v-list-item
-                v-if="tierState.automatic_tier"
-                title="Tier Berdasarkan Spending"
-                :subtitle="tierState.automatic_tier.name"
-              >
-                <template #append>
-                  <v-icon
-                    :icon="
-                      tierState.is_automatic_match
-                        ? 'mdi-check-circle-outline'
-                        : 'mdi-alert-circle-outline'
-                    "
-                    :color="
-                      tierState.is_automatic_match ? 'success' : 'warning'
-                    "
-                    size="20"
-                  />
-                </template>
-              </v-list-item>
-            </v-list>
+                </div>
+              </v-sheet>
 
-            <v-alert
-              v-if="tierState.member?.tier_mode === 'manual'"
-              type="warning"
-              variant="tonal"
-              density="compact"
-              class="mx-4 mb-3"
-              border="start"
-            >
-              Tier dikunci manual. Proses pembayaran tidak akan mengubah tier
-              sampai mode otomatis diaktifkan kembali.
-            </v-alert>
-
-            <v-card-actions class="d-flex flex-wrap ga-2 px-4 pb-4">
-              <v-btn
-                color="warning"
-                variant="flat"
-                prepend-icon="mdi-arrow-up-bold"
-                :disabled="
-                  !tierState.can_upgrade || tierLoading || tierActionLoading
-                "
-                @click="openTierAction('upgrade')"
-              >
-                Upgrade<span v-if="tierState.next_tier">
-                  ke {{ tierState.next_tier.name }}</span
+              <v-sheet rounded="xl" class="pa-3 mb-4 bg-white">
+                <div
+                  class="d-flex flex-column flex-sm-row justify-space-between align-start ga-2 mb-3"
                 >
-              </v-btn>
-              <v-btn
-                color="grey-darken-1"
+                  <div>
+                    <div class="text-subtitle-2 font-weight-bold">
+                      Manajemen Tier Manual
+                    </div>
+                    <div class="text-caption text-medium-emphasis mt-1">
+                      Gunakan untuk mengubah tier pasien secara manual.
+                    </div>
+                  </div>
+                  <v-chip
+                    size="small"
+                    color="primary"
+                    variant="tonal"
+                    prepend-icon="mdi-shield-account-outline"
+                  >
+                    Aksi Admin
+                  </v-chip>
+                </div>
+
+                <v-row dense>
+                  <v-col cols="12" sm="6">
+                    <v-btn
+                      color="warning"
+                      variant="flat"
+                      prepend-icon="mdi-arrow-up-bold"
+                      block
+                      :disabled="
+                        !tierState.next_tier || tierLoading || tierActionLoading
+                      "
+                      @click="openTierAction('upgrade')"
+                    >
+                      {{
+                        tierState.next_tier
+                          ? "Upgrade ke " + tierState.next_tier.name
+                          : "Upgrade Tier"
+                      }}
+                    </v-btn>
+                    <div
+                      v-if="!tierState.next_tier"
+                      class="text-caption text-medium-emphasis mt-1"
+                    >
+                      Pasien sudah berada di tier tertinggi.
+                    </div>
+                  </v-col>
+
+                  <v-col cols="12" sm="6">
+                    <v-btn
+                      color="grey-darken-1"
+                      variant="tonal"
+                      prepend-icon="mdi-arrow-down-bold"
+                      block
+                      :disabled="
+                        !tierState.previous_tier ||
+                        tierLoading ||
+                        tierActionLoading
+                      "
+                      @click="openTierAction('downgrade')"
+                    >
+                      {{
+                        tierState.previous_tier
+                          ? "Downgrade ke " + tierState.previous_tier.name
+                          : "Downgrade Tier"
+                      }}
+                    </v-btn>
+                    <div
+                      v-if="!tierState.previous_tier"
+                      class="text-caption text-medium-emphasis mt-1"
+                    >
+                      Pasien sudah berada di tier terendah.
+                    </div>
+                  </v-col>
+
+                  <v-col v-if="tierState.can_reset_automatic" cols="12">
+                    <v-btn
+                      color="primary"
+                      variant="outlined"
+                      prepend-icon="mdi-sync"
+                      block
+                      :disabled="tierLoading || tierActionLoading"
+                      @click="openTierAction('automatic')"
+                    >
+                      Aktifkan Mode Otomatis
+                    </v-btn>
+                  </v-col>
+                </v-row>
+              </v-sheet>
+
+              <v-row dense>
+                <v-col cols="6">
+                  <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                    <div class="text-caption text-medium-emphasis">
+                      Nomor Member
+                    </div>
+                    <div class="text-body-2 font-weight-bold mt-1">
+                      {{ patient.member.noMember }}
+                    </div>
+                  </v-sheet>
+                </v-col>
+                <v-col cols="6">
+                  <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                    <div class="text-caption text-medium-emphasis">Status</div>
+                    <div class="text-body-2 font-weight-bold mt-1">
+                      {{ patient.member.statusText }}
+                    </div>
+                  </v-sheet>
+                </v-col>
+                <v-col cols="6">
+                  <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                    <div class="text-caption text-medium-emphasis">
+                      Tanggal Daftar
+                    </div>
+                    <div class="text-body-2 font-weight-bold mt-1">
+                      {{ formatDate(patient.member.registeredAt) }}
+                    </div>
+                  </v-sheet>
+                </v-col>
+                <v-col cols="6">
+                  <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5 h-100">
+                    <div class="text-caption text-medium-emphasis">
+                      Kedaluwarsa
+                    </div>
+                    <div class="text-body-2 font-weight-bold mt-1">
+                      {{ formatDate(patient.member.expiredAt) }}
+                    </div>
+                  </v-sheet>
+                </v-col>
+                <v-col cols="12">
+                  <v-sheet rounded="lg" class="pa-3 bg-grey-lighten-5">
+                    <div class="d-flex align-center justify-space-between ga-3">
+                      <div>
+                        <div class="text-caption text-medium-emphasis">
+                          Total Spending
+                        </div>
+                        <div class="text-h6 font-weight-bold mt-1">
+                          {{ formatCurrency(patient.member.totalSpending) }}
+                        </div>
+                      </div>
+                      <v-icon
+                        v-if="tierState.automatic_tier"
+                        :icon="
+                          tierState.is_automatic_match
+                            ? 'mdi-check-circle-outline'
+                            : 'mdi-alert-circle-outline'
+                        "
+                        :color="
+                          tierState.is_automatic_match ? 'success' : 'warning'
+                        "
+                        size="26"
+                      />
+                    </div>
+                  </v-sheet>
+                </v-col>
+              </v-row>
+
+              <v-alert
+                v-if="tierState.member?.tier_mode === 'manual'"
+                type="warning"
                 variant="tonal"
-                prepend-icon="mdi-arrow-down-bold"
-                :disabled="
-                  !tierState.can_downgrade || tierLoading || tierActionLoading
-                "
-                @click="openTierAction('downgrade')"
+                density="compact"
+                class="mt-4"
+                border="start"
               >
-                Downgrade<span v-if="tierState.previous_tier">
-                  ke {{ tierState.previous_tier.name }}</span
-                >
-              </v-btn>
-              <v-btn
-                v-if="tierState.can_reset_automatic"
-                color="primary"
-                variant="outlined"
-                prepend-icon="mdi-sync"
-                :disabled="tierLoading || tierActionLoading"
-                @click="openTierAction('automatic')"
-              >
-                Gunakan Mode Otomatis
-              </v-btn>
-            </v-card-actions>
+                Tier dikunci manual. Pembayaran tidak akan mengubah tier sampai
+                mode otomatis diaktifkan kembali.
+              </v-alert>
+            </v-card-text>
           </template>
 
           <v-card-text v-else>
@@ -1816,6 +2038,29 @@ export default {
       return this.$route.params.id;
     },
 
+    tierGemKey() {
+      return this.resolveTierGemKey(this.currentTierName);
+    },
+
+    tierGemHeaderClass() {
+      return `tier-gem-header--${this.tierGemKey}`;
+    },
+
+    tierGemPanelClass() {
+      return `tier-gem-panel--${this.tierGemKey}`;
+    },
+
+    tierGemAvatarClass() {
+      return [
+        "tier-gem-avatar",
+        this.tierGemKey === "diamond" ? "tier-gem-avatar--diamond" : "",
+      ];
+    },
+
+    isDiamondTier() {
+      return this.tierGemKey === "diamond";
+    },
+
     patientInitial() {
       const name = String(this.patient.name || "").trim();
       if (!name || name === "-") return "P";
@@ -2139,8 +2384,12 @@ export default {
 
     openTierAction(action) {
       const allowed = {
-        upgrade: this.tierState.can_upgrade,
-        downgrade: this.tierState.can_downgrade,
+        upgrade: Boolean(
+          this.tierState.can_upgrade || this.tierState.next_tier,
+        ),
+        downgrade: Boolean(
+          this.tierState.can_downgrade || this.tierState.previous_tier,
+        ),
         automatic: this.tierState.can_reset_automatic,
       };
 
@@ -2481,6 +2730,19 @@ export default {
             .join(" • ") || "-",
         statusText: intake.status_text || "-",
       };
+    },
+
+    resolveTierGemKey(tierName) {
+      const normalized = String(tierName || "")
+        .trim()
+        .toLowerCase();
+
+      if (normalized.includes("diamond")) return "diamond";
+      if (normalized.includes("sapphire")) return "sapphire";
+      if (normalized.includes("ruby") || normalized.includes("rose"))
+        return "ruby";
+
+      return "default";
     },
 
     resetPage() {
