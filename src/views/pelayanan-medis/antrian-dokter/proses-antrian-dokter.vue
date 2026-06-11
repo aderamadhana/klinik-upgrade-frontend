@@ -1727,14 +1727,44 @@ export default {
     },
 
     isOnlineConsultation() {
-      const sourceCode = this.consultationSourceCode.toUpperCase();
-      const sourceName = this.consultationSourceName.toUpperCase();
+      const sourceCode = [
+        this.consultationSourceCode,
+        this.onlineRegistration?.konsultasi_source_code,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toUpperCase();
+
+      const sourceName = [
+        this.consultationSourceName,
+        this.onlineRegistration?.jenis_konsultasi_label,
+        this.onlineRegistration?.konsultasi_source_name,
+        this.onlineRegistration?.source_name,
+        this.onlineRegistration?.channel_label,
+        this.registration?.channel_konsultasi_label,
+        this.registration?.channel_label,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toUpperCase();
+
+      const channels = [
+        this.consultationChannel,
+        this.normalizeText(this.onlineRegistration?.channel_konsultasi),
+        this.normalizeText(this.onlineRegistration?.channel_label),
+        this.normalizeText(this.registration?.channel_konsultasi_label),
+        this.normalizeText(this.registration?.channel_label),
+      ].filter(Boolean);
 
       return (
         sourceCode.includes("ONLINE") ||
         sourceName.includes("ONLINE") ||
-        this.consultationChannel === "2" ||
-        this.consultationChannel.includes("online")
+        channels.some(
+          (channel) =>
+            channel === "2" ||
+            channel === "online" ||
+            channel.includes("online"),
+        )
       );
     },
 
@@ -1903,27 +1933,7 @@ export default {
       };
     },
     showOnlineMedicalInfo() {
-      const data = this.onlineRegistration || {};
-
-      return (
-        Number(data.channel_konsultasi || 0) === 2 ||
-        this.hasMedicalValue(data.konsultasi_source_code) ||
-        this.hasMedicalValue(data.konsultasi_source_name) ||
-        this.hasMedicalValue(data.request_dokter_nama) ||
-        this.hasMedicalValue(data.request_dokter) ||
-        this.hasMedicalValue(data.keluhan_utama) ||
-        this.hasMedicalValue(data.keluhan) ||
-        this.hasMedicalValue(data.keluhan_awal) ||
-        this.hasMedicalValue(data.alergi) ||
-        this.hasMedicalValue(data.produk_obat_sebelumnya) ||
-        this.hasMedicalValue(data.produk_sebelumnya) ||
-        this.hasMedicalValue(data.sedang_hamil) ||
-        this.hasMedicalValue(data.sedang_menyusui) ||
-        this.hasMedicalValue(data.catatan_cs) ||
-        this.hasMedicalValue(data.catatan_awal) ||
-        this.hasMedicalValue(data.catatan_registrasi) ||
-        this.onlineRegistrationPhotos.length > 0
-      );
+      return this.isOnlineConsultation;
     },
 
     onlineRegistrationItems() {
