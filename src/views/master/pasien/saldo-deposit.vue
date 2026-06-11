@@ -221,8 +221,20 @@
               <div class="date-main">
                 {{ getRow(item).tanggal_invoice_formatted || "-" }}
               </div>
-              <div class="date-sub">
-                Expired {{ getRow(item).expired_at_formatted || "-" }}
+              <div class="d-flex align-center ga-1">
+                <div class="date-sub">
+                  Expired {{ getRow(item).expired_at_formatted || "-" }}
+                </div>
+
+                <v-btn
+                  icon="mdi-calendar-edit"
+                  size="x-small"
+                  variant="text"
+                  color="primary"
+                  title="Edit tanggal expired"
+                  :disabled="!canEditExpiredAt(getRow(item))"
+                  @click.stop="openExpiredAtDialog(getRow(item))"
+                />
               </div>
             </div>
           </template>
@@ -315,6 +327,107 @@
         </v-data-table>
       </div>
     </v-card>
+
+    <v-dialog v-model="expiredAtDialog" max-width="560" persistent>
+      <v-card class="dialog-card">
+        <div class="dialog-title d-flex justify-space-between align-center">
+          <div>Edit Tanggal Expired Deposit</div>
+
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            :disabled="expiredAtSubmitting"
+            @click="closeExpiredAtDialog"
+          />
+        </div>
+
+        <v-divider />
+
+        <v-card-text>
+          <v-alert
+            v-if="expiredAtError"
+            type="error"
+            variant="tonal"
+            class="mb-4"
+            closable
+            @click:close="expiredAtError = ''"
+          >
+            {{ expiredAtError }}
+          </v-alert>
+
+          <v-alert type="info" variant="tonal" class="mb-4">
+            Perubahan ini hanya mengubah masa berlaku saldo deposit yang masih
+            tersisa. Data invoice pembelian tetap menjadi histori transaksi.
+          </v-alert>
+
+          <v-row dense>
+            <v-col cols="12">
+              <v-text-field
+                label="Treatment"
+                :model-value="expiredAtForm.nama_treatment"
+                variant="outlined"
+                density="compact"
+                readonly
+              />
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-text-field
+                label="Invoice Pembelian"
+                :model-value="expiredAtForm.no_invoice"
+                variant="outlined"
+                density="compact"
+                readonly
+              />
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-text-field
+                label="Tanggal Expired Saat Ini"
+                :model-value="expiredAtForm.expired_at_formatted"
+                variant="outlined"
+                density="compact"
+                readonly
+              />
+            </v-col>
+
+            <v-col cols="12">
+              <v-text-field
+                v-model="expiredAtForm.expired_at"
+                label="Tanggal Expired Baru"
+                type="date"
+                :min="todayDate"
+                variant="outlined"
+                density="compact"
+                hide-details="auto"
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="justify-end">
+          <v-btn
+            variant="tonal"
+            :disabled="expiredAtSubmitting"
+            @click="closeExpiredAtDialog"
+          >
+            Batal
+          </v-btn>
+
+          <v-btn
+            color="primary"
+            variant="flat"
+            :loading="expiredAtSubmitting"
+            @click="submitExpiredAt"
+          >
+            Simpan Perubahan
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <v-dialog v-model="claimDialog" max-width="900">
       <v-card class="dialog-card">
@@ -619,6 +732,17 @@ export default {
       claimDialog: false,
       selectedDeposit: {},
 
+      expiredAtDialog: false,
+      expiredAtSubmitting: false,
+      expiredAtError: "",
+      expiredAtForm: {
+        deposit_id: null,
+        nama_treatment: "",
+        no_invoice: "",
+        expired_at: "",
+        expired_at_formatted: "",
+      },
+
       claimProcessDialog: false,
       claimSubmitting: false,
       claimError: "",
@@ -650,6 +774,15 @@ export default {
       return Array.isArray(this.selectedDeposit.claims)
         ? this.selectedDeposit.claims
         : [];
+    },
+
+    todayDate() {
+      const now = new Date();
+      const timezoneOffset = now.getTimezoneOffset() * 60000;
+
+      return new Date(now.getTime() - timezoneOffset)
+        .toISOString()
+        .slice(0, 10);
     },
 
     estimatedClaimValue() {
@@ -719,6 +852,85 @@ export default {
     openClaimDialog(item) {
       this.selectedDeposit = item || {};
       this.claimDialog = true;
+    },
+
+    canEditExpiredAt(item) {
+      const row = this.getRow(item);
+      const statusKey = String(row.status_key || "").toLowerCase();
+
+      return (
+        ["aktif", "expired"].includes(statusKey) &&
+        Number(row.qty_sisa || 0) > 0
+      );
+    },
+
+    openExpiredAtDialog(item) {
+      const row = this.getRow(item);
+
+      if (!this.canEditExpiredAt(row)) {
+        return;
+      }
+
+      this.expiredAtError = "";
+      this.expiredAtForm = {
+        deposit_id: row.id || null,
+        nama_treatment: row.nama_treatment || "",
+        no_invoice: row.no_invoice || "-",
+        expired_at: row.expired_at || "",
+        expired_at_formatted: row.expired_at_formatted || "-",
+      };
+      this.expiredAtDialog = true;
+    },
+
+    closeExpiredAtDialog() {
+      if (this.expiredAtSubmitting) {
+        return;
+      }
+
+      this.expiredAtDialog = false;
+      this.expiredAtError = "";
+    },
+
+    async submitExpiredAt() {
+      this.expiredAtError = "";
+
+      if (!this.expiredAtForm.deposit_id) {
+        this.expiredAtError = "Deposit tidak valid.";
+        return;
+      }
+
+      if (!this.expiredAtForm.expired_at) {
+        this.expiredAtError = "Tanggal expired baru wajib diisi.";
+        return;
+      }
+
+      if (this.expiredAtForm.expired_at < this.todayDate) {
+        this.expiredAtError =
+          "Tanggal expired baru tidak boleh lebih kecil dari hari ini.";
+        return;
+      }
+
+      this.expiredAtSubmitting = true;
+
+      try {
+        await pasienService.updateSaldoDepositExpiredAt(
+          this.patientId,
+          this.expiredAtForm.deposit_id,
+          {
+            expired_at: this.expiredAtForm.expired_at,
+          },
+        );
+
+        this.expiredAtDialog = false;
+        await this.loadData();
+      } catch (error) {
+        this.expiredAtError =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Gagal mengubah tanggal expired deposit.";
+      } finally {
+        this.expiredAtSubmitting = false;
+      }
     },
 
     openClaimProcessDialog(item) {
