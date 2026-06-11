@@ -1,1070 +1,1219 @@
 <template>
   <div>
-    <div class="page-header">
-      <div>
-        <h1 class="page-title">Penukaran Poin</h1>
-        <p class="page-subtitle">
-          Proses penukaran poin pasien menjadi merchandise atau voucher reward
-        </p>
-      </div>
+    <v-card variant="tonal" color="primary" rounded="lg" class="mb-4">
+      <v-card-text class="pa-4 pa-md-5">
+        <div class="d-flex flex-column flex-md-row justify-space-between ga-4">
+          <div>
+            <div class="text-overline font-weight-bold">Resepsionis</div>
+            <div class="text-h5 font-weight-bold">Penukaran Poin</div>
+            <div class="text-body-2 mt-1">
+              Pilih pasien, cek saldo poin, tentukan reward, lalu simpan
+              penukaran dalam satu alur kerja.
+            </div>
+          </div>
 
-      <v-breadcrumbs :items="breadcrumbs" divider="/" />
-    </div>
+          <div class="d-flex align-start justify-start justify-md-end">
+            <v-btn
+              color="primary"
+              variant="flat"
+              prepend-icon="mdi-refresh"
+              :loading="loadingPage"
+              @click="reloadPage"
+            >
+              Muat Ulang
+            </v-btn>
+          </div>
+        </div>
+      </v-card-text>
+    </v-card>
 
     <v-alert
-      v-if="alert.show"
-      :type="alert.type"
-      density="compact"
-      closable
+      v-if="errorMessage"
+      type="error"
+      variant="tonal"
       class="mb-4"
-      @click:close="alert.show = false"
+      closable
+      @click:close="errorMessage = ''"
     >
-      {{ alert.message }}
+      {{ errorMessage }}
     </v-alert>
 
-    <v-row dense>
-      <!-- KIRI -->
-      <v-col cols="12" md="8">
-        <!-- DATA PENUKARAN -->
-        <v-card variant="flat" class="border mb-4">
-          <v-card-text class="pa-4">
-            <div
-              class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
-            >
-              <div class="d-flex align-center ga-3">
-                <v-avatar color="primary" size="40">
-                  <v-icon icon="mdi-account-star-outline" size="22" />
-                </v-avatar>
+    <v-alert
+      v-if="successMessage"
+      type="success"
+      variant="tonal"
+      class="mb-4"
+      closable
+      @click:close="successMessage = ''"
+    >
+      {{ successMessage }}
+    </v-alert>
 
-                <div>
-                  <div class="text-subtitle-1 font-weight-bold">
-                    Data Penukaran
-                  </div>
-                  <div class="text-body-2 text-medium-emphasis">
-                    Pilih pasien dan tanggal transaksi penukaran poin
-                  </div>
+    <v-row>
+      <v-col cols="12" lg="8">
+        <v-card variant="outlined" rounded="lg" class="mb-4">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center ga-3 mb-4">
+              <v-avatar color="primary" variant="tonal" rounded="lg" size="42">
+                <v-icon icon="mdi-account-search" />
+              </v-avatar>
+
+              <div>
+                <div class="text-subtitle-1 font-weight-bold">Data Pasien</div>
+                <div class="text-body-2 text-medium-emphasis">
+                  Gunakan data reference pasien agar saldo poin sesuai ledger.
                 </div>
               </div>
-
-              <v-chip
-                color="primary"
-                size="small"
-                prepend-icon="mdi-calendar-clock"
-              >
-                {{ form.tanggal }} {{ form.jam }}
-              </v-chip>
             </div>
 
-            <v-row dense>
-              <v-col cols="12" md="3">
-                <v-text-field
-                  v-model="form.tanggal"
-                  label="Tanggal"
-                  type="date"
-                  variant="outlined"
-                  density="compact"
-                  prepend-inner-icon="mdi-calendar"
-                  hide-details="auto"
-                />
-              </v-col>
-
-              <v-col cols="12" md="3">
-                <v-text-field
-                  v-model="form.jam"
-                  label="Jam"
-                  type="time"
-                  variant="outlined"
-                  density="compact"
-                  prepend-inner-icon="mdi-clock-outline"
-                  hide-details="auto"
-                />
-              </v-col>
-
-              <v-col cols="12" md="6">
+            <v-row align="start">
+              <v-col cols="12" md="8">
                 <v-autocomplete
-                  v-model="selectedPasien"
+                  v-model="selectedPasienId"
                   v-model:search="pasienSearch"
                   :items="pasienOptions"
+                  :loading="loadingPasien"
                   item-title="label"
                   item-value="id"
-                  label="Pasien"
-                  placeholder="Cari nama pasien / No. RM / No. HP"
+                  label="Cari pasien"
+                  placeholder="Ketik nama, no RM, atau nomor HP"
+                  prepend-inner-icon="mdi-account-search"
                   variant="outlined"
-                  density="compact"
-                  prepend-inner-icon="mdi-account-search-outline"
-                  :loading="loading.pasien"
+                  density="comfortable"
+                  hide-details="auto"
                   clearable
-                  return-object
-                  hide-details="auto"
-                  no-data-text="Pasien tidak ditemukan"
-                  @update:search="handlePasienSearch"
-                  @update:model-value="handlePasienChange"
-                />
+                  no-filter
+                  @update:search="onSearchPasien"
+                  @update:model-value="onSelectPasien"
+                >
+                  <template #item="{ props, item }">
+                    <v-list-item v-bind="props">
+                      <template #prepend>
+                        <v-avatar color="primary" variant="tonal" size="36">
+                          <v-icon icon="mdi-account" />
+                        </v-avatar>
+                      </template>
+
+                      <v-list-item-title class="font-weight-bold">
+                        {{ pasienDisplayName(item) }}
+                      </v-list-item-title>
+
+                      <v-list-item-subtitle>
+                        {{ pasienSubtitle(item) }}
+                      </v-list-item-subtitle>
+                    </v-list-item>
+                  </template>
+
+                  <template #selection="{ item }">
+                    <span>{{ pasienSelectionLabel(item) }}</span>
+                  </template>
+                </v-autocomplete>
               </v-col>
 
-              <v-col cols="12" md="6">
+              <v-col cols="12" md="4">
                 <v-text-field
-                  :model-value="formatNumber(form.akumulasi_poin)"
-                  label="Akumulasi Poin"
+                  v-model="form.tanggal"
+                  type="date"
+                  label="Tanggal Penukaran"
                   variant="outlined"
-                  density="compact"
-                  prepend-inner-icon="mdi-star-outline"
-                  bg-color="grey-lighten-5"
-                  readonly
+                  density="comfortable"
                   hide-details="auto"
-                />
-              </v-col>
-
-              <v-col cols="12" md="6">
-                <v-text-field
-                  :model-value="formatNumber(sisaPoin)"
-                  label="Sisa Poin Setelah Penukaran"
-                  variant="outlined"
-                  density="compact"
-                  prepend-inner-icon="mdi-star-check-outline"
-                  bg-color="grey-lighten-5"
-                  readonly
-                  hide-details="auto"
-                />
-              </v-col>
-
-              <v-col cols="12">
-                <v-checkbox
-                  v-model="form.tanpa_minimal_akumulasi"
-                  color="primary"
-                  density="compact"
-                  hide-details
-                  label="Aktifkan penukaran tanpa minimal akumulasi poin"
+                  prepend-inner-icon="mdi-calendar"
                 />
               </v-col>
             </v-row>
           </v-card-text>
         </v-card>
 
-        <!-- RIWAYAT PENUKARAN -->
-        <v-expand-transition>
-          <v-card v-if="form.pasien_id" variant="flat" class="border mb-4">
-            <v-card-text class="pa-4">
-              <div
-                class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
-              >
-                <div class="d-flex align-center ga-3">
-                  <v-avatar color="info" size="40">
-                    <v-icon icon="mdi-history" size="22" />
-                  </v-avatar>
-
-                  <div>
-                    <div class="text-subtitle-1 font-weight-bold">
-                      Riwayat Penukaran Poin
-                    </div>
-                    <div class="text-body-2 text-medium-emphasis">
-                      Riwayat dummy penukaran poin pasien yang dipilih
-                    </div>
-                  </div>
-                </div>
-
-                <v-chip color="info" size="small">
-                  {{ riwayatPenukaranRows.length }} Riwayat
-                </v-chip>
-              </div>
-
-              <v-data-table
-                :headers="riwayatPenukaranHeaders"
-                :items="riwayatPenukaranRows"
-                item-value="kode"
-                density="compact"
-                hide-default-footer
-                class="border"
-              >
-                <template #item.kode="{ item }">
-                  <div class="text-body-2 font-weight-bold text-primary">
-                    {{ item.kode }}
-                  </div>
-                </template>
-
-                <template #item.merchandise="{ item }">
-                  <div class="text-body-2 font-weight-medium">
-                    {{ item.merchandise }}
-                  </div>
-
-                  <div class="text-caption text-medium-emphasis">
-                    Qty: {{ item.qty }}
-                  </div>
-                </template>
-
-                <template #item.total_poin="{ item }">
-                  <div class="text-body-2 font-weight-bold text-end">
-                    {{ formatNumber(item.total_poin) }}
-                  </div>
-                </template>
-
-                <template #item.total_diskon="{ item }">
-                  <div class="text-body-2 font-weight-bold text-end">
-                    {{ formatCurrency(item.total_diskon) }}
-                  </div>
-                </template>
-
-                <template #item.status="{ item }">
-                  <v-chip
-                    size="small"
-                    :color="item.status === 'Berhasil' ? 'success' : 'warning'"
-                  >
-                    {{ item.status }}
-                  </v-chip>
-                </template>
-
-                <template #no-data>
-                  <div class="text-center py-6">
-                    <v-avatar color="grey-lighten-3" size="48" class="mb-3">
-                      <v-icon icon="mdi-history" size="26" color="grey" />
-                    </v-avatar>
-
-                    <div class="text-body-2 text-medium-emphasis">
-                      Belum ada riwayat penukaran poin.
-                    </div>
-                  </div>
-                </template>
-              </v-data-table>
-            </v-card-text>
-          </v-card>
-        </v-expand-transition>
-
-        <!-- MERCHANDISE -->
-        <v-card variant="flat" class="border">
-          <v-card-text class="pa-4">
+        <v-card variant="outlined" rounded="lg" class="mb-4">
+          <v-card-title class="pa-4">
             <div
-              class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
+              class="d-flex flex-column flex-sm-row justify-space-between ga-3"
             >
               <div class="d-flex align-center ga-3">
-                <v-avatar color="primary" size="40">
-                  <v-icon icon="mdi-gift-outline" size="22" />
+                <v-avatar
+                  color="primary"
+                  variant="tonal"
+                  rounded="lg"
+                  size="42"
+                >
+                  <v-icon icon="mdi-gift-outline" />
                 </v-avatar>
 
                 <div>
                   <div class="text-subtitle-1 font-weight-bold">
-                    Merchandise / Voucher Reward
+                    Item Reward
                   </div>
                   <div class="text-body-2 text-medium-emphasis">
-                    Pilih item yang akan ditukar dengan poin pasien
+                    Pilih merchandise atau voucher yang akan ditukar.
                   </div>
                 </div>
               </div>
 
               <v-btn
                 color="primary"
-                size="small"
+                variant="tonal"
                 prepend-icon="mdi-plus"
+                :disabled="!selectedPasienId"
                 @click="addRow"
               >
                 Tambah Item
               </v-btn>
             </div>
+          </v-card-title>
 
-            <v-alert
-              v-if="!rows.length"
-              type="info"
-              density="compact"
-              text="Belum ada merchandise yang dipilih."
-            />
+          <v-divider />
 
-            <v-data-table
-              v-else
-              :headers="headers"
-              :items="rows"
-              item-value="row_id"
-              density="compact"
-              hide-default-footer
-              class="border"
-            >
-              <template #item.merchandise_id="{ item, index }">
-                <v-autocomplete
-                  :model-value="item.merchandise_id"
-                  :items="merchandiseOptions"
-                  item-title="label"
-                  item-value="id"
-                  placeholder="Pilih merchandise"
-                  variant="outlined"
-                  density="compact"
-                  prepend-inner-icon="mdi-gift-outline"
-                  :loading="loading.merchandise"
-                  clearable
-                  hide-details
-                  no-data-text="Merchandise tidak ditemukan"
-                  @update:model-value="handleMerchandiseChange(index, $event)"
-                />
-              </template>
-
-              <template #item.qty="{ item, index }">
-                <v-text-field
-                  :model-value="item.qty"
-                  type="number"
-                  min="1"
-                  variant="outlined"
-                  density="compact"
-                  hide-details
-                  @update:model-value="updateQty(index, $event)"
-                />
-              </template>
-
-              <template #item.harga_poin="{ item }">
-                <v-text-field
-                  :model-value="formatNumber(item.harga_poin)"
-                  variant="outlined"
-                  density="compact"
-                  bg-color="grey-lighten-5"
-                  readonly
-                  hide-details
-                />
-              </template>
-
-              <template #item.diskon_rp="{ item }">
-                <v-text-field
-                  :model-value="formatCurrency(item.diskon_rp)"
-                  variant="outlined"
-                  density="compact"
-                  bg-color="grey-lighten-5"
-                  readonly
-                  hide-details
-                />
-              </template>
-
-              <template #item.subtotal_poin="{ item }">
-                <div class="text-body-2 font-weight-bold text-end">
-                  {{ formatNumber(item.subtotal_poin) }}
-                </div>
-              </template>
-
-              <template #item.action="{ index }">
-                <div class="d-flex justify-end">
-                  <v-btn
-                    icon="mdi-delete-outline"
-                    color="error"
-                    size="small"
-                    @click="removeRow(index)"
-                  />
-                </div>
-              </template>
-
-              <template #no-data>
-                <div class="text-center py-6">
-                  <div class="text-body-2 text-medium-emphasis">
-                    Belum ada merchandise yang dipilih.
-                  </div>
-                </div>
-              </template>
-            </v-data-table>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <!-- KANAN -->
-      <v-col cols="12" md="4">
-        <v-card variant="flat" class="border mb-4">
           <v-card-text class="pa-4">
-            <div class="d-flex align-center ga-3 mb-4">
-              <v-avatar color="warning" size="40">
-                <v-icon icon="mdi-star-circle-outline" size="22" />
-              </v-avatar>
-
-              <div>
-                <div class="text-subtitle-1 font-weight-bold">
-                  Ringkasan Poin
-                </div>
-                <div class="text-body-2 text-medium-emphasis">
-                  Validasi poin sebelum diproses
-                </div>
-              </div>
-            </div>
-
-            <v-card :color="sisaPoin < 0 ? 'error' : 'warning'" class="mb-4">
-              <v-card-text class="pa-4">
-                <div class="text-body-2">Sisa Poin</div>
-
-                <div class="text-h4 font-weight-bold">
-                  {{ formatNumber(sisaPoin) }}
-                </div>
-              </v-card-text>
-            </v-card>
-
-            <v-card variant="outlined" class="mb-4">
-              <v-card-text class="pa-4">
-                <div class="d-flex justify-space-between align-center mb-3">
-                  <span class="text-body-2 text-medium-emphasis">
-                    Akumulasi Poin
-                  </span>
-                  <strong>{{ formatNumber(form.akumulasi_poin) }}</strong>
-                </div>
-
-                <div class="d-flex justify-space-between align-center mb-3">
-                  <span class="text-body-2 text-medium-emphasis">
-                    Minimal Poin
-                  </span>
-                  <strong>{{ formatNumber(minimalPoinRedeem) }}</strong>
-                </div>
-
-                <div class="d-flex justify-space-between align-center mb-3">
-                  <span class="text-body-2 text-medium-emphasis">
-                    Total Poin Ditukar
-                  </span>
-                  <strong>{{ formatNumber(totalPoinDitukar) }}</strong>
-                </div>
-
-                <div class="d-flex justify-space-between align-center">
-                  <span class="text-body-2 text-medium-emphasis">
-                    Total Nilai Diskon
-                  </span>
-                  <strong>{{ formatCurrency(totalDiskonRp) }}</strong>
-                </div>
-              </v-card-text>
-            </v-card>
-
             <v-alert
-              v-if="!form.pasien_id"
-              type="warning"
-              density="compact"
-              class="mb-3"
-            >
-              Pilih pasien terlebih dahulu.
-            </v-alert>
-
-            <v-alert
-              v-else-if="isBelowMinimum"
-              type="warning"
-              density="compact"
-              class="mb-3"
-            >
-              Akumulasi poin pasien belum mencapai minimal penukaran.
-            </v-alert>
-
-            <v-alert
-              v-else-if="!rows.length"
+              v-if="!selectedPasienId"
               type="info"
-              density="compact"
-              class="mb-3"
+              variant="tonal"
+              density="comfortable"
+              class="mb-4"
             >
-              Tambahkan merchandise yang akan ditukar.
-            </v-alert>
-
-            <v-alert
-              v-else-if="hasIncompleteRows"
-              type="warning"
-              density="compact"
-              class="mb-3"
-            >
-              Masih ada baris merchandise yang belum lengkap.
+              Pilih pasien terlebih dahulu. Form reward akan aktif setelah saldo
+              poin pasien berhasil dimuat.
             </v-alert>
 
             <v-alert
               v-else-if="sisaPoin < 0"
               type="error"
-              density="compact"
-              class="mb-3"
+              variant="tonal"
+              density="comfortable"
+              class="mb-4"
             >
-              Poin pasien tidak cukup untuk penukaran ini.
+              Total penukaran melebihi saldo pasien. Kurangi qty atau pilih
+              reward lain.
             </v-alert>
 
-            <div class="d-flex flex-column ga-2">
-              <v-btn
-                color="success"
-                variant="flat"
-                prepend-icon="mdi-content-save-check-outline"
-                :loading="loading.submit"
-                :disabled="disableSubmit"
-                block
-                @click="submit"
-              >
-                Proses Penukaran
-              </v-btn>
+            <v-card
+              v-for="(row, index) in rows"
+              :key="row.uid"
+              variant="outlined"
+              rounded="lg"
+              class="mb-3"
+            >
+              <v-card-text class="pa-3 pa-md-4">
+                <div
+                  class="d-flex align-center justify-space-between ga-3 mb-3"
+                >
+                  <div class="d-flex align-center ga-3">
+                    <v-avatar
+                      color="primary"
+                      variant="tonal"
+                      rounded="lg"
+                      size="36"
+                    >
+                      <v-icon :icon="rewardIcon(row.jenis_reward)" />
+                    </v-avatar>
 
-              <v-btn
-                variant="outlined"
-                color="secondary"
-                :disabled="loading.submit"
-                block
-                @click="resetForm"
-              >
-                Reset Form
-              </v-btn>
-            </div>
+                    <div>
+                      <div class="text-body-2 font-weight-bold">
+                        Reward {{ index + 1 }}
+                      </div>
+                      <div class="text-caption text-medium-emphasis">
+                        {{ row.nama || "Belum dipilih" }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <v-btn
+                    icon="mdi-delete-outline"
+                    color="error"
+                    variant="text"
+                    density="comfortable"
+                    :disabled="rows.length <= 1"
+                    @click="removeRow(index)"
+                  />
+                </div>
+
+                <v-row align="start" dense>
+                  <v-col cols="12" md="6">
+                    <v-autocomplete
+                      v-model="row.merchandise_id"
+                      :items="merchandiseOptions"
+                      :loading="loadingMerchandise"
+                      item-title="label"
+                      item-value="id"
+                      label="Reward"
+                      placeholder="Pilih reward"
+                      variant="outlined"
+                      density="comfortable"
+                      hide-details="auto"
+                      :disabled="!selectedPasienId"
+                      @update:model-value="onSelectMerchandise(index)"
+                    >
+                      <template #item="{ props, item }">
+                        <v-list-item v-bind="props">
+                          <template #prepend>
+                            <v-avatar color="primary" variant="tonal" size="34">
+                              <v-icon
+                                :icon="rewardIcon(slotRaw(item).jenis_reward)"
+                              />
+                            </v-avatar>
+                          </template>
+
+                          <v-list-item-title class="font-weight-bold">
+                            {{ rewardDisplayName(item) }}
+                          </v-list-item-title>
+
+                          <v-list-item-subtitle>
+                            {{ rewardDisplaySubtitle(item) }}
+                          </v-list-item-subtitle>
+                        </v-list-item>
+                      </template>
+                    </v-autocomplete>
+                  </v-col>
+
+                  <v-col cols="6" sm="3" md="2">
+                    <v-text-field
+                      v-model.number="row.qty"
+                      type="number"
+                      min="1"
+                      :max="row.stok || 1"
+                      label="Qty"
+                      variant="outlined"
+                      density="comfortable"
+                      hide-details="auto"
+                      :disabled="!row.merchandise_id"
+                      @update:model-value="normalizeQty(index)"
+                    />
+                  </v-col>
+
+                  <v-col cols="6" sm="3" md="2">
+                    <v-text-field
+                      :model-value="formatPoint(row.harga_poin)"
+                      label="Poin/item"
+                      variant="outlined"
+                      density="comfortable"
+                      hide-details="auto"
+                      readonly
+                    />
+                  </v-col>
+
+                  <v-col cols="12" md="2">
+                    <v-sheet
+                      border
+                      rounded="lg"
+                      class="pa-3 h-100 d-flex flex-column justify-center"
+                    >
+                      <div class="text-caption text-medium-emphasis">
+                        Subtotal
+                      </div>
+                      <div class="text-subtitle-1 font-weight-bold">
+                        {{ formatPoint(row.subtotal_poin) }} poin
+                      </div>
+                    </v-sheet>
+                  </v-col>
+                </v-row>
+
+                <div
+                  v-if="row.merchandise_id"
+                  class="d-flex flex-wrap ga-2 mt-3"
+                >
+                  <v-chip size="small" color="primary" variant="tonal">
+                    {{ rewardTypeLabel(row.jenis_reward) }}
+                  </v-chip>
+
+                  <v-chip
+                    size="small"
+                    :color="row.stok > 0 ? 'success' : 'error'"
+                    variant="tonal"
+                  >
+                    Stok {{ row.stok }}
+                  </v-chip>
+
+                  <v-chip
+                    v-if="row.nilai_diskon_nominal"
+                    size="small"
+                    color="success"
+                    variant="tonal"
+                  >
+                    Diskon {{ formatCurrency(row.nilai_diskon_nominal) }}
+                  </v-chip>
+
+                  <v-chip
+                    v-if="row.nilai_diskon_persen"
+                    size="small"
+                    color="indigo"
+                    variant="tonal"
+                  >
+                    Diskon {{ row.nilai_diskon_persen }}%
+                  </v-chip>
+                </div>
+              </v-card-text>
+            </v-card>
+
+            <v-alert
+              v-if="hasIncompleteRows"
+              type="warning"
+              variant="tonal"
+              density="comfortable"
+              class="mt-2"
+            >
+              Ada item yang belum lengkap. Lengkapi reward dan qty sebelum
+              menyimpan.
+            </v-alert>
+
+            <v-textarea
+              v-model="form.catatan"
+              label="Catatan"
+              placeholder="Opsional, misalnya reward diserahkan langsung ke pasien"
+              variant="outlined"
+              density="comfortable"
+              rows="2"
+              auto-grow
+              hide-details="auto"
+              class="mt-4"
+            />
           </v-card-text>
+        </v-card>
+
+        <v-card variant="outlined" rounded="lg">
+          <v-card-title class="pa-4">
+            <div class="d-flex align-center justify-space-between ga-3">
+              <div class="d-flex align-center ga-3">
+                <v-avatar
+                  color="primary"
+                  variant="tonal"
+                  rounded="lg"
+                  size="42"
+                >
+                  <v-icon icon="mdi-history" />
+                </v-avatar>
+
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">
+                    Riwayat Poin
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Mutasi poin terakhir pasien.
+                  </div>
+                </div>
+              </div>
+
+              <v-chip
+                v-if="historyItems.length"
+                color="primary"
+                variant="tonal"
+              >
+                {{ historyItems.length }} mutasi
+              </v-chip>
+            </div>
+          </v-card-title>
+
+          <v-divider />
+
+          <v-data-table
+            :headers="historyHeaders"
+            :items="historyItems"
+            :loading="loadingSaldo"
+            density="compact"
+            :items-per-page="8"
+            class="text-no-wrap"
+          >
+            <template #item.tanggal="{ item }">
+              <div class="font-weight-medium">
+                {{ formatDate(item.tanggal) }}
+              </div>
+              <div class="text-caption text-medium-emphasis">
+                {{ item.source_no || "-" }}
+              </div>
+            </template>
+
+            <template #item.tipe_mutasi="{ item }">
+              <v-chip
+                size="small"
+                :color="mutationColor(item.tipe_mutasi)"
+                variant="tonal"
+              >
+                {{ mutationLabel(item.tipe_mutasi) }}
+              </v-chip>
+            </template>
+
+            <template #item.poin="{ item }">
+              <div
+                v-if="Number(item.poin_masuk) > 0"
+                class="text-success font-weight-bold"
+              >
+                +{{ formatPoint(item.poin_masuk) }}
+              </div>
+              <div v-else class="text-error font-weight-bold">
+                -{{ formatPoint(item.poin_keluar) }}
+              </div>
+            </template>
+
+            <template #item.saldo_setelah="{ item }">
+              <span class="font-weight-bold">
+                {{ formatPoint(item.saldo_setelah) }}
+              </span>
+            </template>
+
+            <template #item.keterangan="{ item }">
+              <div class="text-body-2">
+                {{ item.keterangan || "-" }}
+              </div>
+
+              <div
+                v-if="
+                  item.redeem &&
+                  item.redeem.details &&
+                  item.redeem.details.length
+                "
+                class="text-caption text-medium-emphasis"
+              >
+                {{
+                  item.redeem.details
+                    .map((detail) => `${detail.nama} x${detail.qty}`)
+                    .join(", ")
+                }}
+              </div>
+            </template>
+
+            <template #no-data>
+              <div class="pa-8 text-center">
+                <v-icon
+                  icon="mdi-history"
+                  size="42"
+                  class="mb-2 text-medium-emphasis"
+                />
+                <div class="font-weight-bold">Belum ada riwayat poin</div>
+                <div class="text-body-2 text-medium-emphasis">
+                  Riwayat akan muncul setelah pasien memiliki mutasi poin.
+                </div>
+              </div>
+            </template>
+          </v-data-table>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" lg="4">
+        <v-card variant="outlined" rounded="lg" class="mb-4">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-start ga-3 mb-4">
+              <v-avatar color="primary" variant="tonal" rounded="lg" size="50">
+                <v-icon icon="mdi-account-star" size="28" />
+              </v-avatar>
+
+              <div class="flex-grow-1">
+                <div class="text-subtitle-1 font-weight-bold">
+                  {{ selectedPasien?.nama || "Belum ada pasien" }}
+                </div>
+                <div class="text-body-2 text-medium-emphasis">
+                  {{
+                    selectedPasien?.no_rm || "Pilih pasien untuk melihat data"
+                  }}
+                </div>
+                <v-chip
+                  v-if="memberInfo?.no_member"
+                  size="small"
+                  color="primary"
+                  variant="tonal"
+                  class="mt-2"
+                >
+                  {{ memberInfo.no_member }}
+                </v-chip>
+              </div>
+            </div>
+
+            <v-sheet border rounded="lg" class="pa-4 mb-3">
+              <div class="d-flex justify-space-between align-start ga-3 mb-3">
+                <div>
+                  <div class="text-caption text-medium-emphasis">
+                    Sisa Setelah Tukar
+                  </div>
+                  <div
+                    class="text-h4 font-weight-bold"
+                    :class="sisaPoin < 0 ? 'text-error' : 'text-success'"
+                  >
+                    {{ formatPoint(sisaPoin) }}
+                  </div>
+                </div>
+
+                <v-avatar :color="pointStatusColor" variant="tonal" size="42">
+                  <v-icon :icon="pointStatusIcon" />
+                </v-avatar>
+              </div>
+
+              <v-progress-linear
+                :model-value="pointUsagePercent"
+                :color="pointStatusColor"
+                height="8"
+                rounded
+              />
+
+              <div class="d-flex justify-space-between mt-2 text-caption">
+                <span class="text-medium-emphasis">Dipakai</span>
+                <span class="font-weight-bold">
+                  {{ formatPoint(totalPoinDitukar) }} /
+                  {{ formatPoint(saldoPoin) }}
+                </span>
+              </div>
+            </v-sheet>
+
+            <v-row dense>
+              <v-col cols="6">
+                <v-sheet border rounded="lg" class="pa-3">
+                  <div class="text-caption text-medium-emphasis">
+                    Saldo Poin
+                  </div>
+                  <div class="text-h6 font-weight-bold">
+                    {{ formatPoint(saldoPoin) }}
+                  </div>
+                </v-sheet>
+              </v-col>
+
+              <v-col cols="6">
+                <v-sheet border rounded="lg" class="pa-3">
+                  <div class="text-caption text-medium-emphasis">Total Qty</div>
+                  <div class="text-h6 font-weight-bold">
+                    {{ formatPoint(totalQtyDitukar) }}
+                  </div>
+                </v-sheet>
+              </v-col>
+            </v-row>
+
+            <v-list density="compact" class="mt-3 bg-transparent">
+              <v-list-item class="px-0">
+                <v-list-item-title class="text-body-2 text-medium-emphasis">
+                  Total Poin Ditukar
+                </v-list-item-title>
+
+                <template #append>
+                  <span class="font-weight-bold">
+                    {{ formatPoint(totalPoinDitukar) }}
+                  </span>
+                </template>
+              </v-list-item>
+
+              <v-list-item class="px-0">
+                <v-list-item-title class="text-body-2 text-medium-emphasis">
+                  Nilai Diskon Nominal
+                </v-list-item-title>
+
+                <template #append>
+                  <span class="font-weight-bold">
+                    {{ formatCurrency(totalDiskonNominal) }}
+                  </span>
+                </template>
+              </v-list-item>
+            </v-list>
+
+            <v-alert
+              :type="submitHintType"
+              variant="tonal"
+              density="comfortable"
+              class="mt-3"
+            >
+              {{ submitHint }}
+            </v-alert>
+
+            <v-btn
+              color="primary"
+              size="large"
+              block
+              class="mt-4"
+              prepend-icon="mdi-content-save"
+              :loading="saving"
+              :disabled="disableSubmit"
+              @click="submitRedeem"
+            >
+              Simpan Penukaran
+            </v-btn>
+          </v-card-text>
+        </v-card>
+
+        <v-card variant="outlined" rounded="lg">
+          <v-card-title class="pa-4">
+            <div class="d-flex align-center ga-3">
+              <v-avatar color="primary" variant="tonal" rounded="lg" size="42">
+                <v-icon icon="mdi-storefront-outline" />
+              </v-avatar>
+
+              <div>
+                <div class="text-subtitle-1 font-weight-bold">
+                  Reward Tersedia
+                </div>
+                <div class="text-body-2 text-medium-emphasis">
+                  Merchandise dan voucher aktif.
+                </div>
+              </div>
+            </div>
+          </v-card-title>
+
+          <v-divider />
+
+          <v-list density="comfortable" lines="two">
+            <v-list-item
+              v-for="item in merchandiseOptions.slice(0, 8)"
+              :key="item.id"
+            >
+              <template #prepend>
+                <v-avatar color="primary" variant="tonal" rounded="lg">
+                  <v-icon :icon="rewardIcon(item.jenis_reward)" />
+                </v-avatar>
+              </template>
+
+              <v-list-item-title class="font-weight-bold">
+                {{ item.nama }}
+              </v-list-item-title>
+
+              <v-list-item-subtitle>
+                {{ formatPoint(item.harga_poin) }} poin • Stok {{ item.stok }}
+              </v-list-item-subtitle>
+
+              <template #append>
+                <v-chip
+                  size="small"
+                  :color="item.stok > 0 ? 'success' : 'error'"
+                  variant="tonal"
+                >
+                  {{ item.stok > 0 ? "Aktif" : "Habis" }}
+                </v-chip>
+              </template>
+            </v-list-item>
+
+            <v-list-item v-if="loadingMerchandise">
+              <template #prepend>
+                <v-progress-circular indeterminate color="primary" size="24" />
+              </template>
+              <v-list-item-title class="text-medium-emphasis">
+                Memuat reward...
+              </v-list-item-title>
+            </v-list-item>
+
+            <v-list-item v-else-if="!merchandiseOptions.length">
+              <v-list-item-title class="text-medium-emphasis">
+                Belum ada reward aktif.
+              </v-list-item-title>
+            </v-list-item>
+          </v-list>
         </v-card>
       </v-col>
     </v-row>
-
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      location="top right"
-      timeout="2500"
-    >
-      {{ snackbar.text }}
-
-      <template #actions>
-        <v-btn icon="mdi-close" variant="text" @click="snackbar.show = false" />
-      </template>
-    </v-snackbar>
   </div>
 </template>
 
-<script>
-import api from "@/plugins/axios";
+<script setup>
+import { computed, onMounted, reactive, ref } from "vue";
+import pasienService from "@/services/pasienService";
 import referenceService from "@/services/referenceService";
 
-const PENUKARAN_POIN_ENDPOINT = "/administrasi/penukaran-poin";
+const loadingPage = ref(false);
+const loadingPasien = ref(false);
+const loadingSaldo = ref(false);
+const loadingMerchandise = ref(false);
+const saving = ref(false);
 
-export default {
-  name: "AllPenukaranPoin",
+const errorMessage = ref("");
+const successMessage = ref("");
 
-  data() {
-    return {
-      breadcrumbs: [
-        {
-          title: "Penukaran Poin",
-          disabled: true,
-        },
-      ],
+const pasienSearch = ref("");
+const selectedPasienId = ref(null);
+const selectedPasien = ref(null);
+const memberInfo = ref(null);
+const saldoPoin = ref(0);
 
-      minimalPoinRedeem: 50,
+const pasienOptions = ref([]);
+const merchandiseOptions = ref([]);
+const historyItems = ref([]);
 
-      loading: {
-        pasien: false,
-        merchandise: false,
-        submit: false,
-      },
+const form = reactive({
+  tanggal: new Date().toISOString().slice(0, 10),
+  catatan: "",
+});
 
-      alert: {
-        show: false,
-        type: "info",
-        message: "",
-      },
+const rows = ref([]);
 
-      snackbar: {
-        show: false,
-        color: "success",
-        text: "",
-      },
+let searchTimer = null;
 
-      selectedPasien: null,
-      pasienSearch: "",
-      pasienSearchTimer: null,
+const historyHeaders = [
+  { title: "Tanggal", key: "tanggal", sortable: false },
+  { title: "Mutasi", key: "tipe_mutasi", sortable: false },
+  { title: "Poin", key: "poin", sortable: false, align: "end" },
+  { title: "Saldo", key: "saldo_setelah", sortable: false, align: "end" },
+  { title: "Keterangan", key: "keterangan", sortable: false },
+];
 
-      form: {
-        tanggal: "",
-        jam: "",
-        pasien_id: null,
-        pasien_new_id: null,
-        pasien_nama: "",
-        pasien_no_rm: "",
-        pasien_no_hp: "",
-        akumulasi_poin: 0,
-        tanpa_minimal_akumulasi: false,
-      },
+const totalPoinDitukar = computed(() =>
+  rows.value.reduce((sum, row) => sum + Number(row.subtotal_poin || 0), 0),
+);
 
-      pasienOptions: [],
-      merchandiseOptions: [],
-      rows: [],
-      riwayatPenukaranRows: [],
+const totalQtyDitukar = computed(() =>
+  rows.value.reduce((sum, row) => {
+    if (!row.merchandise_id) return sum;
 
-      headers: [
-        {
-          title: "Merchandise",
-          key: "merchandise_id",
-          sortable: false,
-          width: "34%",
-        },
-        {
-          title: "Jumlah",
-          key: "qty",
-          sortable: false,
-          width: "12%",
-        },
-        {
-          title: "Harga Poin",
-          key: "harga_poin",
-          sortable: false,
-          width: "18%",
-        },
-        {
-          title: "Diskon (Rp)",
-          key: "diskon_rp",
-          sortable: false,
-          width: "18%",
-        },
-        {
-          title: "Subtotal",
-          key: "subtotal_poin",
-          sortable: false,
-          align: "end",
-          width: "12%",
-        },
-        {
-          title: "Aksi",
-          key: "action",
-          sortable: false,
-          align: "end",
-          width: "6%",
-        },
-      ],
+    return sum + Number(row.qty || 0);
+  }, 0),
+);
 
-      riwayatPenukaranHeaders: [
-        {
-          title: "Tanggal",
-          key: "tanggal",
-          sortable: false,
-          width: "14%",
-        },
-        {
-          title: "Kode",
-          key: "kode",
-          sortable: false,
-          width: "16%",
-        },
-        {
-          title: "Merchandise",
-          key: "merchandise",
-          sortable: false,
-          width: "30%",
-        },
-        {
-          title: "Poin",
-          key: "total_poin",
-          sortable: false,
-          align: "end",
-          width: "12%",
-        },
-        {
-          title: "Diskon",
-          key: "total_diskon",
-          sortable: false,
-          align: "end",
-          width: "16%",
-        },
-        {
-          title: "Status",
-          key: "status",
-          sortable: false,
-          width: "12%",
-        },
-      ],
+const totalDiskonNominal = computed(() =>
+  rows.value.reduce((sum, row) => {
+    if (row.jenis_reward !== "diskon_nominal") return sum;
+
+    return sum + Number(row.nilai_diskon_nominal || 0) * Number(row.qty || 0);
+  }, 0),
+);
+
+const sisaPoin = computed(
+  () => Number(saldoPoin.value || 0) - totalPoinDitukar.value,
+);
+
+const pointUsagePercent = computed(() => {
+  const saldo = Number(saldoPoin.value || 0);
+  const used = Number(totalPoinDitukar.value || 0);
+
+  if (saldo <= 0 && used > 0) return 100;
+  if (saldo <= 0) return 0;
+
+  return Math.min(Math.round((used / saldo) * 100), 100);
+});
+
+const pointStatusColor = computed(() => {
+  if (!selectedPasienId.value) return "grey";
+  if (sisaPoin.value < 0) return "error";
+  if (totalPoinDitukar.value > 0) return "success";
+
+  return "primary";
+});
+
+const pointStatusIcon = computed(() => {
+  if (!selectedPasienId.value) return "mdi-account-search";
+  if (sisaPoin.value < 0) return "mdi-alert-circle";
+  if (totalPoinDitukar.value > 0) return "mdi-check-circle";
+
+  return "mdi-gift-outline";
+});
+
+const hasIncompleteRows = computed(() =>
+  rows.value.some((row) => !row.merchandise_id || Number(row.qty || 0) <= 0),
+);
+
+const submitHint = computed(() => {
+  if (!selectedPasienId.value) return "Pilih pasien terlebih dahulu.";
+  if (loadingSaldo.value) return "Saldo poin pasien sedang dimuat.";
+  if (hasIncompleteRows.value) return "Lengkapi reward dan qty sebelum simpan.";
+  if (totalPoinDitukar.value <= 0) return "Pilih minimal satu reward.";
+  if (sisaPoin.value < 0) return "Saldo poin tidak cukup untuk penukaran ini.";
+
+  return "Transaksi siap disimpan.";
+});
+
+const submitHintType = computed(() => {
+  if (!selectedPasienId.value || loadingSaldo.value) return "info";
+  if (disableSubmit.value) return "warning";
+
+  return "success";
+});
+
+const disableSubmit = computed(() => {
+  if (!selectedPasienId.value) return true;
+  if (saving.value) return true;
+  if (loadingSaldo.value) return true;
+  if (hasIncompleteRows.value) return true;
+  if (totalPoinDitukar.value <= 0) return true;
+  if (sisaPoin.value < 0) return true;
+
+  return false;
+});
+
+onMounted(async () => {
+  addRow();
+  await Promise.all([fetchPasien(), fetchMerchandise()]);
+});
+
+function createEmptyRow() {
+  return {
+    uid: `${Date.now()}-${Math.random()}`,
+    merchandise_id: null,
+    kode: "",
+    nama: "",
+    jenis_reward: "",
+    harga_poin: 0,
+    nilai_diskon_persen: null,
+    nilai_diskon_nominal: null,
+    stok: 0,
+    qty: 1,
+    subtotal_poin: 0,
+  };
+}
+
+function addRow() {
+  rows.value.push(createEmptyRow());
+}
+
+function removeRow(index) {
+  if (rows.value.length <= 1) return;
+
+  rows.value.splice(index, 1);
+}
+
+function onSearchPasien(value) {
+  clearTimeout(searchTimer);
+
+  searchTimer = setTimeout(() => {
+    fetchPasien(value);
+  }, 350);
+}
+
+async function fetchPasien(search = pasienSearch.value) {
+  loadingPasien.value = true;
+
+  try {
+    const response = await referenceService.pasien({
+      search: search || "",
+      limit: 20,
+    });
+
+    pasienOptions.value = unwrapArray(response).map((item) =>
+      normalizePasienOption(item),
+    );
+  } catch (error) {
+    showError(error, "Gagal mengambil data pasien.");
+  } finally {
+    loadingPasien.value = false;
+  }
+}
+
+async function fetchMerchandise() {
+  loadingMerchandise.value = true;
+
+  try {
+    const response = await referenceService.merchandise({
+      q: "",
+      limit: 100,
+    });
+
+    merchandiseOptions.value = unwrapArray(response)
+      .filter((item) => Number(item.harga_poin || 0) > 0)
+      .map((item) => normalizeMerchandiseOption(item));
+  } catch (error) {
+    showError(error, "Gagal mengambil data reward.");
+  } finally {
+    loadingMerchandise.value = false;
+  }
+}
+
+async function onSelectPasien(id) {
+  selectedPasien.value =
+    pasienOptions.value.find((item) => Number(item.id) === Number(id)) || null;
+
+  memberInfo.value = null;
+  saldoPoin.value = 0;
+  historyItems.value = [];
+  rows.value = [createEmptyRow()];
+
+  if (!id) return;
+
+  await fetchSaldoPoin(id);
+}
+
+async function fetchSaldoPoin(id = selectedPasienId.value) {
+  if (!id) return;
+
+  loadingSaldo.value = true;
+
+  try {
+    const response = await pasienService.getSaldoPoin(id);
+    const data = unwrapData(response);
+
+    selectedPasien.value = data.pasien
+      ? normalizePasienOption(data.pasien)
+      : selectedPasien.value;
+
+    memberInfo.value = data.member || null;
+    saldoPoin.value = Number(data.saldo_poin || 0);
+    historyItems.value = Array.isArray(data.riwayat) ? data.riwayat : [];
+  } catch (error) {
+    showError(error, "Gagal mengambil saldo poin pasien.");
+  } finally {
+    loadingSaldo.value = false;
+  }
+}
+
+function onSelectMerchandise(index) {
+  const row = rows.value[index];
+
+  const merchandise = merchandiseOptions.value.find(
+    (item) => Number(item.id) === Number(row.merchandise_id),
+  );
+
+  if (!merchandise) {
+    rows.value[index] = createEmptyRow();
+    return;
+  }
+
+  row.kode = merchandise.kode || "";
+  row.nama = merchandise.nama || "";
+  row.jenis_reward = merchandise.jenis_reward || "";
+  row.harga_poin = Number(merchandise.harga_poin || 0);
+  row.nilai_diskon_persen = merchandise.nilai_diskon_persen;
+  row.nilai_diskon_nominal = merchandise.nilai_diskon_nominal;
+  row.stok = Number(merchandise.stok || 0);
+  row.qty = Math.min(Math.max(Number(row.qty || 1), 1), Math.max(row.stok, 1));
+  row.subtotal_poin = row.harga_poin * row.qty;
+}
+
+function normalizeQty(index) {
+  const row = rows.value[index];
+
+  let qty = Number(row.qty || 0);
+
+  if (qty < 1) qty = 1;
+  if (row.stok > 0 && qty > row.stok) qty = row.stok;
+
+  row.qty = qty;
+  row.subtotal_poin = Number(row.harga_poin || 0) * qty;
+}
+
+async function submitRedeem() {
+  if (disableSubmit.value) return;
+
+  errorMessage.value = "";
+  successMessage.value = "";
+  saving.value = true;
+
+  try {
+    const payload = {
+      tanggal: form.tanggal,
+      catatan: form.catatan,
+      items: rows.value.map((row) => ({
+        merchandise_id: row.merchandise_id,
+        qty: Number(row.qty || 0),
+      })),
     };
-  },
-
-  computed: {
-    totalPoinDitukar() {
-      return this.rows.reduce((total, item) => {
-        return total + Number(item.subtotal_poin || 0);
-      }, 0);
-    },
-
-    totalDiskonRp() {
-      return this.rows.reduce((total, item) => {
-        const qty = Number(item.qty || 0);
-        const diskon = Number(item.diskon_rp || 0);
-
-        return total + qty * diskon;
-      }, 0);
-    },
-
-    sisaPoin() {
-      return Number(this.form.akumulasi_poin || 0) - this.totalPoinDitukar;
-    },
-
-    isBelowMinimum() {
-      if (this.form.tanpa_minimal_akumulasi) return false;
-      if (!this.form.pasien_id) return false;
-
-      return Number(this.form.akumulasi_poin || 0) < this.minimalPoinRedeem;
-    },
-
-    hasIncompleteRows() {
-      return this.rows.some((item) => {
-        if (!item.merchandise_id) return true;
-        if (Number(item.qty || 0) <= 0) return true;
-        if (Number(item.harga_poin || 0) <= 0) return true;
-
-        return false;
-      });
-    },
-
-    disableSubmit() {
-      if (this.loading.submit) return true;
-      if (!this.form.pasien_id) return true;
-      if (this.isBelowMinimum) return true;
-      if (!this.rows.length) return true;
-      if (this.hasIncompleteRows) return true;
-      if (this.totalPoinDitukar <= 0) return true;
-      if (this.sisaPoin < 0) return true;
-
-      return false;
-    },
-  },
-
-  mounted() {
-    this.initForm();
-    this.fetchPasien();
-    this.fetchMerchandise();
-    this.addRow();
-  },
-
-  beforeUnmount() {
-    if (this.pasienSearchTimer) {
-      clearTimeout(this.pasienSearchTimer);
-    }
-  },
-
-  methods: {
-    initForm() {
-      this.form.tanggal = this.todayDate();
-      this.form.jam = this.currentTime();
-    },
-
-    async fetchPasien(search = "") {
-      this.loading.pasien = true;
-
-      try {
-        const response = await referenceService.pasien({
-          search,
-          keyword: search,
-          q: search,
-          per_page: 20,
-        });
-
-        const data = Array.isArray(response) ? response : response?.data || [];
-
-        this.pasienOptions = data.map((item) => this.mapPasienOption(item));
-
-        if (this.selectedPasien) {
-          const exists = this.pasienOptions.some(
-            (item) => item.id === this.selectedPasien.id,
-          );
-
-          if (!exists) {
-            this.pasienOptions.unshift(this.selectedPasien);
-          }
-        }
-      } catch (error) {
-        this.showSnackbar("Gagal memuat data pasien.", "error");
-      } finally {
-        this.loading.pasien = false;
-      }
-    },
-
-    async fetchMerchandise() {
-      this.loading.merchandise = true;
-
-      try {
-        const response = await referenceService.merchandise();
-
-        const data = Array.isArray(response) ? response : response?.data || [];
-
-        this.merchandiseOptions = data.map((item) =>
-          this.mapMerchandiseOption(item),
-        );
-      } catch (error) {
-        this.showSnackbar("Gagal memuat data merchandise.", "error");
-      } finally {
-        this.loading.merchandise = false;
-      }
-    },
-
-    mapPasienOption(item) {
-      const id = item.id || item.new_id || item.pasien_id || null;
-      const newId = item.new_id || item.pasien_new_id || item.id || null;
-      const nama = item.nama || item.pasien_nama || item.nama_pasien || "-";
-      const noRm = item.no_rm || item.no_rekam_medis || item.rm || "-";
-      const noHp = item.no_hp || item.hp || item.telepon || "-";
-
-      const poin = Number(
-        item.akumulasi_poin ||
-          item.sisa_poin ||
-          item.total_poin ||
-          item.stock_poin ||
-          item.poin ||
-          0,
-      );
-
-      return {
-        ...item,
-        id,
-        new_id: newId,
-        nama,
-        no_rm: noRm,
-        no_hp: noHp,
-        akumulasi_poin: poin,
-        label: `${noRm} - ${nama} - ${noHp}`,
-      };
-    },
-
-    mapMerchandiseOption(item) {
-      const id = item.id || item.merchandise_id || null;
-
-      const nama =
-        item.label ||
-        item.nama ||
-        item.nama_merchandise ||
-        item.nama_barang ||
-        item.nama_item ||
-        "-";
-
-      const kode =
-        item.kode ||
-        item.kode_merchandise ||
-        item.kode_barang ||
-        item.code ||
-        "";
-
-      const hargaPoin = Number(
-        item.harga_poin ||
-          item.poin ||
-          item.nilai_poin ||
-          item.point ||
-          item.harga ||
-          0,
-      );
-
-      const diskonRp = Number(
-        item.diskon_rp ||
-          item.nominal_diskon ||
-          item.nilai_diskon ||
-          item.diskon ||
-          item.value_rupiah ||
-          item.nilai_diskon_nominal ||
-          0,
-      );
-
-      return {
-        ...item,
-        id,
-        nama,
-        kode,
-        harga_poin: hargaPoin,
-        diskon_rp: diskonRp,
-        label: kode ? `${kode} - ${nama}` : nama,
-      };
-    },
-
-    handlePasienSearch(value) {
-      const keyword = String(value || "").trim();
-
-      if (
-        this.selectedPasien &&
-        keyword === String(this.selectedPasien.label || "").trim()
-      ) {
-        return;
-      }
-
-      if (this.pasienSearchTimer) {
-        clearTimeout(this.pasienSearchTimer);
-      }
-
-      this.pasienSearchTimer = setTimeout(() => {
-        this.fetchPasien(keyword);
-      }, 400);
-    },
-
-    handlePasienChange(selected) {
-      if (!selected) {
-        this.form.pasien_id = null;
-        this.form.pasien_new_id = null;
-        this.form.pasien_nama = "";
-        this.form.pasien_no_rm = "";
-        this.form.pasien_no_hp = "";
-        this.form.akumulasi_poin = 0;
-        this.riwayatPenukaranRows = [];
-        return;
-      }
-
-      this.selectedPasien = selected;
-
-      this.form.pasien_id = selected.id || null;
-      this.form.pasien_new_id = selected.new_id || null;
-      this.form.pasien_nama = selected.nama || "";
-      this.form.pasien_no_rm = selected.no_rm || "";
-      this.form.pasien_no_hp = selected.no_hp || "";
-      this.form.akumulasi_poin = Number(selected.akumulasi_poin || 0);
-
-      this.pasienSearch = selected.label || selected.nama || "";
-
-      this.riwayatPenukaranRows = this.generateDummyRiwayatPenukaran(selected);
-    },
-
-    generateDummyRiwayatPenukaran(pasien) {
-      const pasienId = pasien?.id || 0;
-
-      return [
-        {
-          tanggal: "2026-05-20",
-          kode: `TUKAR-${pasienId}-001`,
-          merchandise: "Voucher Diskon Treatment",
-          qty: 1,
-          total_poin: 50,
-          total_diskon: 50000,
-          status: "Berhasil",
-        },
-        {
-          tanggal: "2026-04-14",
-          kode: `TUKAR-${pasienId}-002`,
-          merchandise: "Merchandise MS Glow",
-          qty: 2,
-          total_poin: 100,
-          total_diskon: 0,
-          status: "Berhasil",
-        },
-        {
-          tanggal: "2026-03-08",
-          kode: `TUKAR-${pasienId}-003`,
-          merchandise: "Voucher Produk",
-          qty: 1,
-          total_poin: 75,
-          total_diskon: 75000,
-          status: "Berhasil",
-        },
-      ];
-    },
-
-    addRow() {
-      this.rows.push({
-        row_id: `${Date.now()}-${Math.random()}`,
-        merchandise_id: null,
-        merchandise_nama: "",
-        qty: 1,
-        harga_poin: 0,
-        diskon_rp: 0,
-        subtotal_poin: 0,
-      });
-    },
-
-    removeRow(index) {
-      this.rows.splice(index, 1);
-    },
-
-    handleMerchandiseChange(index, value) {
-      const selected = this.merchandiseOptions.find(
-        (item) => item.id === value,
-      );
-
-      const row = this.rows[index];
-
-      if (!row) return;
-
-      row.merchandise_id = value || null;
-      row.merchandise_nama = selected?.nama || "";
-      row.harga_poin = Number(selected?.harga_poin || 0);
-      row.diskon_rp = Number(selected?.diskon_rp || 0);
-      row.subtotal_poin = Number(row.qty || 0) * Number(row.harga_poin || 0);
-    },
-
-    updateQty(index, value) {
-      const row = this.rows[index];
-
-      if (!row) return;
-
-      const qty = Math.max(Number(value || 0), 1);
-
-      row.qty = qty;
-      row.subtotal_poin = qty * Number(row.harga_poin || 0);
-    },
-
-    async submit() {
-      if (this.disableSubmit) return;
-
-      this.loading.submit = true;
-
-      try {
-        const payload = {
-          tanggal: this.form.tanggal,
-          jam: this.form.jam,
-          pasien_id: this.form.pasien_id,
-          pasien_new_id: this.form.pasien_new_id,
-          pasien_nama: this.form.pasien_nama,
-          pasien_no_rm: this.form.pasien_no_rm,
-          pasien_no_hp: this.form.pasien_no_hp,
-          akumulasi_poin: Number(this.form.akumulasi_poin || 0),
-          total_poin_ditukar: this.totalPoinDitukar,
-          total_diskon_rp: this.totalDiskonRp,
-          sisa_poin: this.sisaPoin,
-          tanpa_minimal_akumulasi: this.form.tanpa_minimal_akumulasi ? 1 : 0,
-          items: this.rows.map((item) => ({
-            merchandise_id: item.merchandise_id,
-            merchandise_nama: item.merchandise_nama,
-            qty: Number(item.qty || 0),
-            harga_poin: Number(item.harga_poin || 0),
-            diskon_rp: Number(item.diskon_rp || 0),
-            subtotal_poin: Number(item.subtotal_poin || 0),
-            subtotal_diskon_rp:
-              Number(item.qty || 0) * Number(item.diskon_rp || 0),
-          })),
-        };
-
-        await api.post(PENUKARAN_POIN_ENDPOINT, payload);
-
-        this.showSnackbar("Penukaran poin berhasil diproses.", "success");
-        this.resetForm();
-      } catch (error) {
-        const message =
-          error?.response?.data?.message || "Gagal memproses penukaran poin.";
-
-        this.showSnackbar(message, "error");
-      } finally {
-        this.loading.submit = false;
-      }
-    },
-
-    resetForm() {
-      this.selectedPasien = null;
-      this.pasienSearch = "";
-
-      this.form = {
-        tanggal: this.todayDate(),
-        jam: this.currentTime(),
-        pasien_id: null,
-        pasien_new_id: null,
-        pasien_nama: "",
-        pasien_no_rm: "",
-        pasien_no_hp: "",
-        akumulasi_poin: 0,
-        tanpa_minimal_akumulasi: false,
-      };
-
-      this.riwayatPenukaranRows = [];
-      this.rows = [];
-      this.addRow();
-    },
-
-    showSnackbar(text, color = "success") {
-      this.snackbar.text = text;
-      this.snackbar.color = color;
-      this.snackbar.show = true;
-    },
-
-    formatNumber(value) {
-      return new Intl.NumberFormat("id-ID").format(Number(value || 0));
-    },
-
-    formatCurrency(value) {
-      return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-      }).format(Number(value || 0));
-    },
-
-    todayDate() {
-      const date = new Date();
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-
-      return `${year}-${month}-${day}`;
-    },
-
-    currentTime() {
-      const date = new Date();
-      const hour = String(date.getHours()).padStart(2, "0");
-      const minute = String(date.getMinutes()).padStart(2, "0");
-
-      return `${hour}:${minute}`;
-    },
-  },
-};
+
+    const response = await pasienService.redeemPoin(
+      selectedPasienId.value,
+      payload,
+    );
+
+    const data = unwrapData(response);
+
+    successMessage.value =
+      response?.message ||
+      `Penukaran poin berhasil disimpan${
+        data.kode_redeem ? ` (${data.kode_redeem})` : ""
+      }.`;
+
+    rows.value = [createEmptyRow()];
+    form.catatan = "";
+
+    await Promise.all([fetchSaldoPoin(), fetchMerchandise()]);
+  } catch (error) {
+    showError(error, "Gagal menyimpan penukaran poin.");
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function reloadPage() {
+  loadingPage.value = true;
+  errorMessage.value = "";
+  successMessage.value = "";
+
+  try {
+    await Promise.all([
+      fetchPasien(),
+      fetchMerchandise(),
+      selectedPasienId.value
+        ? fetchSaldoPoin(selectedPasienId.value)
+        : Promise.resolve(),
+    ]);
+  } finally {
+    loadingPage.value = false;
+  }
+}
+
+function normalizePasienOption(item = {}) {
+  const nama = item.nama || item.nama_pasien || item.name || "-";
+  const noRm = item.no_rm || item.no_rekam_medis || "";
+  const phone = item.no_hp || item.no_wa || item.nomor_hp || "";
+
+  return {
+    ...item,
+    id: item.id || item.pasien_id,
+    nama,
+    no_rm: noRm,
+    no_hp: item.no_hp || phone,
+    no_wa: item.no_wa || "",
+    label:
+      item.label ||
+      [noRm || "Tanpa No RM", nama, phone].filter(Boolean).join(" • "),
+  };
+}
+
+function normalizeMerchandiseOption(item = {}) {
+  const nama = item.nama || item.title || item.text || "-";
+  const kode = item.kode || "";
+  const label =
+    item.label ||
+    item.title ||
+    item.text ||
+    `${kode ? `${kode} - ` : ""}${nama} (${formatPoint(item.harga_poin)} poin)`;
+
+  return {
+    ...item,
+    id: item.id || item.value,
+    kode,
+    nama,
+    label,
+    jenis_reward: item.jenis_reward || "",
+    nilai_diskon_persen:
+      item.nilai_diskon_persen !== undefined
+        ? Number(item.nilai_diskon_persen)
+        : null,
+    nilai_diskon_nominal:
+      item.nilai_diskon_nominal !== undefined
+        ? Number(item.nilai_diskon_nominal)
+        : null,
+    harga_poin: Number(item.harga_poin || 0),
+    stok: Number(item.stok || 0),
+  };
+}
+
+function slotRaw(item) {
+  return item?.raw || item || {};
+}
+
+function pasienDisplayName(item) {
+  const raw = normalizePasienOption(slotRaw(item));
+
+  return raw.nama || "-";
+}
+
+function pasienSubtitle(item) {
+  const raw = normalizePasienOption(slotRaw(item));
+  const meta = [
+    raw.no_rm || "Tanpa No RM",
+    raw.no_hp || raw.no_wa || "",
+  ].filter(Boolean);
+
+  return meta.join(" • ");
+}
+
+function pasienSelectionLabel(item) {
+  return normalizePasienOption(slotRaw(item)).label || pasienDisplayName(item);
+}
+
+function rewardDisplayName(item) {
+  const raw = normalizeMerchandiseOption(slotRaw(item));
+
+  return raw.nama || "-";
+}
+
+function rewardDisplaySubtitle(item) {
+  const raw = normalizeMerchandiseOption(slotRaw(item));
+
+  return `${formatPoint(raw.harga_poin)} poin • Stok ${raw.stok}`;
+}
+
+function unwrapData(response) {
+  if (response?.data?.data !== undefined) return response.data.data;
+  if (response?.data !== undefined) return response.data;
+
+  return response || {};
+}
+
+function unwrapArray(response) {
+  const data = unwrapData(response);
+
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data.data)) return data.data;
+  if (Array.isArray(data.items)) return data.items;
+  if (Array.isArray(data.rows)) return data.rows;
+
+  return [];
+}
+
+function showError(error, fallback) {
+  const errors = error?.response?.data?.errors;
+
+  if (errors && typeof errors === "object") {
+    const firstKey = Object.keys(errors)[0];
+    const firstMessage = Array.isArray(errors[firstKey])
+      ? errors[firstKey][0]
+      : errors[firstKey];
+
+    errorMessage.value = firstMessage || fallback;
+    return;
+  }
+
+  errorMessage.value =
+    error?.response?.data?.message ||
+    error?.response?.data?.error ||
+    error?.message ||
+    fallback;
+}
+
+function formatPoint(value) {
+  return new Intl.NumberFormat("id-ID").format(Number(value || 0));
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(Number(value || 0));
+}
+
+function formatDate(value) {
+  if (!value) return "-";
+
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function rewardTypeLabel(type) {
+  const labels = {
+    diskon_persen: "Diskon Persen",
+    diskon_nominal: "Diskon Nominal",
+    merchandise: "Merchandise",
+  };
+
+  return labels[type] || type || "-";
+}
+
+function rewardIcon(type) {
+  const icons = {
+    diskon_persen: "mdi-percent",
+    diskon_nominal: "mdi-ticket-percent",
+    merchandise: "mdi-gift",
+  };
+
+  return icons[type] || "mdi-gift-outline";
+}
+
+function mutationLabel(type) {
+  const labels = {
+    earn: "Poin Masuk",
+    redeem: "Penukaran",
+    void_redeem: "Void Penukaran",
+    adjustment_plus: "Adjustment +",
+    adjustment_minus: "Adjustment -",
+    expired: "Expired",
+  };
+
+  return labels[type] || type || "-";
+}
+
+function mutationColor(type) {
+  const colors = {
+    earn: "success",
+    redeem: "error",
+    void_redeem: "info",
+    adjustment_plus: "success",
+    adjustment_minus: "warning",
+    expired: "grey",
+  };
+
+  return colors[type] || "primary";
+}
 </script>
