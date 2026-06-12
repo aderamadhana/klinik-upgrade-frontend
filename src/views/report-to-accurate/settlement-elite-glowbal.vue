@@ -5,11 +5,11 @@
     >
       <div>
         <div class="text-h5 font-weight-bold text-high-emphasis">
-          Settlement Accurate (Umum)
+          Settlement Accurate (EliteGlowbal)
         </div>
         <div class="text-body-2 text-medium-emphasis mt-1">
-          Upload faktur penjualan harian transaksi umum ke Accurate berdasarkan
-          invoice lunas.
+          Upload faktur penjualan harian transaksi EliteGlowbal ke Accurate
+          berdasarkan invoice lunas.
         </div>
       </div>
 
@@ -214,13 +214,14 @@
     <v-dialog v-model="confirmDialog" max-width="520">
       <v-card rounded="lg">
         <v-card-title class="font-weight-bold">
-          Upload Faktur Umum ke Accurate
+          Upload Faktur EliteGlowbal ke Accurate
         </v-card-title>
 
         <v-card-text>
           <div class="text-body-2 text-medium-emphasis mb-4">
-            Data akan dikirim sebagai faktur penjualan harian. Proses ini tidak
-            boleh diulang jika Accurate sudah berhasil menerima faktur.
+            Data akan dikirim sebagai faktur penjualan harian EliteGlowbal.
+            Proses ini tidak boleh diulang jika Accurate sudah berhasil menerima
+            faktur.
           </div>
 
           <v-list density="compact" lines="two" border rounded>
@@ -276,7 +277,7 @@ import api from "@/services/api";
 import accurateSettlementService from "@/services/accurateSettlementService";
 
 export default {
-  name: "SettlementAccurateUmum",
+  name: "SettlementAccurateEliteGlowbal",
 
   data() {
     return {
@@ -427,7 +428,7 @@ export default {
 
       this.loading = true;
       try {
-        const response = await accurateSettlementService.getUmum({
+        const response = await accurateSettlementService.getEliteGlowbal({
           date: this.filters.date || undefined,
           toko_id: this.getEffectiveTokoId() || undefined,
           search: this.filters.search || undefined,
@@ -442,7 +443,7 @@ export default {
         this.showSnackbar(
           this.getErrorMessage(
             error,
-            "Gagal mengambil data settlement Accurate.",
+            "Gagal mengambil data settlement Accurate EliteGlowbal.",
           ),
           "error",
         );
@@ -491,13 +492,14 @@ export default {
       this.uploadingKey = this.rowKey(this.selectedRow);
 
       try {
-        const response = await accurateSettlementService.uploadUmum({
+        const response = await accurateSettlementService.uploadEliteGlowbal({
           tanggal_faktur: this.selectedRow.tanggal_faktur,
           toko_id: this.selectedRow.toko_id,
         });
 
         this.showSnackbar(
-          response?.message || "Faktur berhasil diupload ke Accurate.",
+          response?.message ||
+            "Faktur EliteGlowbal berhasil diupload ke Accurate.",
           "success",
         );
         this.confirmDialog = false;
@@ -505,7 +507,10 @@ export default {
         await this.loadData();
       } catch (error) {
         this.showSnackbar(
-          this.getErrorMessage(error, "Upload faktur Accurate gagal."),
+          this.getErrorMessage(
+            error,
+            "Upload faktur Accurate EliteGlowbal gagal.",
+          ),
           "error",
         );
       } finally {

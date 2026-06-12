@@ -13,6 +13,21 @@ const accurateSettlementService = {
     );
     return response.data;
   },
+
+  async getEliteGlowbal(params = {}) {
+    const response = await api.get("/accurate/settlement-elite-glowbal", {
+      params,
+    });
+    return response.data?.data || response.data;
+  },
+
+  async uploadEliteGlowbal(payload) {
+    const response = await api.post(
+      "/accurate/settlement-elite-glowbal/upload",
+      payload,
+    );
+    return response.data;
+  },
 };
 
 export default accurateSettlementService;

@@ -734,7 +734,7 @@ export default {
             {
               key: "accurate-faktur-elite",
               title: "Upload Faktur EliteGlobal",
-              to: "/accurate/faktur-elite",
+              to: "/report-to-accurate/settlement-elite-glowbal",
               roles: [
                 "administrator",
                 "superuser",
@@ -746,7 +746,7 @@ export default {
             {
               key: "accurate-faktur-owner",
               title: "Upload Faktur Owner",
-              to: "/accurate/faktur-owner",
+              to: "/report-to-accurate/settlement-owner",
               roles: [
                 "administrator",
                 "superuser",
@@ -758,7 +758,7 @@ export default {
             {
               key: "accurate-faktur-deposit",
               title: "Upload Faktur Deposit",
-              to: "/accurate/faktur-deposit",
+              to: "/report-to-accurate/settlement-faktur-deposit",
               roles: [
                 "administrator",
                 "superuser",
@@ -770,7 +770,7 @@ export default {
             {
               key: "accurate-faktur-realisasi",
               title: "Upload Faktur Realisasi Deposit",
-              to: "/accurate/faktur-realisasi",
+              to: "/report-to-accurate/settlement-realisasi",
               roles: [
                 "administrator",
                 "superuser",
@@ -782,7 +782,7 @@ export default {
             {
               key: "accurate-sto",
               title: "Upload STO",
-              to: "/accurate/sto",
+              to: "/report-to-accurate/settlement-sto",
               roles: [
                 "administrator",
                 "superuser",

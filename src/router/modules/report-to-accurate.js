@@ -9,6 +9,12 @@ const reportToAccurateRoutes = [
         component: () =>
           import("@/views/report-to-accurate/settlement-umum.vue"),
       },
+      {
+        path: "settlement-elite-glowbal",
+        name: "Settlement Accurate EliteGlowbal",
+        component: () =>
+          import("@/views/report-to-accurate/settlement-elite-glowbal.vue"),
+      },
     ],
   },
 ];
