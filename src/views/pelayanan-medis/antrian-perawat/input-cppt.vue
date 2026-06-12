@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-0">
+  <div>
     <div class="d-flex flex-wrap align-start justify-space-between ga-3 mb-4">
       <div>
         <div class="text-h5 font-weight-bold">Input CPPT</div>
@@ -529,7 +529,7 @@
         <v-btn variant="text" @click="snackbar.show = false">Tutup</v-btn>
       </template>
     </v-snackbar>
-  </v-container>
+  </div>
 </template>
 
 <script>

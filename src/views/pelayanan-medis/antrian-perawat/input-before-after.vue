@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-0">
+  <div>
     <div
       class="d-flex flex-column flex-md-row align-md-start justify-space-between ga-3 mb-4"
     >
@@ -434,7 +434,7 @@
         <v-btn variant="text" @click="snackbar.show = false">Tutup</v-btn>
       </template>
     </v-snackbar>
-  </v-container>
+  </div>
 </template>
 
 <script>

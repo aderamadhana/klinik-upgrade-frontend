@@ -328,89 +328,160 @@
       </div>
     </v-card>
 
-    <v-dialog v-model="expiredAtDialog" max-width="560" persistent>
-      <v-card class="dialog-card">
-        <div class="dialog-title d-flex justify-space-between align-center">
-          <div>Edit Tanggal Expired Deposit</div>
+    <v-dialog v-model="expiredAtDialog" max-width="680" persistent scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon icon="mdi-calendar-edit" color="primary" size="26" />
+              </v-avatar>
 
-          <v-btn
-            icon="mdi-close"
-            variant="text"
-            size="small"
-            :disabled="expiredAtSubmitting"
-            @click="closeExpiredAtDialog"
-          />
-        </div>
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  Edit Tanggal Expired Deposit
+                </div>
+                <div class="text-body-2 text-white">
+                  Ubah masa berlaku saldo deposit yang masih tersisa.
+                </div>
+              </div>
+            </div>
 
-        <v-divider />
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              color="white"
+              :disabled="expiredAtSubmitting"
+              @click="closeExpiredAtDialog"
+            />
+          </div>
+        </v-sheet>
 
-        <v-card-text>
+        <v-card-text class="pa-4">
           <v-alert
             v-if="expiredAtError"
             type="error"
             variant="tonal"
-            class="mb-4"
+            border="start"
+            rounded="lg"
             closable
+            class="mb-4"
             @click:close="expiredAtError = ''"
           >
             {{ expiredAtError }}
           </v-alert>
 
-          <v-alert type="info" variant="tonal" class="mb-4">
+          <v-alert
+            type="info"
+            variant="tonal"
+            border="start"
+            rounded="lg"
+            class="mb-4"
+          >
             Perubahan ini hanya mengubah masa berlaku saldo deposit yang masih
             tersisa. Data invoice pembelian tetap menjadi histori transaksi.
           </v-alert>
 
-          <v-row dense>
-            <v-col cols="12">
-              <v-text-field
-                label="Treatment"
-                :model-value="expiredAtForm.nama_treatment"
-                variant="outlined"
-                density="compact"
-                readonly
-              />
-            </v-col>
+          <v-card class="rounded-lg border mb-4" elevation="0">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-start ga-3 mb-4">
+                <v-avatar size="38" color="blue-lighten-5">
+                  <v-icon
+                    icon="mdi-file-document-outline"
+                    color="primary"
+                    size="22"
+                  />
+                </v-avatar>
 
-            <v-col cols="12" md="6">
-              <v-text-field
-                label="Invoice Pembelian"
-                :model-value="expiredAtForm.no_invoice"
-                variant="outlined"
-                density="compact"
-                readonly
-              />
-            </v-col>
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold">
+                    Informasi Deposit
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Pastikan treatment dan invoice pembelian sudah sesuai
+                    sebelum menyimpan.
+                  </div>
+                </div>
+              </div>
 
-            <v-col cols="12" md="6">
-              <v-text-field
-                label="Tanggal Expired Saat Ini"
-                :model-value="expiredAtForm.expired_at_formatted"
-                variant="outlined"
-                density="compact"
-                readonly
-              />
-            </v-col>
+              <v-row dense>
+                <v-col cols="12">
+                  <v-text-field
+                    label="Treatment"
+                    :model-value="expiredAtForm.nama_treatment"
+                    variant="outlined"
+                    density="compact"
+                    readonly
+                    hide-details="auto"
+                  />
+                </v-col>
 
-            <v-col cols="12">
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    label="Invoice Pembelian"
+                    :model-value="expiredAtForm.no_invoice"
+                    variant="outlined"
+                    density="compact"
+                    readonly
+                    hide-details="auto"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    label="Tanggal Expired Saat Ini"
+                    :model-value="expiredAtForm.expired_at_formatted"
+                    variant="outlined"
+                    density="compact"
+                    readonly
+                    hide-details="auto"
+                  />
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+
+          <v-card class="rounded-lg border" elevation="0">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-start ga-3 mb-4">
+                <v-avatar size="38" color="green-lighten-5">
+                  <v-icon
+                    icon="mdi-calendar-check-outline"
+                    color="success"
+                    size="22"
+                  />
+                </v-avatar>
+
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold">
+                    Tanggal Expired Baru
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Pilih tanggal baru minimal hari ini.
+                  </div>
+                </div>
+              </div>
+
               <v-text-field
                 v-model="expiredAtForm.expired_at"
                 label="Tanggal Expired Baru"
                 type="date"
                 :min="todayDate"
                 variant="outlined"
-                density="compact"
+                density="comfortable"
                 hide-details="auto"
+                :disabled="expiredAtSubmitting"
               />
-            </v-col>
-          </v-row>
+            </v-card-text>
+          </v-card>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="justify-end">
+        <v-card-actions class="pa-4 justify-end">
           <v-btn
-            variant="tonal"
+            variant="outlined"
+            color="secondary"
             :disabled="expiredAtSubmitting"
             @click="closeExpiredAtDialog"
           >
@@ -420,7 +491,9 @@
           <v-btn
             color="primary"
             variant="flat"
+            prepend-icon="mdi-content-save"
             :loading="expiredAtSubmitting"
+            :disabled="expiredAtSubmitting"
             @click="submitExpiredAt"
           >
             Simpan Perubahan
@@ -429,243 +502,425 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="claimDialog" max-width="900">
-      <v-card class="dialog-card">
-        <div class="dialog-title d-flex justify-space-between align-center">
-          <div>Riwayat Claim Deposit</div>
+    <v-dialog v-model="claimDialog" max-width="1180" scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon icon="mdi-history" color="primary" size="26" />
+              </v-avatar>
 
-          <v-btn
-            icon="mdi-close"
-            variant="text"
-            size="small"
-            @click="claimDialog = false"
-          />
-        </div>
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  Riwayat Claim Deposit
+                </div>
+                <div class="text-body-2 text-white">
+                  Riwayat penggunaan saldo deposit treatment pasien.
+                </div>
+              </div>
+            </div>
 
-        <v-divider />
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <v-chip
+                v-if="selectedClaims?.length"
+                size="small"
+                color="white"
+                variant="flat"
+                class="font-weight-medium"
+              >
+                {{ selectedClaims.length }} claim
+              </v-chip>
 
-        <v-card-text>
+              <v-btn
+                icon="mdi-close"
+                variant="text"
+                color="white"
+                @click="claimDialog = false"
+              />
+            </div>
+          </div>
+        </v-sheet>
+
+        <v-card-text class="pa-4">
           <v-row dense class="mb-4">
-            <v-col cols="12" md="4">
-              <div class="info-box">
-                <div class="label-text">Treatment</div>
-                <div class="value-text">
-                  {{ selectedDeposit.nama_treatment || "-" }}
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon icon="mdi-stethoscope" color="primary" size="19" />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Treatment
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ selectedDeposit?.nama_treatment || "-" }}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="4">
-              <div class="info-box">
-                <div class="label-text">Invoice Pembelian</div>
-                <div class="value-text">
-                  {{ selectedDeposit.no_invoice || "-" }}
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-file-document-outline"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Invoice Pembelian
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ selectedDeposit?.no_invoice || "-" }}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="4">
-              <div class="info-box">
-                <div class="label-text">Sisa Deposit</div>
-                <div class="value-text">
-                  {{ formatQty(selectedDeposit.qty_sisa) }}
-                  /
-                  {{ formatCurrency(selectedDeposit.nilai_sisa) }}
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="green-lighten-5">
+                    <v-icon
+                      icon="mdi-wallet-outline"
+                      color="success"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Sisa Deposit
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ formatQty(selectedDeposit?.qty_sisa) }}
+                      /
+                      {{ formatCurrency(selectedDeposit?.nilai_sisa) }}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
           </v-row>
 
-          <v-table density="compact" class="riwayat-table">
-            <thead>
-              <tr>
-                <th>Tanggal Claim</th>
-                <th>Invoice</th>
-                <th>Cabang</th>
-                <th class="text-right">Qty</th>
-                <th class="text-right">Nilai Realisasi</th>
-                <th>Dokter / Perawat</th>
-              </tr>
-            </thead>
+          <v-card class="rounded-lg border" elevation="0">
+            <v-card-text class="pa-4">
+              <div
+                class="d-flex align-start justify-space-between ga-3 flex-wrap"
+              >
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">
+                    Detail Claim
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Tanggal claim, invoice realisasi, cabang, qty, nilai,
+                    dokter, dan perawat.
+                  </div>
+                </div>
 
-            <tbody>
-              <tr v-if="!selectedClaims.length">
-                <td colspan="6">
-                  <div class="empty-state">
-                    <v-icon size="36" color="grey">mdi-history</v-icon>
-                    <div class="empty-title">Belum ada claim</div>
-                    <div class="empty-description">
-                      Deposit ini belum pernah digunakan.
+                <v-chip color="primary" variant="tonal" size="small">
+                  {{ selectedClaims?.length || 0 }} data
+                </v-chip>
+              </div>
+            </v-card-text>
+
+            <v-divider />
+
+            <v-table density="compact" fixed-header height="420">
+              <thead>
+                <tr>
+                  <th>Tanggal Claim</th>
+                  <th>Invoice</th>
+                  <th>Cabang</th>
+                  <th class="text-right">Qty</th>
+                  <th class="text-right">Nilai Realisasi</th>
+                  <th>Dokter / Perawat</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr v-if="!selectedClaims?.length">
+                  <td colspan="6">
+                    <v-empty-state
+                      icon="mdi-history"
+                      title="Belum ada claim"
+                      text="Deposit ini belum pernah digunakan."
+                    />
+                  </td>
+                </tr>
+
+                <tr v-for="claim in selectedClaims" :key="claim.id">
+                  <td>{{ claim.claimed_at_formatted || "-" }}</td>
+
+                  <td>
+                    <div class="font-weight-bold text-primary">
+                      {{ claim.no_invoice || "-" }}
                     </div>
-                  </div>
-                </td>
-              </tr>
+                    <div class="text-caption text-medium-emphasis">
+                      {{ claim.kode_registrasi || "-" }}
+                    </div>
+                  </td>
 
-              <tr v-for="claim in selectedClaims" :key="claim.id">
-                <td>{{ claim.claimed_at_formatted || "-" }}</td>
-                <td>
-                  <div class="invoice-link">
-                    {{ claim.no_invoice || "-" }}
-                  </div>
-                  <div class="invoice-sub">
-                    {{ claim.kode_registrasi || "-" }}
-                  </div>
-                </td>
-                <td>{{ claim.toko_claim_nama || "-" }}</td>
-                <td class="text-right">
-                  {{ formatQty(claim.qty_claim) }}
-                </td>
-                <td class="text-right">
-                  {{ formatCurrency(claim.nilai_realisasi) }}
-                </td>
-                <td>
-                  <div>{{ claim.dokter_nama || "-" }}</div>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ claim.perawat_nama || "-" }}
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </v-table>
+                  <td>{{ claim.toko_claim_nama || "-" }}</td>
+
+                  <td class="text-right">
+                    <span class="font-weight-bold">
+                      {{ formatQty(claim.qty_claim) }}
+                    </span>
+                  </td>
+
+                  <td class="text-right">
+                    <span class="font-weight-bold text-success">
+                      {{ formatCurrency(claim.nilai_realisasi) }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <div class="font-weight-medium">
+                      {{ claim.dokter_nama || "-" }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis">
+                      {{ claim.perawat_nama || "-" }}
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </v-card>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="justify-end">
-          <v-btn variant="tonal" @click="claimDialog = false"> Tutup </v-btn>
+        <v-card-actions class="pa-4 justify-end">
+          <v-btn
+            variant="outlined"
+            color="secondary"
+            prepend-icon="mdi-close"
+            @click="claimDialog = false"
+          >
+            Tutup
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="claimProcessDialog" max-width="760" persistent>
-      <v-card class="dialog-card">
-        <div class="dialog-title d-flex justify-space-between align-center">
-          <div>Proses Claim Deposit</div>
+    <v-dialog
+      v-model="claimProcessDialog"
+      max-width="760"
+      persistent
+      scrollable
+    >
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon icon="mdi-cash-check" color="primary" size="26" />
+              </v-avatar>
 
-          <v-btn
-            icon="mdi-close"
-            variant="text"
-            size="small"
-            :disabled="claimSubmitting"
-            @click="closeClaimProcessDialog"
-          />
-        </div>
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  Proses Claim Deposit
+                </div>
+                <div class="text-body-2 text-white">
+                  Gunakan saldo deposit untuk realisasi treatment pasien.
+                </div>
+              </div>
+            </div>
 
-        <v-divider />
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              color="white"
+              :disabled="claimSubmitting"
+              @click="closeClaimProcessDialog"
+            />
+          </div>
+        </v-sheet>
 
-        <v-card-text>
+        <v-card-text class="pa-4">
           <v-alert
             v-if="claimError"
             type="error"
             variant="tonal"
-            class="mb-4"
+            border="start"
+            rounded="lg"
             closable
+            class="mb-4"
             @click:close="claimError = ''"
           >
             {{ claimError }}
           </v-alert>
 
-          <v-row dense>
-            <v-col cols="12">
-              <v-text-field
-                label="Nama Treatment"
-                :model-value="claimForm.nama_treatment"
-                variant="outlined"
-                density="compact"
-                readonly
-              />
-            </v-col>
+          <v-card class="rounded-lg border mb-4" elevation="0">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-start ga-3 mb-4">
+                <v-avatar size="38" color="blue-lighten-5">
+                  <v-icon
+                    icon="mdi-information-outline"
+                    color="primary"
+                    size="22"
+                  />
+                </v-avatar>
 
-            <v-col cols="12" md="6">
-              <v-text-field
-                label="Sisa Qty"
-                :model-value="formatQty(claimForm.qty_sisa)"
-                variant="outlined"
-                density="compact"
-                readonly
-              />
-            </v-col>
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold">
+                    Informasi Deposit
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Pastikan treatment, sisa qty, dan nilai sisa sudah sesuai
+                    sebelum claim.
+                  </div>
+                </div>
+              </div>
 
-            <v-col cols="12" md="6">
-              <v-text-field
-                label="Nilai Sisa"
-                :model-value="formatCurrency(claimForm.nilai_sisa)"
-                variant="outlined"
-                density="compact"
-                readonly
-              />
-            </v-col>
+              <v-row dense>
+                <v-col cols="12">
+                  <v-text-field
+                    label="Nama Treatment"
+                    :model-value="claimForm.nama_treatment"
+                    variant="outlined"
+                    density="compact"
+                    readonly
+                    hide-details="auto"
+                  />
+                </v-col>
 
-            <v-col cols="12" md="6">
-              <v-text-field
-                v-model.number="claimForm.qty_claim"
-                label="Qty Claim"
-                type="number"
-                min="1"
-                :max="claimForm.qty_sisa"
-                variant="outlined"
-                density="compact"
-                hide-details="auto"
-              />
-            </v-col>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    label="Sisa Qty"
+                    :model-value="formatQty(claimForm.qty_sisa)"
+                    variant="outlined"
+                    density="compact"
+                    readonly
+                    hide-details="auto"
+                  />
+                </v-col>
 
-            <v-col cols="12" md="6">
-              <v-text-field
-                label="Estimasi Nilai Realisasi"
-                :model-value="formatCurrency(estimatedClaimValue)"
-                variant="outlined"
-                density="compact"
-                readonly
-              />
-            </v-col>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    label="Nilai Sisa"
+                    :model-value="formatCurrency(claimForm.nilai_sisa)"
+                    variant="outlined"
+                    density="compact"
+                    readonly
+                    hide-details="auto"
+                  />
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
 
-            <v-col cols="12">
-              <v-select
-                v-model="claimForm.claim_dokter_id"
-                label="Dokter Claim Treatment"
-                :items="claimOptions.dokter"
-                item-title="title"
-                item-value="value"
-                variant="outlined"
-                density="compact"
-                clearable
-                hide-details="auto"
-              />
-            </v-col>
+          <v-card class="rounded-lg border" elevation="0">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-start ga-3 mb-4">
+                <v-avatar size="38" color="green-lighten-5">
+                  <v-icon icon="mdi-playlist-check" color="success" size="22" />
+                </v-avatar>
 
-            <v-col cols="12">
-              <v-select
-                v-model="claimForm.claim_perawat_id"
-                label="Perawat Claim Treatment"
-                :items="claimOptions.perawat"
-                item-title="title"
-                item-value="value"
-                variant="outlined"
-                density="compact"
-                clearable
-                hide-details="auto"
-              />
-            </v-col>
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold">Data Claim</div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Isi qty claim, petugas claim, dan catatan jika ada perubahan
+                    treatment.
+                  </div>
+                </div>
+              </div>
 
-            <v-col cols="12">
-              <v-textarea
-                v-model="claimForm.catatan"
-                label="Catatan Jika Ada Perubahan Treatment Pasien"
-                placeholder="Isi catatan untuk treatment pasien"
-                variant="outlined"
-                density="compact"
-                rows="3"
-                hide-details="auto"
-              />
-            </v-col>
-          </v-row>
+              <v-row dense>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model.number="claimForm.qty_claim"
+                    label="Qty Claim"
+                    type="number"
+                    min="1"
+                    :max="claimForm.qty_sisa"
+                    variant="outlined"
+                    density="compact"
+                    hide-details="auto"
+                    :disabled="claimSubmitting"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    label="Estimasi Nilai Realisasi"
+                    :model-value="formatCurrency(estimatedClaimValue)"
+                    variant="outlined"
+                    density="compact"
+                    readonly
+                    hide-details="auto"
+                  />
+                </v-col>
+
+                <v-col cols="12">
+                  <v-select
+                    v-model="claimForm.claim_dokter_id"
+                    label="Dokter Claim Treatment"
+                    :items="claimOptions.dokter"
+                    item-title="title"
+                    item-value="value"
+                    variant="outlined"
+                    density="compact"
+                    clearable
+                    hide-details="auto"
+                    :disabled="claimSubmitting"
+                  />
+                </v-col>
+
+                <v-col cols="12">
+                  <v-select
+                    v-model="claimForm.claim_perawat_id"
+                    label="Perawat Claim Treatment"
+                    :items="claimOptions.perawat"
+                    item-title="title"
+                    item-value="value"
+                    variant="outlined"
+                    density="compact"
+                    clearable
+                    hide-details="auto"
+                    :disabled="claimSubmitting"
+                  />
+                </v-col>
+
+                <v-col cols="12">
+                  <v-textarea
+                    v-model="claimForm.catatan"
+                    label="Catatan Jika Ada Perubahan Treatment Pasien"
+                    placeholder="Isi catatan untuk treatment pasien"
+                    variant="outlined"
+                    density="compact"
+                    rows="3"
+                    hide-details="auto"
+                    :disabled="claimSubmitting"
+                  />
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="justify-end">
+        <v-card-actions class="pa-4 justify-end">
           <v-btn
-            variant="tonal"
+            variant="outlined"
+            color="secondary"
             :disabled="claimSubmitting"
             @click="closeClaimProcessDialog"
           >
@@ -675,7 +930,9 @@
           <v-btn
             color="success"
             variant="flat"
+            prepend-icon="mdi-cash-check"
             :loading="claimSubmitting"
+            :disabled="claimSubmitting"
             @click="submitClaimDeposit"
           >
             Claim

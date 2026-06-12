@@ -144,44 +144,61 @@
       @reset-promo="resetPromo"
     />
 
-    <v-dialog v-model="depositTreatmentDialog" max-width="720" persistent>
-      <v-card rounded="lg">
-        <v-card-title class="pa-4 pb-2">
-          <div class="d-flex align-center justify-space-between ga-3">
-            <div class="d-flex align-center ga-3 min-w-0">
-              <v-avatar color="green-lighten-5" size="34">
-                <v-icon
-                  color="green-darken-2"
-                  icon="mdi-wallet-giftcard"
-                  size="20"
-                />
+    <v-dialog
+      v-model="depositTreatmentDialog"
+      max-width="1180"
+      persistent
+      scrollable
+    >
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon icon="mdi-wallet-giftcard" color="primary" size="26" />
               </v-avatar>
 
-              <div class="min-w-0">
-                <div class="text-subtitle-1 font-weight-bold">
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
                   Pilih Treatment Deposit
                 </div>
-                <v-card-subtitle class="text-caption pa-0 mt-1">
+                <div class="text-body-2 text-white">
                   Pilih treatment dan tentukan qty yang akan dibuat sebagai
-                  saldo deposit
-                </v-card-subtitle>
+                  saldo deposit.
+                </div>
               </div>
             </div>
 
-            <v-btn
-              icon="mdi-close"
-              variant="text"
-              density="comfortable"
-              size="small"
-              @click.stop="closeDepositTreatmentDialog"
-            />
-          </div>
-        </v-card-title>
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <v-chip
+                v-if="treatmentItems?.length"
+                size="small"
+                color="white"
+                variant="flat"
+                class="font-weight-medium"
+              >
+                {{ selectedDepositTreatmentKeys.length }} /
+                {{ treatmentItems.length }} dipilih
+              </v-chip>
 
-        <v-divider />
+              <v-btn
+                icon="mdi-close"
+                variant="text"
+                color="white"
+                @click.stop="closeDepositTreatmentDialog"
+              />
+            </div>
+          </div>
+        </v-sheet>
 
         <v-card-text class="pa-4">
-          <v-alert type="info" variant="tonal" density="compact" class="mb-3">
+          <v-alert
+            type="info"
+            variant="tonal"
+            border="start"
+            rounded="lg"
+            class="mb-4"
+          >
             Produk/obat tetap dibayar normal. Deposit hanya dibuat untuk
             treatment dan qty yang dipilih.
           </v-alert>
@@ -190,186 +207,191 @@
             v-if="!treatmentItems.length"
             type="warning"
             variant="tonal"
-            density="compact"
+            border="start"
+            rounded="lg"
           >
             Transaksi deposit hanya bisa dipilih jika transaksi memiliki minimal
             satu treatment.
           </v-alert>
 
-          <div v-else>
-            <div
-              class="d-flex align-center justify-space-between mb-3 ga-3 flex-wrap"
-            >
-              <div>
-                <div class="text-body-2 font-weight-bold">Daftar Treatment</div>
-                <div class="text-caption text-medium-emphasis">
-                  {{ selectedDepositTreatmentKeys.length }} dari
-                  {{ treatmentItems.length }} treatment dipilih
-                  <span v-if="selectedDepositTreatmentQtyTotal > 0">
-                    • Total Qty Deposit {{ selectedDepositTreatmentQtyTotal }}
-                  </span>
-                </div>
-              </div>
-
-              <div class="d-flex ga-2">
-                <v-btn
-                  type="button"
-                  size="small"
-                  color="primary"
-                  variant="tonal"
-                  prepend-icon="mdi-check-all"
-                  class="text-none font-weight-medium"
-                  @click.stop="selectAllDepositTreatments"
-                >
-                  Pilih Semua
-                </v-btn>
-
-                <v-btn
-                  type="button"
-                  size="small"
-                  color="error"
-                  variant="tonal"
-                  prepend-icon="mdi-close-circle-outline"
-                  class="text-none font-weight-medium"
-                  @click.stop="clearDepositTreatments"
-                >
-                  Kosongkan
-                </v-btn>
-              </div>
-            </div>
-
-            <v-card
-              v-for="(item, index) in treatmentItems"
-              :key="getTreatmentItemKey(item, index)"
-              variant="outlined"
-              rounded="lg"
-              class="mb-2"
-              :class="
-                isDepositTreatmentSelected(item, index)
-                  ? 'bg-green-lighten-5'
-                  : ''
-              "
-              @click.stop="toggleDepositTreatmentItem(item, index)"
-            >
-              <v-card-text class="pa-3">
-                <div class="d-flex align-start ga-2">
-                  <v-checkbox-btn
-                    :model-value="isDepositTreatmentSelected(item, index)"
-                    color="green"
-                    density="compact"
-                    @click.stop="toggleDepositTreatmentItem(item, index)"
-                  />
-
-                  <div class="flex-grow-1 min-w-0">
-                    <div class="d-flex justify-space-between align-start ga-2">
-                      <div class="min-w-0">
-                        <div class="text-body-2 font-weight-bold text-truncate">
-                          {{
-                            item.nama_treatment ||
-                            item.nama_item ||
-                            item.nama ||
-                            "Treatment"
-                          }}
-                        </div>
-
-                        <div
-                          class="text-caption text-medium-emphasis text-truncate"
-                        >
-                          {{
-                            item.beautician ||
-                            item.perawat_nama ||
-                            "Beautician belum dipilih"
-                          }}
-                        </div>
-                      </div>
-
-                      <v-chip
-                        size="x-small"
-                        :color="
-                          isDepositTreatmentSelected(item, index)
-                            ? 'green'
-                            : 'grey'
-                        "
-                        variant="tonal"
-                      >
-                        {{
-                          isDepositTreatmentSelected(item, index)
-                            ? "Dipilih"
-                            : "Belum dipilih"
-                        }}
-                      </v-chip>
-                    </div>
-
-                    <div class="d-flex align-center ga-2 mt-2 flex-wrap">
-                      <v-chip size="small" variant="tonal" color="blue-grey">
-                        Qty Invoice {{ getTreatmentQty(item) }}
-                      </v-chip>
-
-                      <div class="d-flex align-center ga-1" @click.stop>
-                        <v-btn
-                          icon="mdi-minus"
-                          size="x-small"
-                          variant="tonal"
-                          color="primary"
-                          density="comfortable"
-                          :disabled="
-                            !isDepositTreatmentSelected(item, index) ||
-                            getDepositTreatmentQty(item, index) <= 1
-                          "
-                          @click.stop="decreaseDepositTreatmentQty(item, index)"
-                        />
-
-                        <v-chip size="small" variant="tonal" color="primary">
-                          Deposit Qty {{ getDepositTreatmentQty(item, index) }}
-                        </v-chip>
-
-                        <v-btn
-                          icon="mdi-plus"
-                          size="x-small"
-                          variant="tonal"
-                          color="primary"
-                          density="comfortable"
-                          :disabled="
-                            !isDepositTreatmentSelected(item, index) ||
-                            getDepositTreatmentQty(item, index) >=
-                              getTreatmentQty(item)
-                          "
-                          @click.stop="increaseDepositTreatmentQty(item, index)"
-                        />
-                      </div>
-
-                      <v-chip size="small" variant="tonal" color="blue-grey">
-                        Harga {{ formatCurrency(resolveTreatmentHarga(item)) }}
-                      </v-chip>
-
-                      <v-chip size="small" variant="tonal" color="green">
-                        Deposit
-                        {{
-                          formatCurrency(
-                            getDepositTreatmentSubtotal(item, index),
-                          )
-                        }}
-                      </v-chip>
-                    </div>
+          <v-card v-else class="rounded-lg border" elevation="0">
+            <v-card-text class="pa-4">
+              <div
+                class="d-flex align-start justify-space-between ga-3 flex-wrap mb-4"
+              >
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">
+                    Daftar Treatment
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    {{ selectedDepositTreatmentKeys.length }} dari
+                    {{ treatmentItems.length }} treatment dipilih
+                    <span v-if="selectedDepositTreatmentQtyTotal > 0">
+                      • Total Qty Deposit {{ selectedDepositTreatmentQtyTotal }}
+                    </span>
                   </div>
                 </div>
-              </v-card-text>
-            </v-card>
-          </div>
+
+                <div class="d-flex ga-2 flex-wrap">
+                  <v-btn
+                    type="button"
+                    size="small"
+                    color="primary"
+                    variant="tonal"
+                    prepend-icon="mdi-check-all"
+                    @click.stop="selectAllDepositTreatments"
+                  >
+                    Pilih Semua
+                  </v-btn>
+
+                  <v-btn
+                    type="button"
+                    size="small"
+                    color="error"
+                    variant="tonal"
+                    prepend-icon="mdi-close-circle-outline"
+                    @click.stop="clearDepositTreatments"
+                  >
+                    Kosongkan
+                  </v-btn>
+                </div>
+              </div>
+
+              <v-card
+                v-for="(item, index) in treatmentItems"
+                :key="getTreatmentItemKey(item, index)"
+                variant="outlined"
+                rounded="lg"
+                class="mb-3"
+                :color="
+                  isDepositTreatmentSelected(item, index)
+                    ? 'green-lighten-5'
+                    : undefined
+                "
+                @click.stop="toggleDepositTreatmentItem(item, index)"
+              >
+                <v-card-text class="pa-3">
+                  <div class="d-flex align-start ga-3">
+                    <v-checkbox-btn
+                      :model-value="isDepositTreatmentSelected(item, index)"
+                      color="green"
+                      density="compact"
+                      @click.stop="toggleDepositTreatmentItem(item, index)"
+                    />
+
+                    <div class="flex-grow-1">
+                      <div
+                        class="d-flex justify-space-between align-start ga-3 flex-wrap"
+                      >
+                        <div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{
+                              item.nama_treatment ||
+                              item.nama_item ||
+                              item.nama ||
+                              "Treatment"
+                            }}
+                          </div>
+
+                          <div class="text-caption text-medium-emphasis">
+                            {{
+                              item.beautician ||
+                              item.perawat_nama ||
+                              "Beautician belum dipilih"
+                            }}
+                          </div>
+                        </div>
+
+                        <v-chip
+                          size="small"
+                          :color="
+                            isDepositTreatmentSelected(item, index)
+                              ? 'success'
+                              : 'grey'
+                          "
+                          variant="tonal"
+                        >
+                          {{
+                            isDepositTreatmentSelected(item, index)
+                              ? "Dipilih"
+                              : "Belum dipilih"
+                          }}
+                        </v-chip>
+                      </div>
+
+                      <div class="d-flex align-center ga-2 mt-3 flex-wrap">
+                        <v-chip size="small" variant="tonal" color="blue-grey">
+                          Qty Invoice {{ getTreatmentQty(item) }}
+                        </v-chip>
+
+                        <div class="d-flex align-center ga-1" @click.stop>
+                          <v-btn
+                            icon="mdi-minus"
+                            size="x-small"
+                            variant="tonal"
+                            color="primary"
+                            density="comfortable"
+                            :disabled="
+                              !isDepositTreatmentSelected(item, index) ||
+                              getDepositTreatmentQty(item, index) <= 1
+                            "
+                            @click.stop="
+                              decreaseDepositTreatmentQty(item, index)
+                            "
+                          />
+
+                          <v-chip size="small" variant="tonal" color="primary">
+                            Deposit Qty
+                            {{ getDepositTreatmentQty(item, index) }}
+                          </v-chip>
+
+                          <v-btn
+                            icon="mdi-plus"
+                            size="x-small"
+                            variant="tonal"
+                            color="primary"
+                            density="comfortable"
+                            :disabled="
+                              !isDepositTreatmentSelected(item, index) ||
+                              getDepositTreatmentQty(item, index) >=
+                                getTreatmentQty(item)
+                            "
+                            @click.stop="
+                              increaseDepositTreatmentQty(item, index)
+                            "
+                          />
+                        </div>
+
+                        <v-chip size="small" variant="tonal" color="blue-grey">
+                          Harga
+                          {{ formatCurrency(resolveTreatmentHarga(item)) }}
+                        </v-chip>
+
+                        <v-chip size="small" variant="tonal" color="success">
+                          Deposit
+                          {{
+                            formatCurrency(
+                              getDepositTreatmentSubtotal(item, index),
+                            )
+                          }}
+                        </v-chip>
+                      </div>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-card-text>
+          </v-card>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="pa-3">
-          <v-spacer />
-
+        <v-card-actions class="pa-4 justify-end">
           <v-btn
             type="button"
-            size="small"
-            variant="tonal"
-            color="grey-darken-1"
+            variant="outlined"
+            color="secondary"
             prepend-icon="mdi-close"
-            class="text-none font-weight-medium"
             @click.stop="closeDepositTreatmentDialog"
           >
             Batal
@@ -377,11 +399,9 @@
 
           <v-btn
             type="button"
-            size="small"
             color="primary"
             variant="flat"
             prepend-icon="mdi-cash-check"
-            class="text-none font-weight-medium"
             :disabled="!selectedDepositTreatmentKeys.length"
             @click.stop="confirmDepositTreatmentDialog"
           >
@@ -391,92 +411,164 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="phoneConfirmDialog" max-width="620" persistent>
-      <v-card>
-        <v-card-title>
-          <div class="text-h6 font-weight-bold">Konfirmasi Nomor Pasien</div>
-          <div class="text-body-2 text-medium-emphasis">
-            Perbarui nomor HP/WA pasien sebelum pembayaran diselesaikan jika ada
-            perubahan.
+    <v-dialog
+      v-model="phoneConfirmDialog"
+      max-width="680"
+      persistent
+      scrollable
+    >
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon
+                  icon="mdi-phone-check-outline"
+                  color="primary"
+                  size="26"
+                />
+              </v-avatar>
+
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  Konfirmasi Nomor Pasien
+                </div>
+                <div class="text-body-2 text-white">
+                  Perbarui nomor HP/WA pasien sebelum pembayaran diselesaikan
+                  jika ada perubahan.
+                </div>
+              </div>
+            </div>
           </div>
-        </v-card-title>
+        </v-sheet>
 
-        <v-divider />
+        <v-card-text class="pa-4">
+          <v-card class="rounded-lg border" elevation="0">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-start ga-3 mb-4">
+                <v-avatar size="38" color="blue-lighten-5">
+                  <v-icon
+                    icon="mdi-card-account-phone-outline"
+                    color="primary"
+                    size="22"
+                  />
+                </v-avatar>
 
-        <v-card-text>
-          <v-row dense>
-            <v-col cols="12" md="6">
-              <v-text-field
-                v-model="phoneForm.no_hp"
-                label="No. HP"
-                variant="outlined"
-                density="compact"
-                prepend-inner-icon="mdi-cellphone"
-                hide-details="auto"
-              />
-            </v-col>
-            <v-col cols="12" md="6">
-              <v-text-field
-                v-model="phoneForm.no_wa"
-                label="No. WhatsApp"
-                variant="outlined"
-                density="compact"
-                prepend-inner-icon="mdi-whatsapp"
-                hide-details="auto"
-              />
-            </v-col>
-            <v-col cols="12">
-              <v-text-field
-                v-model="phoneForm.no_telp"
-                label="No. Telepon"
-                variant="outlined"
-                density="compact"
-                prepend-inner-icon="mdi-phone"
-                hide-details="auto"
-              />
-            </v-col>
-          </v-row>
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold">
+                    Data Kontak Pasien
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Pastikan nomor aktif agar follow-up pasien dan notifikasi
+                    WhatsApp tidak gagal.
+                  </div>
+                </div>
+              </div>
+
+              <v-row dense>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="phoneForm.no_hp"
+                    label="No. HP"
+                    variant="outlined"
+                    density="compact"
+                    prepend-inner-icon="mdi-cellphone"
+                    hide-details="auto"
+                  />
+                </v-col>
+
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    v-model="phoneForm.no_wa"
+                    label="No. WhatsApp"
+                    variant="outlined"
+                    density="compact"
+                    prepend-inner-icon="mdi-whatsapp"
+                    hide-details="auto"
+                  />
+                </v-col>
+
+                <v-col cols="12">
+                  <v-text-field
+                    v-model="phoneForm.no_telp"
+                    label="No. Telepon"
+                    variant="outlined"
+                    density="compact"
+                    prepend-inner-icon="mdi-phone"
+                    hide-details="auto"
+                  />
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions>
-          <v-btn variant="text" @click="continueWithoutPhoneUpdate">
+        <v-card-actions class="pa-4 justify-end">
+          <v-btn
+            variant="outlined"
+            color="secondary"
+            @click="continueWithoutPhoneUpdate"
+          >
             Lanjut Tanpa Ubah
           </v-btn>
-          <v-spacer />
-          <v-btn color="primary" variant="flat" @click="confirmPhoneAndSubmit">
+
+          <v-btn
+            color="primary"
+            variant="flat"
+            prepend-icon="mdi-content-save-check-outline"
+            @click="confirmPhoneAndSubmit"
+          >
             Simpan Nomor & Submit
           </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="memberRewardDialog" max-width="560" persistent>
-      <v-card rounded="lg">
-        <v-card-title class="pa-5 pb-2">
-          <div class="d-flex align-start ga-3">
-            <v-avatar color="amber-lighten-5" size="44">
-              <v-icon color="amber-darken-2" icon="mdi-crown" size="26" />
-            </v-avatar>
+    <v-dialog
+      v-model="memberRewardDialog"
+      max-width="760"
+      persistent
+      scrollable
+    >
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon icon="mdi-crown" color="primary" size="26" />
+              </v-avatar>
 
-            <div class="min-w-0">
-              <div class="text-h6 font-weight-bold">
-                Benefit Member Diperbarui
-              </div>
-              <div class="text-body-2 text-medium-emphasis mt-1">
-                Pasien mendapatkan update member setelah pembayaran berhasil.
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  Benefit Member Diperbarui
+                </div>
+                <div class="text-body-2 text-white">
+                  Pasien mendapatkan update member setelah pembayaran berhasil.
+                </div>
               </div>
             </div>
-          </div>
-        </v-card-title>
 
-        <v-card-text class="pa-5 pt-3">
+            <v-chip
+              v-if="memberReward?.current_tier_nama"
+              size="small"
+              color="white"
+              variant="flat"
+              class="font-weight-medium"
+            >
+              {{ memberReward.current_tier_nama }}
+            </v-chip>
+          </div>
+        </v-sheet>
+
+        <v-card-text class="pa-4">
           <v-alert
             v-if="memberReward && memberReward.tier_changed"
             type="success"
             variant="tonal"
-            density="comfortable"
+            border="start"
+            rounded="lg"
             class="mb-4"
           >
             Tier pasien naik dari
@@ -490,7 +582,8 @@
             v-else-if="memberReward && memberReward.member_created"
             type="success"
             variant="tonal"
-            density="comfortable"
+            border="start"
+            rounded="lg"
             class="mb-4"
           >
             Pasien berhasil menjadi member
@@ -498,89 +591,120 @@
             >.
           </v-alert>
 
-          <v-row dense>
+          <v-row dense class="mb-4">
             <v-col cols="12" sm="6">
-              <v-card variant="tonal" color="primary" rounded="lg">
-                <v-card-text class="pa-4">
-                  <div class="text-caption text-medium-emphasis">
-                    Poin Didapat
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-star-plus-outline"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Poin Didapat
+                    </div>
+                    <div class="text-h6 font-weight-bold text-high-emphasis">
+                      {{
+                        formatNumber(
+                          memberReward ? memberReward.point_earned : 0,
+                        )
+                      }}
+                    </div>
                   </div>
-                  <div class="text-h5 font-weight-bold mt-1">
-                    {{
-                      formatNumber(memberReward ? memberReward.point_earned : 0)
-                    }}
-                  </div>
-                </v-card-text>
-              </v-card>
+                </div>
+              </v-sheet>
             </v-col>
 
             <v-col cols="12" sm="6">
-              <v-card variant="tonal" color="green" rounded="lg">
-                <v-card-text class="pa-4">
-                  <div class="text-caption text-medium-emphasis">
-                    Saldo Poin
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="green-lighten-5">
+                    <v-icon
+                      icon="mdi-star-circle-outline"
+                      color="success"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Saldo Poin
+                    </div>
+                    <div class="text-h6 font-weight-bold text-high-emphasis">
+                      {{
+                        formatNumber(
+                          memberReward ? memberReward.point_balance : 0,
+                        )
+                      }}
+                    </div>
                   </div>
-                  <div class="text-h5 font-weight-bold mt-1">
-                    {{
-                      formatNumber(
-                        memberReward ? memberReward.point_balance : 0,
-                      )
-                    }}
-                  </div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-
-            <v-col cols="12">
-              <v-list density="compact" class="mt-2">
-                <v-list-item>
-                  <template #prepend>
-                    <v-icon icon="mdi-card-account-details-outline" />
-                  </template>
-                  <v-list-item-title>No. Member</v-list-item-title>
-                  <v-list-item-subtitle>
-                    {{ memberReward ? memberReward.member_no || "-" : "-" }}
-                  </v-list-item-subtitle>
-                </v-list-item>
-
-                <v-list-item>
-                  <template #prepend>
-                    <v-icon icon="mdi-star-circle-outline" />
-                  </template>
-                  <v-list-item-title>Tier Saat Ini</v-list-item-title>
-                  <v-list-item-subtitle>
-                    {{
-                      memberReward ? memberReward.current_tier_nama || "-" : "-"
-                    }}
-                  </v-list-item-subtitle>
-                </v-list-item>
-
-                <v-list-item>
-                  <template #prepend>
-                    <v-icon icon="mdi-receipt-text-outline" />
-                  </template>
-                  <v-list-item-title>No. Invoice</v-list-item-title>
-                  <v-list-item-subtitle>
-                    {{
-                      memberReward
-                        ? memberReward.no_invoice || header.invoice_no || "-"
-                        : header.invoice_no || "-"
-                    }}
-                  </v-list-item-subtitle>
-                </v-list-item>
-              </v-list>
+                </div>
+              </v-sheet>
             </v-col>
           </v-row>
+
+          <v-card class="rounded-lg border" elevation="0">
+            <v-list density="compact">
+              <v-list-item>
+                <template #prepend>
+                  <v-icon
+                    icon="mdi-card-account-details-outline"
+                    color="primary"
+                  />
+                </template>
+
+                <v-list-item-title>No. Member</v-list-item-title>
+                <v-list-item-subtitle>
+                  {{ memberReward ? memberReward.member_no || "-" : "-" }}
+                </v-list-item-subtitle>
+              </v-list-item>
+
+              <v-divider />
+
+              <v-list-item>
+                <template #prepend>
+                  <v-icon icon="mdi-star-circle-outline" color="primary" />
+                </template>
+
+                <v-list-item-title>Tier Saat Ini</v-list-item-title>
+                <v-list-item-subtitle>
+                  {{
+                    memberReward ? memberReward.current_tier_nama || "-" : "-"
+                  }}
+                </v-list-item-subtitle>
+              </v-list-item>
+
+              <v-divider />
+
+              <v-list-item>
+                <template #prepend>
+                  <v-icon icon="mdi-receipt-text-outline" color="primary" />
+                </template>
+
+                <v-list-item-title>No. Invoice</v-list-item-title>
+                <v-list-item-subtitle>
+                  {{
+                    memberReward
+                      ? memberReward.no_invoice || header.invoice_no || "-"
+                      : header.invoice_no || "-"
+                  }}
+                </v-list-item-subtitle>
+              </v-list-item>
+            </v-list>
+          </v-card>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="pa-4">
-          <v-spacer />
+        <v-card-actions class="pa-4 justify-end">
           <v-btn
             color="primary"
             variant="flat"
-            class="text-none font-weight-bold"
+            prepend-icon="mdi-arrow-right"
             @click="continueAfterMemberReward"
           >
             Lanjut ke Daftar Pembayaran

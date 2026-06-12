@@ -1499,154 +1499,334 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="tierHistoryDialog" max-width="760">
-      <v-card rounded="lg">
-        <v-card-title class="d-flex align-center justify-space-between">
-          <div>
-            <div class="font-weight-bold">Riwayat Tier Pasien</div>
-            <div class="text-caption text-medium-emphasis">
-              Audit perubahan tier otomatis dan manual.
+    <v-dialog v-model="tierHistoryDialog" max-width="1180" scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon icon="mdi-crown-outline" color="primary" size="26" />
+              </v-avatar>
+
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  Riwayat Tier Pasien
+                </div>
+                <div class="text-body-2 text-white">
+                  Audit perubahan tier otomatis dan manual.
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <v-chip
+                v-if="tierHistory?.length"
+                size="small"
+                color="white"
+                variant="flat"
+                class="font-weight-medium"
+              >
+                {{ tierHistory.length }} riwayat
+              </v-chip>
+
+              <v-btn
+                icon="mdi-close"
+                variant="text"
+                color="white"
+                @click="tierHistoryDialog = false"
+              />
             </div>
           </div>
-          <v-btn
-            icon="mdi-close"
-            variant="text"
-            size="small"
-            @click="tierHistoryDialog = false"
-          />
-        </v-card-title>
-        <v-divider />
+        </v-sheet>
+
         <v-progress-linear v-if="tierLoading" indeterminate color="primary" />
-        <v-card-text>
-          <v-timeline
+
+        <v-card-text class="pa-4">
+          <v-card
             v-if="tierHistory.length"
-            side="end"
-            density="compact"
-            truncate-line="both"
+            class="rounded-lg border"
+            elevation="0"
           >
-            <v-timeline-item
-              v-for="entry in tierHistory"
-              :key="entry.id"
-              :dot-color="tierHistoryColor(entry.action)"
-              size="small"
-            >
-              <v-card variant="outlined" rounded="lg">
-                <v-card-text>
-                  <div
-                    class="d-flex flex-column flex-sm-row justify-space-between align-start ga-3"
-                  >
-                    <div>
-                      <div class="d-flex align-center flex-wrap ga-2 mb-1">
-                        <span class="font-weight-bold">{{
-                          entry.action_text
-                        }}</span>
-                        <v-chip
-                          size="x-small"
-                          :color="
-                            entry.source === 'manual' ? 'warning' : 'info'
-                          "
-                          variant="tonal"
-                        >
-                          {{ entry.source_text }}
-                        </v-chip>
-                      </div>
-                      <div class="text-body-2">
-                        {{ entry.old_tier?.name || "Belum ada tier" }}
-                        <v-icon icon="mdi-arrow-right" size="15" class="mx-1" />
-                        <strong>{{
-                          entry.new_tier?.name || "Tanpa tier"
-                        }}</strong>
-                      </div>
-                      <div class="text-body-2 text-medium-emphasis mt-2">
-                        {{ entry.reason }}
-                      </div>
-                      <div class="text-caption text-medium-emphasis mt-2">
-                        Spending saat perubahan:
-                        {{ formatCurrency(entry.total_spending_snapshot) }} •
-                        Oleh: {{ entry.created_by }}
-                      </div>
-                    </div>
-                    <div class="text-body-2 text-medium-emphasis text-sm-right">
-                      {{ formatDateTime(entry.effective_at) }}
-                    </div>
+            <v-card-text class="pa-4">
+              <div
+                class="d-flex align-start justify-space-between ga-3 flex-wrap mb-4"
+              >
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">
+                    Timeline Perubahan Tier
                   </div>
-                </v-card-text>
-              </v-card>
-            </v-timeline-item>
-          </v-timeline>
-          <v-empty-state
-            v-else
-            icon="mdi-crown-outline"
-            title="Belum ada riwayat tier"
-            text="Belum ada perubahan tier yang tercatat pada tabel audit tier."
-          />
+                  <div class="text-body-2 text-medium-emphasis">
+                    Menampilkan perubahan tier, sumber perubahan, alasan,
+                    spending snapshot, dan pembuat audit.
+                  </div>
+                </div>
+
+                <v-chip color="primary" variant="tonal" size="small">
+                  {{ tierHistory.length }} data
+                </v-chip>
+              </div>
+
+              <v-timeline side="end" density="compact" truncate-line="both">
+                <v-timeline-item
+                  v-for="entry in tierHistory"
+                  :key="entry.id"
+                  :dot-color="tierHistoryColor(entry.action)"
+                  size="small"
+                >
+                  <v-card variant="outlined" rounded="lg">
+                    <v-card-text class="pa-4">
+                      <div
+                        class="d-flex flex-column flex-sm-row justify-space-between align-start ga-3"
+                      >
+                        <div class="flex-grow-1">
+                          <div class="d-flex align-center flex-wrap ga-2 mb-2">
+                            <div class="text-subtitle-2 font-weight-bold">
+                              {{ entry.action_text }}
+                            </div>
+
+                            <v-chip
+                              size="small"
+                              :color="
+                                entry.source === 'manual' ? 'warning' : 'info'
+                              "
+                              variant="tonal"
+                            >
+                              {{ entry.source_text }}
+                            </v-chip>
+                          </div>
+
+                          <div class="d-flex align-center flex-wrap ga-2 mb-2">
+                            <v-chip size="small" color="grey" variant="tonal">
+                              {{ entry.old_tier?.name || "Belum ada tier" }}
+                            </v-chip>
+
+                            <v-icon icon="mdi-arrow-right" size="16" />
+
+                            <v-chip
+                              size="small"
+                              :color="tierHistoryColor(entry.action)"
+                              variant="tonal"
+                            >
+                              {{ entry.new_tier?.name || "Tanpa tier" }}
+                            </v-chip>
+                          </div>
+
+                          <v-card
+                            v-if="entry.reason"
+                            class="rounded-lg border mt-3"
+                            elevation="0"
+                          >
+                            <v-card-text class="pa-3">
+                              <div
+                                class="text-caption text-medium-emphasis mb-1"
+                              >
+                                Alasan perubahan
+                              </div>
+                              <div class="text-body-2 text-high-emphasis">
+                                {{ entry.reason }}
+                              </div>
+                            </v-card-text>
+                          </v-card>
+
+                          <div class="d-flex flex-wrap ga-2 mt-3">
+                            <v-chip
+                              size="small"
+                              color="primary"
+                              variant="tonal"
+                            >
+                              Spending:
+                              {{
+                                formatCurrency(entry.total_spending_snapshot)
+                              }}
+                            </v-chip>
+
+                            <v-chip
+                              size="small"
+                              color="secondary"
+                              variant="tonal"
+                            >
+                              Oleh: {{ entry.created_by || "-" }}
+                            </v-chip>
+                          </div>
+                        </div>
+
+                        <div
+                          class="text-body-2 text-medium-emphasis text-sm-right"
+                        >
+                          {{ formatDateTime(entry.effective_at) }}
+                        </div>
+                      </div>
+                    </v-card-text>
+                  </v-card>
+                </v-timeline-item>
+              </v-timeline>
+            </v-card-text>
+          </v-card>
+
+          <v-card
+            v-else-if="!tierLoading"
+            class="rounded-lg border"
+            elevation="0"
+          >
+            <v-empty-state
+              icon="mdi-crown-outline"
+              title="Belum ada riwayat tier"
+              text="Belum ada perubahan tier yang tercatat pada tabel audit tier."
+            />
+          </v-card>
         </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="pa-4 justify-end">
+          <v-btn
+            variant="outlined"
+            color="secondary"
+            prepend-icon="mdi-close"
+            @click="tierHistoryDialog = false"
+          >
+            Tutup
+          </v-btn>
+        </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="tierActionDialog" max-width="560" persistent>
-      <v-card rounded="lg">
-        <v-card-title class="d-flex align-center justify-space-between">
-          <div>
-            <div class="font-weight-bold">{{ tierActionTitle }}</div>
-            <div class="text-caption text-medium-emphasis">
-              Perubahan disimpan sebagai audit dan berlaku pada transaksi
-              berikutnya.
+    <v-dialog v-model="tierActionDialog" max-width="680" persistent scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon
+                  :icon="
+                    tierActionType === 'downgrade'
+                      ? 'mdi-arrow-down-bold-circle-outline'
+                      : 'mdi-arrow-up-bold-circle-outline'
+                  "
+                  color="primary"
+                  size="26"
+                />
+              </v-avatar>
+
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  {{ tierActionTitle }}
+                </div>
+                <div class="text-body-2 text-white">
+                  Perubahan tier disimpan sebagai audit dan berlaku pada
+                  transaksi berikutnya.
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <v-chip
+                size="small"
+                color="white"
+                variant="flat"
+                class="font-weight-medium"
+              >
+                {{ currentTierName }}
+                <v-icon icon="mdi-arrow-right" size="14" class="mx-1" />
+                {{ tierActionTarget?.name || currentTierName }}
+              </v-chip>
+
+              <v-btn
+                icon="mdi-close"
+                variant="text"
+                color="white"
+                :disabled="tierActionLoading"
+                @click="closeTierAction"
+              />
             </div>
           </div>
-          <v-btn
-            icon="mdi-close"
-            variant="text"
-            size="small"
-            :disabled="tierActionLoading"
-            @click="closeTierAction"
-          />
-        </v-card-title>
-        <v-divider />
-        <v-form ref="tierActionForm" @submit.prevent="submitTierAction">
-          <v-card-text>
-            <v-alert
-              :type="tierActionType === 'downgrade' ? 'warning' : 'info'"
-              variant="tonal"
-              border="start"
-              class="mb-4"
-            >
-              <div class="font-weight-bold mb-1">
-                {{ currentTierName }}
-                <v-icon icon="mdi-arrow-right" size="16" class="mx-1" />
-                {{ tierActionTarget?.name || currentTierName }}
-              </div>
-              <div class="text-body-2">
-                {{ tierActionDescription }}
-              </div>
-            </v-alert>
+        </v-sheet>
 
-            <v-textarea
-              v-model="tierReason"
-              label="Alasan perubahan tier"
-              placeholder="Contoh: Penyesuaian keputusan manajemen berdasarkan evaluasi membership"
-              variant="outlined"
-              rows="3"
-              counter="500"
-              :rules="tierReasonRules"
-              :disabled="tierActionLoading"
-              autofocus
-            />
+        <v-form ref="tierActionForm" @submit.prevent="submitTierAction">
+          <v-card-text class="pa-4">
+            <v-card class="rounded-lg border mb-4" elevation="0">
+              <v-card-text class="pa-4">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar
+                    size="38"
+                    :color="
+                      tierActionType === 'downgrade'
+                        ? 'orange-lighten-5'
+                        : 'blue-lighten-5'
+                    "
+                  >
+                    <v-icon
+                      :icon="
+                        tierActionType === 'downgrade'
+                          ? 'mdi-alert-outline'
+                          : 'mdi-information-outline'
+                      "
+                      :color="
+                        tierActionType === 'downgrade' ? 'warning' : 'primary'
+                      "
+                      size="22"
+                    />
+                  </v-avatar>
+
+                  <div class="flex-grow-1">
+                    <div class="text-subtitle-2 font-weight-bold">
+                      {{ currentTierName }}
+                      <v-icon icon="mdi-arrow-right" size="16" class="mx-1" />
+                      {{ tierActionTarget?.name || currentTierName }}
+                    </div>
+
+                    <div class="text-body-2 text-medium-emphasis mt-1">
+                      {{ tierActionDescription }}
+                    </div>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+
+            <v-card class="rounded-lg border" elevation="0">
+              <v-card-text class="pa-4">
+                <div class="text-subtitle-2 font-weight-bold mb-1">
+                  Alasan Perubahan Tier
+                </div>
+
+                <div class="text-body-2 text-medium-emphasis mb-3">
+                  Wajib diisi agar riwayat perubahan tier jelas saat diaudit.
+                </div>
+
+                <v-textarea
+                  v-model="tierReason"
+                  label="Alasan perubahan tier"
+                  placeholder="Contoh: Penyesuaian keputusan manajemen berdasarkan evaluasi membership"
+                  variant="outlined"
+                  density="comfortable"
+                  rows="3"
+                  counter="500"
+                  :rules="tierReasonRules"
+                  :disabled="tierActionLoading"
+                  autofocus
+                />
+              </v-card-text>
+            </v-card>
           </v-card-text>
-          <v-card-actions class="px-4 pb-4">
-            <v-spacer />
+
+          <v-divider />
+
+          <v-card-actions class="pa-4 justify-end">
             <v-btn
               variant="outlined"
+              color="secondary"
               :disabled="tierActionLoading"
               @click="closeTierAction"
             >
               Batal
             </v-btn>
+
             <v-btn
               :color="tierActionType === 'downgrade' ? 'warning' : 'primary'"
               variant="flat"
               type="submit"
               :loading="tierActionLoading"
+              :disabled="tierActionLoading"
             >
               Konfirmasi
             </v-btn>
@@ -1742,49 +1922,81 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="beforeAfterDialog" max-width="980">
-      <v-card rounded="lg">
-        <v-card-title class="d-flex align-center justify-space-between">
-          <div>
-            <div class="font-weight-bold">Foto Before After</div>
-            <div class="text-caption text-medium-emphasis">
-              Pilih kunjungan treatment untuk melihat dokumentasi foto.
+    <v-dialog v-model="beforeAfterDialog" max-width="1180" scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon
+                  icon="mdi-image-multiple-outline"
+                  color="primary"
+                  size="26"
+                />
+              </v-avatar>
+
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  Foto Before After
+                </div>
+                <div class="text-body-2 text-white">
+                  Pilih kunjungan treatment untuk melihat dokumentasi foto.
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <v-chip
+                v-if="photoVisitOptions?.length"
+                size="small"
+                color="white"
+                variant="flat"
+                class="font-weight-medium"
+              >
+                {{ photoVisitOptions.length }} kunjungan
+              </v-chip>
+
+              <v-btn
+                icon="mdi-close"
+                variant="text"
+                color="white"
+                @click="beforeAfterDialog = false"
+              />
             </div>
           </div>
-          <v-btn
-            icon="mdi-close"
-            variant="text"
-            size="small"
-            @click="beforeAfterDialog = false"
-          />
-        </v-card-title>
-        <v-divider />
-        <v-card-text>
-          <v-select
-            v-model="photoVisitId"
-            :items="photoVisitOptions"
-            item-title="title"
-            item-value="value"
-            label="Kunjungan treatment"
-            variant="outlined"
-            density="comfortable"
-            prepend-inner-icon="mdi-calendar-search"
-            :disabled="photoLoading"
-            @update:model-value="loadBeforeAfterPhotos"
-          />
+        </v-sheet>
 
-          <v-progress-linear
-            v-if="photoLoading"
-            indeterminate
-            color="deep-purple"
-            class="mb-4"
-          />
+        <v-card-text class="pa-4">
+          <v-card class="rounded-lg border mb-4" elevation="0">
+            <v-card-text class="pa-4">
+              <v-select
+                v-model="photoVisitId"
+                :items="photoVisitOptions"
+                item-title="title"
+                item-value="value"
+                label="Kunjungan treatment"
+                variant="outlined"
+                density="comfortable"
+                prepend-inner-icon="mdi-calendar-search"
+                :disabled="photoLoading"
+                hide-details
+                @update:model-value="loadBeforeAfterPhotos"
+              />
+            </v-card-text>
+
+            <v-progress-linear
+              v-if="photoLoading"
+              indeterminate
+              color="primary"
+            />
+          </v-card>
 
           <v-alert
             v-if="photoError"
             type="warning"
             variant="tonal"
             border="start"
+            rounded="lg"
             class="mb-4"
           >
             {{ photoError }}
@@ -1792,66 +2004,123 @@
 
           <v-row v-if="hasBeforeAfterPhotos" dense>
             <v-col cols="12" md="6">
-              <v-card variant="outlined" rounded="lg" height="100%">
-                <v-card-title class="text-subtitle-1 font-weight-bold"
-                  >Before</v-card-title
-                >
-                <v-divider />
-                <v-card-text>
+              <v-card class="rounded-lg border h-100" elevation="0">
+                <v-card-text class="pa-4">
+                  <div
+                    class="d-flex align-start justify-space-between ga-3 mb-4"
+                  >
+                    <div class="d-flex align-center ga-3">
+                      <v-avatar size="36" color="blue-lighten-5">
+                        <v-icon
+                          icon="mdi-camera-outline"
+                          color="primary"
+                          size="20"
+                        />
+                      </v-avatar>
+
+                      <div>
+                        <div class="text-subtitle-1 font-weight-bold">
+                          Before
+                        </div>
+                        <div class="text-body-2 text-medium-emphasis">
+                          Dokumentasi sebelum treatment
+                        </div>
+                      </div>
+                    </div>
+
+                    <v-chip color="primary" variant="tonal" size="small">
+                      {{ beforeAfterPhotos?.before?.length || 0 }} foto
+                    </v-chip>
+                  </div>
+
                   <v-row dense>
                     <v-col
-                      v-for="photo in beforeAfterPhotos.before"
+                      v-for="photo in beforeAfterPhotos?.before || []"
                       :key="photo.id"
                       cols="12"
                       sm="4"
                     >
-                      <v-img :src="photo.url" height="190" cover rounded="lg">
-                        <template #error>
-                          <div
-                            class="d-flex align-center justify-center fill-height bg-grey-lighten-3 text-caption"
-                          >
-                            Foto tidak dapat dimuat
-                          </div>
-                        </template>
-                      </v-img>
-                      <div
-                        class="text-caption text-center text-medium-emphasis mt-2"
-                      >
-                        Foto {{ photo.order }}
-                      </div>
+                      <v-card variant="outlined" rounded="lg">
+                        <v-img :src="photo.url" height="190" cover>
+                          <template #error>
+                            <div
+                              class="d-flex align-center justify-center fill-height bg-grey-lighten-3 text-caption text-medium-emphasis"
+                            >
+                              Foto tidak dapat dimuat
+                            </div>
+                          </template>
+                        </v-img>
+
+                        <v-divider />
+
+                        <div
+                          class="text-caption text-center text-medium-emphasis pa-2"
+                        >
+                          Foto {{ photo.order }}
+                        </div>
+                      </v-card>
                     </v-col>
                   </v-row>
                 </v-card-text>
               </v-card>
             </v-col>
+
             <v-col cols="12" md="6">
-              <v-card variant="outlined" rounded="lg" height="100%">
-                <v-card-title class="text-subtitle-1 font-weight-bold"
-                  >After</v-card-title
-                >
-                <v-divider />
-                <v-card-text>
+              <v-card class="rounded-lg border h-100" elevation="0">
+                <v-card-text class="pa-4">
+                  <div
+                    class="d-flex align-start justify-space-between ga-3 mb-4"
+                  >
+                    <div class="d-flex align-center ga-3">
+                      <v-avatar size="36" color="green-lighten-5">
+                        <v-icon
+                          icon="mdi-camera-plus-outline"
+                          color="success"
+                          size="20"
+                        />
+                      </v-avatar>
+
+                      <div>
+                        <div class="text-subtitle-1 font-weight-bold">
+                          After
+                        </div>
+                        <div class="text-body-2 text-medium-emphasis">
+                          Dokumentasi setelah treatment
+                        </div>
+                      </div>
+                    </div>
+
+                    <v-chip color="success" variant="tonal" size="small">
+                      {{ beforeAfterPhotos?.after?.length || 0 }} foto
+                    </v-chip>
+                  </div>
+
                   <v-row dense>
                     <v-col
-                      v-for="photo in beforeAfterPhotos.after"
+                      v-for="photo in beforeAfterPhotos?.after || []"
                       :key="photo.id"
                       cols="12"
                       sm="4"
                     >
-                      <v-img :src="photo.url" height="190" cover rounded="lg">
-                        <template #error>
-                          <div
-                            class="d-flex align-center justify-center fill-height bg-grey-lighten-3 text-caption"
-                          >
-                            Foto tidak dapat dimuat
-                          </div>
-                        </template>
-                      </v-img>
-                      <div
-                        class="text-caption text-center text-medium-emphasis mt-2"
-                      >
-                        Foto {{ photo.order }}
-                      </div>
+                      <v-card variant="outlined" rounded="lg">
+                        <v-img :src="photo.url" height="190" cover>
+                          <template #error>
+                            <div
+                              class="d-flex align-center justify-center fill-height bg-grey-lighten-3 text-caption text-medium-emphasis"
+                            >
+                              Foto tidak dapat dimuat
+                            </div>
+                          </template>
+                        </v-img>
+
+                        <v-divider />
+
+                        <div
+                          class="text-caption text-center text-medium-emphasis pa-2"
+                        >
+                          Foto {{ photo.order }}
+                        </div>
+                      </v-card>
                     </v-col>
                   </v-row>
                 </v-card-text>
@@ -1859,13 +2128,31 @@
             </v-col>
           </v-row>
 
-          <v-empty-state
+          <v-card
             v-else-if="!photoLoading && !photoError"
-            icon="mdi-image-off-outline"
-            title="Foto belum tersedia"
-            text="Belum ada dokumentasi before dan after pada kunjungan yang dipilih."
-          />
+            class="rounded-lg border"
+            elevation="0"
+          >
+            <v-empty-state
+              icon="mdi-image-off-outline"
+              title="Foto belum tersedia"
+              text="Belum ada dokumentasi before dan after pada kunjungan yang dipilih."
+            />
+          </v-card>
         </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="pa-4 justify-end">
+          <v-btn
+            variant="outlined"
+            color="secondary"
+            prepend-icon="mdi-close"
+            @click="beforeAfterDialog = false"
+          >
+            Tutup
+          </v-btn>
+        </v-card-actions>
       </v-card>
     </v-dialog>
 

@@ -397,146 +397,312 @@
       </div>
     </v-card>
 
-    <v-dialog v-model="detailDialog.show" max-width="720">
-      <v-card class="dialog-card">
-        <v-card-title
-          class="dialog-title d-flex justify-space-between align-center"
-        >
-          <div>
-            <div>Detail Booking</div>
-            <div class="text-body-2 text-medium-emphasis">
-              {{ getBookingCode(detailDialog.item) }}
-            </div>
-          </div>
+    <v-dialog v-model="detailDialog.show" max-width="1180" scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon
+                  icon="mdi-calendar-check-outline"
+                  color="primary"
+                  size="26"
+                />
+              </v-avatar>
 
-          <v-btn
-            icon="mdi-close"
-            variant="text"
-            size="small"
-            @click="detailDialog.show = false"
-          />
-        </v-card-title>
-
-        <v-divider />
-
-        <v-card-text v-if="detailDialog.item" class="pa-4">
-          <v-row dense>
-            <v-col cols="12" md="6">
-              <div class="info-box">
-                <div class="label-text">Kode Booking</div>
-                <div class="value-text">
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  Detail Booking
+                </div>
+                <div class="text-body-2 text-white">
                   {{ getBookingCode(detailDialog.item) }}
                 </div>
               </div>
-            </v-col>
+            </div>
 
-            <v-col cols="12" md="6">
-              <div class="info-box">
-                <div class="label-text">Status</div>
-                <v-chip
-                  size="small"
-                  :color="statusMeta(detailDialog.item.status).color"
-                  :prepend-icon="statusMeta(detailDialog.item.status).icon"
-                  variant="flat"
-                  class="font-weight-bold"
-                >
-                  {{ statusMeta(detailDialog.item.status).text }}
-                </v-chip>
-              </div>
-            </v-col>
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <v-chip
+                v-if="detailDialog.item"
+                size="small"
+                color="white"
+                variant="flat"
+                class="font-weight-medium"
+              >
+                {{ statusMeta(detailDialog.item.status).text }}
+              </v-chip>
 
-            <v-col cols="12" md="6">
-              <div class="info-box">
-                <div class="label-text">Nama Pasien</div>
-                <div class="value-text">
-                  {{ getPasienName(detailDialog.item) }}
+              <v-btn
+                icon="mdi-close"
+                variant="text"
+                color="white"
+                @click="detailDialog.show = false"
+              />
+            </div>
+          </div>
+        </v-sheet>
+
+        <v-card-text v-if="detailDialog.item" class="pa-4">
+          <v-row dense class="mb-4">
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon icon="mdi-barcode-scan" color="primary" size="19" />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Kode Booking
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ getBookingCode(detailDialog.item) }}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="6">
-              <div class="info-box">
-                <div class="label-text">No HP</div>
-                <div class="value-text">
-                  {{ getPasienPhone(detailDialog.item) }}
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      :icon="statusMeta(detailDialog.item.status).icon"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">Status</div>
+                    <v-chip
+                      size="small"
+                      :color="statusMeta(detailDialog.item.status).color"
+                      :prepend-icon="statusMeta(detailDialog.item.status).icon"
+                      variant="tonal"
+                      class="font-weight-bold mt-1"
+                    >
+                      {{ statusMeta(detailDialog.item.status).text }}
+                    </v-chip>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="6">
-              <div class="info-box">
-                <div class="label-text">Jadwal</div>
-                <div class="value-text">
-                  {{ formatDate(getAppointmentDate(detailDialog.item)) }}
-                  ·
-                  {{ formatTime(getAppointmentTime(detailDialog.item)) }}
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-account-outline"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Nama Pasien
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ getPasienName(detailDialog.item) }}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="6">
-              <div class="info-box">
-                <div class="label-text">Kategori</div>
-                <div class="value-text">
-                  {{ detailDialog.item.kategori?.nama || "-" }}
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon icon="mdi-cellphone" color="primary" size="19" />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">No HP</div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ getPasienPhone(detailDialog.item) }}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="6">
-              <div class="info-box">
-                <div class="label-text">Dokter</div>
-                <div class="value-text">
-                  {{ detailDialog.item.dokter?.nama || "Belum ditentukan" }}
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-calendar-clock"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">Jadwal</div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ formatDate(getAppointmentDate(detailDialog.item)) }}
+                      ·
+                      {{ formatTime(getAppointmentTime(detailDialog.item)) }}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="6">
-              <div class="info-box">
-                <div class="label-text">Treatment</div>
-                <div class="value-text">
-                  {{ detailDialog.item.treatment?.nama || "-" }}
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon icon="mdi-tag-outline" color="primary" size="19" />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Kategori
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ detailDialog.item.kategori?.nama || "-" }}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="6">
-              <div class="info-box">
-                <div class="label-text">Source</div>
-                <div class="value-text">
-                  {{ detailDialog.item.source || "-" }}
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon icon="mdi-doctor" color="primary" size="19" />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">Dokter</div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ detailDialog.item.dokter?.nama || "Belum ditentukan" }}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="6">
-              <div class="info-box">
-                <div class="label-text">Status Time</div>
-                <div class="value-text">
-                  {{ getStatusTimeLabel(detailDialog.item) }}
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon icon="mdi-stethoscope" color="primary" size="19" />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Treatment
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ detailDialog.item.treatment?.nama || "-" }}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12">
-              <div class="note-box">
-                <div class="label-text">Catatan</div>
-                {{
-                  detailDialog.item.notes || detailDialog.item.catatan || "-"
-                }}
-              </div>
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-source-branch"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">Source</div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ detailDialog.item.source || "-" }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
+            </v-col>
+
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="green-lighten-5">
+                    <v-icon
+                      icon="mdi-clock-outline"
+                      color="success"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Status Time
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ getStatusTimeLabel(detailDialog.item) }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
             </v-col>
           </v-row>
+
+          <v-card class="rounded-lg border" elevation="0">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-start ga-3">
+                <v-avatar size="34" color="blue-lighten-5">
+                  <v-icon
+                    icon="mdi-note-text-outline"
+                    color="primary"
+                    size="19"
+                  />
+                </v-avatar>
+
+                <div>
+                  <div class="text-caption text-medium-emphasis">Catatan</div>
+                  <div class="text-body-2 text-high-emphasis mt-1">
+                    {{
+                      detailDialog.item.notes ||
+                      detailDialog.item.catatan ||
+                      "-"
+                    }}
+                  </div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="justify-end pa-4">
+        <v-card-actions class="pa-4 justify-end">
           <v-btn
             color="secondary"
             variant="outlined"
-            class="text-none font-weight-bold"
+            prepend-icon="mdi-close"
             @click="detailDialog.show = false"
           >
             Tutup
@@ -545,36 +711,80 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="confirmDialog.show" max-width="480">
-      <v-card class="dialog-card">
-        <v-card-title class="dialog-title">
-          {{ confirmTitle }}
-        </v-card-title>
+    <v-dialog v-model="confirmDialog.show" max-width="680" scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet :color="confirmColor || 'primary'" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon
+                  icon="mdi-alert-circle-outline"
+                  :color="confirmColor || 'primary'"
+                  size="26"
+                />
+              </v-avatar>
 
-        <v-divider />
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  {{ confirmTitle }}
+                </div>
+                <div class="text-body-2 text-white">
+                  {{ getBookingCode(confirmDialog.item) }}
+                </div>
+              </div>
+            </div>
+
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              color="white"
+              :disabled="actionLoadingId !== null"
+              @click="closeConfirmDialog"
+            />
+          </div>
+        </v-sheet>
 
         <v-card-text class="pa-4">
-          <div class="text-body-2 mb-3">
+          <v-alert
+            type="warning"
+            variant="tonal"
+            border="start"
+            rounded="lg"
+            class="mb-4"
+          >
             {{ confirmMessage }}
-          </div>
-
-          <v-alert type="warning" variant="tonal" density="compact">
-            <div class="font-weight-bold">
-              {{ getBookingCode(confirmDialog.item) }}
-            </div>
-            <div class="text-body-2">
-              {{ getPasienName(confirmDialog.item) }}
-            </div>
           </v-alert>
+
+          <v-card class="rounded-lg border" elevation="0">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-start ga-3">
+                <v-avatar size="38" color="blue-lighten-5">
+                  <v-icon
+                    icon="mdi-calendar-check-outline"
+                    color="primary"
+                    size="22"
+                  />
+                </v-avatar>
+
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold">
+                    {{ getBookingCode(confirmDialog.item) }}
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis mt-1">
+                    {{ getPasienName(confirmDialog.item) }}
+                  </div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="justify-end pa-4">
+        <v-card-actions class="pa-4 justify-end">
           <v-btn
             color="secondary"
             variant="outlined"
-            class="text-none font-weight-bold"
             :disabled="actionLoadingId !== null"
             @click="closeConfirmDialog"
           >
@@ -584,8 +794,8 @@
           <v-btn
             :color="confirmColor"
             variant="flat"
-            class="text-none font-weight-bold"
             :loading="actionLoadingId !== null"
+            :disabled="actionLoadingId !== null"
             @click="executeAction"
           >
             Proses

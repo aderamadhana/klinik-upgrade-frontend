@@ -492,50 +492,126 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="buktiChatDialog.show" max-width="520">
-      <v-card class="dialog-card">
-        <v-card-title class="dialog-title">
-          Upload Bukti Chat Konsultasi Online
-        </v-card-title>
+    <v-dialog v-model="buktiChatDialog.show" max-width="720" scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon
+                  icon="mdi-chat-upload-outline"
+                  color="primary"
+                  size="26"
+                />
+              </v-avatar>
 
-        <v-divider />
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  Upload Bukti Chat Konsultasi Online
+                </div>
+                <div class="text-body-2 text-white">
+                  Lampirkan bukti chat konsultasi online pasien.
+                </div>
+              </div>
+            </div>
+
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              color="white"
+              :disabled="buktiChatDialog.loading"
+              @click="closeBuktiChatDialog"
+            />
+          </div>
+        </v-sheet>
 
         <v-card-text class="pa-4">
-          <div v-if="buktiChatDialog.item" class="delete-dialog-info mb-4">
-            <div>
-              <strong>No Registrasi:</strong>
-              {{ getKodeRegistrasi(buktiChatDialog.item) }}
-            </div>
-            <div>
-              <strong>Pasien:</strong>
-              {{ getPasienName(buktiChatDialog.item) }}
-            </div>
-          </div>
+          <v-card
+            v-if="buktiChatDialog.item"
+            class="rounded-lg border mb-4"
+            elevation="0"
+          >
+            <v-card-text class="pa-4">
+              <div class="d-flex align-start ga-3">
+                <v-avatar size="38" color="blue-lighten-5">
+                  <v-icon
+                    icon="mdi-account-details-outline"
+                    color="primary"
+                    size="22"
+                  />
+                </v-avatar>
 
-          <v-file-input
-            v-model="buktiChatDialog.file"
-            label="Pilih file bukti chat"
-            prepend-icon=""
-            prepend-inner-icon="mdi-paperclip"
-            variant="outlined"
-            density="compact"
-            accept=".jpg,.jpeg,.png,.webp,.pdf"
-            :error-messages="buktiChatDialog.error"
-            show-size
-          />
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold">
+                    Detail Registrasi
+                  </div>
 
-          <div class="text-caption text-medium-emphasis mt-2">
-            Format yang didukung: JPG, JPEG, PNG, WEBP, atau PDF. Maksimal 5 MB.
-          </div>
+                  <div class="text-body-2 text-medium-emphasis mt-2">
+                    <strong>No Registrasi:</strong>
+                    {{ getKodeRegistrasi(buktiChatDialog.item) }}
+                  </div>
+
+                  <div class="text-body-2 text-medium-emphasis mt-1">
+                    <strong>Pasien:</strong>
+                    {{ getPasienName(buktiChatDialog.item) }}
+                  </div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+
+          <v-card class="rounded-lg border" elevation="0">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-start ga-3 mb-4">
+                <v-avatar size="38" color="blue-lighten-5">
+                  <v-icon icon="mdi-paperclip" color="primary" size="22" />
+                </v-avatar>
+
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold">
+                    File Bukti Chat
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Pilih file bukti chat konsultasi online yang akan diupload.
+                  </div>
+                </div>
+              </div>
+
+              <v-file-input
+                v-model="buktiChatDialog.file"
+                label="Pilih file bukti chat"
+                prepend-icon=""
+                prepend-inner-icon="mdi-paperclip"
+                variant="outlined"
+                density="compact"
+                accept=".jpg,.jpeg,.png,.webp,.pdf"
+                :error-messages="buktiChatDialog.error"
+                :disabled="buktiChatDialog.loading"
+                show-size
+                hide-details="auto"
+              />
+
+              <v-alert
+                type="info"
+                variant="tonal"
+                border="start"
+                rounded="lg"
+                density="compact"
+                class="mt-4"
+              >
+                Format yang didukung: JPG, JPEG, PNG, WEBP, atau PDF. Maksimal 5
+                MB.
+              </v-alert>
+            </v-card-text>
+          </v-card>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="justify-end pa-4">
+        <v-card-actions class="pa-4 justify-end">
           <v-btn
             variant="outlined"
             color="secondary"
-            class="text-none font-weight-bold"
             :disabled="buktiChatDialog.loading"
             @click="closeBuktiChatDialog"
           >
@@ -546,9 +622,8 @@
             color="primary"
             variant="flat"
             prepend-icon="mdi-upload-outline"
-            class="text-none font-weight-bold"
             :loading="buktiChatDialog.loading"
-            :disabled="!buktiChatDialog.file"
+            :disabled="!buktiChatDialog.file || buktiChatDialog.loading"
             @click="submitBuktiChatKonsultasiOnline"
           >
             Upload

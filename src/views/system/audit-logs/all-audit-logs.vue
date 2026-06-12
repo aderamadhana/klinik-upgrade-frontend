@@ -344,221 +344,355 @@
     </div>
 
     <!-- DETAIL DIALOG -->
-    <!-- DETAIL DIALOG -->
-    <v-dialog v-model="detailDialog" max-width="1100">
-      <v-card class="detail-dialog-card">
-        <v-card-title class="detail-dialog-title">
-          <div>
-            <div class="dialog-main-title">Detail Audit Log</div>
-            <div class="dialog-subtitle">
-              ID: {{ selectedItem ? selectedItem.id : "-" }}
-            </div>
-          </div>
+    <v-dialog v-model="detailDialog" max-width="1180" scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon
+                  icon="mdi-clipboard-text-clock-outline"
+                  color="primary"
+                  size="26"
+                />
+              </v-avatar>
 
-          <v-btn
-            icon="mdi-close"
-            variant="text"
-            size="small"
-            @click="detailDialog = false"
-          />
-        </v-card-title>
-
-        <v-divider />
-
-        <!-- LOADING STATE -->
-        <v-card-text v-if="detailLoading" class="detail-dialog-body">
-          <div class="detail-loading-box">
-            <v-progress-circular
-              indeterminate
-              color="primary"
-              size="42"
-              width="4"
-            />
-
-            <div class="detail-loading-title">Memuat detail audit log...</div>
-
-            <div class="detail-loading-subtitle">
-              Sistem sedang mengambil old values dan new values.
-            </div>
-          </div>
-
-          <v-row dense class="mt-4">
-            <v-col v-for="n in 8" :key="`info-${n}`" cols="12" md="3">
-              <div class="skeleton-info-box">
-                <div class="skeleton-line small"></div>
-                <div class="skeleton-line large"></div>
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  Detail Audit Log
+                </div>
+                <div class="text-body-2 text-white">
+                  ID: {{ selectedItem ? selectedItem.id : "-" }}
+                </div>
               </div>
+            </div>
+
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <v-chip
+                v-if="selectedItem?.action"
+                size="small"
+                color="white"
+                variant="flat"
+                class="font-weight-medium"
+              >
+                {{ formatAction(selectedItem.action) }}
+              </v-chip>
+
+              <v-btn
+                icon="mdi-close"
+                variant="text"
+                color="white"
+                @click="detailDialog = false"
+              />
+            </div>
+          </div>
+        </v-sheet>
+
+        <v-card-text v-if="detailLoading" class="pa-4">
+          <v-card class="rounded-lg border mb-4" elevation="0">
+            <v-card-text class="pa-6 text-center">
+              <v-progress-circular
+                indeterminate
+                color="primary"
+                size="42"
+                width="4"
+              />
+
+              <div class="text-subtitle-1 font-weight-bold mt-4">
+                Memuat detail audit log...
+              </div>
+
+              <div class="text-body-2 text-medium-emphasis mt-1">
+                Sistem sedang mengambil old values dan new values.
+              </div>
+            </v-card-text>
+          </v-card>
+
+          <v-row dense>
+            <v-col v-for="n in 8" :key="`info-${n}`" cols="12" sm="6" md="3">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <v-skeleton-loader type="text, heading" />
+              </v-sheet>
             </v-col>
 
             <v-col cols="12" md="6">
-              <div class="skeleton-json-box"></div>
+              <v-sheet rounded="lg" border class="pa-3">
+                <v-skeleton-loader type="paragraph, paragraph, paragraph" />
+              </v-sheet>
             </v-col>
 
             <v-col cols="12" md="6">
-              <div class="skeleton-json-box"></div>
+              <v-sheet rounded="lg" border class="pa-3">
+                <v-skeleton-loader type="paragraph, paragraph, paragraph" />
+              </v-sheet>
             </v-col>
           </v-row>
         </v-card-text>
 
-        <!-- DETAIL CONTENT -->
-        <v-card-text v-else-if="selectedItem" class="detail-dialog-body">
-          <v-row dense class="mb-3">
-            <v-col cols="12" md="3">
-              <div class="detail-info-box">
-                <div class="detail-label">Tanggal</div>
-                <div class="detail-value">
-                  {{ formatDateTime(selectedItem.created_at) }}
+        <v-card-text v-else-if="selectedItem" class="pa-4">
+          <v-row dense class="mb-4">
+            <v-col cols="12" sm="6" md="3">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-calendar-clock"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">Tanggal</div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ formatDateTime(selectedItem.created_at) }}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="3">
-              <div class="detail-info-box">
-                <div class="detail-label">Module</div>
-                <div class="detail-value">
-                  {{ selectedItem.module_name || "-" }}
+            <v-col cols="12" sm="6" md="3">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-view-module-outline"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">Module</div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ selectedItem.module_name || "-" }}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="3">
-              <div class="detail-info-box">
-                <div class="detail-label">Tabel</div>
-                <div class="detail-value">
-                  {{ selectedItem.table_name || "-" }}
+            <v-col cols="12" sm="6" md="3">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon icon="mdi-table" color="primary" size="19" />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">Tabel</div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ selectedItem.table_name || "-" }}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="3">
-              <div class="detail-info-box">
-                <div class="detail-label">Action</div>
-                <div class="detail-value">
-                  <v-chip
-                    size="small"
-                    :color="getActionColor(selectedItem.action)"
-                  >
-                    {{ formatAction(selectedItem.action) }}
-                  </v-chip>
+            <v-col cols="12" sm="6" md="3">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-lightning-bolt-outline"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">Action</div>
+                    <v-chip
+                      size="small"
+                      :color="getActionColor(selectedItem.action)"
+                      variant="tonal"
+                      class="font-weight-bold mt-1"
+                    >
+                      {{ formatAction(selectedItem.action) }}
+                    </v-chip>
+                  </div>
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="3">
-              <div class="detail-info-box">
-                <div class="detail-label">Record ID</div>
-                <div class="detail-value">
+            <v-col cols="12" sm="6" md="3">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="text-caption text-medium-emphasis">Record ID</div>
+                <div class="text-body-2 font-weight-bold text-high-emphasis">
                   {{ selectedItem.record_id || "-" }}
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="3">
-              <div class="detail-info-box">
-                <div class="detail-label">Toko ID</div>
-                <div class="detail-value">
+            <v-col cols="12" sm="6" md="3">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="text-caption text-medium-emphasis">Toko ID</div>
+                <div class="text-body-2 font-weight-bold text-high-emphasis">
                   {{ selectedItem.toko_id || "-" }}
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="3">
-              <div class="detail-info-box">
-                <div class="detail-label">User</div>
-                <div class="detail-value">
+            <v-col cols="12" sm="6" md="3">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="text-caption text-medium-emphasis">User</div>
+                <div class="text-body-2 font-weight-bold text-high-emphasis">
                   {{ selectedItem.username || "-" }}
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" md="3">
-              <div class="detail-info-box">
-                <div class="detail-label">Role</div>
-                <div class="detail-value">
+            <v-col cols="12" sm="6" md="3">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="text-caption text-medium-emphasis">Role</div>
+                <div class="text-body-2 font-weight-bold text-high-emphasis">
                   {{ selectedItem.role_name || "-" }}
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
             <v-col cols="12" md="6">
-              <div class="detail-info-box">
-                <div class="detail-label">IP Address</div>
-                <div class="detail-value">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="text-caption text-medium-emphasis">IP Address</div>
+                <div class="text-body-2 font-weight-bold text-high-emphasis">
                   {{ selectedItem.ip_address || "-" }}
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
             <v-col cols="12" md="6">
-              <div class="detail-info-box">
-                <div class="detail-label">Reason</div>
-                <div class="detail-value">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="text-caption text-medium-emphasis">Reason</div>
+                <div class="text-body-2 font-weight-bold text-high-emphasis">
                   {{ selectedItem.reason || "-" }}
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
             <v-col cols="12">
-              <div class="detail-info-box">
-                <div class="detail-label">Deskripsi</div>
-                <div class="detail-value">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="text-caption text-medium-emphasis">Deskripsi</div>
+                <div class="text-body-2 font-weight-bold text-high-emphasis">
                   {{ selectedItem.description || "-" }}
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
 
             <v-col cols="12">
-              <div class="detail-info-box">
-                <div class="detail-label">User Agent</div>
-                <div class="detail-value detail-user-agent">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="text-caption text-medium-emphasis">User Agent</div>
+                <div class="text-body-2 text-high-emphasis">
                   {{ selectedItem.user_agent || "-" }}
                 </div>
-              </div>
+              </v-sheet>
             </v-col>
           </v-row>
 
           <v-row dense>
             <v-col cols="12" md="6">
-              <div class="json-card">
-                <div class="json-title">Old Values</div>
-                <pre class="json-box">{{
-                  formatJson(
-                    selectedItem.old_values_parsed || selectedItem.old_values,
-                  )
-                }}</pre>
-              </div>
+              <v-card class="rounded-lg border h-100" elevation="0">
+                <v-card-text class="pa-4">
+                  <div class="d-flex align-center ga-3 mb-3">
+                    <v-avatar size="34" color="orange-lighten-5">
+                      <v-icon icon="mdi-history" color="warning" size="19" />
+                    </v-avatar>
+
+                    <div>
+                      <div class="text-subtitle-1 font-weight-bold">
+                        Old Values
+                      </div>
+                      <div class="text-body-2 text-medium-emphasis">
+                        Data sebelum perubahan.
+                      </div>
+                    </div>
+                  </div>
+
+                  <v-sheet
+                    rounded="lg"
+                    border
+                    max-height="420"
+                    class="pa-3 bg-grey-lighten-4 overflow-auto"
+                  >
+                    <pre class="ma-0 text-body-2">{{
+                      formatJson(
+                        selectedItem.old_values_parsed ||
+                          selectedItem.old_values,
+                      )
+                    }}</pre>
+                  </v-sheet>
+                </v-card-text>
+              </v-card>
             </v-col>
 
             <v-col cols="12" md="6">
-              <div class="json-card">
-                <div class="json-title">New Values</div>
-                <pre class="json-box">{{
-                  formatJson(
-                    selectedItem.new_values_parsed || selectedItem.new_values,
-                  )
-                }}</pre>
-              </div>
+              <v-card class="rounded-lg border h-100" elevation="0">
+                <v-card-text class="pa-4">
+                  <div class="d-flex align-center ga-3 mb-3">
+                    <v-avatar size="34" color="green-lighten-5">
+                      <v-icon
+                        icon="mdi-plus-circle-outline"
+                        color="success"
+                        size="19"
+                      />
+                    </v-avatar>
+
+                    <div>
+                      <div class="text-subtitle-1 font-weight-bold">
+                        New Values
+                      </div>
+                      <div class="text-body-2 text-medium-emphasis">
+                        Data setelah perubahan.
+                      </div>
+                    </div>
+                  </div>
+
+                  <v-sheet
+                    rounded="lg"
+                    border
+                    max-height="420"
+                    class="pa-3 bg-grey-lighten-4 overflow-auto"
+                  >
+                    <pre class="ma-0 text-body-2">{{
+                      formatJson(
+                        selectedItem.new_values_parsed ||
+                          selectedItem.new_values,
+                      )
+                    }}</pre>
+                  </v-sheet>
+                </v-card-text>
+              </v-card>
             </v-col>
           </v-row>
         </v-card-text>
 
-        <!-- FAILED STATE -->
-        <v-card-text v-else class="detail-dialog-body">
-          <div class="detail-empty-box">
-            <v-icon size="46" color="error"> mdi-alert-circle-outline </v-icon>
-
-            <div class="detail-loading-title">
-              Detail audit log gagal dimuat
-            </div>
-
-            <div class="detail-loading-subtitle">
-              Silakan tutup modal lalu buka kembali detail data.
-            </div>
-          </div>
+        <v-card-text v-else class="pa-4">
+          <v-card class="rounded-lg border" elevation="0">
+            <v-empty-state
+              icon="mdi-alert-circle-outline"
+              title="Detail audit log gagal dimuat"
+              text="Silakan tutup modal lalu buka kembali detail data."
+            />
+          </v-card>
         </v-card-text>
 
-        <v-card-actions class="justify-end pa-4">
-          <v-btn variant="text" @click="detailDialog = false"> Tutup </v-btn>
+        <v-divider />
+
+        <v-card-actions class="pa-4 justify-end">
+          <v-btn
+            variant="outlined"
+            color="secondary"
+            prepend-icon="mdi-close"
+            @click="detailDialog = false"
+          >
+            Tutup
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

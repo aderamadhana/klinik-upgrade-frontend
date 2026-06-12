@@ -821,31 +821,80 @@
       Data registrasi tidak ditemukan.
     </v-alert>
 
-    <v-dialog v-model="cancelDialog.show" max-width="460">
-      <v-card>
-        <v-card-title class="text-subtitle-1 font-weight-bold pa-4">
-          Batalkan Registrasi?
-        </v-card-title>
+    <v-dialog v-model="cancelDialog.show" max-width="680" persistent scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="error" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon icon="mdi-cancel" color="error" size="26" />
+              </v-avatar>
 
-        <v-divider />
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  Batalkan Registrasi?
+                </div>
+                <div class="text-body-2 text-white">
+                  Registrasi akan ditandai batal dan tidak dilanjutkan.
+                </div>
+              </div>
+            </div>
+
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              color="white"
+              :disabled="cancelDialog.loading"
+              @click="cancelDialog.show = false"
+            />
+          </div>
+        </v-sheet>
 
         <v-card-text class="pa-4">
-          <div class="text-body-2 mb-3">
-            Data registrasi
-            <strong>{{
-              detail?.kode_registrasi || `REG-${detail?.id || "-"}`
-            }}</strong>
-            akan dibatalkan.
-          </div>
-
-          <v-alert type="warning" variant="tonal" density="compact">
+          <v-alert
+            type="warning"
+            variant="tonal"
+            border="start"
+            rounded="lg"
+            class="mb-4"
+          >
             Pastikan registrasi memang tidak dilanjutkan sebelum membatalkan.
           </v-alert>
+
+          <v-card class="rounded-lg border" elevation="0">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-start ga-3">
+                <v-avatar size="38" color="red-lighten-5">
+                  <v-icon
+                    icon="mdi-file-cancel-outline"
+                    color="error"
+                    size="22"
+                  />
+                </v-avatar>
+
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold">
+                    Detail Registrasi
+                  </div>
+
+                  <div class="text-body-2 text-medium-emphasis mt-2">
+                    Data registrasi berikut akan dibatalkan:
+                  </div>
+
+                  <div
+                    class="text-body-1 font-weight-bold text-high-emphasis mt-2"
+                  >
+                    {{ detail?.kode_registrasi || `REG-${detail?.id || "-"}` }}
+                  </div>
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="justify-end pa-4">
+        <v-card-actions class="pa-4 justify-end">
           <v-btn
             variant="outlined"
             color="secondary"
@@ -858,7 +907,9 @@
           <v-btn
             color="error"
             variant="flat"
+            prepend-icon="mdi-cancel"
             :loading="cancelDialog.loading"
+            :disabled="cancelDialog.loading"
             @click="cancelRegistrasi"
           >
             Batalkan

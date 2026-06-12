@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-4 pa-md-6">
+  <div>
     <v-row align="center" class="mb-4">
       <v-col cols="12" md="8">
         <div class="text-h4 font-weight-bold text-grey-darken-4">
@@ -300,61 +300,200 @@
       </div>
     </v-card>
 
-    <v-dialog v-model="detailDialog" max-width="960">
-      <v-card rounded="lg">
-        <v-card-title
-          class="d-flex align-start justify-space-between flex-wrap ga-3 pa-5"
-        >
-          <div>
-            <div class="text-h6 font-weight-bold">Detail Riwayat Resep</div>
-            <div class="text-body-2 text-medium-emphasis mt-1">
-              {{ selectedRow?.pasien?.nama || "-" }}
-              <span class="mx-1">•</span>
-              {{ selectedRow?.no_invoice || "-" }}
+    <v-dialog v-model="detailDialog" max-width="1180" scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon icon="mdi-history" color="primary" size="26" />
+              </v-avatar>
+
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  Detail Riwayat Resep
+                </div>
+                <div class="text-body-2 text-white">
+                  {{ selectedRow?.pasien?.nama || "-" }}
+                  <span class="mx-1">•</span>
+                  {{ selectedRow?.no_invoice || "-" }}
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <v-chip
+                v-if="selectedRow?.finished_at"
+                size="small"
+                color="white"
+                variant="flat"
+                class="font-weight-medium"
+              >
+                Selesai
+              </v-chip>
+
+              <v-btn
+                icon="mdi-close"
+                variant="text"
+                color="white"
+                @click="closeDetail"
+              />
             </div>
           </div>
+        </v-sheet>
 
-          <v-btn icon="mdi-close" variant="text" @click="closeDetail" />
-        </v-card-title>
+        <v-card-text class="pa-4">
+          <v-row dense class="mb-4">
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-card-account-details-outline"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
 
-        <v-divider />
-
-        <v-card-text class="pa-5">
-          <v-row>
-            <v-col cols="12" sm="6" md="3">
-              <div class="text-caption text-medium-emphasis">No. RM</div>
-              <div class="text-body-2 font-weight-bold mt-1">
-                {{ selectedRow?.pasien?.no_rm || "-" }}
-              </div>
+                  <div>
+                    <div class="text-caption text-medium-emphasis">No. RM</div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ selectedRow?.pasien?.no_rm || "-" }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" sm="6" md="3">
-              <div class="text-caption text-medium-emphasis">Dokter</div>
-              <div class="text-body-2 font-weight-bold mt-1">
-                {{ selectedRow?.konsultasi?.dokter || "Belum ditentukan" }}
-              </div>
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon icon="mdi-doctor" color="primary" size="19" />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">Dokter</div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{
+                        selectedRow?.konsultasi?.dokter || "Belum ditentukan"
+                      }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" sm="6" md="3">
-              <div class="text-caption text-medium-emphasis">Diproses oleh</div>
-              <div class="text-body-2 font-weight-bold mt-1">
-                {{ selectedRow?.petugas?.nama || "Tidak tercatat" }}
-              </div>
-              <div class="text-caption text-medium-emphasis mt-1">
-                {{ selectedRow?.petugas?.jabatan || "-" }}
-              </div>
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-account-cog-outline"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Diproses Oleh
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ selectedRow?.petugas?.nama || "Tidak tercatat" }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis mt-1">
+                      {{ selectedRow?.petugas?.jabatan || "-" }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
             </v-col>
 
-            <v-col cols="12" sm="6" md="3">
-              <div class="text-caption text-medium-emphasis">Waktu proses</div>
-              <div class="text-body-2 font-weight-bold mt-1">
-                {{ processingDuration(selectedRow) }}
-              </div>
-              <div class="text-caption text-medium-emphasis mt-1">
-                {{ formatDateTime(selectedRow?.started_at) }}
-                –
-                {{ formatDateTime(selectedRow?.finished_at) }}
-              </div>
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="green-lighten-5">
+                    <v-icon
+                      icon="mdi-timer-outline"
+                      color="success"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Waktu Proses
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ processingDuration(selectedRow) }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis mt-1">
+                      {{ formatDateTime(selectedRow?.started_at) }}
+                      –
+                      {{ formatDateTime(selectedRow?.finished_at) }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
+            </v-col>
+
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="green-lighten-5">
+                    <v-icon
+                      icon="mdi-cash-multiple"
+                      color="success"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Total Invoice
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ formatCurrency(selectedRow?.grand_total) }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
+            </v-col>
+
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-receipt-text-outline"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      No. Invoice
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ selectedRow?.no_invoice || "-" }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
             </v-col>
           </v-row>
 
@@ -362,17 +501,37 @@
             v-if="selectedRow?.pasien?.alergi_obat"
             type="warning"
             variant="tonal"
-            density="compact"
-            class="mt-4"
+            border="start"
+            rounded="lg"
+            class="mb-4"
           >
             <strong>Alergi obat:</strong>
             {{ selectedRow.pasien.alergi_obat }}
           </v-alert>
 
-          <template v-if="selectedRow?.treatment?.length">
-            <div class="text-subtitle-1 font-weight-bold mt-5 mb-3">
-              Treatment
-            </div>
+          <v-card
+            v-if="selectedRow?.treatment?.length"
+            class="rounded-lg border mb-4"
+            elevation="0"
+          >
+            <v-card-text class="pa-4">
+              <div
+                class="d-flex align-start justify-space-between ga-3 flex-wrap"
+              >
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">Treatment</div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Treatment yang terkait dengan riwayat resep pasien.
+                  </div>
+                </div>
+
+                <v-chip color="primary" variant="tonal" size="small">
+                  {{ selectedRow?.treatment?.length || 0 }} treatment
+                </v-chip>
+              </div>
+            </v-card-text>
+
+            <v-divider />
 
             <v-table density="comfortable">
               <thead>
@@ -382,95 +541,131 @@
                   <th class="text-right">Subtotal</th>
                 </tr>
               </thead>
+
               <tbody>
                 <tr
                   v-for="treatment in selectedRow.treatment"
                   :key="treatment.id"
                 >
                   <td>
-                    <div class="font-weight-bold">
+                    <div class="font-weight-bold text-high-emphasis">
                       {{ treatment.nama }}
                     </div>
                     <div class="text-caption text-medium-emphasis mt-1">
                       {{ treatment.source_label || "-" }}
                     </div>
                   </td>
+
                   <td class="text-right">
                     {{ formatQty(treatment.qty) }}
                   </td>
-                  <td class="text-right font-weight-bold">
+
+                  <td class="text-right font-weight-bold text-success">
                     {{ formatCurrency(treatment.subtotal) }}
                   </td>
                 </tr>
               </tbody>
             </v-table>
-          </template>
+          </v-card>
 
-          <div class="text-subtitle-1 font-weight-bold mt-5 mb-3">
-            Obat / Produk
-          </div>
-
-          <v-table density="comfortable">
-            <thead>
-              <tr>
-                <th>Obat / Produk</th>
-                <th>Aturan Pakai</th>
-                <th class="text-right">Qty</th>
-                <th class="text-right">Subtotal</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <tr
-                v-for="product in selectedRow?.produk || []"
-                :key="product.id"
+          <v-card class="rounded-lg border" elevation="0">
+            <v-card-text class="pa-4">
+              <div
+                class="d-flex align-start justify-space-between ga-3 flex-wrap"
               >
-                <td>
-                  <div class="font-weight-bold">
-                    {{ product.nama }}
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">
+                    Obat / Produk
                   </div>
-                  <div class="text-caption text-medium-emphasis mt-1">
-                    {{ product.source_label || "-" }}
-                    <span v-if="product.is_saran_dokter"> • Saran dokter </span>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Obat, produk, aturan pakai, qty, subtotal, dan cara
+                    penggunaan.
                   </div>
-                </td>
-                <td>
-                  <div class="text-body-2">
-                    {{ productUsage(product) }}
-                  </div>
-                  <div
-                    v-if="product.cara_penggunaan"
-                    class="text-caption text-medium-emphasis mt-1"
-                  >
-                    Cara penggunaan: {{ product.cara_penggunaan }}
-                  </div>
-                </td>
-                <td class="text-right">
-                  {{ formatQty(product.qty) }}
-                  {{ product.satuan || "" }}
-                </td>
-                <td class="text-right font-weight-bold">
-                  {{ formatCurrency(product.subtotal) }}
-                </td>
-              </tr>
-            </tbody>
-          </v-table>
+                </div>
 
-          <v-divider class="my-4" />
+                <v-chip color="primary" variant="tonal" size="small">
+                  {{ selectedRow?.produk?.length || 0 }} item
+                </v-chip>
+              </div>
+            </v-card-text>
 
-          <div class="d-flex justify-space-between align-center">
-            <div class="text-body-2 text-medium-emphasis">Total invoice</div>
-            <div class="text-h6 font-weight-bold">
-              {{ formatCurrency(selectedRow?.grand_total) }}
-            </div>
-          </div>
+            <v-divider />
+
+            <v-table density="comfortable">
+              <thead>
+                <tr>
+                  <th>Obat / Produk</th>
+                  <th>Aturan Pakai</th>
+                  <th class="text-right">Qty</th>
+                  <th class="text-right">Subtotal</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr v-if="!selectedRow?.produk?.length">
+                  <td colspan="4">
+                    <v-empty-state
+                      icon="mdi-pill-off"
+                      title="Belum ada obat / produk"
+                      text="Tidak ada item obat atau produk pada riwayat resep ini."
+                    />
+                  </td>
+                </tr>
+
+                <tr
+                  v-for="product in selectedRow?.produk || []"
+                  :key="product.id"
+                >
+                  <td>
+                    <div class="font-weight-bold text-high-emphasis">
+                      {{ product.nama }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis mt-1">
+                      {{ product.source_label || "-" }}
+                      <span v-if="product.is_saran_dokter">
+                        • Saran dokter
+                      </span>
+                    </div>
+                  </td>
+
+                  <td>
+                    <div class="text-body-2 text-high-emphasis">
+                      {{ productUsage(product) }}
+                    </div>
+                    <div
+                      v-if="product.cara_penggunaan"
+                      class="text-caption text-medium-emphasis mt-1"
+                    >
+                      Cara penggunaan: {{ product.cara_penggunaan }}
+                    </div>
+                  </td>
+
+                  <td class="text-right">
+                    {{ formatQty(product.qty) }}
+                    {{ product.satuan || "" }}
+                  </td>
+
+                  <td class="text-right font-weight-bold text-success">
+                    {{ formatCurrency(product.subtotal) }}
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </v-card>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="pa-4">
-          <v-spacer />
-          <v-btn variant="text" @click="closeDetail"> Tutup </v-btn>
+        <v-card-actions class="pa-4 justify-end flex-wrap ga-2">
+          <v-btn
+            variant="outlined"
+            color="secondary"
+            prepend-icon="mdi-close"
+            @click="closeDetail"
+          >
+            Tutup
+          </v-btn>
+
           <v-btn
             color="deep-purple"
             variant="flat"
@@ -495,7 +690,7 @@
         <v-btn variant="text" @click="snackbar.show = false"> Tutup </v-btn>
       </template>
     </v-snackbar>
-  </v-container>
+  </div>
 </template>
 
 <script>

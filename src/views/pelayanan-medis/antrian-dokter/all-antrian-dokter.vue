@@ -330,67 +330,22 @@
       </div>
     </v-card>
 
-    <v-dialog v-model="dialogDelete" max-width="480">
-      <v-card class="dialog-card">
-        <v-card-title class="dialog-title">Hapus Antrian Dokter?</v-card-title>
-
-        <v-divider />
-
-        <v-card-text class="pa-4">
-          <v-alert
-            type="warning"
-            density="compact"
-            variant="tonal"
-            class="mb-4"
-          >
-            Data antrian dokter ini akan dihapus dari daftar antrian.
-          </v-alert>
-
-          <div v-if="selectedItem" class="delete-dialog-info">
-            <div>
-              <strong>No Registrasi:</strong>
-              {{ getKodeRegistrasi(selectedItem) }}
-            </div>
-            <div>
-              <strong>No Antrian:</strong>
-              {{ getDisplayQueueNumber(selectedItem) }}
-            </div>
-            <div>
-              <strong>Pasien:</strong> {{ getPasienName(selectedItem) }}
-            </div>
-            <div>
-              <strong>Dokter:</strong> {{ getDokterName(selectedItem) }}
-            </div>
-            <div><strong>Status:</strong> {{ formatStatus(selectedItem) }}</div>
-          </div>
-        </v-card-text>
-
-        <v-divider />
-
-        <v-card-actions class="justify-end pa-4">
-          <v-btn
-            variant="outlined"
-            color="secondary"
-            class="text-none font-weight-bold"
-            :disabled="deleteLoading"
-            @click="closeDeleteDialog"
-          >
-            Batal
-          </v-btn>
-
-          <v-btn
-            color="error"
-            variant="flat"
-            prepend-icon="mdi-delete-outline"
-            class="text-none font-weight-bold"
-            :loading="deleteLoading"
-            @click="deleteItem"
-          >
-            Ya, Hapus
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <confirm-delete-dialog
+      v-model="dialogDelete"
+      :loading="deleteLoading"
+      title="Konfirmasi Hapus"
+      subtitle="Data antrian dokter akan dihapus dari daftar antrian."
+      question="Yakin ingin menghapus antrian dokter ini?"
+      :item-title="selectedItem ? getPasienName(selectedItem) : '-'"
+      :item-subtitle="
+        selectedItem
+          ? `No Registrasi: ${getKodeRegistrasi(selectedItem)} • No Antrian: ${getDisplayQueueNumber(selectedItem)} • Dokter: ${getDokterName(selectedItem)} • Status: ${formatStatus(selectedItem)}`
+          : ''
+      "
+      warning-text="Data antrian dokter ini akan dihapus secara soft delete."
+      @cancel="closeDeleteDialog"
+      @confirm="deleteItem"
+    />
 
     <v-snackbar
       v-model="snackbar.show"
@@ -414,10 +369,13 @@
 
 <script>
 import antrianDokterService from "@/services/pelayanan-medis/antrianDokterService";
+import ConfirmDeleteDialog from "@/components/common/ConfirmDeleteDialog.vue";
 
 export default {
   name: "AllAntrianDokter",
-
+  components: {
+    ConfirmDeleteDialog,
+  },
   data() {
     return {
       loading: false,

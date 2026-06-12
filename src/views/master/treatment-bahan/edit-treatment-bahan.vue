@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-6">
+  <div>
     <div class="page-header">
       <div>
         <h1 class="page-title">Edit Bahan Treatment</h1>
@@ -167,7 +167,7 @@
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000">
       {{ snackbar.message }}
     </v-snackbar>
-  </v-container>
+  </div>
 </template>
 
 <script>

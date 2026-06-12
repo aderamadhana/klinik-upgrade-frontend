@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-4 pa-md-6">
+  <div>
     <div
       class="d-flex flex-column flex-md-row justify-space-between align-start ga-3 mb-5"
     >
@@ -138,56 +138,133 @@
       </v-data-table-server>
     </v-card>
 
-    <v-dialog v-model="confirmDialog" max-width="540">
-      <v-card rounded="lg">
-        <v-card-title class="font-weight-bold">
-          Kirim STO ke Accurate
-        </v-card-title>
+    <v-dialog v-model="confirmDialog" max-width="720" scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon
+                  icon="mdi-cloud-upload-outline"
+                  color="primary"
+                  size="26"
+                />
+              </v-avatar>
 
-        <v-card-text>
-          <div class="text-body-2 text-medium-emphasis mb-4">
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  Kirim STO ke Accurate
+                </div>
+                <div class="text-body-2 text-white">
+                  Kirim data STO sebagai faktur penjualan ke Accurate.
+                </div>
+              </div>
+            </div>
+
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              color="white"
+              :disabled="uploading"
+              @click="confirmDialog = false"
+            />
+          </div>
+        </v-sheet>
+
+        <v-card-text class="pa-4">
+          <v-alert
+            type="warning"
+            variant="tonal"
+            border="start"
+            rounded="lg"
+            class="mb-4"
+          >
             Data STO akan dikirim sebagai faktur penjualan ke Accurate. Proses
             ini tidak boleh diulang jika Accurate sudah menerima faktur.
-          </div>
+          </v-alert>
 
-          <v-list density="compact" lines="two" border rounded>
-            <v-list-item
-              title="Tanggal"
-              :subtitle="selectedRow?.tanggal_faktur || '-'"
-            />
-            <v-list-item
-              title="No. Faktur"
-              :subtitle="selectedRow?.no_faktur || '-'"
-            />
-            <v-list-item
-              title="Nama Toko"
-              :subtitle="selectedRow?.nama_toko || '-'"
-            />
-            <v-list-item
-              title="Metode Pembayaran"
-              :subtitle="selectedRow?.metode_pembayaran || '-'"
-            />
-            <v-list-item
-              title="Total Harga"
-              :subtitle="formatCurrency(selectedRow?.total_harga || 0)"
-            />
-          </v-list>
+          <v-card class="rounded-lg border" elevation="0">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-start ga-3 mb-4">
+                <v-avatar size="38" color="blue-lighten-5">
+                  <v-icon
+                    icon="mdi-file-document-check-outline"
+                    color="primary"
+                    size="22"
+                  />
+                </v-avatar>
+
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold">
+                    Detail Faktur STO
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Pastikan tanggal, nomor faktur, toko, metode pembayaran, dan
+                    total harga sudah sesuai.
+                  </div>
+                </div>
+              </div>
+
+              <v-list density="compact" lines="two" border rounded>
+                <v-list-item
+                  title="Tanggal"
+                  :subtitle="selectedRow?.tanggal_faktur || '-'"
+                />
+
+                <v-divider />
+
+                <v-list-item
+                  title="No. Faktur"
+                  :subtitle="selectedRow?.no_faktur || '-'"
+                />
+
+                <v-divider />
+
+                <v-list-item
+                  title="Nama Toko"
+                  :subtitle="selectedRow?.nama_toko || '-'"
+                />
+
+                <v-divider />
+
+                <v-list-item
+                  title="Metode Pembayaran"
+                  :subtitle="selectedRow?.metode_pembayaran || '-'"
+                />
+
+                <v-divider />
+
+                <v-list-item>
+                  <v-list-item-title>Total Harga</v-list-item-title>
+                  <v-list-item-subtitle>
+                    <span class="font-weight-bold text-success">
+                      {{ formatCurrency(selectedRow?.total_harga || 0) }}
+                    </span>
+                  </v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
         </v-card-text>
 
-        <v-card-actions>
-          <v-spacer />
+        <v-divider />
+
+        <v-card-actions class="pa-4 justify-end">
           <v-btn
-            variant="text"
-            class="text-none"
+            variant="outlined"
+            color="secondary"
+            :disabled="uploading"
             @click="confirmDialog = false"
           >
             Batal
           </v-btn>
+
           <v-btn
             color="primary"
             variant="flat"
-            class="text-none"
+            prepend-icon="mdi-cloud-upload-outline"
             :loading="uploading"
+            :disabled="uploading"
             @click="uploadSelected"
           >
             Kirim Sekarang
@@ -199,7 +276,7 @@
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3500">
       {{ snackbar.message }}
     </v-snackbar>
-  </v-container>
+  </div>
 </template>
 
 <script>

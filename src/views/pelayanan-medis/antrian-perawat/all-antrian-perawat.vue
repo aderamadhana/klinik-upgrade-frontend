@@ -398,47 +398,135 @@
       </div>
     </v-card>
 
-    <v-dialog v-model="finishDialog.show" max-width="480">
-      <v-card class="dialog-card">
-        <v-card-title class="dialog-title">
-          Selesaikan Nurse Station?
-        </v-card-title>
+    <v-dialog v-model="finishDialog.show" max-width="680" persistent scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="success" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon
+                  icon="mdi-check-circle-outline"
+                  color="success"
+                  size="26"
+                />
+              </v-avatar>
 
-        <v-divider />
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  Selesaikan Nurse Station?
+                </div>
+                <div class="text-body-2 text-white">
+                  Pastikan CPPT, foto before-after, dan bahan treatment sudah
+                  sesuai.
+                </div>
+              </div>
+            </div>
+
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              color="white"
+              :disabled="finishDialog.loading"
+              @click="closeFinishDialog"
+            />
+          </div>
+        </v-sheet>
 
         <v-card-text class="pa-4">
-          <v-alert type="info" variant="tonal" density="compact" class="mb-4">
-            Pastikan CPPT, foto before-after, dan bahan treatment sudah sesuai
-            sebelum antrian diselesaikan.
+          <v-alert
+            type="info"
+            variant="tonal"
+            border="start"
+            rounded="lg"
+            class="mb-4"
+          >
+            Setelah diselesaikan, antrian nurse station akan ditandai selesai.
           </v-alert>
 
-          <div v-if="finishDialog.item" class="delete-dialog-info">
-            <div>
-              <strong>No Registrasi:</strong>
-              {{ getKodeRegistrasi(finishDialog.item) }}
-            </div>
-            <div>
-              <strong>Pasien:</strong>
-              {{ getPasienName(finishDialog.item) }}
-            </div>
-            <div>
-              <strong>Treatment:</strong>
-              {{ getTreatmentSummary(finishDialog.item) }}
-            </div>
-            <div>
-              <strong>Perawat:</strong>
-              {{ getPerawatName(finishDialog.item) }}
-            </div>
-          </div>
+          <v-card
+            v-if="finishDialog.item"
+            class="rounded-lg border"
+            elevation="0"
+          >
+            <v-card-text class="pa-4">
+              <div class="d-flex align-start ga-3 mb-4">
+                <v-avatar size="38" color="green-lighten-5">
+                  <v-icon
+                    icon="mdi-clipboard-check-outline"
+                    color="success"
+                    size="22"
+                  />
+                </v-avatar>
+
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold">
+                    Detail Antrian
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Periksa kembali data antrian sebelum diselesaikan.
+                  </div>
+                </div>
+              </div>
+
+              <v-row dense>
+                <v-col cols="12" md="6">
+                  <v-sheet rounded="lg" border class="pa-3 h-100">
+                    <div class="text-caption text-medium-emphasis">
+                      No Registrasi
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ getKodeRegistrasi(finishDialog.item) }}
+                    </div>
+                  </v-sheet>
+                </v-col>
+
+                <v-col cols="12" md="6">
+                  <v-sheet rounded="lg" border class="pa-3 h-100">
+                    <div class="text-caption text-medium-emphasis">Pasien</div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ getPasienName(finishDialog.item) }}
+                    </div>
+                  </v-sheet>
+                </v-col>
+
+                <v-col cols="12" md="6">
+                  <v-sheet rounded="lg" border class="pa-3 h-100">
+                    <div class="text-caption text-medium-emphasis">
+                      Treatment
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ getTreatmentSummary(finishDialog.item) }}
+                    </div>
+                  </v-sheet>
+                </v-col>
+
+                <v-col cols="12" md="6">
+                  <v-sheet rounded="lg" border class="pa-3 h-100">
+                    <div class="text-caption text-medium-emphasis">Perawat</div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ getPerawatName(finishDialog.item) }}
+                    </div>
+                  </v-sheet>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="justify-end pa-4">
+        <v-card-actions class="pa-4 justify-end">
           <v-btn
             variant="outlined"
             color="secondary"
-            class="text-none font-weight-bold"
             :disabled="finishDialog.loading"
             @click="closeFinishDialog"
           >
@@ -449,8 +537,8 @@
             color="success"
             variant="flat"
             prepend-icon="mdi-check-circle-outline"
-            class="text-none font-weight-bold"
             :loading="finishDialog.loading"
+            :disabled="finishDialog.loading"
             @click="finishQueue"
           >
             Selesaikan
@@ -459,68 +547,22 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="deleteDialog.show" max-width="480">
-      <v-card class="dialog-card">
-        <v-card-title class="dialog-title"> Hapus Nurse Station? </v-card-title>
-
-        <v-divider />
-
-        <v-card-text class="pa-4">
-          <v-alert
-            type="warning"
-            variant="tonal"
-            density="compact"
-            class="mb-4"
-          >
-            Data antrian akan dihapus dari daftar antrian perawat.
-          </v-alert>
-
-          <div v-if="deleteDialog.item" class="delete-dialog-info">
-            <div>
-              <strong>No Registrasi:</strong>
-              {{ getKodeRegistrasi(deleteDialog.item) }}
-            </div>
-            <div>
-              <strong>Pasien:</strong>
-              {{ getPasienName(deleteDialog.item) }}
-            </div>
-            <div>
-              <strong>Treatment:</strong>
-              {{ getTreatmentSummary(deleteDialog.item) }}
-            </div>
-            <div>
-              <strong>Status:</strong>
-              {{ getStatusMeta(deleteDialog.item).label }}
-            </div>
-          </div>
-        </v-card-text>
-
-        <v-divider />
-
-        <v-card-actions class="justify-end pa-4">
-          <v-btn
-            variant="outlined"
-            color="secondary"
-            class="text-none font-weight-bold"
-            :disabled="deleteDialog.loading"
-            @click="closeDeleteDialog"
-          >
-            Batal
-          </v-btn>
-
-          <v-btn
-            color="error"
-            variant="flat"
-            prepend-icon="mdi-delete-outline"
-            class="text-none font-weight-bold"
-            :loading="deleteDialog.loading"
-            @click="deleteQueue"
-          >
-            Hapus
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <confirm-delete-dialog
+      v-model="deleteDialog.show"
+      :loading="deleteDialog.loading"
+      title="Konfirmasi Hapus"
+      subtitle="Data antrian akan dihapus dari daftar antrian perawat."
+      question="Yakin ingin menghapus nurse station ini?"
+      :item-title="deleteDialog.item ? getPasienName(deleteDialog.item) : '-'"
+      :item-subtitle="
+        deleteDialog.item
+          ? `No Registrasi: ${getKodeRegistrasi(deleteDialog.item)} • Treatment: ${getTreatmentSummary(deleteDialog.item)} • Status: ${getStatusMeta(deleteDialog.item).label}`
+          : ''
+      "
+      warning-text="Data antrian nurse station akan dihapus secara soft delete."
+      @cancel="closeDeleteDialog"
+      @confirm="deleteQueue"
+    />
 
     <v-snackbar
       v-model="snackbar.show"
@@ -539,10 +581,13 @@
 
 <script>
 import antrianPerawatService from "@/services/pelayanan-medis/antrianPerawatService";
+import ConfirmDeleteDialog from "@/components/common/ConfirmDeleteDialog.vue";
 
 export default {
   name: "AllAntrianPerawat",
-
+  components: {
+    ConfirmDeleteDialog,
+  },
   data() {
     return {
       loading: false,
