@@ -165,172 +165,306 @@
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="dialogDetail" max-width="1100" scrollable>
-      <v-card rounded="xl" class="detail-shell">
-        <div class="detail-header">
-          <div class="d-flex align-center ga-3">
-            <v-avatar size="48" color="blue-lighten-4">
-              <v-icon icon="mdi-stethoscope" color="primary" size="28" />
-            </v-avatar>
+    <v-dialog v-model="dialogDetail" max-width="1180" scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon
+                  icon="mdi-package-variant-closed"
+                  color="primary"
+                  size="26"
+                />
+              </v-avatar>
 
-            <div>
-              <div class="detail-title">
-                {{ selectedItem?.nama || "-" }}
-              </div>
-              <div class="detail-subtitle">
-                Detail treatment global dan konfigurasi tarif per cabang
-              </div>
-            </div>
-          </div>
-
-          <div class="d-flex ga-2 flex-wrap">
-            <v-chip
-              v-if="
-                selectedItem?.kode_accurate &&
-                selectedItem.kode_accurate !== '-'
-              "
-              size="small"
-              color="indigo"
-            >
-              Kode Accurate: {{ selectedItem.kode_accurate }}
-            </v-chip>
-          </div>
-        </div>
-
-        <v-divider />
-
-        <v-card-text class="detail-body">
-          <div class="info-card mb-5">
-            <div class="section-heading">Informasi Treatment</div>
-
-            <v-row>
-              <v-col cols="12" md="4">
-                <div class="info-box">
-                  <div class="info-label">Kode Accurate</div>
-                  <div class="info-value">
-                    {{ selectedItem?.kode_accurate || "-" }}
-                  </div>
+              <div>
+                <div class="text-subtitle-1 font-weight-bold text-white">
+                  {{ selectedItem?.nama || "-" }}
                 </div>
-              </v-col>
-
-              <v-col cols="12" md="4">
-                <div class="info-box">
-                  <div class="info-label">Nama Treatment</div>
-                  <div class="info-value">{{ selectedItem?.nama || "-" }}</div>
+                <div class="text-body-2 text-white">
+                  Detail produk global dan konfigurasi harga per cabang
                 </div>
-              </v-col>
-              <v-col cols="12" md="3">
-                <div class="info-box">
-                  <div class="info-label">Kategori Sales</div>
-                  <div class="info-value">
-                    {{ selectedItem?.kategori_sales || "-" }}
-                  </div>
-                </div>
-              </v-col>
-
-              <v-col cols="12" md="3">
-                <div class="info-box">
-                  <div class="info-label">Unit</div>
-                  <div class="info-value">
-                    {{ selectedItem?.unit_nama || "-" }}
-                  </div>
-                </div>
-              </v-col>
-
-              <v-col cols="12" md="3">
-                <div class="info-box">
-                  <div class="info-label">Tipe Treatment</div>
-                  <div class="info-value">
-                    {{ selectedItem?.tipe_nama || "-" }}
-                  </div>
-                </div>
-              </v-col>
-
-              <v-col cols="12" md="3">
-                <div class="info-box">
-                  <div class="info-label">Durasi</div>
-                  <div class="info-value">
-                    {{ selectedItem?.durasi_label || "-" }}
-                  </div>
-                </div>
-              </v-col>
-            </v-row>
-          </div>
-
-          <div
-            class="d-flex justify-space-between align-center mb-3 flex-wrap ga-2"
-          >
-            <div>
-              <div class="section-heading pa-0">Konfigurasi Per Cabang</div>
-              <div class="text-body-2 text-medium-emphasis">
-                Tarif, modal, insentif, dan status aktif di tiap cabang
               </div>
             </div>
 
-            <v-chip color="blue" size="small">
-              {{ selectedItem?.toko_configs?.length || 0 }} cabang
-            </v-chip>
-          </div>
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <v-chip
+                v-if="selectedItem?.kode"
+                size="small"
+                color="white"
+                variant="flat"
+                class="font-weight-medium"
+              >
+                Kode: {{ selectedItem.kode }}
+              </v-chip>
 
-          <div class="table-card">
+              <v-chip
+                v-if="
+                  selectedItem?.kode_accurate &&
+                  selectedItem.kode_accurate !== '-'
+                "
+                size="small"
+                color="white"
+                variant="flat"
+                class="font-weight-medium"
+              >
+                Accurate: {{ selectedItem.kode_accurate }}
+              </v-chip>
+
+              <v-btn
+                icon="mdi-close"
+                variant="text"
+                color="white"
+                @click="dialogDetail = false"
+              />
+            </div>
+          </div>
+        </v-sheet>
+
+        <v-card-text class="pa-4">
+          <v-row dense class="mb-4">
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon icon="mdi-barcode-scan" color="primary" size="19" />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Kode Accurate
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ selectedItem?.kode_accurate || "-" }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
+            </v-col>
+
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-package-variant-closed"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Nama Produk
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ selectedItem?.nama || "-" }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
+            </v-col>
+
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon icon="mdi-tag-outline" color="primary" size="19" />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Kategori
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ selectedItem?.kategori_produk_nama || "-" }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
+            </v-col>
+
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-shape-outline"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Golongan
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ selectedItem?.golongan_produk_nama || "-" }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
+            </v-col>
+
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-map-marker-outline"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Tempat Produk
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ selectedItem?.tempat_nama || "-" }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
+            </v-col>
+
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-scale-balance"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">Satuan</div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
+                      {{ selectedItem?.satuan_nama || "-" }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
+            </v-col>
+          </v-row>
+
+          <v-card class="rounded-lg border mt-4" elevation="0">
+            <v-card-text class="pa-4">
+              <div
+                class="d-flex align-start justify-space-between ga-3 flex-wrap"
+              >
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">
+                    Konfigurasi Per Cabang
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Harga, supplier, stok, dan fee yang berlaku di tiap cabang
+                  </div>
+                </div>
+
+                <div class="d-flex ga-2 flex-wrap">
+                  <v-chip color="primary" variant="tonal" size="small">
+                    {{ selectedItem?.toko_configs?.length || 0 }} cabang
+                  </v-chip>
+
+                  <v-chip color="success" variant="tonal" size="small">
+                    {{ selectedItem?.jumlah_cabang || 0 }} terdaftar
+                  </v-chip>
+                </div>
+              </div>
+            </v-card-text>
+
+            <v-divider />
+
             <v-data-table
               :headers="detailHeaders"
               :items="selectedItem?.toko_configs || []"
-              density="compact"
+              density="comfortable"
               item-value="id"
+              fixed-header
+              height="420"
+              :items-per-page="-1"
               no-data-text="Belum ada konfigurasi cabang"
             >
+              <template #bottom />
+
               <template #item.toko_nama="{ item }">
-                <div class="font-weight-medium">
+                <div class="font-weight-bold text-high-emphasis">
                   {{ item.toko_nama || "-" }}
                 </div>
               </template>
 
-              <template #item.tarif="{ item }">
+              <template #item.supplier_nama="{ item }">
+                <v-chip size="small" color="secondary" variant="tonal">
+                  {{ item.supplier_nama || "-" }}
+                </v-chip>
+              </template>
+
+              <template #item.harga_jual="{ item }">
                 <span class="font-weight-bold text-success">
-                  {{ formatRupiah(item.tarif) }}
+                  {{ formatRupiah(item.harga_jual) }}
                 </span>
               </template>
 
-              <template #item.harga_terendah="{ item }">
-                {{ formatRupiah(item.harga_terendah) }}
+              <template #item.harga_beli="{ item }">
+                <span class="text-high-emphasis">
+                  {{ formatRupiah(item.harga_beli) }}
+                </span>
               </template>
 
-              <template #item.biaya_modal="{ item }">
-                {{ formatRupiah(item.biaya_modal) }}
-              </template>
-
-              <template #item.tarif_dokter="{ item }">
-                {{ formatRupiah(item.tarif_dokter) }}
-              </template>
-
-              <template #item.tarif_beautician="{ item }">
-                {{ formatRupiah(item.tarif_beautician) }}
-              </template>
-
-              <template #item.insentif_use="{ item }">
-                <v-chip size="small" color="teal">
-                  {{ item.insentif_use || "-" }}
+              <template #item.stok_awal="{ item }">
+                <v-chip size="small" color="primary" variant="tonal">
+                  {{ formatNumber(item.stok_awal) }}
                 </v-chip>
               </template>
 
-              <template #item.status="{ item }">
+              <template #item.stok_minimum="{ item }">
                 <v-chip
                   size="small"
+                  variant="tonal"
                   :color="
-                    Number(item.is_active || 0) === 1 ? 'success' : 'error'
+                    Number(item.stok_minimum || 0) > 0 ? 'warning' : 'grey'
                   "
                 >
-                  {{ Number(item.is_active || 0) === 1 ? "Aktif" : "Nonaktif" }}
+                  {{ formatNumber(item.stok_minimum) }}
                 </v-chip>
               </template>
+
+              <template #item.fee_dokter="{ item }">
+                <span class="text-high-emphasis">
+                  {{ formatRupiah(item.fee_dokter) }}
+                </span>
+              </template>
+
+              <template #item.fee_beautician="{ item }">
+                <span class="text-high-emphasis">
+                  {{ formatRupiah(item.fee_beautician) }}
+                </span>
+              </template>
             </v-data-table>
-          </div>
+          </v-card>
         </v-card-text>
 
         <v-divider />
 
-        <v-card-actions class="justify-end pa-4">
+        <v-card-actions class="pa-4 justify-end">
           <v-btn
             variant="outlined"
             color="secondary"
@@ -343,48 +477,16 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="deleteDialog" max-width="480">
-      <v-card rounded="lg">
-        <v-card-title class="text-h6 font-weight-bold">
-          Hapus Treatment
-        </v-card-title>
-
-        <v-divider />
-
-        <v-card-text>
-          <p class="mb-2">Yakin ingin menghapus treatment ini?</p>
-
-          <v-alert type="warning" rounded="lg">
-            <strong>{{ selectedItem?.nama || "-" }}</strong>
-            <br />
-            Data akan dihapus secara soft delete.
-          </v-alert>
-        </v-card-text>
-
-        <v-divider />
-
-        <v-card-actions class="justify-end">
-          <v-btn
-            variant="outlined"
-            color="secondary"
-            :disabled="loadingDelete"
-            @click="deleteDialog = false"
-          >
-            Batal
-          </v-btn>
-
-          <v-btn
-            color="error"
-            variant="flat"
-            :loading="loadingDelete"
-            :disabled="loadingDelete"
-            @click="deleteTreatment"
-          >
-            Hapus
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <confirm-delete-dialog
+      v-model="deleteDialog"
+      :loading="loadingDelete"
+      title="Konfirmasi Hapus"
+      subtitle="Data treatment akan dihapus secara soft delete."
+      question="Yakin ingin menghapus treatment ini?"
+      :item-title="selectedItem?.nama || '-'"
+      warning-text="Data treatment akan dihapus secara soft delete."
+      @confirm="deleteTreatment"
+    />
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">
       {{ snackbar.text }}
@@ -394,9 +496,13 @@
 
 <script>
 import treatmentService from "@/services/master/treatmentService";
+import ConfirmDeleteDialog from "@/components/common/ConfirmDeleteDialog.vue";
 
 export default {
   name: "AllMasterTreatment",
+  components: {
+    ConfirmDeleteDialog,
+  },
 
   data() {
     return {

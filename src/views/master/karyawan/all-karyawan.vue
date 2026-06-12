@@ -156,45 +156,15 @@
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="dialogDelete" width="430">
-      <v-card rounded="lg">
-        <v-card-title class="text-h6 font-weight-bold">
-          Konfirmasi Hapus
-        </v-card-title>
-
-        <v-divider />
-
-        <v-card-text>
-          Apakah Tuan yakin ingin menghapus karyawan
-          <b>{{ selectedKaryawan?.nama || "-" }}</b
-          >?
-        </v-card-text>
-
-        <v-divider />
-
-        <v-card-actions>
-          <v-spacer />
-
-          <v-btn
-            variant="text"
-            color="grey"
-            :disabled="loadingDelete"
-            @click="dialogDelete = false"
-          >
-            Batal
-          </v-btn>
-
-          <v-btn
-            color="error"
-            variant="flat"
-            :loading="loadingDelete"
-            @click="deleteKaryawan"
-          >
-            Hapus
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <confirm-delete-dialog
+      v-model="dialogDelete"
+      :loading="loadingDelete"
+      subtitle="Data karyawan akan dihapus secara soft delete."
+      question="Yakin ingin menghapus karyawan ini?"
+      :item-title="selectedKaryawan?.nama || '-'"
+      warning-text="Data karyawan akan dihapus secara soft delete."
+      @confirm="deleteKaryawan"
+    />
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">
       {{ snackbar.message }}
@@ -204,10 +174,13 @@
 
 <script>
 import karyawanService from "@/services/master/karyawanService";
+import ConfirmDeleteDialog from "@/components/common/ConfirmDeleteDialog.vue";
 
 export default {
   name: "KaryawanIndex",
-
+  components: {
+    ConfirmDeleteDialog,
+  },
   data() {
     return {
       breadcrumbs: [

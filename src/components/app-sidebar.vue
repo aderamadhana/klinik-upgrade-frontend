@@ -647,19 +647,19 @@ export default {
                 "branch accounting",
               ],
             },
-            {
-              key: "kasir-pembayaran-resep",
-              title: "Pembayaran Resep",
-              to: "/kasir/pembayaran-resep",
-              roles: [
-                "administrator",
-                "superuser",
-                "it",
-                "management",
-                "front office",
-                "branch accounting",
-              ],
-            },
+            // {
+            //   key: "kasir-pembayaran-resep",
+            //   title: "Pembayaran Resep",
+            //   to: "/kasir/pembayaran-resep",
+            //   roles: [
+            //     "administrator",
+            //     "superuser",
+            //     "it",
+            //     "management",
+            //     "front office",
+            //     "branch accounting",
+            //   ],
+            // },
             {
               key: "kasir-riwayat",
               title: "Riwayat Pembayaran",

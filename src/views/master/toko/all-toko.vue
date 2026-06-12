@@ -141,48 +141,14 @@
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="deleteDialog" max-width="480">
-      <v-card rounded="lg">
-        <v-card-title class="text-h6 font-weight-bold">
-          Konfirmasi Hapus
-        </v-card-title>
-
-        <v-divider />
-
-        <v-card-text>
-          <p class="mb-2">Yakin ingin menghapus toko ini?</p>
-
-          <v-alert type="warning" rounded="lg">
-            <strong>{{ selectedItem?.nama_toko || "-" }}</strong>
-            <br />
-            Data akan dihapus secara soft delete.
-          </v-alert>
-        </v-card-text>
-
-        <v-divider />
-
-        <v-card-actions class="justify-end">
-          <v-btn
-            variant="outlined"
-            color="secondary"
-            :disabled="loadingDelete"
-            @click="deleteDialog = false"
-          >
-            Batal
-          </v-btn>
-
-          <v-btn
-            color="error"
-            variant="flat"
-            :loading="loadingDelete"
-            :disabled="loadingDelete"
-            @click="deleteToko"
-          >
-            Hapus
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <confirm-delete-dialog
+      v-model="deleteDialog"
+      :loading="loadingDelete"
+      subtitle="Data toko akan dihapus secara soft delete."
+      question="Yakin ingin menghapus toko ini?"
+      :item-title="selectedItem?.nama_toko || '-'"
+      @confirm="deleteToko"
+    />
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">
       {{ snackbar.text }}
@@ -192,10 +158,13 @@
 
 <script>
 import tokoService from "@/services/master/tokoService";
+import ConfirmDeleteDialog from "@/components/common/ConfirmDeleteDialog.vue";
 
 export default {
   name: "AllToko",
-
+  components: {
+    ConfirmDeleteDialog,
+  },
   data() {
     return {
       search: "",

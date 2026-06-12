@@ -158,47 +158,16 @@
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="deleteDialog" max-width="480">
-      <v-card rounded="lg">
-        <v-card-title class="text-h6 font-weight-bold">
-          Konfirmasi Hapus
-        </v-card-title>
-
-        <v-divider />
-
-        <v-card-text>
-          <p class="mb-2">Yakin ingin menghapus kategori antrian ini?</p>
-
-          <v-alert type="warning" rounded="lg">
-            <strong>{{ selectedItem?.nama || "-" }}</strong>
-            <br />
-            Data akan dihapus secara soft delete.
-          </v-alert>
-        </v-card-text>
-
-        <v-divider />
-
-        <v-card-actions class="justify-end">
-          <v-btn
-            variant="outlined"
-            color="secondary"
-            :disabled="loadingDelete"
-            @click="deleteDialog = false"
-          >
-            Batal
-          </v-btn>
-
-          <v-btn
-            color="error"
-            variant="flat"
-            :loading="loadingDelete"
-            @click="deleteKategori"
-          >
-            Hapus
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <confirm-delete-dialog
+      v-model="deleteDialog"
+      :loading="loadingDelete"
+      title="Konfirmasi Hapus"
+      subtitle="Data kategori antrian akan dihapus secara soft delete."
+      question="Yakin ingin menghapus kategori antrian ini?"
+      :item-title="selectedItem?.nama || '-'"
+      warning-text="Data kategori antrian akan dihapus secara soft delete."
+      @confirm="deleteKategori"
+    />
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">
       {{ snackbar.text }}
@@ -208,10 +177,13 @@
 
 <script>
 import masterAntrianKategoriService from "@/services/master/masterAntrianKategoriService";
+import ConfirmDeleteDialog from "@/components/common/ConfirmDeleteDialog.vue";
 
 export default {
   name: "AllAntrianKategori",
-
+  components: {
+    ConfirmDeleteDialog,
+  },
   data() {
     return {
       search: "",

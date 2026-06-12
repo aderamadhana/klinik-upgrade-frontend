@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-6">
+  <div>
     <div class="page-header">
       <div>
         <h1 class="page-title">Saldo Deposit Pasien</h1>
@@ -683,7 +683,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script>

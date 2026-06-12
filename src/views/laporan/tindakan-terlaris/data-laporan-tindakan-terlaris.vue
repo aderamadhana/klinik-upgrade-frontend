@@ -1,23 +1,17 @@
 <template>
-  <div class="pa-4">
-    <div
-      class="d-flex flex-column flex-md-row justify-space-between align-start ga-3 mb-4"
-    >
+  <div>
+    <div class="d-flex justify-space-between align-start flex-wrap ga-4 mb-4">
       <div>
-        <h1 class="text-h5 font-weight-bold mb-1">
+        <div class="text-h4 font-weight-bold">
           Data Laporan Tindakan Terlaris
-        </h1>
-        <div class="text-body-2 text-medium-emphasis">
+        </div>
+        <div class="text-body-2 text-medium-emphasis mt-1">
           Ranking tindakan/treatment berdasarkan qty terbanyak dari invoice
           lunas.
         </div>
       </div>
 
-      <v-breadcrumbs :items="breadcrumbs" density="compact" class="pa-0">
-        <template #divider>
-          <v-icon icon="mdi-chevron-right" size="16" />
-        </template>
-      </v-breadcrumbs>
+      <v-breadcrumbs :items="breadcrumbs" density="compact" class="pa-0" />
     </div>
 
     <v-card elevation="0" rounded="lg" border class="mb-4">

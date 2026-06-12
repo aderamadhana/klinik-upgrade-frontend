@@ -153,47 +153,16 @@
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="deleteDialog" max-width="480">
-      <v-card rounded="lg">
-        <v-card-title class="text-h6 font-weight-bold">
-          Hapus Supplier
-        </v-card-title>
-
-        <v-divider />
-
-        <v-card-text>
-          <p class="mb-2">Yakin ingin menghapus supplier ini?</p>
-
-          <v-alert type="warning" rounded="lg">
-            <strong>{{ selectedSupplier?.nama || "-" }}</strong>
-            <br />
-            Data akan dihapus secara soft delete.
-          </v-alert>
-        </v-card-text>
-
-        <v-divider />
-
-        <v-card-actions class="justify-end">
-          <v-btn
-            variant="outlined"
-            color="secondary"
-            :disabled="loadingDelete"
-            @click="deleteDialog = false"
-          >
-            Batal
-          </v-btn>
-
-          <v-btn
-            color="error"
-            variant="flat"
-            :loading="loadingDelete"
-            @click="confirmDeleteSupplier"
-          >
-            Hapus
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <confirm-delete-dialog
+      v-model="deleteDialog"
+      :loading="loadingDelete"
+      title="Konfirmasi Hapus"
+      subtitle="Data supplier akan dihapus secara soft delete."
+      question="Yakin ingin menghapus supplier ini?"
+      :item-title="selectedSupplier?.nama || '-'"
+      warning-text="Data supplier akan dihapus secara soft delete."
+      @confirm="confirmDeleteSupplier"
+    />
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">
       {{ snackbar.text }}
@@ -203,10 +172,13 @@
 
 <script>
 import supplierService from "@/services/master/supplierService";
+import ConfirmDeleteDialog from "@/components/common/ConfirmDeleteDialog.vue";
 
 export default {
   name: "SupplierIndex",
-
+  components: {
+    ConfirmDeleteDialog,
+  },
   data() {
     return {
       search: "",

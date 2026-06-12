@@ -117,15 +117,6 @@
               </v-btn>
 
               <v-btn
-                color="info"
-                size="small"
-                prepend-icon="mdi-eye"
-                @click="detailBrandAmbassador(item)"
-              >
-                Detail
-              </v-btn>
-
-              <v-btn
                 color="error"
                 size="small"
                 prepend-icon="mdi-delete"
@@ -219,47 +210,16 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="deleteDialog" max-width="480">
-      <v-card rounded="lg">
-        <v-card-title class="text-h6 font-weight-bold">
-          Hapus Brand Ambassador
-        </v-card-title>
-
-        <v-divider />
-
-        <v-card-text>
-          <p class="mb-2">Yakin ingin menghapus data brand ambassador ini?</p>
-
-          <v-alert type="warning" rounded="lg">
-            <strong>{{ selectedItem?.nama || "-" }}</strong>
-            <br />
-            Data akan dihapus secara soft delete.
-          </v-alert>
-        </v-card-text>
-
-        <v-divider />
-
-        <v-card-actions class="justify-end">
-          <v-btn
-            variant="outlined"
-            color="secondary"
-            :disabled="loadingDelete"
-            @click="deleteDialog = false"
-          >
-            Batal
-          </v-btn>
-
-          <v-btn
-            color="error"
-            variant="flat"
-            :loading="loadingDelete"
-            @click="confirmDelete"
-          >
-            Hapus
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <confirm-delete-dialog
+      v-model="deleteDialog"
+      :loading="loadingDelete"
+      title="Konfirmasi Hapus"
+      subtitle="Data brand ambassador akan dihapus secara soft delete."
+      question="Yakin ingin menghapus data brand ambassador ini?"
+      :item-title="selectedItem?.nama || '-'"
+      warning-text="Data brand ambassador akan dihapus secara soft delete."
+      @confirm="confirmDelete"
+    />
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">
       {{ snackbar.text }}
@@ -269,10 +229,13 @@
 
 <script>
 import brandAmbassadorService from "@/services/master/brandAmbassadorService";
+import ConfirmDeleteDialog from "@/components/common/ConfirmDeleteDialog.vue";
 
 export default {
   name: "BrandAmbassadorIndex",
-
+  components: {
+    ConfirmDeleteDialog,
+  },
   data() {
     return {
       search: "",

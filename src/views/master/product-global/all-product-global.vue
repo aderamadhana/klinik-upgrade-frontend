@@ -185,28 +185,38 @@
       </v-card-text>
     </v-card>
 
-    <v-dialog v-model="dialogDetail" max-width="1100" scrollable>
-      <v-card rounded="xl" class="detail-dialog-card">
-        <v-card-title class="pa-0">
-          <div class="detail-hero">
+    <v-dialog v-model="dialogDetail" max-width="1180" scrollable>
+      <v-card rounded="lg" max-height="88vh" class="overflow-hidden">
+        <v-sheet color="primary" class="pa-4">
+          <div class="d-flex align-start justify-space-between ga-4 flex-wrap">
             <div class="d-flex align-center ga-3">
-              <v-avatar color="primary" size="48">
-                <v-icon icon="mdi-package-variant-closed" size="28" />
+              <v-avatar size="44" color="white" rounded="lg">
+                <v-icon
+                  icon="mdi-package-variant-closed"
+                  color="primary"
+                  size="26"
+                />
               </v-avatar>
 
               <div>
-                <div class="text-h6 font-weight-bold">
+                <div class="text-subtitle-1 font-weight-bold text-white">
                   {{ selectedItem?.nama || "-" }}
                 </div>
-                <div class="text-body-2 text-medium-emphasis">
+                <div class="text-body-2 text-white">
                   Detail produk global dan konfigurasi harga per cabang
                 </div>
               </div>
             </div>
 
-            <div class="d-flex ga-2 flex-wrap">
-              <v-chip size="small" color="primary">
-                {{ selectedItem?.kode || "-" }}
+            <div class="d-flex align-center ga-2 flex-wrap">
+              <v-chip
+                v-if="selectedItem?.kode"
+                size="small"
+                color="white"
+                variant="flat"
+                class="font-weight-medium"
+              >
+                Kode: {{ selectedItem.kode }}
               </v-chip>
 
               <v-chip
@@ -215,201 +225,214 @@
                   selectedItem.kode_accurate !== '-'
                 "
                 size="small"
-                color="indigo"
+                color="white"
+                variant="flat"
+                class="font-weight-medium"
               >
                 Accurate: {{ selectedItem.kode_accurate }}
               </v-chip>
 
-              <v-chip
-                size="small"
-                :color="
-                  Number(selectedItem?.is_delete || 0) === 1
-                    ? 'error'
-                    : 'success'
-                "
-              >
-                {{
-                  Number(selectedItem?.is_delete || 0) === 1
-                    ? "Deleted"
-                    : "Aktif"
-                }}
-              </v-chip>
+              <v-btn
+                icon="mdi-close"
+                variant="text"
+                color="white"
+                @click="dialogDetail = false"
+              />
             </div>
           </div>
-        </v-card-title>
+        </v-sheet>
 
-        <v-divider />
+        <v-card-text class="pa-4">
+          <v-row dense class="mb-4">
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon icon="mdi-barcode-scan" color="primary" size="19" />
+                  </v-avatar>
 
-        <v-card-text class="pa-5">
-          <v-row class="mb-2">
-            <v-col cols="12" md="3">
-              <v-card color="primary" rounded="lg">
-                <v-card-text class="pa-4">
-                  <div class="detail-mini-label">Jumlah Cabang</div>
-                  <div class="detail-mini-value">
-                    {{ selectedItem?.jumlah_cabang || 0 }}
-                  </div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-
-            <v-col cols="12" md="3">
-              <v-card color="success" rounded="lg">
-                <v-card-text class="pa-4">
-                  <div class="detail-mini-label">Range Harga</div>
-                  <div class="detail-mini-value text-truncate">
-                    {{ selectedItem?.range_harga || "-" }}
-                  </div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-
-            <v-col cols="12" md="3">
-              <v-card color="info" rounded="lg">
-                <v-card-text class="pa-4">
-                  <div class="detail-mini-label">Jenis Obat</div>
-                  <div class="d-flex ga-1 flex-wrap mt-1">
-                    <v-chip
-                      v-if="Number(selectedItem?.is_obat_resep || 0) === 1"
-                      size="x-small"
-                      color="primary"
-                      variant="flat"
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Kode Accurate
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
                     >
-                      Resep
-                    </v-chip>
-
-                    <v-chip
-                      v-if="Number(selectedItem?.is_obat_bebas || 0) === 1"
-                      size="x-small"
-                      color="success"
-                      variant="flat"
-                    >
-                      Bebas
-                    </v-chip>
-
-                    <span
-                      v-if="
-                        Number(selectedItem?.is_obat_resep || 0) !== 1 &&
-                        Number(selectedItem?.is_obat_bebas || 0) !== 1
-                      "
-                      class="detail-mini-value"
-                    >
-                      -
-                    </span>
-                  </div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-
-            <v-col cols="12" md="3">
-              <v-card color="secondary" rounded="lg">
-                <v-card-text class="pa-4">
-                  <div class="detail-mini-label">Satuan</div>
-                  <div class="detail-mini-value">
-                    {{ selectedItem?.satuan_nama || "-" }}
-                  </div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-          </v-row>
-
-          <v-card variant="outlined" rounded="lg" class="mb-5">
-            <v-card-title class="text-subtitle-1 font-weight-bold pb-1">
-              Informasi Produk
-            </v-card-title>
-
-            <v-card-text>
-              <v-row>
-                <v-col cols="12" md="4">
-                  <div class="detail-field">
-                    <div class="detail-label">Kode Accurate</div>
-                    <div class="detail-value">
                       {{ selectedItem?.kode_accurate || "-" }}
                     </div>
                   </div>
-                </v-col>
+                </div>
+              </v-sheet>
+            </v-col>
 
-                <v-col cols="12" md="4">
-                  <div class="detail-field">
-                    <div class="detail-label">Nama Produk</div>
-                    <div class="detail-value">
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-package-variant-closed"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Nama Produk
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
                       {{ selectedItem?.nama || "-" }}
                     </div>
                   </div>
-                </v-col>
+                </div>
+              </v-sheet>
+            </v-col>
 
-                <v-col cols="12" md="3">
-                  <div class="detail-field">
-                    <div class="detail-label">Kategori</div>
-                    <div class="detail-value">
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon icon="mdi-tag-outline" color="primary" size="19" />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Kategori
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
                       {{ selectedItem?.kategori_produk_nama || "-" }}
                     </div>
                   </div>
-                </v-col>
+                </div>
+              </v-sheet>
+            </v-col>
 
-                <v-col cols="12" md="3">
-                  <div class="detail-field">
-                    <div class="detail-label">Golongan</div>
-                    <div class="detail-value">
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-shape-outline"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Golongan
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
                       {{ selectedItem?.golongan_produk_nama || "-" }}
                     </div>
                   </div>
-                </v-col>
+                </div>
+              </v-sheet>
+            </v-col>
 
-                <v-col cols="12" md="3">
-                  <div class="detail-field">
-                    <div class="detail-label">Tempat Produk</div>
-                    <div class="detail-value">
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-map-marker-outline"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Tempat Produk
+                    </div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
                       {{ selectedItem?.tempat_nama || "-" }}
                     </div>
                   </div>
-                </v-col>
+                </div>
+              </v-sheet>
+            </v-col>
 
-                <v-col cols="12" md="3">
-                  <div class="detail-field">
-                    <div class="detail-label">Satuan</div>
-                    <div class="detail-value">
+            <v-col cols="12" sm="6" md="4">
+              <v-sheet rounded="lg" border class="pa-3 h-100">
+                <div class="d-flex align-start ga-3">
+                  <v-avatar size="34" color="blue-lighten-5">
+                    <v-icon
+                      icon="mdi-scale-balance"
+                      color="primary"
+                      size="19"
+                    />
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">Satuan</div>
+                    <div
+                      class="text-body-2 font-weight-bold text-high-emphasis"
+                    >
                       {{ selectedItem?.satuan_nama || "-" }}
                     </div>
                   </div>
-                </v-col>
-              </v-row>
+                </div>
+              </v-sheet>
+            </v-col>
+          </v-row>
+
+          <v-card class="rounded-lg border mt-4" elevation="0">
+            <v-card-text class="pa-4">
+              <div
+                class="d-flex align-start justify-space-between ga-3 flex-wrap"
+              >
+                <div>
+                  <div class="text-subtitle-1 font-weight-bold">
+                    Konfigurasi Per Cabang
+                  </div>
+                  <div class="text-body-2 text-medium-emphasis">
+                    Harga, supplier, stok, dan fee yang berlaku di tiap cabang
+                  </div>
+                </div>
+
+                <div class="d-flex ga-2 flex-wrap">
+                  <v-chip color="primary" variant="tonal" size="small">
+                    {{ selectedItem?.toko_configs?.length || 0 }} cabang
+                  </v-chip>
+
+                  <v-chip color="success" variant="tonal" size="small">
+                    {{ selectedItem?.jumlah_cabang || 0 }} terdaftar
+                  </v-chip>
+                </div>
+              </div>
             </v-card-text>
-          </v-card>
 
-          <div
-            class="d-flex justify-space-between align-center mb-3 flex-wrap ga-2"
-          >
-            <div>
-              <div class="text-subtitle-1 font-weight-bold">
-                Konfigurasi Per Cabang
-              </div>
-              <div class="text-body-2 text-medium-emphasis">
-                Harga, supplier, stok, dan fee yang berlaku di tiap cabang
-              </div>
-            </div>
+            <v-divider />
 
-            <v-chip color="info" size="small">
-              {{ selectedItem?.toko_configs?.length || 0 }} cabang
-            </v-chip>
-          </div>
-
-          <v-card variant="outlined" rounded="lg">
             <v-data-table
               :headers="detailHeaders"
               :items="selectedItem?.toko_configs || []"
-              density="compact"
+              density="comfortable"
               item-value="id"
+              fixed-header
+              height="420"
+              :items-per-page="-1"
               no-data-text="Belum ada konfigurasi cabang"
             >
+              <template #bottom />
+
               <template #item.toko_nama="{ item }">
-                <div class="font-weight-medium">
+                <div class="font-weight-bold text-high-emphasis">
                   {{ item.toko_nama || "-" }}
                 </div>
               </template>
 
               <template #item.supplier_nama="{ item }">
-                <v-chip size="small" color="secondary">
+                <v-chip size="small" color="secondary" variant="tonal">
                   {{ item.supplier_nama || "-" }}
                 </v-chip>
               </template>
@@ -421,11 +444,13 @@
               </template>
 
               <template #item.harga_beli="{ item }">
-                {{ formatRupiah(item.harga_beli) }}
+                <span class="text-high-emphasis">
+                  {{ formatRupiah(item.harga_beli) }}
+                </span>
               </template>
 
               <template #item.stok_awal="{ item }">
-                <v-chip size="small" color="primary">
+                <v-chip size="small" color="primary" variant="tonal">
                   {{ formatNumber(item.stok_awal) }}
                 </v-chip>
               </template>
@@ -433,6 +458,7 @@
               <template #item.stok_minimum="{ item }">
                 <v-chip
                   size="small"
+                  variant="tonal"
                   :color="
                     Number(item.stok_minimum || 0) > 0 ? 'warning' : 'grey'
                   "
@@ -442,11 +468,15 @@
               </template>
 
               <template #item.fee_dokter="{ item }">
-                {{ formatRupiah(item.fee_dokter) }}
+                <span class="text-high-emphasis">
+                  {{ formatRupiah(item.fee_dokter) }}
+                </span>
               </template>
 
               <template #item.fee_beautician="{ item }">
-                {{ formatRupiah(item.fee_beautician) }}
+                <span class="text-high-emphasis">
+                  {{ formatRupiah(item.fee_beautician) }}
+                </span>
               </template>
             </v-data-table>
           </v-card>
@@ -454,7 +484,7 @@
 
         <v-divider />
 
-        <v-card-actions class="justify-end pa-4">
+        <v-card-actions class="pa-4 justify-end">
           <v-btn
             variant="outlined"
             color="secondary"
@@ -467,48 +497,16 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="deleteDialog" max-width="480">
-      <v-card rounded="lg">
-        <v-card-title class="text-h6 font-weight-bold">
-          Hapus Produk
-        </v-card-title>
-
-        <v-divider />
-
-        <v-card-text>
-          <p class="mb-2">Yakin ingin menghapus produk ini?</p>
-
-          <v-alert type="warning" rounded="lg">
-            <strong>{{ selectedItem?.nama || "-" }}</strong>
-            <br />
-            Data akan dihapus secara soft delete.
-          </v-alert>
-        </v-card-text>
-
-        <v-divider />
-
-        <v-card-actions class="justify-end">
-          <v-btn
-            variant="outlined"
-            color="secondary"
-            :disabled="loadingDelete"
-            @click="deleteDialog = false"
-          >
-            Batal
-          </v-btn>
-
-          <v-btn
-            color="error"
-            variant="flat"
-            :loading="loadingDelete"
-            :disabled="loadingDelete"
-            @click="deleteProduk"
-          >
-            Hapus
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <confirm-delete-dialog
+      v-model="deleteDialog"
+      :loading="loadingDelete"
+      title="Konfirmasi Hapus"
+      subtitle="Data produk akan dihapus secara soft delete."
+      question="Yakin ingin menghapus produk ini?"
+      :item-title="selectedItem?.nama || '-'"
+      warning-text="Data produk akan dihapus secara soft delete."
+      @confirm="deleteProduk"
+    />
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500">
       {{ snackbar.text }}
@@ -518,10 +516,13 @@
 
 <script>
 import produkService from "@/services/master/produkService";
+import ConfirmDeleteDialog from "@/components/common/ConfirmDeleteDialog.vue";
 
 export default {
   name: "AllProduk",
-
+  components: {
+    ConfirmDeleteDialog,
+  },
   data() {
     return {
       search: "",

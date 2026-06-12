@@ -1,114 +1,99 @@
 <template>
-  <v-container fluid class="pa-6">
+  <div>
     <div class="page-header">
       <div>
         <h1 class="page-title">Master Bahan Perawat</h1>
         <p class="page-subtitle">
           Kelola daftar bahan yang digunakan pada proses tindakan perawat.
         </p>
-
-        <v-breadcrumbs
-          :items="breadcrumbs"
-          density="compact"
-          class="pa-0 mt-2"
-        />
       </div>
 
-      <v-btn
-        color="success"
-        prepend-icon="mdi-plus"
-        class="toolbar-btn"
-        @click="openForm()"
-      >
-        Entry Data
-      </v-btn>
+      <v-breadcrumbs :items="breadcrumbs" divider="/" />
     </div>
 
-    <v-card class="main-card">
-      <div class="toolbar-wrap">
-        <div class="toolbar-filter">
-          <v-text-field
-            v-model="search"
-            label="Cari bahan / kode accurate"
-            prepend-inner-icon="mdi-magnify"
-            variant="outlined"
-            density="compact"
-            hide-details
-            clearable
-            class="search-field"
-          />
-        </div>
-
-        <div class="action-wrap">
+    <v-card elevation="1">
+      <v-card-title
+        class="d-flex justify-space-between align-center flex-wrap ga-3"
+      >
+        <div class="d-flex ga-2 flex-wrap">
           <v-btn
-            variant="tonal"
-            prepend-icon="mdi-refresh"
-            class="toolbar-btn"
-            :loading="loading"
-            @click="loadData"
+            small
+            color="success"
+            prepend-icon="mdi-plus"
+            @click="openForm()"
           >
-            Refresh
+            Entry Data
           </v-btn>
         </div>
-      </div>
 
-      <div class="table-wrap">
+        <v-text-field
+          v-model="search"
+          placeholder="Cari bahan, kode accurate, satuan..."
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+          density="compact"
+          hide-details
+          clearable
+          style="max-width: 320px"
+          @keyup.enter="handleSearch"
+          @click:clear="handleClearSearch"
+        />
+      </v-card-title>
+
+      <v-card-text>
         <v-data-table-server
-          v-model:page="page"
-          v-model:items-per-page="perPage"
+          :page="page"
+          :items-per-page="itemsPerPage"
           :headers="headers"
           :items="items"
           :items-length="totalItems"
           :loading="loading"
-          loading-text="Memuat data bahan perawat..."
+          :items-per-page-options="itemsPerPageOptions"
           item-value="id"
           density="compact"
-          class="payment-table"
-          @update:options="handleTableOptions"
+          loading-text="Memuat data bahan perawat..."
+          no-data-text="Data bahan perawat belum tersedia"
+          @update:page="handlePageChange"
+          @update:items-per-page="handleItemsPerPageChange"
         >
           <template #loading>
-            <v-skeleton-loader type="table-row@6" class="pa-4" />
+            <v-skeleton-loader type="table-row@6" />
           </template>
 
-          <template #[`item.nama_bahan`]="{ item }">
-            <div class="patient-name">
-              {{ item.nama_bahan }}
+          <template #item.no="{ index }">
+            {{ rowNumber(index) }}
+          </template>
+
+          <template #item.nama_bahan="{ item }">
+            <div class="font-weight-medium">
+              {{ item.nama_bahan || "-" }}
             </div>
-            <div class="patient-meta">
+            <div class="text-caption text-medium-emphasis">
               {{ item.kode_accurate_obat_bahan || "Kode Accurate belum ada" }}
             </div>
           </template>
 
-          <template #[`item.satuan`]="{ item }">
-            <v-chip
-              size="small"
-              variant="tonal"
-              color="primary"
-              class="badge-chip"
-            >
+          <template #item.satuan="{ item }">
+            <v-chip size="small" color="primary">
               {{ item.satuan || "-" }}
             </v-chip>
           </template>
 
-          <template #[`item.is_active`]="{ item }">
-            <span
-              class="status-pill"
-              :class="
-                Number(item.is_active) === 1 ? 'status-paid' : 'status-cancel'
-              "
+          <template #item.is_active="{ item }">
+            <v-chip
+              size="small"
+              :color="Number(item.is_active) === 1 ? 'success' : 'error'"
             >
               {{ Number(item.is_active) === 1 ? "Aktif" : "Nonaktif" }}
-            </span>
+            </v-chip>
           </template>
 
-          <template #[`item.actions`]="{ item }">
-            <div class="action-cell">
+          <template #item.actions="{ item }">
+            <div class="d-flex ga-2 justify-end">
               <v-btn
                 size="small"
                 color="primary"
-                variant="tonal"
                 prepend-icon="mdi-pencil"
-                class="text-action-btn"
                 @click="openForm(item)"
               >
                 Edit
@@ -117,9 +102,7 @@
               <v-btn
                 size="small"
                 color="error"
-                variant="tonal"
                 prepend-icon="mdi-delete"
-                class="text-action-btn"
                 @click="openDeleteDialog(item)"
               >
                 Hapus
@@ -128,24 +111,35 @@
           </template>
 
           <template #no-data>
-            <div class="empty-state">
-              <v-icon size="44" color="grey">mdi-flask-outline</v-icon>
-              <div class="empty-title">Data bahan perawat belum tersedia</div>
-              <div class="empty-description">
-                Tambahkan bahan seperti kapas, gel, cairan, atau bahan tindakan
-                lainnya.
+            <div class="text-center py-6">
+              <div class="text-subtitle-2 mb-1">
+                Data bahan perawat belum tersedia
+              </div>
+              <div class="text-body-2 text-medium-emphasis">
+                Klik Entry Data untuk menambahkan bahan baru.
               </div>
             </div>
           </template>
         </v-data-table-server>
-      </div>
+      </v-card-text>
     </v-card>
 
     <v-dialog v-model="formDialog" max-width="620" persistent>
-      <v-card class="dialog-card">
-        <div class="dialog-title">
-          {{ form.id ? "Edit Bahan Perawat" : "Tambah Bahan Perawat" }}
-        </div>
+      <v-card rounded="lg">
+        <v-card-title class="d-flex justify-space-between align-center">
+          <span class="text-h6 font-weight-bold">
+            {{ form.id ? "Edit Bahan Perawat" : "Tambah Bahan Perawat" }}
+          </span>
+
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            :disabled="saving"
+            @click="closeForm"
+          />
+        </v-card-title>
+
+        <v-divider />
 
         <v-card-text>
           <v-form ref="formRef" v-model="formValid" @submit.prevent="submit">
@@ -185,14 +179,16 @@
                   color="success"
                   inset
                   hide-details
-                  label="Status aktif"
+                  :label="form.is_active ? 'Status aktif' : 'Status nonaktif'"
                 />
               </v-col>
             </v-row>
           </v-form>
         </v-card-text>
 
-        <v-card-actions class="justify-end px-5 pb-4">
+        <v-divider />
+
+        <v-card-actions class="justify-end">
           <v-btn variant="text" :disabled="saving" @click="closeForm">
             Batal
           </v-btn>
@@ -210,68 +206,59 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="deleteDialog" max-width="460">
-      <v-card class="dialog-card">
-        <div class="dialog-title">Hapus Bahan Perawat</div>
-
-        <v-card-text>
-          Data ini akan ditandai sebagai terhapus.
-
-          <div class="delete-dialog-info" v-if="selectedItem">
-            <strong>{{ selectedItem.nama_bahan }}</strong>
-          </div>
-        </v-card-text>
-
-        <v-card-actions class="justify-end px-5 pb-4">
-          <v-btn variant="text" :disabled="deleting" @click="closeDeleteDialog">
-            Batal
-          </v-btn>
-
-          <v-btn
-            color="error"
-            variant="flat"
-            prepend-icon="mdi-delete"
-            :loading="deleting"
-            @click="deleteData"
-          >
-            Hapus
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <confirm-delete-dialog
+      v-model="deleteDialog"
+      :loading="deleting"
+      title="Konfirmasi Hapus"
+      subtitle="Data bahan perawat akan dihapus secara soft delete."
+      question="Yakin ingin menghapus bahan perawat ini?"
+      :item-title="selectedItem?.nama_bahan || '-'"
+      warning-text="Data bahan perawat akan dihapus secara soft delete."
+      @cancel="closeDeleteDialog"
+      @confirm="deleteData"
+    />
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000">
       {{ snackbar.message }}
     </v-snackbar>
-  </v-container>
+  </div>
 </template>
 
 <script>
 import perawatBahanService from "@/services/master/perawatBahanService";
+import ConfirmDeleteDialog from "@/components/common/ConfirmDeleteDialog.vue";
 
 export default {
   name: "AllPerawatBahan",
-
+  components: {
+    ConfirmDeleteDialog,
+  },
   data() {
     return {
       breadcrumbs: [
         { title: "Dashboard", disabled: false, to: "/dashboard" },
         { title: "Master", disabled: true },
-        { title: "Bahan Perawat", disabled: true },
+        {
+          title: "Bahan Perawat",
+          disabled: false,
+          to: "/master/perawat-bahan",
+        },
       ],
 
       headers: [
-        { title: "Bahan", key: "nama_bahan", sortable: false },
-        { title: "Satuan", key: "satuan", sortable: false },
-        { title: "Status", key: "is_active", sortable: false },
-        { title: "Aksi", key: "actions", sortable: false, align: "end" },
+        { title: "NO", key: "no", sortable: false, width: "70px" },
+        { title: "BAHAN", key: "nama_bahan", sortable: false },
+        { title: "SATUAN", key: "satuan", sortable: false },
+        { title: "STATUS", key: "is_active", sortable: false },
+        { title: "ACTION", key: "actions", sortable: false, align: "end" },
       ],
 
       items: [],
       search: "",
 
       page: 1,
-      perPage: 10,
+      itemsPerPage: 10,
+      itemsPerPageOptions: [10, 25, 50, 100],
       totalItems: 0,
 
       loading: false,
@@ -281,7 +268,7 @@ export default {
       formDialog: false,
       deleteDialog: false,
       selectedItem: null,
-      searchTimer: null,
+      fetchTimer: null,
       formValid: false,
 
       form: this.defaultForm(),
@@ -298,19 +285,14 @@ export default {
     };
   },
 
-  watch: {
-    search() {
-      clearTimeout(this.searchTimer);
-
-      this.searchTimer = setTimeout(() => {
-        this.page = 1;
-        this.loadData();
-      }, 400);
-    },
-  },
-
   mounted() {
     this.loadData();
+  },
+
+  beforeUnmount() {
+    if (this.fetchTimer) {
+      clearTimeout(this.fetchTimer);
+    }
   },
 
   methods: {
@@ -330,15 +312,29 @@ export default {
       try {
         const response = await perawatBahanService.getAll({
           page: this.page,
-          per_page: this.perPage,
-          search: this.search || undefined,
+          per_page: this.itemsPerPage,
+          search: this.search || "",
         });
 
-        this.items = this.extractRows(response);
-        this.totalItems = this.extractTotal(response);
+        const rows = this.extractRows(response);
+        const meta = this.extractMeta(response);
+
+        this.items = rows.map((item) => this.mapItem(item));
+        this.totalItems = Number(meta.total || rows.length || 0);
+
+        if (meta.current_page) {
+          this.page = Number(meta.current_page);
+        }
+
+        if (meta.per_page) {
+          this.itemsPerPage = Number(meta.per_page);
+        }
       } catch (error) {
+        this.items = [];
+        this.totalItems = 0;
+
         this.showSnackbar(
-          error.response?.data?.message || "Gagal mengambil data bahan perawat",
+          this.getErrorMessage(error, "Gagal mengambil data bahan perawat"),
           "error",
         );
       } finally {
@@ -346,26 +342,71 @@ export default {
       }
     },
 
-    handleTableOptions(options) {
-      const nextPage = Number(options.page || 1);
-      const nextPerPage = Number(options.itemsPerPage || 10);
-
-      if (this.page === nextPage && this.perPage === nextPerPage) {
-        return;
+    queueLoadData() {
+      if (this.fetchTimer) {
+        clearTimeout(this.fetchTimer);
       }
 
-      this.page = nextPage;
-      this.perPage = nextPerPage;
+      this.fetchTimer = setTimeout(() => {
+        this.loadData();
+      }, 100);
+    },
+
+    handlePageChange(value) {
+      this.page = Number(value || 1);
+      this.queueLoadData();
+    },
+
+    handleItemsPerPageChange(value) {
+      this.itemsPerPage = Number(value || 10);
+      this.page = 1;
+      this.queueLoadData();
+    },
+
+    handleSearch() {
+      if (this.fetchTimer) {
+        clearTimeout(this.fetchTimer);
+      }
+
+      this.page = 1;
       this.loadData();
+    },
+
+    handleClearSearch() {
+      if (this.fetchTimer) {
+        clearTimeout(this.fetchTimer);
+      }
+
+      this.search = "";
+      this.page = 1;
+      this.loadData();
+    },
+
+    rowNumber(index) {
+      return (
+        (Number(this.page || 1) - 1) * Number(this.itemsPerPage || 10) +
+        index +
+        1
+      );
+    },
+
+    mapItem(item) {
+      return {
+        id: item.id,
+        nama_bahan: item.nama_bahan || "-",
+        kode_accurate_obat_bahan: item.kode_accurate_obat_bahan || "",
+        satuan: item.satuan || "-",
+        is_active: Number(item.is_active) === 1 ? 1 : 0,
+      };
     },
 
     openForm(item = null) {
       this.form = item
         ? {
             id: item.id,
-            nama_bahan: item.nama_bahan || "",
+            nama_bahan: item.nama_bahan === "-" ? "" : item.nama_bahan || "",
             kode_accurate_obat_bahan: item.kode_accurate_obat_bahan || "",
-            satuan: item.satuan || "",
+            satuan: item.satuan === "-" ? "" : item.satuan || "",
             is_active: Number(item.is_active) === 1,
           }
         : this.defaultForm();
@@ -383,9 +424,11 @@ export default {
     },
 
     async submit() {
-      const validation = await this.$refs.formRef.validate();
+      if (this.$refs.formRef) {
+        const validation = await this.$refs.formRef.validate();
 
-      if (!validation.valid) return;
+        if (!validation.valid) return;
+      }
 
       this.saving = true;
 
@@ -408,7 +451,7 @@ export default {
         this.loadData();
       } catch (error) {
         this.showSnackbar(
-          error.response?.data?.message || "Gagal menyimpan data bahan perawat",
+          this.getErrorMessage(error, "Gagal menyimpan data bahan perawat"),
           "error",
         );
       } finally {
@@ -436,10 +479,15 @@ export default {
 
         this.showSnackbar("Data bahan perawat berhasil dihapus", "success");
         this.closeDeleteDialog();
+
+        if (this.items.length === 1 && this.page > 1) {
+          this.page -= 1;
+        }
+
         this.loadData();
       } catch (error) {
         this.showSnackbar(
-          error.response?.data?.message || "Gagal menghapus data bahan perawat",
+          this.getErrorMessage(error, "Gagal menghapus data bahan perawat"),
           "error",
         );
       } finally {
@@ -452,16 +500,57 @@ export default {
       if (Array.isArray(response?.data)) return response.data;
       if (Array.isArray(response?.data?.data)) return response.data.data;
       if (Array.isArray(response?.items)) return response.items;
+
       return [];
     },
 
-    extractTotal(response) {
-      if (response?.meta?.total !== undefined)
-        return Number(response.meta.total);
-      if (response?.data?.total !== undefined)
-        return Number(response.data.total);
-      if (response?.total !== undefined) return Number(response.total);
-      return this.extractRows(response).length;
+    extractMeta(response) {
+      if (response?.meta) return response.meta;
+      if (response?.data?.meta) return response.data.meta;
+
+      if (
+        response?.current_page ||
+        response?.per_page ||
+        response?.total ||
+        response?.last_page
+      ) {
+        return {
+          current_page: response.current_page,
+          per_page: response.per_page,
+          total: response.total,
+          last_page: response.last_page,
+        };
+      }
+
+      if (
+        response?.data?.current_page ||
+        response?.data?.per_page ||
+        response?.data?.total ||
+        response?.data?.last_page
+      ) {
+        return {
+          current_page: response.data.current_page,
+          per_page: response.data.per_page,
+          total: response.data.total,
+          last_page: response.data.last_page,
+        };
+      }
+
+      return {
+        current_page: this.page,
+        per_page: this.itemsPerPage,
+        total: 0,
+        last_page: 1,
+      };
+    },
+
+    getErrorMessage(error, fallback) {
+      return (
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        fallback
+      );
     },
 
     showSnackbar(message, color = "success") {
