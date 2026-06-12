@@ -75,6 +75,7 @@
                 density="comfortable"
                 :rules="[rules.required]"
                 clearable
+                @update:model-value="setUppercaseField('nama', $event)"
               />
             </v-col>
 
@@ -110,6 +111,7 @@
                 variant="outlined"
                 density="comfortable"
                 clearable
+                @update:model-value="setUppercaseField('no_telp', $event)"
               />
             </v-col>
 
@@ -121,6 +123,7 @@
                 variant="outlined"
                 density="comfortable"
                 clearable
+                @update:model-value="setUppercaseField('nik', $event)"
               />
             </v-col>
 
@@ -132,6 +135,7 @@
                 variant="outlined"
                 density="comfortable"
                 clearable
+                @update:model-value="setUppercaseField('no_ihs', $event)"
               />
             </v-col>
 
@@ -143,6 +147,7 @@
                 variant="outlined"
                 density="comfortable"
                 clearable
+                @update:model-value="setUppercaseField('no_sip_dok', $event)"
               />
             </v-col>
 
@@ -187,6 +192,7 @@
                 rows="3"
                 auto-grow
                 clearable
+                @update:model-value="setUppercaseField('alamat', $event)"
               />
             </v-col>
           </v-row>
@@ -475,17 +481,17 @@ export default {
       const data = res?.data ?? res?.result ?? res;
 
       this.form = {
-        kode: data?.kode || "",
+        kode: this.uppercaseValue(data?.kode || ""),
         jabatan_id: data?.jabatan_id || null,
-        nama: data?.nama || "",
-        alamat: data?.alamat || "",
+        nama: this.uppercaseValue(data?.nama || ""),
+        alamat: this.uppercaseValue(data?.alamat || ""),
         foto_karyawan: data?.foto_karyawan || "",
-        no_telp: data?.no_telp || "",
-        nik: data?.nik || "",
-        no_ihs: data?.no_ihs || "",
+        no_telp: this.uppercaseValue(data?.no_telp || ""),
+        nik: this.uppercaseValue(data?.nik || ""),
+        no_ihs: this.uppercaseValue(data?.no_ihs || ""),
         gender: data?.gender || null,
         birthday_date: this.formatDateInput(data?.birthday_date),
-        no_sip_dok: data?.no_sip_dok || "",
+        no_sip_dok: this.uppercaseValue(data?.no_sip_dok || ""),
         is_dokter_spesialis: Number(data?.is_dokter_spesialis || 0) === 1,
         sort_order: Number(data?.sort_order || 0),
         penempatan: this.mapPenempatan(data?.penempatan),
@@ -575,7 +581,7 @@ export default {
           response?.data?.kode ?? response?.kode ?? response?.data ?? "";
 
         if (kode) {
-          this.form.kode = kode;
+          this.form.kode = this.uppercaseValue(kode);
           this.lastGeneratedSignature = currentSignature;
         }
       } catch (error) {
@@ -663,17 +669,17 @@ export default {
 
     buildPayload() {
       return {
-        kode: this.cleanValue(this.form.kode),
+        kode: this.cleanUpperValue(this.form.kode),
         jabatan_id: this.form.jabatan_id,
-        nama: this.cleanValue(this.form.nama),
-        alamat: this.cleanValue(this.form.alamat),
+        nama: this.cleanUpperValue(this.form.nama),
+        alamat: this.cleanUpperValue(this.form.alamat),
         foto_karyawan: this.cleanValue(this.form.foto_karyawan),
-        no_telp: this.cleanValue(this.form.no_telp),
-        nik: this.cleanValue(this.form.nik),
-        no_ihs: this.cleanValue(this.form.no_ihs),
+        no_telp: this.cleanUpperValue(this.form.no_telp),
+        nik: this.cleanUpperValue(this.form.nik),
+        no_ihs: this.cleanUpperValue(this.form.no_ihs),
         gender: this.form.gender || null,
         birthday_date: this.form.birthday_date || null,
-        no_sip_dok: this.cleanValue(this.form.no_sip_dok),
+        no_sip_dok: this.cleanUpperValue(this.form.no_sip_dok),
         is_dokter_spesialis: this.form.is_dokter_spesialis ? 1 : 0,
         sort_order: Number(this.form.sort_order || 0),
         penempatan: this.form.penempatan.map((item) => ({
@@ -683,6 +689,28 @@ export default {
           tanggal_selesai: item.tanggal_selesai || null,
         })),
       };
+    },
+
+    uppercaseValue(value) {
+      if (value === undefined || value === null) {
+        return "";
+      }
+
+      return String(value).toUpperCase();
+    },
+
+    setUppercaseField(field, value) {
+      this.form[field] = this.uppercaseValue(value);
+    },
+
+    cleanUpperValue(value) {
+      const cleaned = this.cleanValue(value);
+
+      if (typeof cleaned === "string") {
+        return cleaned.toUpperCase();
+      }
+
+      return cleaned;
     },
 
     cleanValue(value) {

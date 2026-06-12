@@ -49,7 +49,7 @@
           <v-row dense>
             <v-col cols="12" md="9">
               <v-text-field
-                v-model="form.nama_pasien"
+                :model-value="form.nama_pasien"
                 label="Nama Pasien *"
                 variant="outlined"
                 density="comfortable"
@@ -57,6 +57,7 @@
                 :error-messages="
                   validationErrors.nama_pasien || validationErrors.nama
                 "
+                @update:model-value="setUppercaseField('nama_pasien', $event)"
               />
             </v-col>
 
@@ -170,7 +171,7 @@
 
             <v-col cols="12">
               <v-textarea
-                v-model="form.alamat_detail"
+                :model-value="form.alamat_detail"
                 label="Alamat Detail *"
                 rows="3"
                 variant="outlined"
@@ -179,6 +180,7 @@
                 :error-messages="
                   validationErrors.alamat_detail || validationErrors.alamat
                 "
+                @update:model-value="setUppercaseField('alamat_detail', $event)"
               />
             </v-col>
           </v-row>
@@ -252,12 +254,13 @@
 
             <v-col cols="12" md="4">
               <v-text-field
-                v-model="form.tempat_lahir"
+                :model-value="form.tempat_lahir"
                 label="Tempat Lahir *"
                 variant="outlined"
                 density="comfortable"
                 :rules="[required]"
                 :error-messages="validationErrors.tempat_lahir"
+                @update:model-value="setUppercaseField('tempat_lahir', $event)"
               />
             </v-col>
 
@@ -345,12 +348,13 @@
 
             <v-col cols="12" md="6">
               <v-text-field
-                v-model="form.sumber_info"
+                :model-value="form.sumber_info"
                 label="Sumber Info"
                 placeholder="Optional"
                 variant="outlined"
                 density="comfortable"
                 :error-messages="validationErrors.sumber_info"
+                @update:model-value="setUppercaseField('sumber_info', $event)"
               />
             </v-col>
           </v-row>
@@ -362,35 +366,38 @@
           <v-row dense>
             <v-col cols="12">
               <v-text-field
-                v-model="form.alergi_obat"
+                :model-value="form.alergi_obat"
                 label="Alergi Obat"
                 placeholder="Optional"
                 variant="outlined"
                 density="comfortable"
                 :error-messages="validationErrors.alergi_obat"
+                @update:model-value="setUppercaseField('alergi_obat', $event)"
               />
             </v-col>
 
             <v-col cols="12">
               <v-text-field
-                v-model="form.masalah_kulit"
+                :model-value="form.masalah_kulit"
                 label="Masalah Kulit"
                 placeholder="Optional"
                 variant="outlined"
                 density="comfortable"
                 :error-messages="validationErrors.masalah_kulit"
+                @update:model-value="setUppercaseField('masalah_kulit', $event)"
               />
             </v-col>
 
             <v-col cols="12">
               <v-textarea
-                v-model="form.catatan"
+                :model-value="form.catatan"
                 label="Catatan"
                 placeholder="Optional"
                 rows="3"
                 variant="outlined"
                 density="comfortable"
                 :error-messages="validationErrors.catatan"
+                @update:model-value="setUppercaseField('catatan', $event)"
               />
             </v-col>
           </v-row>
@@ -443,6 +450,16 @@ export default {
       successMessage: "",
       errorMessage: "",
       validationErrors: {},
+
+      uppercaseFields: [
+        "nama_pasien",
+        "alamat_detail",
+        "tempat_lahir",
+        "sumber_info",
+        "alergi_obat",
+        "masalah_kulit",
+        "catatan",
+      ],
 
       form: {
         nama_pasien: "",
@@ -576,6 +593,22 @@ export default {
       };
     },
 
+    toUppercaseValue(value) {
+      if (value === null || value === undefined) return "";
+
+      return String(value).toUpperCase();
+    },
+
+    setUppercaseField(field, value) {
+      this.form[field] = this.toUppercaseValue(value);
+    },
+
+    normalizeUppercaseForm() {
+      this.uppercaseFields.forEach((field) => {
+        this.form[field] = this.toUppercaseValue(this.form[field]);
+      });
+    },
+
     async initPage() {
       this.refreshTokoFromLocalStorage();
 
@@ -688,6 +721,8 @@ export default {
     },
 
     buildPayload() {
+      this.normalizeUppercaseForm();
+
       return {
         nama_pasien: this.form.nama_pasien,
         tipe_pasien: this.form.tipe_pasien,
@@ -727,6 +762,7 @@ export default {
       this.validationErrors = {};
 
       this.refreshTokoFromLocalStorage();
+      this.normalizeUppercaseForm();
 
       if (!this.form.toko_id) {
         this.errorMessage =
@@ -783,6 +819,7 @@ export default {
 
     buatTokenRegistrasi() {
       this.refreshTokoFromLocalStorage();
+      this.normalizeUppercaseForm();
 
       if (!this.form.toko_id) {
         this.errorMessage =

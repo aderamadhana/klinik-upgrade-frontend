@@ -65,13 +65,14 @@
 
             <v-col cols="12" md="4">
               <v-text-field
-                v-model="form.nama"
+                :model-value="form.nama"
                 label="Nama Karyawan *"
                 placeholder="Masukkan nama lengkap"
                 variant="outlined"
                 density="comfortable"
                 :rules="[rules.required]"
                 clearable
+                @update:model-value="setUppercaseField('nama', $event)"
               />
             </v-col>
 
@@ -101,56 +102,61 @@
 
             <v-col cols="12" md="4">
               <v-text-field
-                v-model="form.no_telp"
+                :model-value="form.no_telp"
                 label="No. Telepon"
                 placeholder="Masukkan no telepon / WhatsApp"
                 variant="outlined"
                 density="comfortable"
                 clearable
+                @update:model-value="setUppercaseField('no_telp', $event)"
               />
             </v-col>
 
             <v-col cols="12" md="4">
               <v-text-field
-                v-model="form.nik"
+                :model-value="form.nik"
                 label="NIK"
                 placeholder="Masukkan NIK"
                 variant="outlined"
                 density="comfortable"
                 clearable
+                @update:model-value="setUppercaseField('nik', $event)"
               />
             </v-col>
 
             <v-col cols="12" md="4">
               <v-text-field
-                v-model="form.no_ihs"
+                :model-value="form.no_ihs"
                 label="No. IHS"
                 placeholder="Masukkan nomor IHS"
                 variant="outlined"
                 density="comfortable"
                 clearable
+                @update:model-value="setUppercaseField('no_ihs', $event)"
               />
             </v-col>
 
             <v-col cols="12" md="4">
               <v-text-field
-                v-model="form.no_sip_dok"
+                :model-value="form.no_sip_dok"
                 label="No. SIP Dokter"
                 placeholder="Masukkan nomor SIP"
                 variant="outlined"
                 density="comfortable"
                 clearable
+                @update:model-value="setUppercaseField('no_sip_dok', $event)"
               />
             </v-col>
 
             <v-col cols="12" md="6">
               <v-text-field
-                v-model="form.foto_karyawan"
+                :model-value="form.foto_karyawan"
                 label="Foto Karyawan"
                 placeholder="Path / URL foto"
                 variant="outlined"
                 density="comfortable"
                 clearable
+                @update:model-value="setUppercaseField('foto_karyawan', $event)"
               />
             </v-col>
 
@@ -176,7 +182,7 @@
 
             <v-col cols="12">
               <v-textarea
-                v-model="form.alamat"
+                :model-value="form.alamat"
                 label="Alamat"
                 placeholder="Masukkan alamat"
                 variant="outlined"
@@ -184,6 +190,7 @@
                 rows="3"
                 auto-grow
                 clearable
+                @update:model-value="setUppercaseField('alamat', $event)"
               />
             </v-col>
           </v-row>
@@ -332,6 +339,17 @@ export default {
         { label: "Perempuan", value: "P" },
       ],
 
+      uppercaseFields: [
+        "kode",
+        "nama",
+        "alamat",
+        "foto_karyawan",
+        "no_telp",
+        "nik",
+        "no_ihs",
+        "no_sip_dok",
+      ],
+
       form: {
         kode: "",
         jabatan_id: null,
@@ -380,6 +398,22 @@ export default {
   },
 
   methods: {
+    toUppercaseValue(value) {
+      if (value === null || value === undefined) return "";
+
+      return String(value).toUpperCase();
+    },
+
+    setUppercaseField(field, value) {
+      this.form[field] = this.toUppercaseValue(value);
+    },
+
+    normalizeUppercaseForm() {
+      this.uppercaseFields.forEach((field) => {
+        this.form[field] = this.toUppercaseValue(this.form[field]);
+      });
+    },
+
     async fetchMasterData() {
       this.loadingMaster = true;
 
@@ -460,7 +494,7 @@ export default {
         const kode =
           response?.data?.kode ?? response?.kode ?? response?.data ?? "";
 
-        this.form.kode = kode;
+        this.form.kode = this.toUppercaseValue(kode);
       } catch (error) {
         console.error(error);
 
@@ -547,6 +581,8 @@ export default {
     },
 
     buildPayload() {
+      this.normalizeUppercaseForm();
+
       return {
         kode: this.form.kode,
         jabatan_id: this.form.jabatan_id,
@@ -571,6 +607,8 @@ export default {
     },
 
     async submitForm() {
+      this.normalizeUppercaseForm();
+
       const result = await this.$refs.formRef.validate();
 
       if (!result.valid) return;
