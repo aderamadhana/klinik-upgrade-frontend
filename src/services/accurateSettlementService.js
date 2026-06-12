@@ -54,6 +54,31 @@ const accurateSettlementService = {
     );
     return response.data;
   },
+
+  async getDepositRealization(params = {}) {
+    const response = await api.get("/accurate/settlement-deposit-realization", {
+      params,
+    });
+    return response.data?.data || response.data;
+  },
+
+  async uploadDepositRealization(payload) {
+    const response = await api.post(
+      "/accurate/settlement-deposit-realization/upload",
+      payload,
+    );
+    return response.data;
+  },
+
+  async getSto(params = {}) {
+    const response = await api.get("/accurate/settlement-sto", { params });
+    return response.data?.data || response.data;
+  },
+
+  async uploadSto(payload) {
+    const response = await api.post("/accurate/settlement-sto/upload", payload);
+    return response.data;
+  },
 };
 
 export default accurateSettlementService;

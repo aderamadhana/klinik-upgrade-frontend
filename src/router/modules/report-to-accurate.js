@@ -27,6 +27,18 @@ const reportToAccurateRoutes = [
         component: () =>
           import("@/views/report-to-accurate/settlement-deposit.vue"),
       },
+      {
+        path: "settlement-realisasi",
+        name: "Faktur Realisasi Deposit Accurate",
+        component: () =>
+          import("@/views/report-to-accurate/settlement-deposit-realization.vue"),
+      },
+      {
+        path: "settlement-sto",
+        name: "STO Accurate",
+        component: () =>
+          import("@/views/report-to-accurate/settlement-sto.vue"),
+      },
     ],
   },
 ];
