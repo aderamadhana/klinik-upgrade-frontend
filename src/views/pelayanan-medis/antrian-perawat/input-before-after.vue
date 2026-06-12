@@ -122,8 +122,8 @@
         border="start"
         class="mb-4"
       >
-        Mulai proses antrian perawat terlebih dahulu. Foto belum dapat diubah
-        selama task masih berstatus menunggu.
+        Antrian perawat masih berstatus menunggu. Foto tetap dapat diunggah atau
+        diubah selama task belum selesai atau dibatalkan.
       </v-alert>
 
       <v-alert
@@ -512,7 +512,11 @@ export default {
     },
 
     canEdit() {
-      return Boolean(this.beforeAfterMeta?.editable) && this.taskStatus === 1;
+      return (
+        Boolean(this.beforeAfterMeta?.editable) &&
+        this.taskStatus >= 0 &&
+        ![2, 9].includes(this.taskStatus)
+      );
     },
 
     isReadOnly() {

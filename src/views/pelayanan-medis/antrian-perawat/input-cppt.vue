@@ -140,8 +140,8 @@
         variant="tonal"
         class="mb-4"
       >
-        Antrian masih menunggu. Mulai antrian perawat terlebih dahulu sebelum
-        menyimpan CPPT.
+        Antrian perawat masih berstatus menunggu. CPPT tetap dapat diisi selama
+        task belum selesai atau dibatalkan.
       </v-alert>
 
       <v-form ref="form" v-model="formValid" @submit.prevent="saveCppt">
@@ -606,7 +606,7 @@ export default {
     },
 
     canEdit() {
-      return this.taskStatus === 1;
+      return this.taskStatus >= 0 && ![2, 9].includes(this.taskStatus);
     },
 
     isReadOnly() {

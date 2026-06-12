@@ -1065,7 +1065,8 @@ export default {
     getQueueEndAt(item, status) {
       if (status === "selesai") {
         return this.parseDateTime(
-          item?.finished_at ||
+          item?.task_finished_at ||
+            item?.finished_at ||
             item?.selesai_at ||
             item?.antrian?.finished_at ||
             item?.updated_at ||
@@ -1155,8 +1156,8 @@ export default {
       }
 
       if (raw === 0 || raw === "0") return "menunggu";
-      if (raw === 1 || raw === "1") return "menunggu";
-      if (raw === 2 || raw === "2") return "proses";
+      if (raw === 1 || raw === "1") return "proses";
+      if (raw === 2 || raw === "2") return "selesai";
       if (raw === 3 || raw === "3") return "selesai";
       if (raw === 4 || raw === "4") return "selesai";
       if (raw === 9 || raw === "9") return "batal";
@@ -1199,15 +1200,42 @@ export default {
     },
 
     getStatusValue(item) {
+      if (this.isTruthy(item?.is_delete) || this.isTruthy(item?.is_batal)) {
+        return "batal";
+      }
+
+      if (
+        item?.status_antrian_perawat !== undefined &&
+        item?.status_antrian_perawat !== null &&
+        item?.status_antrian_perawat !== ""
+      ) {
+        return this.normalizeStatus(item.status_antrian_perawat, item);
+      }
+
       const raw =
         item?.status_antrian ||
         item?.antrian?.status ||
         item?.queue_status ||
+        item?.task_status ||
         item?.status_task ||
         item?.status ||
         item?.status_perawat;
 
-      return this.normalizeStatus(raw, item);
+      const status = this.normalizeStatus(raw, item);
+
+      if (["selesai", "batal", "dilewati"].includes(status)) {
+        return status;
+      }
+
+      if (this.isAllNurseInputDone(item)) {
+        return "selesai";
+      }
+
+      if (this.hasAnyNurseInputDone(item) && status === "menunggu") {
+        return "proses";
+      }
+
+      return status;
     },
 
     getStatusMeta(item) {
@@ -1436,6 +1464,22 @@ export default {
       return this.isProgressDone(value);
     },
 
+    hasAnyNurseInputDone(item) {
+      return (
+        this.isCpptDone(item) ||
+        this.isBeforeAfterDone(item) ||
+        this.isBahanTreatmentDone(item)
+      );
+    },
+
+    isAllNurseInputDone(item) {
+      return (
+        this.isCpptDone(item) &&
+        this.isBeforeAfterDone(item) &&
+        this.isBahanTreatmentDone(item)
+      );
+    },
+
     getPrimaryAction(item) {
       const status = this.getStatusValue(item);
 
@@ -1543,7 +1587,17 @@ export default {
     },
 
     canDelete(item) {
-      return !["selesai"].includes(this.getStatusValue(item));
+      if (
+        item?.can_delete_antrian !== undefined &&
+        item?.can_delete_antrian !== null
+      ) {
+        return this.isTruthy(item.can_delete_antrian);
+      }
+
+      return (
+        this.getStatusValue(item) === "menunggu" &&
+        !this.hasAnyNurseInputDone(item)
+      );
     },
 
     async startQueue(item) {

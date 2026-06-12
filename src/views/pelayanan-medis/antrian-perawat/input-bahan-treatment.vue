@@ -103,7 +103,7 @@
         </div>
 
         <v-chip
-          color="primary"
+          :color="hasInvalidQty ? 'error' : 'primary'"
           variant="tonal"
           size="small"
           class="font-weight-bold"
@@ -119,6 +119,17 @@
           Simpan hanya setelah bahan benar-benar dipakai. Sistem akan menyimpan
           nama bahan, qty default, qty terpakai, satuan, perawat, dan tanggal
           pengisian.
+        </v-alert>
+
+        <v-alert
+          v-if="hasInvalidQty"
+          type="error"
+          variant="tonal"
+          density="comfortable"
+          class="mb-4"
+        >
+          Ada {{ totalInvalidItems }} item dengan qty terpakai tidak valid. Qty
+          terpakai tidak boleh minus atau melebihi qty default.
         </v-alert>
 
         <v-skeleton-loader v-if="loading" type="list-item-three-line@4" />
@@ -174,16 +185,25 @@
 
                 <v-chip
                   :color="
-                    getTreatmentFilledCount(treatment) > 0 ? 'success' : 'grey'
+                    getTreatmentInvalidCount(treatment) > 0
+                      ? 'error'
+                      : getTreatmentFilledCount(treatment) > 0
+                        ? 'success'
+                        : 'grey'
                   "
                   variant="tonal"
                   size="small"
                   class="font-weight-bold"
                 >
-                  {{ getTreatmentFilledCount(treatment) }}/{{
-                    treatment.items.length
-                  }}
-                  terisi
+                  <span v-if="getTreatmentInvalidCount(treatment) > 0">
+                    {{ getTreatmentInvalidCount(treatment) }} tidak valid
+                  </span>
+                  <span v-else>
+                    {{ getTreatmentFilledCount(treatment) }}/{{
+                      treatment.items.length
+                    }}
+                    terisi
+                  </span>
                 </v-chip>
               </div>
             </v-expansion-panel-title>
@@ -199,7 +219,7 @@
                     >
                       Qty Default
                     </th>
-                    <th class="text-left font-weight-bold" style="width: 180px">
+                    <th class="text-left font-weight-bold" style="width: 220px">
                       Qty Terpakai
                     </th>
                     <th class="text-left font-weight-bold" style="width: 110px">
@@ -211,32 +231,51 @@
                   <tr
                     v-for="(item, itemIndex) in treatment.items"
                     :key="`${treatment.treatment_detail_id}-${item.master_treatment_perawat_bahan_id}-${item.perawat_bahan_id}-${itemIndex}`"
+                    :class="getItemRowClass(item)"
                   >
-                    <td>
-                      <div
-                        class="text-body-2 font-weight-medium text-grey-darken-4"
-                      >
-                        {{ item.nama_bahan }}
+                    <td :class="getItemCellClass(item)">
+                      <div class="d-flex align-center ga-2">
+                        <div
+                          class="text-body-2 font-weight-medium text-grey-darken-4"
+                        >
+                          {{ item.nama_bahan }}
+                        </div>
+
+                        <v-chip
+                          v-if="isItemChanged(item)"
+                          color="success"
+                          variant="tonal"
+                          size="x-small"
+                          class="font-weight-bold"
+                        >
+                          Berubah
+                        </v-chip>
                       </div>
                     </td>
-                    <td class="text-right">
+
+                    <td class="text-right" :class="getItemCellClass(item)">
                       <span class="text-body-2 text-medium-emphasis">
                         {{ formatQty(item.jumlah_default) }}
                       </span>
                     </td>
-                    <td>
+
+                    <td :class="getItemCellClass(item)">
                       <v-text-field
                         v-model="item.jumlah_terpakai"
                         type="number"
                         min="0"
+                        :max="getQtyDefault(item)"
                         step="0.01"
                         variant="outlined"
                         density="compact"
-                        hide-details
+                        hide-details="auto"
+                        :error="isQtyInvalid(item)"
+                        :error-messages="getQtyErrorMessages(item)"
                         :disabled="!canEdit || saving"
                       />
                     </td>
-                    <td>
+
+                    <td :class="getItemCellClass(item)">
                       <span class="text-body-2 font-weight-bold">
                         {{ item.satuan || "-" }}
                       </span>
@@ -255,8 +294,13 @@
         class="d-flex flex-column flex-md-row justify-space-between align-stretch align-md-center ga-3 pa-4"
       >
         <div class="text-body-2 text-medium-emphasis">
-          {{ totalFilledItems }}/{{ totalItems }} item bahan sudah memiliki qty
-          terpakai.
+          <span v-if="hasInvalidQty" class="text-error font-weight-bold">
+            Perbaiki {{ totalInvalidItems }} qty bahan sebelum menyimpan.
+          </span>
+          <span v-else>
+            {{ totalFilledItems }}/{{ totalItems }} item bahan sudah memiliki
+            qty terpakai.
+          </span>
         </div>
 
         <div class="d-flex ga-2 justify-end">
@@ -273,7 +317,9 @@
             color="primary"
             prepend-icon="mdi-content-save"
             :loading="saving"
-            :disabled="loading || !canEdit || !treatments.length"
+            :disabled="
+              loading || !canEdit || !treatments.length || hasInvalidQty
+            "
             @click="saveChanges"
           >
             Simpan Perubahan
@@ -360,11 +406,24 @@ export default {
       return this.treatments.reduce((total, treatment) => {
         return (
           total +
-          (treatment.items || []).filter(
-            (item) => Number(item.jumlah_terpakai || 0) > 0,
-          ).length
+          (treatment.items || []).filter((item) => this.getQtyUsed(item) > 0)
+            .length
         );
       }, 0);
+    },
+
+    totalInvalidItems() {
+      return this.treatments.reduce((total, treatment) => {
+        return (
+          total +
+          (treatment.items || []).filter((item) => this.isQtyInvalid(item))
+            .length
+        );
+      }, 0);
+    },
+
+    hasInvalidQty() {
+      return this.totalInvalidItems > 0;
     },
   },
 
@@ -398,24 +457,36 @@ export default {
     },
 
     normalizeTreatments(treatments) {
-      return treatments.map((treatment) => ({
+      return treatments.map((treatment, treatmentIndex) => ({
         ...treatment,
-        items: (treatment.items || []).map((item) => ({
+        items: (treatment.items || []).map((item, itemIndex) => ({
           ...item,
-          jumlah_default: Number(item.jumlah_default || 0),
-          jumlah_terpakai: Number(item.jumlah_terpakai || 0),
+          _row_key: [
+            treatment.treatment_detail_id || treatment.id || treatmentIndex,
+            item.id || "",
+            item.master_treatment_perawat_bahan_id || "",
+            item.perawat_bahan_id || "",
+            itemIndex,
+          ].join("-"),
+          jumlah_default: this.toNumber(item.jumlah_default),
+          jumlah_terpakai: this.toNumber(item.jumlah_terpakai),
         })),
       }));
     },
 
     getTreatmentFilledCount(treatment) {
-      return (treatment.items || []).filter(
-        (item) => Number(item.jumlah_terpakai || 0) > 0,
-      ).length;
+      return (treatment.items || []).filter((item) => this.getQtyUsed(item) > 0)
+        .length;
+    },
+
+    getTreatmentInvalidCount(treatment) {
+      return (treatment.items || []).filter((item) => this.isQtyInvalid(item))
+        .length;
     },
 
     resetQty() {
       this.treatments = JSON.parse(JSON.stringify(this.initialTreatments));
+      this.errorMessage = "";
     },
 
     buildPayloadItems() {
@@ -427,7 +498,7 @@ export default {
             item.master_treatment_perawat_bahan_id,
           ),
           perawat_bahan_id: Number(item.perawat_bahan_id),
-          jumlah_terpakai: Number(item.jumlah_terpakai || 0),
+          jumlah_terpakai: this.getQtyUsed(item),
         }));
       });
     },
@@ -440,6 +511,10 @@ export default {
           "Tidak ada bahan treatment untuk disimpan.",
           "warning",
         );
+        return;
+      }
+
+      if (!this.validateQtyLimits()) {
         return;
       }
 
@@ -479,6 +554,12 @@ export default {
           response?.message || "Bahan treatment berhasil disimpan.",
           "success",
         );
+
+        setTimeout(() => {
+          this.$router.replace({
+            path: "/pelayanan-medis/antrian-perawat",
+          });
+        }, 700);
       } catch (error) {
         this.errorMessage = this.getErrorMessage(
           error,
@@ -489,8 +570,80 @@ export default {
       }
     },
 
+    validateQtyLimits() {
+      const invalidItem = this.treatments
+        .flatMap((treatment) => treatment.items || [])
+        .find((item) => this.isQtyInvalid(item));
+
+      if (!invalidItem) return true;
+
+      const satuan = invalidItem.satuan ? ` ${invalidItem.satuan}` : "";
+      const message = this.isQtyExceedsDefault(invalidItem)
+        ? `Qty terpakai ${invalidItem.nama_bahan} tidak boleh melebihi qty default ${this.formatQty(this.getQtyDefault(invalidItem))}${satuan}.`
+        : `Qty terpakai ${invalidItem.nama_bahan} tidak boleh minus.`;
+
+      this.showSnackbar(message, "error");
+      return false;
+    },
+
+    isQtyInvalid(item) {
+      return this.isQtyBelowZero(item) || this.isQtyExceedsDefault(item);
+    },
+
+    isQtyBelowZero(item) {
+      return this.getQtyUsed(item) < 0;
+    },
+
+    isQtyExceedsDefault(item) {
+      return this.getQtyUsed(item) > this.getQtyDefault(item);
+    },
+
+    getQtyErrorMessages(item) {
+      if (this.isQtyBelowZero(item)) {
+        return ["Qty tidak boleh minus."];
+      }
+
+      if (this.isQtyExceedsDefault(item)) {
+        const satuan = item.satuan ? ` ${item.satuan}` : "";
+        return [
+          `Maksimal ${this.formatQty(this.getQtyDefault(item))}${satuan}.`,
+        ];
+      }
+
+      return [];
+    },
+
+    getQtyDefault(item) {
+      return this.toNumber(item?.jumlah_default);
+    },
+
+    getQtyUsed(item) {
+      return this.toNumber(item?.jumlah_terpakai);
+    },
+
+    toNumber(value) {
+      if (value === null || value === undefined || value === "") return 0;
+
+      if (typeof value === "number") {
+        return Number.isFinite(value) ? value : 0;
+      }
+
+      let normalizedValue = String(value).trim().replace(/\s/g, "");
+
+      if (normalizedValue.includes(",") && normalizedValue.includes(".")) {
+        normalizedValue = normalizedValue.replace(/\./g, "").replace(",", ".");
+      } else if (normalizedValue.includes(",")) {
+        normalizedValue = normalizedValue.replace(",", ".");
+      }
+
+      normalizedValue = normalizedValue.replace(/[^0-9.-]/g, "");
+
+      const numberValue = Number(normalizedValue);
+      return Number.isFinite(numberValue) ? numberValue : 0;
+    },
+
     formatQty(value) {
-      const numberValue = Number(value || 0);
+      const numberValue = this.toNumber(value);
       return numberValue.toLocaleString("id-ID", {
         minimumFractionDigits: 0,
         maximumFractionDigits: 4,
@@ -525,6 +678,38 @@ export default {
 
     goBack() {
       this.$router.back();
+    },
+    getInitialItem(item) {
+      return this.initialTreatments
+        .flatMap((treatment) => treatment.items || [])
+        .find((initialItem) => initialItem._row_key === item._row_key);
+    },
+
+    isItemChanged(item) {
+      const initialItem = this.getInitialItem(item);
+
+      if (!initialItem) return false;
+
+      return (
+        this.normalizeQtyForCompare(item.jumlah_terpakai) !==
+        this.normalizeQtyForCompare(initialItem.jumlah_terpakai)
+      );
+    },
+
+    getItemRowClass(item) {
+      if (this.isQtyInvalid(item)) return "bg-red-lighten-5";
+      if (this.isItemChanged(item)) return "bg-green-lighten-5";
+      return "";
+    },
+
+    getItemCellClass(item) {
+      if (this.isQtyInvalid(item)) return "bg-red-lighten-5";
+      if (this.isItemChanged(item)) return "bg-green-lighten-5";
+      return "";
+    },
+
+    normalizeQtyForCompare(value) {
+      return Number(this.toNumber(value).toFixed(4));
     },
   },
 };
