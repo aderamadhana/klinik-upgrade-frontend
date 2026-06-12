@@ -10,6 +10,12 @@ const kasirRoutes = [
           import("@/views/kasir-pembayaran/pembayaran/all-pembayaran.vue"),
       },
       {
+        path: "riwayat-pembayaran",
+        name: "Riwayat Pembayaran",
+        component: () =>
+          import("@/views/kasir-pembayaran/pembayaran/riwayat-pembayaran.vue"),
+      },
+      {
         path: "daftar-pembayaran/:id/proses-pembayaran",
         name: "Proses Pembayaran Layanan",
         component: () =>

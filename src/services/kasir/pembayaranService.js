@@ -7,6 +7,13 @@ export default {
     return api.get(BASE_URL, { params }).then((response) => response.data);
   },
 
+  getHistory(params = {}) {
+    return this.getAll({
+      status: "lunas",
+      ...params,
+    });
+  },
+
   getById(id) {
     return api.get(`${BASE_URL}/${id}`).then((response) => response.data);
   },
