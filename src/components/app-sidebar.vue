@@ -758,7 +758,7 @@ export default {
             {
               key: "accurate-faktur-deposit",
               title: "Upload Faktur Deposit",
-              to: "/report-to-accurate/settlement-faktur-deposit",
+              to: "/report-to-accurate/settlement-deposit",
               roles: [
                 "administrator",
                 "superuser",

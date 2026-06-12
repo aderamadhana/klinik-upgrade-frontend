@@ -28,6 +28,32 @@ const accurateSettlementService = {
     );
     return response.data;
   },
+
+  async getOwner(params = {}) {
+    const response = await api.get("/accurate/settlement-owner", { params });
+    return response.data?.data || response.data;
+  },
+
+  async uploadOwner(payload) {
+    const response = await api.post(
+      "/accurate/settlement-owner/upload",
+      payload,
+    );
+    return response.data;
+  },
+
+  async getDeposit(params = {}) {
+    const response = await api.get("/accurate/settlement-deposit", { params });
+    return response.data?.data || response.data;
+  },
+
+  async uploadDeposit(payload) {
+    const response = await api.post(
+      "/accurate/settlement-deposit/upload",
+      payload,
+    );
+    return response.data;
+  },
 };
 
 export default accurateSettlementService;

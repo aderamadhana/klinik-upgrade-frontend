@@ -15,6 +15,18 @@ const reportToAccurateRoutes = [
         component: () =>
           import("@/views/report-to-accurate/settlement-elite-glowbal.vue"),
       },
+      {
+        path: "settlement-owner",
+        name: "Settlement Accurate Owner",
+        component: () =>
+          import("@/views/report-to-accurate/settlement-owner.vue"),
+      },
+      {
+        path: "settlement-deposit",
+        name: "Faktur Deposit Accurate",
+        component: () =>
+          import("@/views/report-to-accurate/settlement-deposit.vue"),
+      },
     ],
   },
 ];
