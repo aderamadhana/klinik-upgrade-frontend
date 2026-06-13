@@ -1,3 +1,6 @@
+const laporanBelumTersedia = () =>
+  import("@/views/laporan/laporan-belum-tersedia.vue");
+
 const laporanRoutes = [
   {
     path: "/laporan",
@@ -100,6 +103,102 @@ const laporanRoutes = [
         name: "Data Laporan Tindakan Terlaris",
         component: () =>
           import("@/views/laporan/tindakan-terlaris/data-laporan-tindakan-terlaris.vue"),
+      },
+      {
+        path: "treatment-tidak-laku",
+        name: "Data Treatment Tidak Laku",
+        component: laporanBelumTersedia,
+        meta: {
+          title: "Data Treatment Tidak Laku",
+        },
+      },
+      {
+        path: "pasien-paling-sering-belanja",
+        name: "Pasien Paling Sering Belanja",
+        component: laporanBelumTersedia,
+        meta: {
+          title: "Pasien Paling Sering Belanja",
+        },
+      },
+      {
+        path: "detail-treatment",
+        name: "Data Laporan Detail Treatment",
+        component: laporanBelumTersedia,
+        meta: {
+          title: "Data Laporan Detail Treatment",
+        },
+      },
+      {
+        path: "pasien-terakhir-transaksi",
+        name: "Data Pasien Terakhir Transaksi",
+        component: laporanBelumTersedia,
+        meta: {
+          title: "Data Pasien Terakhir Transaksi",
+        },
+      },
+      {
+        path: "pembayaran-fo",
+        name: "Data Laporan Pembayaran FO",
+        component: laporanBelumTersedia,
+        meta: {
+          title: "Data Laporan Pembayaran FO",
+        },
+      },
+      {
+        path: "jumlah-peningkatan-pasien",
+        name: "Data Laporan Jumlah Peningkatan Pasien",
+        component: laporanBelumTersedia,
+        meta: {
+          title: "Data Laporan Jumlah Peningkatan Pasien",
+        },
+      },
+      {
+        path: "produk-resep-dokter",
+        name: "Data Laporan Produk Resep Dokter",
+        component: laporanBelumTersedia,
+        meta: {
+          title: "Data Laporan Produk Resep Dokter",
+        },
+      },
+      {
+        path: "referral-treatment-staff",
+        name: "Laporan Referral Treatment Staff",
+        component: laporanBelumTersedia,
+        meta: {
+          title: "Laporan Referral Treatment Staff",
+        },
+      },
+      {
+        path: "referral-product-staff",
+        name: "Laporan Referral Product Staff",
+        component: laporanBelumTersedia,
+        meta: {
+          title: "Laporan Referral Product Staff",
+        },
+      },
+      {
+        path: "redeem-referral-ba",
+        name: "Laporan Redeem Referral BA",
+        component: laporanBelumTersedia,
+        meta: {
+          title: "Laporan Redeem Referral BA",
+        },
+      },
+      {
+        path: "belum-realisasi-deposit",
+        name: "Data Laporan Belum Realisasi Deposit",
+        component: laporanBelumTersedia,
+        meta: {
+          title: "Data Laporan Belum Realisasi Deposit",
+        },
+      },
+      {
+        path: "bahan-treatment",
+        name: "Laporan Bahan Treatment",
+        component: laporanBelumTersedia,
+        meta: {
+          title: "Laporan Bahan Treatment",
+        },
       },
     ],
   },
