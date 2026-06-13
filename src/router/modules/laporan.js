@@ -107,49 +107,75 @@ const laporanRoutes = [
       {
         path: "treatment-tidak-laku",
         name: "Data Treatment Tidak Laku",
-        component: laporanBelumTersedia,
+        component: () =>
+          import("@/views/laporan/treatment-tidak-laku/data-treatment-tidak-laku.vue"),
         meta: {
           title: "Data Treatment Tidak Laku",
         },
       },
       {
         path: "pasien-paling-sering-belanja",
-        name: "Pasien Paling Sering Belanja",
-        component: laporanBelumTersedia,
+        alias: [
+          "/laporan/data-pasien-paling-sering-belanja",
+          "/laporan/laporan-pasien-paling-sering-belanja",
+        ],
+        name: "Data Pasien Paling Sering Belanja",
+        component: () =>
+          import("@/views/laporan/pasien-paling-sering-belanja/data-pasien-paling-sering-belanja.vue"),
         meta: {
-          title: "Pasien Paling Sering Belanja",
+          title: "Data Pasien Paling Sering Belanja",
         },
       },
       {
         path: "detail-treatment",
+        alias: [
+          "/laporan/data-laporan-detail-treatment",
+          "/laporan/laporan-detail-treatment",
+        ],
         name: "Data Laporan Detail Treatment",
-        component: laporanBelumTersedia,
+        component: () =>
+          import("@/views/laporan/detail-treatment/data-laporan-detail-treatment.vue"),
         meta: {
           title: "Data Laporan Detail Treatment",
         },
       },
       {
         path: "pasien-terakhir-transaksi",
-        name: "Data Pasien Terakhir Transaksi",
-        component: laporanBelumTersedia,
+        alias: [
+          "/laporan/pasien-terakhir-transaksi-treatment",
+          "/laporan/data-pasien-terakhir-transaksi-treatment",
+        ],
+        name: "Data Pasien Terakhir Transaksi Treatment",
+        component: () =>
+          import("@/views/laporan/pasien-terakhir-transaksi/data-pasien-terakhir-transaksi-treatment.vue"),
         meta: {
-          title: "Data Pasien Terakhir Transaksi",
+          title: "Data Pasien Terakhir Transaksi Treatment",
         },
       },
       {
         path: "pembayaran-fo",
+        alias: [
+          "/laporan/data-laporan-pembayaran-fo",
+          "/laporan/laporan-pembayaran-fo",
+        ],
         name: "Data Laporan Pembayaran FO",
-        component: laporanBelumTersedia,
+        component: () =>
+          import("@/views/laporan/pembayaran-fo/data-laporan-pembayaran-fo.vue"),
         meta: {
           title: "Data Laporan Pembayaran FO",
         },
       },
       {
         path: "jumlah-peningkatan-pasien",
-        name: "Data Laporan Jumlah Peningkatan Pasien",
-        component: laporanBelumTersedia,
+        alias: [
+          "/laporan/jumlah-peningkatan",
+          "/laporan/data-laporan-jumlah-peningkatan",
+        ],
+        name: "Data Laporan Jumlah Peningkatan",
+        component: () =>
+          import("@/views/laporan/jumlah-peningkatan/data-laporan-jumlah-peningkatan.vue"),
         meta: {
-          title: "Data Laporan Jumlah Peningkatan Pasien",
+          title: "Data Laporan Jumlah Peningkatan",
         },
       },
       {
