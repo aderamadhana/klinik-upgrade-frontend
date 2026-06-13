@@ -34,7 +34,7 @@ export default {
       blob: response.data,
       filename: parseFilename(
         response.headers?.["content-disposition"],
-        `data-laporan-tindakan-terlaris.${format === "excel" ? "xls" : "html"}`,
+        `data-laporan-tindakan-terlaris.${format === "excel" ? "xlsx" : "pdf"}`,
       ),
       contentType: response.headers?.["content-type"] || response.data?.type,
     };

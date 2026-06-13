@@ -24,9 +24,15 @@ export default {
     return response.data;
   },
 
-  async exportReport({ jenis, ...params }) {
+  async exportReport({ jenis, format = "pdf", ...params }) {
+    const normalizedFormat = String(format).toLowerCase();
+    const extension = normalizedFormat === "excel" ? "xlsx" : "pdf";
+
     const response = await api.get(`${ENDPOINT}/export/${jenis}`, {
-      params,
+      params: {
+        ...params,
+        format: normalizedFormat,
+      },
       responseType: "blob",
     });
 
@@ -34,7 +40,7 @@ export default {
       blob: response.data,
       filename: parseFilename(
         response.headers?.["content-disposition"],
-        `laporan-pemasukan-${jenis}.html`,
+        `laporan-pemasukan-${jenis}.${extension}`,
       ),
       contentType: response.headers?.["content-type"] || response.data?.type,
     };

@@ -222,46 +222,57 @@
         </v-alert>
 
         <v-row dense>
-          <v-col cols="12" sm="6" md="3">
-            <v-btn
-              color="primary"
-              block
-              min-height="44"
-              prepend-icon="mdi-file-pdf-box"
-              :loading="downloading === 'semua'"
-              :disabled="!canSubmit || hasAnyDownload"
-              @click="downloadReport('semua')"
-            >
-              Laporan Semua Pemasukan
-            </v-btn>
-          </v-col>
+          <v-col
+            v-for="option in exportOptions"
+            :key="option.value"
+            cols="12"
+            md="4"
+          >
+            <v-card elevation="0" rounded="lg" border>
+              <v-card-text>
+                <div class="d-flex align-center ga-2 mb-3">
+                  <v-icon :icon="option.icon" :color="option.color" />
+                  <div>
+                    <div class="text-subtitle-2 font-weight-bold">
+                      {{ option.title }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis">
+                      {{ option.description }}
+                    </div>
+                  </div>
+                </div>
 
-          <v-col cols="12" sm="6" md="3">
-            <v-btn
-              color="error"
-              block
-              min-height="44"
-              prepend-icon="mdi-file-pdf-box"
-              :loading="downloading === 'langsung'"
-              :disabled="!canSubmit || hasAnyDownload"
-              @click="downloadReport('langsung')"
-            >
-              Laporan Pemasukan Langsung
-            </v-btn>
-          </v-col>
+                <v-row dense>
+                  <v-col cols="12" sm="6">
+                    <v-btn
+                      color="error"
+                      variant="flat"
+                      block
+                      prepend-icon="mdi-file-pdf-box"
+                      :loading="downloading === `${option.value}-pdf`"
+                      :disabled="!canSubmit || hasAnyDownload"
+                      @click="downloadReport(option.value, 'pdf')"
+                    >
+                      PDF
+                    </v-btn>
+                  </v-col>
 
-          <v-col cols="12" sm="6" md="3">
-            <v-btn
-              color="warning"
-              block
-              min-height="44"
-              prepend-icon="mdi-file-pdf-box"
-              :loading="downloading === 'booking'"
-              :disabled="!canSubmit || hasAnyDownload"
-              @click="downloadReport('booking')"
-            >
-              Laporan Pemasukan Booking
-            </v-btn>
+                  <v-col cols="12" sm="6">
+                    <v-btn
+                      color="success"
+                      variant="flat"
+                      block
+                      prepend-icon="mdi-microsoft-excel"
+                      :loading="downloading === `${option.value}-excel`"
+                      :disabled="!canSubmit || hasAnyDownload"
+                      @click="downloadReport(option.value, 'excel')"
+                    >
+                      Excel
+                    </v-btn>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-card>
           </v-col>
         </v-row>
       </v-card-text>
@@ -387,6 +398,32 @@ export default {
         this.filters.tanggal_akhir,
       )}`;
     },
+
+    exportOptions() {
+      return [
+        {
+          value: "semua",
+          title: "Semua Pemasukan",
+          description: "Gabungan transaksi langsung dan booking.",
+          icon: "mdi-file-chart-outline",
+          color: "primary",
+        },
+        {
+          value: "langsung",
+          title: "Pemasukan Langsung",
+          description: "Transaksi tanpa sumber booking.",
+          icon: "mdi-storefront-outline",
+          color: "error",
+        },
+        {
+          value: "booking",
+          title: "Pemasukan Booking",
+          description: "Transaksi yang berasal dari booking.",
+          icon: "mdi-calendar-check-outline",
+          color: "warning",
+        },
+      ];
+    },
   },
 
   watch: {
@@ -504,27 +541,45 @@ export default {
       });
     },
 
-    async downloadReport(jenis) {
+    async downloadReport(jenis, format) {
       if (!this.canSubmit || this.downloading) return;
 
-      this.downloading = jenis;
+      this.downloading = `${jenis}-${format}`;
       this.errorMessage = "";
 
       try {
-        const { blob, contentType } = await pemasukanUmumService.exportReport({
-          jenis,
-          ...this.buildParams(),
-        });
+        const { blob, filename, contentType } =
+          await pemasukanUmumService.exportReport({
+            jenis,
+            format,
+            ...this.buildParams(),
+          });
 
+        const fallbackType =
+          format === "excel"
+            ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            : "application/pdf";
         const fileBlob = new Blob([blob], {
-          type: contentType || blob?.type || "text/html",
+          type: contentType || blob?.type || fallbackType,
         });
         const url = window.URL.createObjectURL(fileBlob);
-        window.open(url, "_blank");
+
+        if (format === "pdf") {
+          window.open(url, "_blank");
+        } else {
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = filename || `laporan-pemasukan-${jenis}.xlsx`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+        }
+
+        window.setTimeout(() => window.URL.revokeObjectURL(url), 1500);
       } catch (error) {
         this.errorMessage = this.getErrorMessage(
           error,
-          "Gagal membuka laporan pemasukan.",
+          "Gagal mengekspor laporan pemasukan.",
         );
       } finally {
         this.downloading = "";

@@ -2,31 +2,33 @@
   <div>
     <div class="d-flex justify-space-between align-start flex-wrap ga-4 mb-4">
       <div>
-        <div class="text-h4 font-weight-bold">Data Laporan Detail Pasien</div>
-        <div class="text-body-2 text-medium-emphasis mt-1">
-          Export data detail pasien berdasarkan tanggal daftar pasien.
+        <h1 class="text-h5 font-weight-bold mb-1">Laporan Detail Pasien</h1>
+        <div class="text-body-2 text-medium-emphasis">
+          Rekap faktur lunas pasien beserta nilai treatment dan produk.
         </div>
       </div>
 
       <v-breadcrumbs :items="breadcrumbs" density="compact" class="pa-0" />
     </div>
 
-    <v-card elevation="0" rounded="lg" border class="mb-4">
+    <v-card variant="outlined" class="mb-4">
       <v-card-title
         class="d-flex align-center ga-2 text-subtitle-1 font-weight-bold"
       >
         <v-icon icon="mdi-filter-variant" size="20" />
         Filter Laporan
       </v-card-title>
+
       <v-divider />
+
       <v-card-text>
         <v-alert
           v-if="errorMessage"
           type="error"
           variant="tonal"
           density="compact"
-          class="mb-4"
           closable
+          class="mb-4"
           @click:close="errorMessage = ''"
         >
           {{ errorMessage }}
@@ -42,7 +44,7 @@
               density="compact"
               hide-details="auto"
               prepend-inner-icon="mdi-calendar-start"
-              :disabled="loading"
+              :disabled="loading || hasAnyDownload"
             />
           </v-col>
 
@@ -55,7 +57,7 @@
               density="compact"
               hide-details="auto"
               prepend-inner-icon="mdi-calendar-end"
-              :disabled="loading"
+              :disabled="loading || hasAnyDownload"
             />
           </v-col>
 
@@ -66,7 +68,7 @@
               height="40"
               prepend-icon="mdi-magnify"
               :loading="loading"
-              :disabled="!canSubmit"
+              :disabled="!canSubmit || hasAnyDownload"
               @click="loadSummary"
             >
               Terapkan
@@ -78,84 +80,80 @@
 
     <v-row dense class="mb-4">
       <v-col cols="12" sm="6" md="3">
-        <v-card elevation="0" rounded="lg" border>
+        <v-card variant="outlined" height="100%">
+          <v-card-text>
+            <div class="text-body-2 text-medium-emphasis">Total Transaksi</div>
+            <div class="text-h5 font-weight-bold mt-1">
+              {{ number(summary.total_transaksi) }}
+            </div>
+            <div class="text-caption text-medium-emphasis mt-1">
+              Invoice lunas periode {{ displayPeriod }}
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" sm="6" md="3">
+        <v-card variant="outlined" height="100%">
           <v-card-text>
             <div class="text-body-2 text-medium-emphasis">Total Pasien</div>
             <div class="text-h5 font-weight-bold mt-1">
               {{ number(summary.total_pasien) }}
             </div>
             <div class="text-caption text-medium-emphasis mt-1">
-              Periode {{ displayPeriod }}
+              Pasien unik dari invoice lunas.
             </div>
           </v-card-text>
         </v-card>
       </v-col>
 
       <v-col cols="12" sm="6" md="3">
-        <v-card elevation="0" rounded="lg" border>
+        <v-card variant="outlined" height="100%">
           <v-card-text>
-            <div class="text-body-2 text-medium-emphasis">Member Aktif</div>
+            <div class="text-body-2 text-medium-emphasis">Total Treatment</div>
             <div class="text-h5 font-weight-bold mt-1">
-              {{ number(summary.total_member) }}
+              {{ rupiah(summary.total_treatment) }}
             </div>
             <div class="text-caption text-medium-emphasis mt-1">
-              Berdasarkan data member terbaru pasien.
+              Nilai treatment net per item.
             </div>
           </v-card-text>
         </v-card>
       </v-col>
 
       <v-col cols="12" sm="6" md="3">
-        <v-card elevation="0" rounded="lg" border>
+        <v-card variant="tonal" color="primary" height="100%">
           <v-card-text>
-            <div class="text-body-2 text-medium-emphasis">No. WA Terisi</div>
+            <div class="text-body-2">Total Produk</div>
             <div class="text-h5 font-weight-bold mt-1">
-              {{ number(summary.total_no_wa_terisi) }}
-            </div>
-            <div class="text-caption text-medium-emphasis mt-1">
-              Berguna untuk follow-up CRM.
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-
-      <v-col cols="12" sm="6" md="3">
-        <v-card
-          elevation="0"
-          rounded="lg"
-          border
-          color="primary"
-          variant="tonal"
-        >
-          <v-card-text>
-            <div class="text-body-2">Total Spending</div>
-            <div class="text-h5 font-weight-bold mt-1">
-              {{ rupiah(summary.total_spending) }}
+              {{ rupiah(summary.total_produk) }}
             </div>
             <div class="text-caption mt-1">
-              Dari invoice lunas pasien yang masuk filter.
+              Nilai produk dan obat net per item.
             </div>
           </v-card-text>
         </v-card>
       </v-col>
     </v-row>
 
-    <v-card elevation="0" rounded="lg" border>
+    <v-card variant="outlined">
       <v-card-title
         class="d-flex align-center ga-2 text-subtitle-1 font-weight-bold"
       >
         <v-icon icon="mdi-file-chart-outline" size="20" />
-        Cetak Data Laporan Detail Pasien
+        Export Laporan Detail Pasien
       </v-card-title>
+
       <v-divider />
+
       <v-card-text>
         <v-alert type="info" variant="tonal" density="compact" class="mb-4">
-          Data memakai tanggal daftar pasien. Cabang mengikuti toko aktif dari
-          header request.
+          Data menggunakan tanggal lunas invoice. Cabang mengikuti toko aktif
+          dari header request.
         </v-alert>
 
         <v-row dense>
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6">
             <v-btn
               color="error"
               block
@@ -165,11 +163,11 @@
               :disabled="!canSubmit || hasAnyDownload"
               @click="downloadReport('pdf')"
             >
-              Cetak laporan .pdf
+              Laporan Detail Pasien PDF
             </v-btn>
           </v-col>
 
-          <v-col cols="12" sm="6" md="3">
+          <v-col cols="12" sm="6">
             <v-btn
               color="success"
               block
@@ -179,7 +177,7 @@
               :disabled="!canSubmit || hasAnyDownload"
               @click="downloadReport('excel')"
             >
-              Cetak laporan .xlsx
+              Laporan Detail Pasien XLSX
             </v-btn>
           </v-col>
         </v-row>
@@ -210,10 +208,11 @@ export default {
         tanggal_akhir: today(),
       },
       summary: {
+        total_transaksi: 0,
         total_pasien: 0,
-        total_member: 0,
-        total_no_wa_terisi: 0,
-        total_spending: 0,
+        total_treatment: 0,
+        total_produk: 0,
+        grand_total: 0,
       },
       breadcrumbs: [
         {
@@ -288,10 +287,11 @@ export default {
         const data = response?.data || {};
 
         this.summary = {
+          total_transaksi: Number(data.total_transaksi || 0),
           total_pasien: Number(data.total_pasien || 0),
-          total_member: Number(data.total_member || 0),
-          total_no_wa_terisi: Number(data.total_no_wa_terisi || 0),
-          total_spending: Number(data.total_spending || 0),
+          total_treatment: Number(data.total_treatment || 0),
+          total_produk: Number(data.total_produk || 0),
+          grand_total: Number(data.grand_total || 0),
         };
       } catch (error) {
         this.errorMessage = this.getErrorMessage(
@@ -322,16 +322,18 @@ export default {
         const url = window.URL.createObjectURL(fileBlob);
 
         if (format === "pdf") {
-          window.open(url, "_blank");
-        } else {
-          const link = document.createElement("a");
-          link.href = url;
-          link.setAttribute("download", filename);
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          window.URL.revokeObjectURL(url);
+          window.open(url, "_blank", "noopener,noreferrer");
+          window.setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+          return;
         }
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
       } catch (error) {
         this.errorMessage = this.getErrorMessage(
           error,
@@ -367,7 +369,7 @@ export default {
 
     number(value) {
       return new Intl.NumberFormat("id-ID", {
-        maximumFractionDigits: 2,
+        maximumFractionDigits: 0,
       }).format(Number(value || 0));
     },
   },

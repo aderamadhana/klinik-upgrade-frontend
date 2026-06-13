@@ -36,7 +36,7 @@ export default {
     });
 
     const fallback = `laporan-insentif-apoteker.${
-      format === "excel" ? "xls" : "html"
+      format === "excel" ? "xlsx" : "pdf"
     }`;
 
     return {

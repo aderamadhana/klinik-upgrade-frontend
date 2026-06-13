@@ -1,6 +1,9 @@
 import api from "@/plugins/axios";
 
 const ENDPOINT = "/laporan/insentif-nurse-beautician";
+const XLSX_CONTENT_TYPE =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const PDF_CONTENT_TYPE = "application/pdf";
 
 function parseFilename(contentDisposition, fallback) {
   if (!contentDisposition) return fallback;
@@ -16,6 +19,41 @@ function parseFilename(contentDisposition, fallback) {
   }
 
   return fallback;
+}
+
+function ensureExportExtension(filename, format) {
+  const expectedExtension = format === "excel" ? ".xlsx" : ".pdf";
+  const safeFilename = String(filename || "").trim();
+
+  if (!safeFilename) {
+    return `laporan-insentif-nurse${expectedExtension}`;
+  }
+
+  const withoutKnownExtension = safeFilename.replace(
+    /\.(xlsx?|pdf|html?)$/i,
+    "",
+  );
+
+  return `${withoutKnownExtension}${expectedExtension}`;
+}
+
+function validateExportResponse(format, contentType) {
+  const normalizedContentType = String(contentType || "").toLowerCase();
+
+  if (
+    format === "excel" &&
+    !normalizedContentType.includes(XLSX_CONTENT_TYPE)
+  ) {
+    throw new Error(
+      "Backend masih mengirim format Excel lama. Pastikan controller memakai PhpSpreadsheet dan MIME XLSX.",
+    );
+  }
+
+  if (format === "pdf" && !normalizedContentType.includes(PDF_CONTENT_TYPE)) {
+    throw new Error(
+      "Backend tidak mengirim file PDF. Pastikan export PDF memakai Dompdf.",
+    );
+  }
 }
 
 export default {
@@ -35,17 +73,24 @@ export default {
       responseType: "blob",
     });
 
-    const fallback = `laporan-insentif-nurse-beautician-${jenis}.${
-      format === "excel" ? "xls" : "html"
+    const contentType =
+      response.headers?.["content-type"] || response.data?.type || "";
+
+    validateExportResponse(format, contentType);
+
+    const fallback = `laporan-insentif-nurse-${jenis}.${
+      format === "excel" ? "xlsx" : "pdf"
     }`;
+
+    const parsedFilename = parseFilename(
+      response.headers?.["content-disposition"],
+      fallback,
+    );
 
     return {
       blob: response.data,
-      filename: parseFilename(
-        response.headers?.["content-disposition"],
-        fallback,
-      ),
-      contentType: response.headers?.["content-type"] || response.data?.type,
+      filename: ensureExportExtension(parsedFilename, format),
+      contentType,
     };
   },
 };

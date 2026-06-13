@@ -38,9 +38,8 @@ export default {
       },
     );
 
-    const fallback = `laporan-insentif-dokter-${kategori}-${jenis}.${
-      format === "excel" ? "xls" : "html"
-    }`;
+    const extension = format === "excel" ? "xlsx" : "pdf";
+    const fallback = `laporan-insentif-dokter-${kategori}-${jenis}.${extension}`;
 
     return {
       blob: response.data,

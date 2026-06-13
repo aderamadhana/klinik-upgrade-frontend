@@ -1,15 +1,15 @@
 <template>
   <div>
-    <div class="d-flex justify-space-between align-start flex-wrap ga-4 mb-4">
+    <div class="d-flex justify-space-between align-start flex-wrap ga-3 mb-5">
       <div>
-        <div class="text-h4 font-weight-bold">Laporan Insentif Apoteker</div>
-        <div class="text-body-2 text-medium-emphasis mt-1">
-          Export insentif produk/obat berdasarkan resep yang sudah selesai
-          diproses.
+        <h1 class="text-h5 font-weight-bold mb-1">Laporan Insentif Apoteker</h1>
+        <div class="text-body-2 text-medium-emphasis">
+          Rekap fee berdasarkan resep atau faktur yang selesai diproses petugas
+          farmasi.
         </div>
       </div>
 
-      <v-breadcrumbs :items="breadcrumbs" density="compact" class="pa-0" />
+      <v-breadcrumbs :items="breadcrumbs" class="pa-0" density="compact" />
     </div>
 
     <v-card elevation="0" rounded="lg" border class="mb-4">
@@ -19,7 +19,9 @@
         <v-icon icon="mdi-filter-variant" size="20" />
         Filter Laporan
       </v-card-title>
+
       <v-divider />
+
       <v-card-text>
         <v-alert
           v-if="errorMessage"
@@ -66,13 +68,13 @@
               item-title="label"
               item-value="id"
               label="Apoteker / Asisten Apoteker"
-              placeholder="Pilih Apoteker / Asisten Apoteker"
+              placeholder="Semua petugas"
               variant="outlined"
               density="compact"
               hide-details="auto"
               clearable
               :disabled="loading"
-              no-data-text="Apoteker tidak ditemukan"
+              no-data-text="Petugas tidak ditemukan"
             />
           </v-col>
 
@@ -95,7 +97,7 @@
 
     <v-row dense class="mb-4">
       <v-col cols="12" md="4">
-        <v-card elevation="0" rounded="lg" border>
+        <v-card elevation="0" rounded="lg" border height="100%">
           <v-card-text>
             <div class="text-body-2 text-medium-emphasis">Total Insentif</div>
             <div class="text-h5 font-weight-bold mt-1">
@@ -109,15 +111,14 @@
       </v-col>
 
       <v-col cols="12" md="4">
-        <v-card elevation="0" rounded="lg" border>
+        <v-card elevation="0" rounded="lg" border height="100%">
           <v-card-text>
-            <div class="text-body-2 text-medium-emphasis">Produk / Obat</div>
+            <div class="text-body-2 text-medium-emphasis">Resep Selesai</div>
             <div class="text-h5 font-weight-bold mt-1">
-              {{ number(summary.produk.total_qty) }} qty
+              {{ number(summary.resep.total_resep) }} faktur
             </div>
             <div class="text-caption text-medium-emphasis mt-1">
-              {{ summary.produk.total_item }} item • Omzet
-              {{ rupiah(summary.produk.total_omzet) }}
+              Fee {{ rupiah(summary.resep.fee_per_resep) }} per resep
             </div>
           </v-card-text>
         </v-card>
@@ -128,6 +129,7 @@
           elevation="0"
           rounded="lg"
           border
+          height="100%"
           color="primary"
           variant="tonal"
         >
@@ -149,13 +151,15 @@
         class="d-flex align-center ga-2 text-subtitle-1 font-weight-bold"
       >
         <v-icon icon="mdi-file-chart-outline" size="20" />
-        Laporan Insentif Apoteker
+        Export Laporan
       </v-card-title>
+
       <v-divider />
+
       <v-card-text>
         <v-alert type="info" variant="tonal" density="compact" class="mb-4">
-          Apoteker boleh dikosongkan untuk export semua Apoteker / Asisten
-          Apoteker pada cabang aktif.
+          Jika petugas dikosongkan, PDF dibuat per petugas dan Excel dibuat satu
+          sheet untuk setiap petugas.
         </v-alert>
 
         <v-row dense>
@@ -169,7 +173,7 @@
               :disabled="!canSubmit || hasAnyDownload"
               @click="downloadReport('pdf')"
             >
-              Cetak Laporan .pdf
+              Download PDF
             </v-btn>
           </v-col>
 
@@ -183,7 +187,7 @@
               :disabled="!canSubmit || hasAnyDownload"
               @click="downloadReport('excel')"
             >
-              Cetak Laporan .xlsx
+              Download Excel
             </v-btn>
           </v-col>
         </v-row>
@@ -215,6 +219,12 @@ export default {
         apoteker_id: null,
       },
       summary: {
+        resep: {
+          total_resep: 0,
+          total_faktur: 0,
+          fee_per_resep: 0,
+          total_insentif: 0,
+        },
         produk: {
           total_item: 0,
           total_qty: 0,
@@ -324,6 +334,12 @@ export default {
         const data = response?.data || {};
 
         this.summary = {
+          resep: {
+            total_resep: Number(data.resep?.total_resep || 0),
+            total_faktur: Number(data.resep?.total_faktur || 0),
+            fee_per_resep: Number(data.resep?.fee_per_resep || 0),
+            total_insentif: Number(data.resep?.total_insentif || 0),
+          },
           produk: {
             total_item: Number(data.produk?.total_item || 0),
             total_qty: Number(data.produk?.total_qty || 0),
@@ -343,65 +359,33 @@ export default {
     },
 
     async downloadReport(format) {
-      if (!this.canSubmit || this.downloading) return;
+      if (!this.canSubmit || this.hasAnyDownload) return;
 
       this.downloading = format;
       this.errorMessage = "";
 
       try {
-        const response = await insentifApotekerService.exportReport({
+        const result = await insentifApotekerService.exportReport({
           format,
           ...this.buildParams(),
         });
 
-        this.handleExportBlob(response, format);
+        const url = window.URL.createObjectURL(result.blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = result.filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
       } catch (error) {
         this.errorMessage = this.getErrorMessage(
           error,
-          "Gagal export laporan.",
+          "Gagal mengunduh laporan.",
         );
       } finally {
         this.downloading = "";
       }
-    },
-
-    handleExportBlob(response, format) {
-      const blob = response.blob;
-      const url = window.URL.createObjectURL(blob);
-
-      if (format === "pdf") {
-        const popup = window.open(url, "_blank");
-
-        if (!popup) {
-          this.forceDownload(url, response.filename);
-        } else {
-          window.setTimeout(() => window.URL.revokeObjectURL(url), 60000);
-        }
-
-        return;
-      }
-
-      this.forceDownload(url, response.filename);
-    },
-
-    forceDownload(url, filename) {
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    },
-
-    getErrorMessage(error, fallback) {
-      const data = error?.response?.data;
-
-      if (data instanceof Blob) {
-        return fallback;
-      }
-
-      return data?.message || data?.error || error?.message || fallback;
     },
 
     rupiah(value) {
@@ -421,10 +405,12 @@ export default {
     formatDate(value) {
       if (!value) return "-";
 
-      const [year, month, day] = String(value).split("-");
-      if (!year || !month || !day) return value;
-
+      const [year, month, day] = value.split("-");
       return `${day}/${month}/${year}`;
+    },
+
+    getErrorMessage(error, fallback) {
+      return error?.response?.data?.message || error?.message || fallback;
     },
   },
 };

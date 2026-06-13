@@ -30,13 +30,18 @@ export default {
       responseType: "blob",
     });
 
+    const extension = format === "excel" ? "xlsx" : "pdf";
+
     return {
       blob: response.data,
       filename: parseFilename(
         response.headers?.["content-disposition"],
-        `data-top-pasien-nominal-terbanyak.${format === "excel" ? "xls" : "html"}`,
+        `data-top-pasien-nominal-terbanyak.${extension}`,
       ),
-      contentType: response.headers?.["content-type"] || response.data?.type,
+      contentType:
+        response.headers?.["content-type"] ||
+        response.data?.type ||
+        "application/octet-stream",
     };
   },
 };
