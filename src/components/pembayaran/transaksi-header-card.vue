@@ -271,6 +271,36 @@
         </v-card-text>
       </v-card>
 
+      <!-- PREMIER LOUNGE -->
+      <v-card variant="outlined" class="mb-4">
+        <v-card-text class="pa-4">
+          <div class="d-flex align-start ga-3">
+            <v-checkbox-btn
+              :model-value="Boolean(header.is_premier)"
+              color="primary"
+              density="comfortable"
+              @update:model-value="updateField('is_premier', Boolean($event))"
+            />
+
+            <div class="flex-grow-1">
+              <div class="text-body-2 font-weight-bold">Premier Lounge</div>
+              <div class="text-caption text-medium-emphasis mt-1">
+                Aktifkan jika transaksi dilakukan di Premier Lounge. Biarkan
+                nonaktif untuk transaksi reguler.
+              </div>
+            </div>
+
+            <v-chip
+              :color="header.is_premier ? 'primary' : 'default'"
+              :variant="header.is_premier ? 'flat' : 'tonal'"
+              size="small"
+            >
+              {{ header.is_premier ? "Premier" : "Reguler" }}
+            </v-chip>
+          </div>
+        </v-card-text>
+      </v-card>
+
       <!-- CATATAN -->
       <v-textarea
         v-if="!isSpecialTransaction"

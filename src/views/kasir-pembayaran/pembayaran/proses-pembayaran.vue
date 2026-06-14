@@ -813,6 +813,7 @@ export default {
         jenis_transaksi_id: 0,
         jenis_transaksi: "Umum",
         jenis_transaksi_kode: null,
+        is_premier: false,
         sumber_informasi_id: null,
         sumber_informasi_kode: null,
         sumber: "Pelanggan Lama",
@@ -2470,6 +2471,7 @@ export default {
         jenis_transaksi_id: jenisTransaksiId,
         jenis_transaksi: jenisTransaksi?.title || "Umum",
         jenis_transaksi_kode: jenisTransaksi?.kode || null,
+        is_premier: Number(invoice.is_premier ?? data.is_premier ?? 0) === 1,
         sumber_informasi_id: sumberInformasi?.id || sumberInformasiId || null,
         sumber_informasi_kode: sumberInformasi?.kode || null,
         sumber:
@@ -4161,6 +4163,7 @@ export default {
 
       return {
         jenis_transaksi: Number(this.header.jenis_transaksi_id || 0),
+        is_premier: this.header.is_premier ? 1 : 0,
         catatan_pembayaran: this.header.catatan || null,
         sumber_informasi_id: this.header.sumber_informasi_id || null,
         sumber_kedatangan: this.header.sumber || null,

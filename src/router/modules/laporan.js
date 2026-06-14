@@ -180,8 +180,13 @@ const laporanRoutes = [
       },
       {
         path: "produk-resep-dokter",
+        alias: [
+          "/laporan/data-laporan-produk-resep-dokter",
+          "/laporan/laporan-produk-resep-dokter",
+        ],
         name: "Data Laporan Produk Resep Dokter",
-        component: laporanBelumTersedia,
+        component: () =>
+          import("@/views/laporan/produk-resep-dokter/data-laporan-produk-resep-dokter.vue"),
         meta: {
           title: "Data Laporan Produk Resep Dokter",
         },
@@ -212,16 +217,27 @@ const laporanRoutes = [
       },
       {
         path: "belum-realisasi-deposit",
+        alias: [
+          "/laporan/deposit-belum-realisasi",
+          "/laporan/laporan-belum-realisasi-deposit",
+        ],
         name: "Data Laporan Belum Realisasi Deposit",
-        component: laporanBelumTersedia,
+        component: () =>
+          import("@/views/laporan/belum-realisasi-deposit/data-laporan-belum-realisasi-deposit.vue"),
         meta: {
           title: "Data Laporan Belum Realisasi Deposit",
         },
       },
       {
         path: "bahan-treatment",
+        alias: [
+          "/laporan/detail-bahan-treatment",
+          "/laporan/rekap-bahan-treatment",
+          "/laporan/laporan-bahan-treatment",
+        ],
         name: "Laporan Bahan Treatment",
-        component: laporanBelumTersedia,
+        component: () =>
+          import("@/views/laporan/bahan-treatment/data-laporan-bahan-treatment.vue"),
         meta: {
           title: "Laporan Bahan Treatment",
         },

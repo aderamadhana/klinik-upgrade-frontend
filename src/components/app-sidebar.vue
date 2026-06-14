@@ -1022,42 +1022,6 @@ export default {
               ],
             },
             {
-              key: "laporan-referral-treatment-staff",
-              title: "Lap. Referral Treatment Staff",
-              to: "/laporan/referral-treatment-staff",
-              roles: [
-                "administrator",
-                "superuser",
-                "it",
-                "management",
-                "branch accounting",
-              ],
-            },
-            {
-              key: "laporan-referral-product-staff",
-              title: "Lap. Referral Product Staff",
-              to: "/laporan/referral-product-staff",
-              roles: [
-                "administrator",
-                "superuser",
-                "it",
-                "management",
-                "branch accounting",
-              ],
-            },
-            {
-              key: "laporan-redeem-referral-ba",
-              title: "Lap. Redeem Referral BA",
-              to: "/laporan/redeem-referral-ba",
-              roles: [
-                "administrator",
-                "superuser",
-                "it",
-                "management",
-                "branch accounting",
-              ],
-            },
-            {
               key: "laporan-belum-realisasi-deposit",
               title: "Data Laporan Belum Realisasi Deposit",
               to: "/laporan/belum-realisasi-deposit",
