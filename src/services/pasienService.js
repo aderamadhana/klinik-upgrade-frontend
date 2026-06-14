@@ -59,4 +59,34 @@ export default {
     const response = await api.delete(`/administrasi/pasien/${id}`);
     return response.data;
   },
+
+  async getPengkajianAwal(id) {
+    const response = await api.get(
+      `/administrasi/pasien/${id}/pengkajian-awal`,
+    );
+    return response.data;
+  },
+
+  async getPengkajianAwalById(id, pengkajianId) {
+    const response = await api.get(
+      `/administrasi/pasien/${id}/pengkajian-awal/${pengkajianId}`,
+    );
+    return response.data;
+  },
+
+  async createPengkajianAwal(id, payload) {
+    const response = await api.post(
+      `/administrasi/pasien/${id}/pengkajian-awal`,
+      payload,
+    );
+    return response.data;
+  },
+
+  async updatePengkajianAwal(id, pengkajianId, payload) {
+    const response = await api.put(
+      `/administrasi/pasien/${id}/pengkajian-awal/${pengkajianId}`,
+      payload,
+    );
+    return response.data;
+  },
 };

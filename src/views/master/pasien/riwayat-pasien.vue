@@ -1468,6 +1468,182 @@
       </v-col>
     </v-row>
 
+    <v-dialog v-model="skinAnalyzerDialog" max-width="960" scrollable>
+      <v-card rounded="lg">
+        <v-card-title
+          class="d-flex align-start justify-space-between ga-4 px-5 py-4"
+        >
+          <div>
+            <div class="text-h6 font-weight-bold">Skin Analyzer</div>
+            <div class="text-body-2 text-medium-emphasis mt-1">
+              Simpan dan buka kembali tautan hasil analisis kulit pasien.
+            </div>
+          </div>
+
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            :disabled="skinAnalyzerSaving"
+            @click="closeSkinAnalyzer"
+          />
+        </v-card-title>
+
+        <v-divider />
+
+        <v-card-text class="pa-5">
+          <v-alert
+            type="info"
+            variant="tonal"
+            border="start"
+            icon="mdi-qrcode-scan"
+            class="mb-4"
+          >
+            Scan QR dari perangkat Skin Analyzer atau tempel link hasil analisis
+            pada kolom berikut.
+          </v-alert>
+
+          <v-form ref="skinAnalyzerForm" @submit.prevent="saveSkinAnalyzer">
+            <v-row dense align="start">
+              <v-col cols="12" md="9">
+                <v-text-field
+                  v-model.trim="skinAnalyzerLink"
+                  label="Link hasil Skin Analyzer"
+                  placeholder="https://..."
+                  prepend-inner-icon="mdi-link-variant"
+                  variant="outlined"
+                  density="comfortable"
+                  :rules="skinAnalyzerLinkRules"
+                  :disabled="skinAnalyzerSaving"
+                  maxlength="2048"
+                  counter
+                  clearable
+                />
+              </v-col>
+
+              <v-col cols="12" md="3">
+                <v-btn
+                  type="submit"
+                  block
+                  color="primary"
+                  variant="flat"
+                  prepend-icon="mdi-content-save-outline"
+                  height="48"
+                  :loading="skinAnalyzerSaving"
+                  :disabled="skinAnalyzerSaving"
+                >
+                  Simpan
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-form>
+
+          <v-alert
+            v-if="skinAnalyzerError"
+            type="error"
+            variant="tonal"
+            border="start"
+            class="mb-4"
+            closable
+            @click:close="skinAnalyzerError = ''"
+          >
+            {{ skinAnalyzerError }}
+          </v-alert>
+
+          <div class="border rounded-lg overflow-hidden">
+            <v-progress-linear
+              v-if="skinAnalyzerLoading"
+              indeterminate
+              color="primary"
+            />
+
+            <v-table density="comfortable">
+              <thead>
+                <tr>
+                  <th class="text-left">#</th>
+                  <th class="text-left">Tanggal & Waktu</th>
+                  <th class="text-left">Dioperasikan Oleh</th>
+                  <th class="text-left">Cabang</th>
+                  <th class="text-right">Aksi</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <template v-if="skinAnalyzerLoading">
+                  <tr
+                    v-for="index in 3"
+                    :key="`skin-analyzer-loading-${index}`"
+                  >
+                    <td colspan="5" class="py-3">
+                      <v-skeleton-loader type="text" />
+                    </td>
+                  </tr>
+                </template>
+
+                <template v-else-if="skinAnalyzerItems.length">
+                  <tr v-for="(item, index) in skinAnalyzerItems" :key="item.id">
+                    <td>{{ index + 1 }}</td>
+                    <td>{{ formatDateTime(item.created_at) }}</td>
+                    <td class="font-weight-medium">
+                      {{ item.operate_by || "-" }}
+                    </td>
+                    <td>{{ item.branch || "-" }}</td>
+                    <td class="text-right">
+                      <v-btn
+                        color="primary"
+                        variant="tonal"
+                        size="small"
+                        prepend-icon="mdi-open-in-new"
+                        @click="openSkinAnalyzerResult(item)"
+                      >
+                        Lihat Hasil
+                      </v-btn>
+                    </td>
+                  </tr>
+                </template>
+
+                <tr v-else>
+                  <td colspan="5" class="pa-0">
+                    <div
+                      class="d-flex flex-column align-center justify-center py-10 px-4 text-center"
+                    >
+                      <v-icon
+                        icon="mdi-face-recognition"
+                        size="42"
+                        color="grey-lighten-1"
+                        class="mb-2"
+                      />
+                      <div class="text-subtitle-2 font-weight-bold">
+                        Belum ada hasil Skin Analyzer
+                      </div>
+                      <div class="text-body-2 text-medium-emphasis mt-1">
+                        Tambahkan link hasil analisis pertama pasien melalui
+                        form di atas.
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </div>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="px-5 py-4">
+          <v-spacer />
+          <v-btn
+            variant="outlined"
+            color="secondary"
+            :disabled="skinAnalyzerSaving"
+            @click="closeSkinAnalyzer"
+          >
+            Tutup
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-dialog v-model="shippingAddressDialog" max-width="560">
       <v-card rounded="lg">
         <v-card-title class="d-flex align-center justify-space-between">
@@ -2270,6 +2446,27 @@ export default {
           "Alasan minimal 5 karakter.",
         (value) =>
           String(value || "").length <= 500 || "Alasan maksimal 500 karakter.",
+      ],
+      skinAnalyzerDialog: false,
+      skinAnalyzerLoading: false,
+      skinAnalyzerSaving: false,
+      skinAnalyzerError: "",
+      skinAnalyzerLink: "",
+      skinAnalyzerItems: [],
+      skinAnalyzerLinkRules: [
+        (value) =>
+          Boolean(String(value || "").trim()) ||
+          "Link hasil Skin Analyzer wajib diisi.",
+        (value) => {
+          const link = String(value || "").trim();
+          if (!link) return true;
+          return (
+            /^https?:\/\/[^\s]+$/i.test(link) ||
+            "Gunakan link lengkap yang diawali http:// atau https://."
+          );
+        },
+        (value) =>
+          String(value || "").length <= 2048 || "Link maksimal 2048 karakter.",
       ],
       shippingAddressDialog: false,
       tierHistoryDialog: false,
@@ -3119,20 +3316,122 @@ export default {
       popup.document.close();
     },
 
-    openSkinAnalyzer() {
-      if (this.patient.skinAnalyzerUrl) {
-        window.open(
-          this.patient.skinAnalyzerUrl,
-          "_blank",
-          "noopener,noreferrer",
-        );
+    async openSkinAnalyzer() {
+      this.skinAnalyzerDialog = true;
+      this.skinAnalyzerError = "";
+      this.skinAnalyzerLink = "";
+
+      await this.$nextTick();
+      this.$refs.skinAnalyzerForm?.resetValidation();
+      await this.loadSkinAnalyzer();
+    },
+
+    closeSkinAnalyzer() {
+      if (this.skinAnalyzerSaving) return;
+
+      this.skinAnalyzerDialog = false;
+      this.skinAnalyzerError = "";
+      this.skinAnalyzerLink = "";
+      this.$refs.skinAnalyzerForm?.resetValidation();
+    },
+
+    async loadSkinAnalyzer() {
+      if (!this.pasienId) {
+        this.skinAnalyzerItems = [];
         return;
       }
 
-      this.showSnackbar(
-        "URL atau endpoint Skin Analyzer belum dikirim oleh API pasien.",
-        "warning",
-      );
+      this.skinAnalyzerLoading = true;
+      this.skinAnalyzerError = "";
+
+      try {
+        const response = await api.get(
+          `/administrasi/pasien/${this.pasienId}/skin-analyzer`,
+        );
+
+        if (!response.data?.status) {
+          throw new Error(
+            response.data?.message ||
+              "Data Skin Analyzer pasien gagal diambil.",
+          );
+        }
+
+        this.skinAnalyzerItems = Array.isArray(response.data?.data)
+          ? response.data.data
+          : [];
+      } catch (error) {
+        this.skinAnalyzerItems = [];
+        this.skinAnalyzerError = this.getErrorMessage(
+          error,
+          "Data Skin Analyzer pasien gagal diambil.",
+        );
+      } finally {
+        this.skinAnalyzerLoading = false;
+      }
+    },
+
+    async saveSkinAnalyzer() {
+      if (this.skinAnalyzerSaving) return;
+
+      const validation = await this.$refs.skinAnalyzerForm?.validate();
+      if (!validation?.valid) {
+        this.showSnackbar("Periksa kembali link hasil Skin Analyzer.", "error");
+        return;
+      }
+
+      this.skinAnalyzerSaving = true;
+      this.skinAnalyzerError = "";
+
+      try {
+        const response = await api.post(
+          `/administrasi/pasien/${this.pasienId}/skin-analyzer`,
+          { url: String(this.skinAnalyzerLink || "").trim() },
+        );
+
+        if (!response.data?.status) {
+          throw new Error(
+            response.data?.message ||
+              "Link hasil Skin Analyzer gagal disimpan.",
+          );
+        }
+
+        this.skinAnalyzerLink = "";
+        this.$refs.skinAnalyzerForm?.resetValidation();
+        await this.loadSkinAnalyzer();
+
+        this.showSnackbar(
+          response.data?.message ||
+            "Link hasil Skin Analyzer berhasil disimpan.",
+          "success",
+        );
+      } catch (error) {
+        const message = this.getErrorMessage(
+          error,
+          "Link hasil Skin Analyzer gagal disimpan.",
+        );
+        this.skinAnalyzerError = message;
+        this.showSnackbar(message, "error");
+      } finally {
+        this.skinAnalyzerSaving = false;
+      }
+    },
+
+    openSkinAnalyzerResult(item) {
+      const url = String(item?.url || "").trim();
+
+      if (!/^https?:\/\/[^\s]+$/i.test(url)) {
+        this.showSnackbar("Link hasil Skin Analyzer tidak valid.", "error");
+        return;
+      }
+
+      const popup = window.open("", "_blank");
+      if (!popup) {
+        this.showSnackbar("Popup diblokir browser.", "error");
+        return;
+      }
+
+      popup.opener = null;
+      popup.location.href = url;
     },
 
     async openBeforeAfterDialog() {
