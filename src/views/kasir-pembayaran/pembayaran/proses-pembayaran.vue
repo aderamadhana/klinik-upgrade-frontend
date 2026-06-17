@@ -1650,8 +1650,16 @@ export default {
           .filter((item) => this.isPerawat(item))
           .map((item) => ({
             id: item.id,
+            value: item.id,
             title: item.nama,
             nama: item.nama,
+            kode_jabatan: item.jabatan?.kode_jabatan || item.kode_jabatan || "",
+            nama_jabatan:
+              item.jabatan?.nama_jabatan ||
+              item.jabatan?.nama ||
+              item.nama_jabatan ||
+              item.jabatan_nama ||
+              "",
             raw: item,
           }));
 
@@ -2636,8 +2644,28 @@ export default {
           item.treatment?.nama ||
           "",
         qty: Number(item.qty || item.jumlah || 1),
-        beautician: data.perawat_awal?.nama || item.perawat?.nama || null,
-        beautician_id: data.perawat_awal_id || item.perawat_id || null,
+        perawat_id:
+          item.perawat_id || item.perawat?.id || data.perawat_awal_id || null,
+        perawat_nama:
+          item.perawat_nama ||
+          item.perawat?.nama ||
+          data.perawat_awal?.nama ||
+          null,
+        perawat_jabatan_kode:
+          item.perawat_jabatan_kode ||
+          item.perawat?.jabatan?.kode_jabatan ||
+          null,
+        perawat_jabatan_nama:
+          item.perawat_jabatan_nama ||
+          item.perawat?.jabatan?.nama_jabatan ||
+          null,
+        beautician:
+          item.perawat_nama ||
+          item.perawat?.nama ||
+          data.perawat_awal?.nama ||
+          null,
+        beautician_id:
+          item.perawat_id || item.perawat?.id || data.perawat_awal_id || null,
         harga,
         voucher_diskon_id: item.voucher_diskon_id || null,
         voucher_diskon_ids: item.voucher_diskon_id
@@ -2900,6 +2928,10 @@ export default {
         treatment_id: null,
         nama: null,
         qty: 1,
+        perawat_id: null,
+        perawat_nama: "",
+        perawat_jabatan_kode: "",
+        perawat_jabatan_nama: "",
         beautician: null,
         beautician_id: null,
         harga: 0,

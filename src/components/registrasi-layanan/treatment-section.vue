@@ -1,8 +1,9 @@
 <template>
   <div class="mt-3">
     <v-alert type="info" density="comfortable" border="start" class="mb-4">
-      FO menentukan detail treatment pada tahap ini. Routing ke dokter atau
-      nurse station ditentukan otomatis berdasarkan item treatment yang dipilih.
+      Pilih treatment. Nurse / beautician bersifat opsional per baris dan akan
+      diteruskan ke antrian dokter, pembayaran, serta laporan insentif bila
+      dipilih.
     </v-alert>
 
     <v-expand-transition>
@@ -45,7 +46,8 @@
                   Daftar Treatment
                 </div>
                 <div class="text-caption text-medium-emphasis">
-                  Tambahkan treatment yang akan dikerjakan pada kunjungan ini
+                  Nurse atau beautician dapat dipilih pada masing-masing
+                  treatment bila ada pelaksana.
                 </div>
               </div>
             </div>
@@ -70,8 +72,8 @@
         border="start"
         class="mb-4"
       >
-        Cabang belum terpilih. Data treatment akan muncul setelah cabang aktif
-        tersedia.
+        Cabang belum terpilih. Treatment dan nurse / beautician akan muncul
+        setelah cabang aktif tersedia.
       </v-alert>
 
       <v-alert
@@ -96,7 +98,7 @@
           <div
             class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3"
           >
-            <div class="d-flex align-center ga-2">
+            <div class="d-flex align-center flex-wrap ga-2">
               <v-chip color="success" size="small" class="font-weight-medium">
                 Treatment {{ index + 1 }}
               </v-chip>
@@ -107,6 +109,15 @@
                 size="small"
               >
                 Rp {{ formatCurrency(item.total || 0) }}
+              </v-chip>
+
+              <v-chip
+                v-if="item.perawat_id"
+                color="secondary"
+                size="small"
+                prepend-icon="mdi-account-heart-outline"
+              >
+                {{ item.perawat_nama || "Pelaksana dipilih" }}
               </v-chip>
             </div>
 
@@ -122,7 +133,7 @@
           </div>
 
           <v-row dense>
-            <v-col cols="12" md="4">
+            <v-col cols="12" md="5">
               <v-autocomplete
                 :model-value="item.treatment_toko_id || item.tindakan_id"
                 label="Nama Tindakan"
@@ -142,7 +153,7 @@
                 clearable
                 hide-details="auto"
                 menu-icon="mdi-chevron-down"
-                @update:modelValue="onTindakanChange(index, $event)"
+                @update:model-value="onTindakanChange(index, $event)"
               >
                 <template #message>
                   Data treatment difilter berdasarkan cabang aktif.
@@ -156,7 +167,61 @@
               </v-autocomplete>
             </v-col>
 
-            <v-col cols="12" sm="6" md="2">
+            <v-col cols="12" md="4">
+              <v-autocomplete
+                :model-value="item.perawat_id"
+                label="Nurse / Beautician"
+                :placeholder="
+                  item.tindakan_id
+                    ? 'Pilih pelaksana treatment'
+                    : 'Pilih treatment terlebih dahulu'
+                "
+                :items="staffOptions"
+                item-title="title"
+                item-value="value"
+                variant="outlined"
+                density="comfortable"
+                prepend-inner-icon="mdi-account-heart-outline"
+                :loading="loadingStaff"
+                :disabled="!activeTokoId || !item.tindakan_id"
+                clearable
+                hide-details="auto"
+                menu-icon="mdi-chevron-down"
+                @update:model-value="onStaffChange(index, $event)"
+              >
+                <template #item="{ props: itemProps, item: option }">
+                  <v-list-item
+                    v-bind="itemProps"
+                    :title="getStaffItemTitle(option)"
+                    :subtitle="getStaffItemSubtitle(option)"
+                  />
+                </template>
+
+                <template #no-data>
+                  <div class="pa-4 text-body-2 text-medium-emphasis">
+                    Tidak ada nurse / beautician aktif di cabang ini.
+                  </div>
+                </template>
+              </v-autocomplete>
+            </v-col>
+
+            <v-col cols="12" md="3">
+              <v-text-field
+                :model-value="item.jumlah"
+                label="Jumlah"
+                type="number"
+                min="1"
+                variant="outlined"
+                density="comfortable"
+                prepend-inner-icon="mdi-counter"
+                hide-details="auto"
+                @update:model-value="updateItemField(index, 'jumlah', $event)"
+              />
+            </v-col>
+          </v-row>
+
+          <v-row dense class="mt-1">
+            <v-col cols="12" sm="6">
               <v-text-field
                 :model-value="formatRupiah(item.harga)"
                 label="Harga"
@@ -168,21 +233,7 @@
               />
             </v-col>
 
-            <v-col cols="12" sm="6" md="2">
-              <v-text-field
-                :model-value="item.jumlah"
-                label="Jumlah"
-                type="number"
-                min="1"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-counter"
-                hide-details="auto"
-                @update:modelValue="updateItemField(index, 'jumlah', $event)"
-              />
-            </v-col>
-
-            <v-col cols="12" md="4">
+            <v-col cols="12" sm="6">
               <v-text-field
                 :model-value="formatRupiah(item.total)"
                 label="Total"
@@ -209,7 +260,7 @@
                 <div class="text-subtitle-1 font-weight-bold">
                   Total Treatment
                 </div>
-                <div class="text-caption text-medium-emphasis text-white">
+                <div class="text-caption text-white">
                   Total dari seluruh treatment yang dipilih
                 </div>
               </div>
@@ -246,8 +297,8 @@
 
             <div class="d-flex flex-column ga-2">
               <v-alert
-                v-for="(message, index) in validationMessages"
-                :key="index"
+                v-for="(message, messageIndex) in validationMessages"
+                :key="messageIndex"
                 type="warning"
                 density="compact"
                 border="start"
@@ -261,6 +312,7 @@
     </template>
   </div>
 </template>
+
 <script>
 import referenceService from "@/services/referenceService";
 
@@ -288,8 +340,10 @@ export default {
   data() {
     return {
       loadingTreatment: false,
+      loadingStaff: false,
       errorMessage: "",
       apiTreatmentList: [],
+      staffOptions: [],
       localTreatment: this.normalizeTreatmentState(this.form?.treatment),
       fetchTimer: null,
       isHydrating: false,
@@ -303,6 +357,14 @@ export default {
         this.form?.tokoId ||
         localStorage.getItem("selected_toko_id") ||
         null
+      );
+    },
+
+    activeDate() {
+      return (
+        this.form?.tanggal_kunjungan ||
+        this.form?.tanggal ||
+        new Date().toISOString().slice(0, 10)
       );
     },
 
@@ -334,9 +396,10 @@ export default {
     },
 
     totalTreatment() {
-      return (this.localTreatment.items || []).reduce((sum, item) => {
-        return sum + Number(item.total || 0);
-      }, 0);
+      return (this.localTreatment.items || []).reduce(
+        (sum, item) => sum + Number(item.total || 0),
+        0,
+      );
     },
 
     treatmentCount() {
@@ -348,23 +411,16 @@ export default {
     },
 
     routeTreatment() {
-      if (!this.treatmentCount) {
-        return "";
-      }
-
+      if (!this.treatmentCount) return "";
       return this.needNurseStation ? "nurse_station" : "dokter";
     },
 
     validationMessages() {
       const messages = [];
 
-      if (!this.layananState.ada_treatment) {
-        return messages;
-      }
+      if (!this.layananState.ada_treatment) return messages;
 
-      const activeItems = this.selectedItems;
-
-      if (activeItems.length === 0) {
+      if (!this.selectedItems.length) {
         messages.push("Minimal satu treatment harus dipilih.");
       }
 
@@ -392,7 +448,6 @@ export default {
       deep: true,
       handler(value) {
         if (this.isHydrating) return;
-
         this.localTreatment = this.normalizeTreatmentState(value);
       },
     },
@@ -409,19 +464,24 @@ export default {
 
         if (!value) {
           this.apiTreatmentList = [];
+          this.staffOptions = [];
           this.clearSelectedTreatment();
           return;
         }
 
-        this.queueFetchTreatment();
+        this.queueFetchReferences();
       },
+    },
+
+    activeDate(value, oldValue) {
+      if (String(value || "") !== String(oldValue || "") && this.activeTokoId) {
+        this.queueFetchReferences();
+      }
     },
   },
 
   beforeUnmount() {
-    if (this.fetchTimer) {
-      clearTimeout(this.fetchTimer);
-    }
+    if (this.fetchTimer) clearTimeout(this.fetchTimer);
   },
 
   methods: {
@@ -436,23 +496,17 @@ export default {
         harga: 0,
         jumlah: 1,
         total: 0,
+        perawat_id: null,
+        perawat_nama: "",
+        perawat_jabatan_kode: "",
+        perawat_jabatan_nama: "",
         perlu_tindakan_perawat: false,
         route_treatment: "",
-      };
-    },
-
-    getDefaultTreatment() {
-      return {
-        perlu_tindakan_perawat: false,
-        route_treatment: "",
-        total: 0,
-        items: [this.getDefaultItem()],
       };
     },
 
     normalizeTreatmentState(value) {
       const source = value || {};
-
       const items =
         Array.isArray(source.items) && source.items.length
           ? source.items.map((item) => this.normalizeItem(item))
@@ -469,26 +523,22 @@ export default {
     normalizeItem(item = {}) {
       const normalized = {
         __key: item.__key || this.generateKey(),
-
         treatment_toko_id:
           item.treatment_toko_id ??
           item.master_treatment_toko_id ??
           item.tindakan_toko_id ??
           item.toko_treatment_id ??
           null,
-
         tindakan_id:
           item.tindakan_id ??
           item.treatment_id ??
           item.master_treatment_id ??
           null,
-
         treatment_id:
           item.treatment_id ??
           item.tindakan_id ??
           item.master_treatment_id ??
           null,
-
         nama_tindakan:
           item.nama_tindakan ||
           item.tindakan_nama ||
@@ -496,7 +546,6 @@ export default {
           item.nama_treatment ||
           item.nama ||
           "",
-
         treatment_nama:
           item.treatment_nama ||
           item.nama_tindakan ||
@@ -504,23 +553,36 @@ export default {
           item.nama_treatment ||
           item.nama ||
           "",
-
         harga: this.toNumber(item.harga || item.harga_treatment || 0),
-        jumlah: this.toNumber(item.jumlah || 1),
+        jumlah: Math.max(this.toNumber(item.jumlah || item.qty || 1), 1),
         total: 0,
-
+        perawat_id:
+          item.perawat_id ??
+          item.beautician_id ??
+          item.nurse_id ??
+          item.pelaksana_id ??
+          null,
+        perawat_nama:
+          item.perawat_nama ||
+          item.beautician_nama ||
+          item.nurse_nama ||
+          item.pelaksana_nama ||
+          item.beautician ||
+          "",
+        perawat_jabatan_kode:
+          item.perawat_jabatan_kode || item.kode_jabatan || "",
+        perawat_jabatan_nama:
+          item.perawat_jabatan_nama || item.nama_jabatan || "",
         perlu_tindakan_perawat: Boolean(
           item.perlu_tindakan_perawat ||
           item.is_tindakan_perawat ||
           item.perlu_perawat ||
           item.route_treatment === "nurse_station",
         ),
-
         route_treatment: item.route_treatment || "",
       };
 
       normalized.total = normalized.harga * normalized.jumlah;
-
       return normalized;
     },
 
@@ -528,40 +590,74 @@ export default {
       return `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     },
 
-    queueFetchTreatment() {
-      if (this.fetchTimer) {
-        clearTimeout(this.fetchTimer);
-      }
-
-      this.fetchTimer = setTimeout(() => {
-        this.fetchTreatmentByToko();
-      }, 150);
+    queueFetchReferences() {
+      if (this.fetchTimer) clearTimeout(this.fetchTimer);
+      this.fetchTimer = setTimeout(() => this.fetchReferences(), 150);
     },
 
-    async fetchTreatmentByToko() {
-      if (!this.activeTokoId) {
-        this.apiTreatmentList = [];
-        return;
-      }
+    async fetchReferences() {
+      if (!this.activeTokoId) return;
 
       this.loadingTreatment = true;
+      this.loadingStaff = true;
       this.errorMessage = "";
 
-      try {
-        const rows = await referenceService.treatmentByToko({
-          toko_id: this.activeTokoId,
-        });
+      const params = {
+        toko_id: this.activeTokoId,
+        tanggal: this.activeDate,
+      };
 
-        this.apiTreatmentList = Array.isArray(rows) ? rows : [];
-        this.clearUnavailableTreatment();
-      } catch (error) {
+      const [treatmentResult, staffResult] = await Promise.allSettled([
+        referenceService.treatmentByToko({ toko_id: this.activeTokoId }),
+        referenceService.nurseBeautician(params),
+      ]);
+
+      if (treatmentResult.status === "fulfilled") {
+        this.apiTreatmentList = Array.isArray(treatmentResult.value)
+          ? treatmentResult.value
+          : [];
+      } else {
         this.apiTreatmentList = [];
         this.errorMessage =
-          error.response?.data?.message ||
+          treatmentResult.reason?.response?.data?.message ||
           "Gagal mengambil data treatment berdasarkan cabang.";
-      } finally {
-        this.loadingTreatment = false;
       }
+
+      if (staffResult.status === "fulfilled") {
+        this.staffOptions = this.normalizeStaffOptions(staffResult.value);
+      } else {
+        this.staffOptions = [];
+        this.errorMessage =
+          staffResult.reason?.response?.data?.message ||
+          "Gagal mengambil data nurse / beautician berdasarkan cabang.";
+      }
+
+      this.clearUnavailableTreatment();
+      this.clearUnavailableStaff();
+      this.loadingTreatment = false;
+      this.loadingStaff = false;
+    },
+
+    normalizeStaffOptions(rows) {
+      const data = Array.isArray(rows) ? rows : [];
+
+      return data
+        .map((item) => {
+          const id = item.value ?? item.id ?? item.karyawan_id ?? null;
+          const nama = item.nama || item.nama_karyawan || item.title || "-";
+          const kodeJabatan = item.kode_jabatan || "";
+          const namaJabatan = item.nama_jabatan || item.jabatan || "";
+
+          return {
+            ...item,
+            value: id,
+            title: namaJabatan ? `${nama} - ${namaJabatan}` : nama,
+            nama,
+            kode_jabatan: kodeJabatan,
+            nama_jabatan: namaJabatan,
+          };
+        })
+        .filter((item) => item.value);
     },
 
     mapTreatmentOption(item) {
@@ -572,7 +668,6 @@ export default {
         item.toko_treatment_id ??
         item.id ??
         null;
-
       const treatmentId =
         item.treatment_id ??
         item.master_treatment_id ??
@@ -581,7 +676,6 @@ export default {
         item.new_id ??
         item.id ??
         null;
-
       const nama =
         item.title ||
         item.label ||
@@ -591,7 +685,6 @@ export default {
         item.nama_tindakan ||
         item.text ||
         "-";
-
       const harga = this.toNumber(
         item.harga ??
           item.harga_jual ??
@@ -601,7 +694,6 @@ export default {
           item.harga_toko ??
           0,
       );
-
       const perluPerawat = Boolean(
         item.perlu_tindakan_perawat ||
         item.is_tindakan_perawat ||
@@ -613,10 +705,8 @@ export default {
         ...item,
         value: treatmentTokoId,
         title: nama,
-
         treatment_toko_id: treatmentTokoId,
         treatment_id: treatmentId,
-
         harga,
         perlu_tindakan_perawat: perluPerawat,
         route_treatment: perluPerawat ? "nurse_station" : "dokter",
@@ -629,11 +719,32 @@ export default {
       );
     },
 
-    onTindakanChange(index, tindakanValue) {
-      const selected = tindakanValue
-        ? this.findTreatmentOption(tindakanValue)
-        : null;
+    findStaffOption(id) {
+      return this.staffOptions.find(
+        (item) => String(item.value) === String(id),
+      );
+    },
 
+    getStaffRawOption(option) {
+      return option?.raw || option || {};
+    },
+
+    getStaffItemTitle(option) {
+      const raw = this.getStaffRawOption(option);
+
+      return raw.nama || raw.nama_karyawan || raw.title || option?.title || "-";
+    },
+
+    getStaffItemSubtitle(option) {
+      const raw = this.getStaffRawOption(option);
+
+      return raw.nama_jabatan || raw.kode_jabatan || "";
+    },
+
+    onTindakanChange(index, treatmentValue) {
+      const selected = treatmentValue
+        ? this.findTreatmentOption(treatmentValue)
+        : null;
       const currentItem =
         this.localTreatment.items[index] || this.getDefaultItem();
 
@@ -645,45 +756,48 @@ export default {
 
       const updated = {
         ...currentItem,
-
         treatment_toko_id: selected.treatment_toko_id || selected.value || null,
         tindakan_id: selected.treatment_id || null,
         treatment_id: selected.treatment_id || null,
-
         nama_tindakan: selected.title,
         treatment_nama: selected.title,
-
         harga: this.toNumber(selected.harga),
-        jumlah: Number(currentItem.jumlah || 1),
-
+        jumlah: Math.max(Number(currentItem.jumlah || 1), 1),
         perlu_tindakan_perawat: Boolean(selected.perlu_tindakan_perawat),
         route_treatment: selected.route_treatment || "",
       };
 
       updated.total = updated.harga * updated.jumlah;
-
       this.localTreatment.items.splice(index, 1, updated);
+      this.emitTreatment();
+    },
+
+    onStaffChange(index, staffId) {
+      const item = this.localTreatment.items[index];
+
+      if (!item) {
+        return;
+      }
+
+      const selected = staffId ? this.findStaffOption(staffId) : null;
+
+      item.perawat_id = selected?.value ? Number(selected.value) : null;
+
+      item.perawat_nama = selected?.nama || "";
+      item.perawat_jabatan_kode = selected?.kode_jabatan || "";
+      item.perawat_jabatan_nama = selected?.nama_jabatan || "";
+
       this.emitTreatment();
     },
 
     updateItemField(index, field, value) {
       const currentItem = this.localTreatment.items[index];
-
-      if (!currentItem) return;
-
-      if (field === "harga") {
-        return;
-      }
+      if (!currentItem || field === "harga") return;
 
       if (field === "jumlah") {
-        currentItem.jumlah = this.toNumber(value);
-
-        if (currentItem.jumlah <= 0) {
-          currentItem.jumlah = 1;
-        }
-
+        currentItem.jumlah = Math.max(this.toNumber(value), 1);
         currentItem.total =
-          this.toNumber(currentItem.harga) * this.toNumber(currentItem.jumlah);
+          this.toNumber(currentItem.harga) * currentItem.jumlah;
       } else {
         currentItem[field] = value;
       }
@@ -699,11 +813,9 @@ export default {
     removeItem(index) {
       if (this.localTreatment.items.length <= 1) {
         this.localTreatment.items = [this.getDefaultItem()];
-        this.emitTreatment();
-        return;
+      } else {
+        this.localTreatment.items.splice(index, 1);
       }
-
-      this.localTreatment.items.splice(index, 1);
       this.emitTreatment();
     },
 
@@ -716,25 +828,39 @@ export default {
       if (!this.apiTreatmentList.length) return;
 
       let changed = false;
-
       this.localTreatment.items = this.localTreatment.items.map((item) => {
         if (!item.tindakan_id) return item;
 
+        const selectedValue = item.treatment_toko_id || item.tindakan_id;
         const exists = this.tindakanOptions.some(
-          (treatment) => String(treatment.value) === String(item.tindakan_id),
+          (treatment) => String(treatment.value) === String(selectedValue),
         );
 
-        if (!exists) {
-          changed = true;
-          return this.getDefaultItem();
-        }
-
-        return item;
+        if (exists) return item;
+        changed = true;
+        return this.getDefaultItem();
       });
 
-      if (changed) {
-        this.emitTreatment();
-      }
+      if (changed) this.emitTreatment();
+    },
+
+    clearUnavailableStaff() {
+      if (!this.staffOptions.length) return;
+
+      let changed = false;
+      this.localTreatment.items.forEach((item) => {
+        if (!item.perawat_id) return;
+
+        if (!this.findStaffOption(item.perawat_id)) {
+          item.perawat_id = null;
+          item.perawat_nama = "";
+          item.perawat_jabatan_kode = "";
+          item.perawat_jabatan_nama = "";
+          changed = true;
+        }
+      });
+
+      if (changed) this.emitTreatment();
     },
 
     emitTreatment() {
@@ -742,22 +868,41 @@ export default {
         perlu_tindakan_perawat: this.needNurseStation,
         route_treatment: this.routeTreatment,
         total: this.totalTreatment,
+
         items: this.localTreatment.items.map((item) => ({
           treatment_toko_id: item.treatment_toko_id || null,
 
-          tindakan_id: item.tindakan_id,
-          treatment_id: item.treatment_id || item.tindakan_id,
+          tindakan_id: item.tindakan_id || null,
+          treatment_id: item.treatment_id || item.tindakan_id || null,
 
-          nama_tindakan: item.nama_tindakan,
-          tindakan_nama: item.nama_tindakan,
-          treatment_nama: item.treatment_nama || item.nama_tindakan,
+          nama_tindakan: item.nama_tindakan || "",
+          nama_treatment:
+            item.nama_treatment ||
+            item.treatment_nama ||
+            item.nama_tindakan ||
+            "",
+          tindakan_nama: item.nama_tindakan || "",
+          treatment_nama: item.treatment_nama || item.nama_tindakan || "",
 
           harga: Number(item.harga || 0),
           jumlah: Number(item.jumlah || 1),
           total: Number(item.total || 0),
 
+          // Pelaksana opsional dan disimpan pada masing-masing item treatment.
+          perawat_id: item.perawat_id ? Number(item.perawat_id) : null,
+
+          perawat_nama: item.perawat_nama || "",
+          perawat_jabatan_kode: item.perawat_jabatan_kode || "",
+          perawat_jabatan_nama: item.perawat_jabatan_nama || "",
+
           perlu_tindakan_perawat: Boolean(item.perlu_tindakan_perawat),
+
           route_treatment: item.route_treatment || "",
+
+          is_deposit_claim: item.is_deposit_claim ? 1 : 0,
+          deposit_treatment_id: item.deposit_treatment_id || null,
+          deposit_claim_id: item.deposit_claim_id || null,
+          catatan: item.catatan || "",
         })),
       };
 
@@ -772,7 +917,6 @@ export default {
     toNumber(value) {
       if (typeof value === "number") return value;
       if (value === null || value === undefined || value === "") return 0;
-
       return Number(String(value).replace(/[^\d.-]/g, "")) || 0;
     },
 
@@ -780,7 +924,6 @@ export default {
       if (typeof this.formatNumber === "function") {
         return this.formatNumber(value || 0);
       }
-
       return new Intl.NumberFormat("id-ID").format(Number(value || 0));
     },
 
@@ -790,126 +933,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.group-wrap {
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  padding: 20px;
-  background: #fff;
-}
-
-.group-head {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.group-title {
-  display: flex;
-  align-items: center;
-  font-size: 16px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.group-subtitle {
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.section-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.section-title {
-  display: flex;
-  align-items: center;
-  font-size: 20px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.section-title::before {
-  content: "☰";
-  font-size: 18px;
-  color: #2563eb;
-  margin-right: 10px;
-}
-
-.section-subtitle {
-  margin-top: 6px;
-  font-size: 13px;
-  color: #64748b;
-}
-
-.table-head {
-  display: grid;
-  grid-template-columns: 4fr 2fr 2fr 2fr 1fr;
-  gap: 12px;
-  padding: 0 4px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-}
-
-.item-row {
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 14px;
-  background: #f8fafc;
-}
-
-.total-box {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 20px;
-  border-radius: 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-
-.total-box__label {
-  font-size: 15px;
-  font-weight: 700;
-  color: #334155;
-}
-
-.total-box__value {
-  font-size: 22px;
-  font-weight: 800;
-  color: #0284c7;
-}
-
-.validation-wrap {
-  border-color: #fecaca;
-  background: #fff7f7;
-}
-
-.validation-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.validation-item {
-  color: #b91c1c;
-  font-size: 13px;
-}
-
-@media (max-width: 768px) {
-  .group-wrap {
-    padding: 16px;
-  }
-
-  .section-head {
-    flex-direction: column;
-  }
-}
-</style>

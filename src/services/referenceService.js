@@ -61,11 +61,15 @@ const referenceService = {
     return response.data.data;
   },
 
+  async nurseBeautician(params = {}) {
+    const response = await api.get("/reference/nurse-beautician", { params });
+    return response.data.data;
+  },
+
   async voucherDiskonJenis(params = {}) {
     const response = await api.get("/reference/voucher-diskon-jenis", {
       params,
     });
-
     return response.data;
   },
 
@@ -73,7 +77,6 @@ const referenceService = {
     const response = await api.get("/reference/voucher-diskon-kategori", {
       params,
     });
-
     return response.data;
   },
 
@@ -81,7 +84,6 @@ const referenceService = {
     const response = await api.get("/reference/voucher-diskon-template", {
       params,
     });
-
     return response.data;
   },
 
@@ -129,7 +131,6 @@ const referenceService = {
     const response = await api.get("/reference/voucher-diskon-eligible", {
       params,
     });
-
     return response.data.data;
   },
 
@@ -137,7 +138,6 @@ const referenceService = {
     const response = await api.get("/reference/merchandise", {
       params,
     });
-
     return response.data.data;
   },
 
@@ -162,7 +162,6 @@ const referenceService = {
     const response = await api.get("/reference/jenis-transaksi", {
       params,
     });
-
     return response.data.data;
   },
 
@@ -170,7 +169,6 @@ const referenceService = {
     const response = await api.get("/reference/sumber-informasi", {
       params,
     });
-
     return response.data.data;
   },
 

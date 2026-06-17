@@ -30,6 +30,7 @@
             icon="mdi-face-woman-shimmer-outline"
           />
         </v-avatar>
+
         <div class="text-subtitle-2 font-weight-bold mb-1">
           Belum ada treatment
         </div>
@@ -56,11 +57,12 @@
               <v-icon icon="mdi-medical-bag" size="20" color="primary" />
             </v-avatar>
           </template>
+
           <div class="text-subtitle-1 font-weight-bold">
             Treatment #{{ index + 1 }}
           </div>
           <v-card-subtitle class="text-caption pa-0 mt-1">
-            Detail treatment, beautician, qty, diskon, dan subtotal
+            Detail treatment, pelaksana, qty, diskon, dan subtotal
           </v-card-subtitle>
 
           <template #append>
@@ -109,18 +111,42 @@
             </v-col>
 
             <v-col cols="12" sm="8" md="5">
-              <v-select
-                :model-value="item.beautician"
+              <v-sheet
+                v-if="item.perawat_id"
+                rounded="lg"
+                border
+                class="pa-3 h-100"
+              >
+                <div
+                  class="d-flex align-center ga-2 text-caption text-medium-emphasis mb-1"
+                >
+                  <v-icon icon="mdi-account-heart-outline" size="16" />
+                  Nurse / Beautician
+                </div>
+                <div class="text-body-2 font-weight-bold text-high-emphasis">
+                  {{ displayPerawatName(item) }}
+                </div>
+                <div
+                  v-if="displayPerawatJob(item)"
+                  class="text-caption text-medium-emphasis mt-1"
+                >
+                  {{ displayPerawatJob(item) }}
+                </div>
+              </v-sheet>
+
+              <v-autocomplete
+                v-else
+                :model-value="item.perawat_id"
                 :items="perawatList"
                 item-title="title"
-                item-value="title"
-                label="Beautician / Perawat"
+                item-value="value"
+                label="Nurse / Beautician"
                 variant="outlined"
                 density="comfortable"
                 prepend-inner-icon="mdi-account-heart-outline"
                 hide-details="auto"
                 clearable
-                @update:model-value="updateField(index, 'beautician', $event)"
+                @update:model-value="onPerawatChange(index, $event)"
               />
             </v-col>
           </v-row>
@@ -149,6 +175,7 @@
                 density="comfortable"
                 prepend-inner-icon="mdi-percent-outline"
                 hide-details="auto"
+                :readonly="discountReadonly"
                 @update:model-value="updateField(index, 'diskon_type', $event)"
               />
             </v-col>
@@ -164,6 +191,7 @@
                 :prefix="displayDiskonType(item) === 'Rp' ? 'Rp' : ''"
                 :suffix="displayDiskonType(item) === '%' ? '%' : ''"
                 hide-details="auto"
+                :readonly="discountReadonly"
                 @update:model-value="updateField(index, 'diskon', $event)"
               />
             </v-col>
@@ -196,11 +224,13 @@
 <script>
 export default {
   name: "PembayaranTreatmentCard",
+
   props: {
     items: { type: Array, default: () => [] },
     tindakanList: { type: Array, default: () => [] },
     perawatList: { type: Array, default: () => [] },
     diskonTypeList: { type: Array, default: () => [] },
+    discountReadonly: { type: Boolean, default: false },
     formatCurrency: { type: Function, required: true },
     getSubtotal: { type: Function, required: true },
     getDisplaySubtotal: {
@@ -216,20 +246,81 @@ export default {
       default: null,
     },
   },
+
   emits: ["add-item", "remove-item", "update-item-field", "fill-item"],
+
   methods: {
     updateField(index, field, value, shouldFill = false) {
       this.$emit("update-item-field", { index, field, value });
+
       if (shouldFill) {
         this.$nextTick(() => {
           this.$emit("fill-item", index);
         });
       }
     },
+
+    onPerawatChange(index, perawatId) {
+      const selected = this.perawatList.find(
+        (item) => String(item.value ?? item.id) === String(perawatId),
+      );
+
+      this.updateField(
+        index,
+        "perawat_id",
+        selected?.value ?? selected?.id ?? null,
+      );
+      this.updateField(
+        index,
+        "perawat_nama",
+        selected?.nama || selected?.title || "",
+      );
+      this.updateField(
+        index,
+        "perawat_jabatan_kode",
+        selected?.kode_jabatan || "",
+      );
+      this.updateField(
+        index,
+        "perawat_jabatan_nama",
+        selected?.nama_jabatan || "",
+      );
+    },
+
+    findPerawat(item) {
+      if (!item?.perawat_id) return null;
+
+      return this.perawatList.find(
+        (option) =>
+          String(option.value ?? option.id) === String(item.perawat_id),
+      );
+    },
+
+    displayPerawatName(item) {
+      const selected = this.findPerawat(item);
+      return (
+        item.perawat_nama ||
+        selected?.nama ||
+        selected?.title ||
+        item.beautician ||
+        "-"
+      );
+    },
+
+    displayPerawatJob(item) {
+      const selected = this.findPerawat(item);
+      return (
+        item.perawat_jabatan_nama ||
+        item.perawat_jabatan_kode ||
+        selected?.nama_jabatan ||
+        selected?.kode_jabatan ||
+        ""
+      );
+    },
+
     displayDiskonType(item) {
       if (this.getVoucherDiscountType) {
         const value = this.getVoucherDiscountType(item);
-
         if (value !== null && value !== undefined && value !== "") {
           return value;
         }
@@ -241,7 +332,6 @@ export default {
     displayDiskonValue(item) {
       if (this.getVoucherDiscountValue) {
         const value = this.getVoucherDiscountValue(item);
-
         if (value !== null && value !== undefined && value !== "") {
           return value;
         }
