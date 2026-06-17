@@ -772,20 +772,48 @@ export default {
       this.emitTreatment();
     },
 
-    onStaffChange(index, staffId) {
+    onStaffChange(index, staffValue) {
       const item = this.localTreatment.items[index];
 
-      if (!item) {
+      if (!item) return;
+
+      const raw = staffValue?.raw || staffValue || null;
+      const rawId =
+        raw && typeof raw === "object"
+          ? (raw.value ?? raw.id ?? raw.karyawan_id ?? null)
+          : raw;
+
+      // Hanya kosongkan ketika user benar-benar menekan clear.
+      if (rawId === null || rawId === undefined || rawId === "") {
+        item.perawat_id = null;
+        item.perawat_nama = "";
+        item.perawat_jabatan_kode = "";
+        item.perawat_jabatan_nama = "";
+        this.emitTreatment();
         return;
       }
 
-      const selected = staffId ? this.findStaffOption(staffId) : null;
+      const perawatId = Number(rawId);
 
-      item.perawat_id = selected?.value ? Number(selected.value) : null;
+      if (!Number.isFinite(perawatId) || perawatId <= 0) {
+        this.errorMessage = "ID Nurse / Beautician tidak valid.";
+        return;
+      }
 
-      item.perawat_nama = selected?.nama || "";
-      item.perawat_jabatan_kode = selected?.kode_jabatan || "";
-      item.perawat_jabatan_nama = selected?.nama_jabatan || "";
+      // ID dari event adalah sumber utama. Jangan dibuat null hanya karena
+      // option belum ditemukan saat reference sedang reload.
+      item.perawat_id = perawatId;
+
+      const selected =
+        this.findStaffOption(perawatId) ||
+        (raw && typeof raw === "object" ? raw : null);
+
+      item.perawat_nama =
+        selected?.nama || selected?.nama_karyawan || item.perawat_nama || "";
+      item.perawat_jabatan_kode =
+        selected?.kode_jabatan || item.perawat_jabatan_kode || "";
+      item.perawat_jabatan_nama =
+        selected?.nama_jabatan || item.perawat_jabatan_nama || "";
 
       this.emitTreatment();
     },
@@ -848,14 +876,28 @@ export default {
       if (!this.staffOptions.length) return;
 
       let changed = false;
+
       this.localTreatment.items.forEach((item) => {
         if (!item.perawat_id) return;
 
-        if (!this.findStaffOption(item.perawat_id)) {
-          item.perawat_id = null;
-          item.perawat_nama = "";
-          item.perawat_jabatan_kode = "";
-          item.perawat_jabatan_nama = "";
+        const selected = this.findStaffOption(item.perawat_id);
+
+        // Jangan menghapus ID existing hanya karena reference tidak memuatnya.
+        // Hal itu sebelumnya membuat pilihan user berubah menjadi null.
+        if (!selected) return;
+
+        const nama = selected.nama || selected.nama_karyawan || "";
+        const kodeJabatan = selected.kode_jabatan || "";
+        const namaJabatan = selected.nama_jabatan || "";
+
+        if (
+          item.perawat_nama !== nama ||
+          item.perawat_jabatan_kode !== kodeJabatan ||
+          item.perawat_jabatan_nama !== namaJabatan
+        ) {
+          item.perawat_nama = nama;
+          item.perawat_jabatan_kode = kodeJabatan;
+          item.perawat_jabatan_nama = namaJabatan;
           changed = true;
         }
       });
@@ -889,7 +931,11 @@ export default {
           total: Number(item.total || 0),
 
           // Pelaksana opsional dan disimpan pada masing-masing item treatment.
-          perawat_id: item.perawat_id ? Number(item.perawat_id) : null,
+          perawat_id:
+            Number.isFinite(Number(item.perawat_id)) &&
+            Number(item.perawat_id) > 0
+              ? Number(item.perawat_id)
+              : null,
 
           perawat_nama: item.perawat_nama || "",
           perawat_jabatan_kode: item.perawat_jabatan_kode || "",

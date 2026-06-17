@@ -166,6 +166,7 @@
               variant="tonal"
               size="small"
               prepend-icon="mdi-clipboard-pulse-outline"
+              :disabled="!pasienId"
               @click="goToPengkajianAwal"
             >
               Pengkajian Awal
@@ -176,6 +177,8 @@
               variant="tonal"
               size="small"
               prepend-icon="mdi-face-recognition"
+              :disabled="!pasienId"
+              @click="openSkinAnalyzer"
             >
               Skin Analyzer
             </v-btn>
@@ -232,133 +235,343 @@
             rounded="lg"
             class="mb-5"
           >
-            <v-card-text class="pa-4 pb-2">
-              <div
-                class="d-flex align-start justify-space-between flex-wrap ga-3"
-              >
+            <v-card-title
+              class="d-flex align-start justify-space-between flex-wrap ga-3 pa-4"
+            >
+              <div class="d-flex align-start ga-3">
+                <v-avatar color="primary" variant="tonal" size="40">
+                  <v-icon size="22">mdi-laptop-account</v-icon>
+                </v-avatar>
+
                 <div>
                   <div class="text-subtitle-1 font-weight-bold">
-                    Informasi Medis Pendaftaran
+                    Intake Konsultasi Online
                   </div>
                   <div class="text-caption text-medium-emphasis">
-                    Data awal dari pendaftaran konsultasi online.
+                    Informasi awal pasien sebelum pemeriksaan dan pengisian SOAP
+                    dokter.
                   </div>
                 </div>
+              </div>
 
-                <v-chip color="primary" variant="tonal" size="small">
-                  {{
-                    displayMedicalText(
-                      onlineRegistration.jenis_konsultasi_label ||
-                        onlineRegistration.konsultasi_source_name ||
-                        onlineRegistration.source_name ||
-                        onlineRegistration.channel_label ||
-                        "Konsultasi Online",
-                    )
-                  }}
+              <div class="d-flex align-center flex-wrap ga-2">
+                <v-chip
+                  color="primary"
+                  variant="tonal"
+                  size="small"
+                  prepend-icon="mdi-cloud-check-outline"
+                >
+                  {{ consultationLabel }}
+                </v-chip>
+
+                <v-chip
+                  color="info"
+                  variant="outlined"
+                  size="small"
+                  prepend-icon="mdi-numeric-1-circle-outline"
+                >
+                  Tinjau Intake
                 </v-chip>
               </div>
-            </v-card-text>
+            </v-card-title>
 
             <v-divider />
 
             <v-card-text class="pa-4">
-              <v-row dense>
-                <v-col
-                  v-for="item in onlineRegistrationItems"
-                  :key="item.key"
-                  cols="12"
-                  :md="item.cols || 6"
-                >
-                  <v-sheet border rounded="lg" class="pa-3 h-100">
-                    <div class="text-caption text-medium-emphasis mb-1">
-                      {{ item.label }}
-                    </div>
-
-                    <div class="text-body-2 font-weight-medium">
-                      {{ displayMedicalText(item.value) }}
-                    </div>
-                  </v-sheet>
-                </v-col>
-              </v-row>
-
-              <template v-if="onlineRegistrationPhotos.length">
-                <v-divider class="my-4" />
-
-                <div
-                  class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3"
-                >
-                  <div>
-                    <div class="text-subtitle-2 font-weight-bold">
-                      Dokumentasi Foto Pendaftaran
-                    </div>
-                    <div class="text-caption text-medium-emphasis">
-                      Foto kiri, depan, dan kanan dari pendaftaran konsultasi
-                      online.
-                    </div>
-                  </div>
-
-                  <v-chip color="success" variant="tonal" size="small">
-                    {{ onlineRegistrationPhotos.length }} Foto
-                  </v-chip>
+              <v-alert
+                type="info"
+                variant="tonal"
+                density="compact"
+                border="start"
+                class="mb-4"
+              >
+                <div class="font-weight-bold mb-1">
+                  Konfirmasi informasi sebelum pemeriksaan
                 </div>
+                <div class="text-body-2">
+                  Gunakan data ini sebagai acuan awal, lalu lengkapi hasil
+                  pemeriksaan pada SOAP Dokter di bagian berikutnya.
+                </div>
+              </v-alert>
 
+              <template v-if="hasOnlineRegistrationClinicalInfo">
                 <v-row dense>
                   <v-col
-                    v-for="photo in onlineRegistrationPhotos"
-                    :key="photo.key"
+                    v-if="onlineRegistrationClinicalInfo.complaint"
                     cols="12"
-                    md="4"
+                    :md="
+                      onlineRegistrationClinicalInfo.requestedDoctor ? 8 : 12
+                    "
                   >
-                    <v-card variant="outlined" rounded="lg" class="h-100">
-                      <v-card-text class="pa-3">
-                        <div class="text-caption text-medium-emphasis mb-2">
-                          {{ photo.label }}
+                    <v-sheet border rounded="lg" class="pa-4 h-100">
+                      <div class="d-flex align-start ga-3">
+                        <v-avatar color="error" variant="tonal" size="34">
+                          <v-icon size="19">mdi-comment-alert-outline</v-icon>
+                        </v-avatar>
+
+                        <div>
+                          <div class="text-caption text-medium-emphasis mb-1">
+                            Keluhan Utama
+                          </div>
+                          <div class="text-body-1 font-weight-bold">
+                            {{
+                              displayMedicalText(
+                                onlineRegistrationClinicalInfo.complaint,
+                              )
+                            }}
+                          </div>
                         </div>
+                      </div>
+                    </v-sheet>
+                  </v-col>
 
-                        <v-img
-                          v-if="photo.url"
-                          :src="photo.url"
-                          height="180"
-                          cover
-                          rounded="lg"
-                          class="border"
-                        />
+                  <v-col
+                    v-if="onlineRegistrationClinicalInfo.requestedDoctor"
+                    cols="12"
+                    :md="onlineRegistrationClinicalInfo.complaint ? 4 : 12"
+                  >
+                    <v-sheet border rounded="lg" class="pa-4 h-100">
+                      <div class="d-flex align-start ga-3">
+                        <v-avatar color="primary" variant="tonal" size="34">
+                          <v-icon size="19">mdi-doctor</v-icon>
+                        </v-avatar>
 
-                        <v-sheet
-                          v-else
-                          border
-                          rounded="lg"
-                          class="pa-6 text-center text-medium-emphasis"
-                        >
-                          <v-icon size="32" class="mb-2">
-                            mdi-image-off-outline
-                          </v-icon>
-                          <div class="text-caption">Foto belum tersedia</div>
-                        </v-sheet>
-
-                        <div
-                          v-if="photo.file_name"
-                          class="text-caption text-medium-emphasis mt-2 text-truncate"
-                        >
-                          {{ photo.file_name }}
+                        <div>
+                          <div class="text-caption text-medium-emphasis mb-1">
+                            Request Dokter
+                          </div>
+                          <div class="text-body-2 font-weight-bold">
+                            {{
+                              displayMedicalText(
+                                onlineRegistrationClinicalInfo.requestedDoctor,
+                              )
+                            }}
+                          </div>
                         </div>
-                      </v-card-text>
-                    </v-card>
+                      </div>
+                    </v-sheet>
+                  </v-col>
+
+                  <v-col
+                    v-if="
+                      onlineRegistrationClinicalInfo.allergy ||
+                      onlineRegistrationClinicalInfo.previousMedication
+                    "
+                    cols="12"
+                    md="6"
+                  >
+                    <v-list
+                      border
+                      rounded="lg"
+                      density="compact"
+                      class="py-0 h-100"
+                    >
+                      <v-list-item
+                        v-if="onlineRegistrationClinicalInfo.allergy"
+                        prepend-icon="mdi-allergy"
+                        title="Riwayat Alergi"
+                        :subtitle="onlineRegistrationClinicalInfo.allergy"
+                        class="py-2"
+                      />
+
+                      <v-divider
+                        v-if="
+                          onlineRegistrationClinicalInfo.allergy &&
+                          onlineRegistrationClinicalInfo.previousMedication
+                        "
+                      />
+
+                      <v-list-item
+                        v-if="onlineRegistrationClinicalInfo.previousMedication"
+                        prepend-icon="mdi-pill-multiple"
+                        title="Produk / Obat Sebelumnya"
+                        :subtitle="
+                          onlineRegistrationClinicalInfo.previousMedication
+                        "
+                        class="py-2"
+                      />
+                    </v-list>
+                  </v-col>
+
+                  <v-col
+                    v-if="
+                      onlineRegistrationClinicalInfo.pregnant ||
+                      onlineRegistrationClinicalInfo.breastfeeding
+                    "
+                    cols="12"
+                    md="6"
+                  >
+                    <v-sheet border rounded="lg" class="pa-4 h-100">
+                      <div class="d-flex align-center ga-2 mb-3">
+                        <v-icon size="19" color="deep-purple">
+                          mdi-shield-account-outline
+                        </v-icon>
+                        <div class="text-subtitle-2 font-weight-bold">
+                          Kondisi Khusus
+                        </div>
+                      </div>
+
+                      <div
+                        v-if="onlineRegistrationClinicalInfo.pregnant"
+                        class="d-flex align-center justify-space-between ga-3"
+                        :class="{
+                          'mb-3': onlineRegistrationClinicalInfo.breastfeeding,
+                        }"
+                      >
+                        <div class="text-body-2">Sedang Hamil</div>
+                        <v-chip
+                          :color="
+                            medicalConditionColor(
+                              onlineRegistrationClinicalInfo.pregnant,
+                            )
+                          "
+                          variant="tonal"
+                          size="small"
+                        >
+                          {{
+                            displayMedicalText(
+                              onlineRegistrationClinicalInfo.pregnant,
+                            )
+                          }}
+                        </v-chip>
+                      </div>
+
+                      <v-divider
+                        v-if="
+                          onlineRegistrationClinicalInfo.pregnant &&
+                          onlineRegistrationClinicalInfo.breastfeeding
+                        "
+                        class="mb-3"
+                      />
+
+                      <div
+                        v-if="onlineRegistrationClinicalInfo.breastfeeding"
+                        class="d-flex align-center justify-space-between ga-3"
+                      >
+                        <div class="text-body-2">Sedang Menyusui</div>
+                        <v-chip
+                          :color="
+                            medicalConditionColor(
+                              onlineRegistrationClinicalInfo.breastfeeding,
+                            )
+                          "
+                          variant="tonal"
+                          size="small"
+                        >
+                          {{
+                            displayMedicalText(
+                              onlineRegistrationClinicalInfo.breastfeeding,
+                            )
+                          }}
+                        </v-chip>
+                      </div>
+                    </v-sheet>
+                  </v-col>
+
+                  <v-col v-if="onlineRegistrationClinicalInfo.note" cols="12">
+                    <v-alert
+                      type="warning"
+                      variant="tonal"
+                      density="compact"
+                      border="start"
+                    >
+                      <div class="font-weight-bold mb-1">
+                        Catatan Pendaftaran
+                      </div>
+                      <div class="text-body-2">
+                        {{ onlineRegistrationClinicalInfo.note }}
+                      </div>
+                    </v-alert>
                   </v-col>
                 </v-row>
               </template>
 
               <v-alert
-                v-else-if="
-                  Number(onlineRegistration.channel_konsultasi || 0) === 2
-                "
+                v-else
+                type="warning"
+                variant="tonal"
+                density="compact"
+                border="start"
+              >
+                Data medis pendaftaran online belum diisi. Dokter tetap dapat
+                melanjutkan pemeriksaan dan mengisi SOAP.
+              </v-alert>
+
+              <v-expansion-panels
+                v-if="onlineRegistrationPhotos.length"
+                variant="accordion"
+                class="mt-4"
+              >
+                <v-expansion-panel elevation="0" rounded="lg" class="border">
+                  <v-expansion-panel-title class="py-3 px-4">
+                    <div
+                      class="d-flex align-center justify-space-between flex-wrap ga-3 w-100 pr-2"
+                    >
+                      <div class="d-flex align-center ga-3">
+                        <v-avatar color="success" variant="tonal" size="34">
+                          <v-icon size="19">mdi-camera-outline</v-icon>
+                        </v-avatar>
+
+                        <div>
+                          <div class="text-body-2 font-weight-bold">
+                            Dokumentasi Pendaftaran
+                          </div>
+                          <div class="text-caption text-medium-emphasis">
+                            Foto kondisi pasien yang dikirim saat registrasi.
+                          </div>
+                        </div>
+                      </div>
+
+                      <v-chip color="success" variant="tonal" size="small">
+                        {{ onlineRegistrationPhotos.length }} Foto
+                      </v-chip>
+                    </div>
+                  </v-expansion-panel-title>
+
+                  <v-expansion-panel-text>
+                    <v-row dense>
+                      <v-col
+                        v-for="photo in onlineRegistrationPhotos"
+                        :key="photo.key"
+                        cols="12"
+                        md="4"
+                      >
+                        <v-card variant="outlined" rounded="lg" class="h-100">
+                          <v-card-text class="pa-3">
+                            <div class="text-caption text-medium-emphasis mb-2">
+                              {{ photo.label }}
+                            </div>
+
+                            <v-img
+                              :src="photo.url"
+                              height="190"
+                              cover
+                              rounded="lg"
+                              class="border"
+                            />
+
+                            <div
+                              v-if="photo.file_name"
+                              class="text-caption text-medium-emphasis mt-2 text-truncate"
+                            >
+                              {{ photo.file_name }}
+                            </div>
+                          </v-card-text>
+                        </v-card>
+                      </v-col>
+                    </v-row>
+                  </v-expansion-panel-text>
+                </v-expansion-panel>
+              </v-expansion-panels>
+
+              <v-alert
+                v-else
                 type="warning"
                 variant="tonal"
                 density="compact"
                 class="mt-4"
               >
-                Foto pendaftaran belum tersedia pada payload detail antrian
-                dokter.
+                Dokumentasi foto pendaftaran online belum tersedia.
               </v-alert>
             </v-card-text>
           </v-card>
@@ -538,7 +751,7 @@
             </v-sheet>
           </v-card>
 
-          <div class="mb-6">
+          <div v-if="showPatientHistory" class="mb-6">
             <v-divider class="mb-4" />
 
             <div
@@ -1433,6 +1646,182 @@
       </v-row>
     </template>
 
+    <v-dialog v-model="skinAnalyzerDialog" max-width="960" scrollable>
+      <v-card rounded="lg">
+        <v-card-title
+          class="d-flex align-start justify-space-between ga-4 px-5 py-4"
+        >
+          <div>
+            <div class="text-h6 font-weight-bold">Skin Analyzer</div>
+            <div class="text-body-2 text-medium-emphasis mt-1">
+              Simpan dan buka kembali tautan hasil analisis kulit pasien.
+            </div>
+          </div>
+
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
+            :disabled="skinAnalyzerSaving"
+            @click="closeSkinAnalyzer"
+          />
+        </v-card-title>
+
+        <v-divider />
+
+        <v-card-text class="pa-5">
+          <v-alert
+            type="info"
+            variant="tonal"
+            border="start"
+            icon="mdi-qrcode-scan"
+            class="mb-4"
+          >
+            Scan QR dari perangkat Skin Analyzer atau tempel link hasil analisis
+            pada kolom berikut.
+          </v-alert>
+
+          <v-form ref="skinAnalyzerForm" @submit.prevent="saveSkinAnalyzer">
+            <v-row dense align="start">
+              <v-col cols="12" md="9">
+                <v-text-field
+                  v-model.trim="skinAnalyzerLink"
+                  label="Link hasil Skin Analyzer"
+                  placeholder="https://..."
+                  prepend-inner-icon="mdi-link-variant"
+                  variant="outlined"
+                  density="comfortable"
+                  :rules="skinAnalyzerLinkRules"
+                  :disabled="skinAnalyzerSaving"
+                  maxlength="2048"
+                  counter
+                  clearable
+                />
+              </v-col>
+
+              <v-col cols="12" md="3">
+                <v-btn
+                  type="submit"
+                  block
+                  color="primary"
+                  variant="flat"
+                  prepend-icon="mdi-content-save-outline"
+                  height="48"
+                  :loading="skinAnalyzerSaving"
+                  :disabled="skinAnalyzerSaving"
+                >
+                  Simpan
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-form>
+
+          <v-alert
+            v-if="skinAnalyzerError"
+            type="error"
+            variant="tonal"
+            border="start"
+            class="mb-4"
+            closable
+            @click:close="skinAnalyzerError = ''"
+          >
+            {{ skinAnalyzerError }}
+          </v-alert>
+
+          <div class="border rounded-lg overflow-hidden">
+            <v-progress-linear
+              v-if="skinAnalyzerLoading"
+              indeterminate
+              color="primary"
+            />
+
+            <v-table density="comfortable">
+              <thead>
+                <tr>
+                  <th class="text-left">#</th>
+                  <th class="text-left">Tanggal & Waktu</th>
+                  <th class="text-left">Dioperasikan Oleh</th>
+                  <th class="text-left">Cabang</th>
+                  <th class="text-right">Aksi</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <template v-if="skinAnalyzerLoading">
+                  <tr
+                    v-for="index in 3"
+                    :key="`skin-analyzer-loading-${index}`"
+                  >
+                    <td colspan="5" class="py-3">
+                      <v-skeleton-loader type="text" />
+                    </td>
+                  </tr>
+                </template>
+
+                <template v-else-if="skinAnalyzerItems.length">
+                  <tr v-for="(item, index) in skinAnalyzerItems" :key="item.id">
+                    <td>{{ index + 1 }}</td>
+                    <td>{{ formatSkinAnalyzerDateTime(item.created_at) }}</td>
+                    <td class="font-weight-medium">
+                      {{ item.operate_by || "-" }}
+                    </td>
+                    <td>{{ item.branch || "-" }}</td>
+                    <td class="text-right">
+                      <v-btn
+                        color="primary"
+                        variant="tonal"
+                        size="small"
+                        prepend-icon="mdi-open-in-new"
+                        @click="openSkinAnalyzerResult(item)"
+                      >
+                        Lihat Hasil
+                      </v-btn>
+                    </td>
+                  </tr>
+                </template>
+
+                <tr v-else>
+                  <td colspan="5" class="pa-0">
+                    <div
+                      class="d-flex flex-column align-center justify-center py-10 px-4 text-center"
+                    >
+                      <v-icon
+                        icon="mdi-face-recognition"
+                        size="42"
+                        color="grey-lighten-1"
+                        class="mb-2"
+                      />
+                      <div class="text-subtitle-2 font-weight-bold">
+                        Belum ada hasil Skin Analyzer
+                      </div>
+                      <div class="text-body-2 text-medium-emphasis mt-1">
+                        Tambahkan link hasil analisis pertama pasien melalui
+                        form di atas.
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </div>
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="px-5 py-4">
+          <v-spacer />
+          <v-btn
+            variant="outlined"
+            color="secondary"
+            :disabled="skinAnalyzerSaving"
+            @click="closeSkinAnalyzer"
+          >
+            Tutup
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-snackbar
       v-model="snackbar.show"
       :color="snackbar.color"
@@ -1576,6 +1965,29 @@ export default {
       obatItems: [],
       treatmentItems: [],
 
+      skinAnalyzerDialog: false,
+      skinAnalyzerLoading: false,
+      skinAnalyzerSaving: false,
+      skinAnalyzerError: "",
+      skinAnalyzerLink: "",
+      skinAnalyzerItems: [],
+      skinAnalyzerLinkRules: [
+        (value) =>
+          Boolean(String(value || "").trim()) ||
+          "Link hasil Skin Analyzer wajib diisi.",
+        (value) => {
+          const link = String(value || "").trim();
+          if (!link) return true;
+
+          return (
+            /^https?:\/\/[^\s]+$/i.test(link) ||
+            "Gunakan link lengkap yang diawali http:// atau https://."
+          );
+        },
+        (value) =>
+          String(value || "").length <= 2048 || "Link maksimal 2048 karakter.",
+      ],
+
       snackbar: {
         show: false,
         color: "success",
@@ -1587,6 +1999,13 @@ export default {
   computed: {
     antrianId() {
       return this.$route.params.id;
+    },
+
+    pasienId() {
+      const value = this.resolvePasienId(this.registration || {});
+      const pasienId = Number(value || 0);
+
+      return pasienId > 0 ? pasienId : null;
     },
 
     riwayatSummaryText() {
@@ -1754,20 +2173,34 @@ export default {
     },
 
     isOnlineConsultation() {
-      const sourceCode = [
-        this.consultationSourceCode,
-        this.onlineRegistration?.konsultasi_source_code,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toUpperCase();
+      const primaryChannel = this.normalizeText(
+        this.registration?.channel_konsultasi ??
+          this.registration?.layanan?.channel_konsultasi ??
+          this.registration?.konsultasi?.channel_konsultasi ??
+          this.registration?.konsultasi_channel,
+      );
 
-      const sourceName = [
+      if (primaryChannel) {
+        if (
+          primaryChannel === "2" ||
+          primaryChannel === "online" ||
+          primaryChannel.includes("online")
+        ) {
+          return true;
+        }
+
+        if (
+          primaryChannel === "1" ||
+          primaryChannel === "offline" ||
+          primaryChannel.includes("offline")
+        ) {
+          return false;
+        }
+      }
+
+      const primarySource = [
+        this.consultationSourceCode,
         this.consultationSourceName,
-        this.onlineRegistration?.jenis_konsultasi_label,
-        this.onlineRegistration?.konsultasi_source_name,
-        this.onlineRegistration?.source_name,
-        this.onlineRegistration?.channel_label,
         this.registration?.channel_konsultasi_label,
         this.registration?.channel_label,
       ]
@@ -1775,36 +2208,59 @@ export default {
         .join(" ")
         .toUpperCase();
 
-      const channels = [
-        this.consultationChannel,
-        this.normalizeText(this.onlineRegistration?.channel_konsultasi),
-        this.normalizeText(this.onlineRegistration?.channel_label),
-        this.normalizeText(this.registration?.channel_konsultasi_label),
-        this.normalizeText(this.registration?.channel_label),
-      ].filter(Boolean);
+      if (primarySource.includes("ONLINE")) {
+        return true;
+      }
 
-      return (
-        sourceCode.includes("ONLINE") ||
-        sourceName.includes("ONLINE") ||
-        channels.some(
-          (channel) =>
-            channel === "2" ||
-            channel === "online" ||
-            channel.includes("online"),
-        )
+      if (
+        primarySource.includes("OFFLINE") ||
+        primarySource.includes("SPPG") ||
+        primarySource.includes("SPKK")
+      ) {
+        return false;
+      }
+
+      const intakeType = Number(this.onlineRegistration?.jenis_konsultasi || 0);
+
+      if (intakeType === 2) {
+        return true;
+      }
+
+      if (intakeType === 1) {
+        return false;
+      }
+
+      const intakeChannel = this.normalizeText(
+        this.onlineRegistration?.channel_konsultasi,
       );
+
+      if (
+        intakeChannel === "2" ||
+        intakeChannel === "online" ||
+        intakeChannel.includes("online")
+      ) {
+        return true;
+      }
+
+      const intakeSource = [
+        this.onlineRegistration?.konsultasi_source_code,
+        this.onlineRegistration?.konsultasi_source_name,
+        this.onlineRegistration?.jenis_konsultasi_label,
+        this.onlineRegistration?.channel_label,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toUpperCase();
+
+      return intakeSource.includes("ONLINE");
     },
 
     showSoapForm() {
-      if (this.hasOriginalConsultation && !this.isOnlineConsultation) {
-        return true;
-      }
+      return this.hasOriginalConsultation || this.form.add_consultation;
+    },
 
-      if (!this.hasOriginalConsultation && this.form.add_consultation) {
-        return true;
-      }
-
-      return false;
+    showPatientHistory() {
+      return this.hasOriginalConsultation || this.form.add_consultation;
     },
 
     showAddConsultationOption() {
@@ -1916,11 +2372,10 @@ export default {
     ruleAlert() {
       if (this.hasOriginalConsultation && this.isOnlineConsultation) {
         return {
-          show: true,
+          show: false,
           type: "info",
-          title: "Konsultasi online",
-          message:
-            "Informasi medis pendaftaran ditampilkan sebagai acuan dokter. SOAP tidak ditampilkan untuk konsultasi online.",
+          title: "",
+          message: "",
         };
       }
 
@@ -1960,49 +2415,52 @@ export default {
       };
     },
     showOnlineMedicalInfo() {
-      return this.isOnlineConsultation;
+      return this.hasOriginalConsultation && this.isOnlineConsultation;
     },
 
-    onlineRegistrationItems() {
+    onlineRegistrationClinicalInfo() {
       const data = this.onlineRegistration || {};
+      const pregnantRaw = data.sedang_hamil_raw ?? data.sedang_hamil;
+      const breastfeedingRaw = data.sedang_menyusui_raw ?? data.sedang_menyusui;
+
+      const notes = [
+        data.catatan_cs,
+        data.catatan_awal,
+        data.catatan_registrasi,
+      ]
+        .map((value) => String(value || "").trim())
+        .filter(Boolean);
+
+      return {
+        requestedDoctor:
+          data.request_dokter_nama || data.request_dokter || null,
+        complaint:
+          data.keluhan_utama || data.keluhan || data.keluhan_awal || null,
+        allergy: data.alergi || null,
+        previousMedication:
+          data.produk_obat_sebelumnya || data.produk_sebelumnya || null,
+        pregnant: this.hasMedicalValue(pregnantRaw)
+          ? this.normalizeMedicalYesNo(pregnantRaw)
+          : null,
+        breastfeeding: this.hasMedicalValue(breastfeedingRaw)
+          ? this.normalizeMedicalYesNo(breastfeedingRaw)
+          : null,
+        note: Array.from(new Set(notes)).join(" • ") || null,
+      };
+    },
+
+    hasOnlineRegistrationClinicalInfo() {
+      const info = this.onlineRegistrationClinicalInfo;
 
       return [
-        {
-          key: "request_dokter_nama",
-          label: "Request Dokter Khusus",
-          value: data.request_dokter_nama || data.request_dokter,
-        },
-        {
-          key: "keluhan_utama",
-          label: "Keluhan Utama",
-          value: data.keluhan_utama || data.keluhan || data.keluhan_awal,
-          cols: 12,
-        },
-        {
-          key: "alergi",
-          label: "Alergi",
-          value: data.alergi,
-        },
-        {
-          key: "produk_obat_sebelumnya",
-          label: "Produk / Obat Sebelumnya",
-          value: data.produk_obat_sebelumnya || data.produk_sebelumnya,
-        },
-        {
-          key: "sedang_hamil",
-          label: "Sedang Hamil",
-          value: this.normalizeMedicalYesNo(
-            data.sedang_hamil_raw ?? data.sedang_hamil,
-          ),
-        },
-        {
-          key: "sedang_menyusui",
-          label: "Sedang Menyusui",
-          value: this.normalizeMedicalYesNo(
-            data.sedang_menyusui_raw ?? data.sedang_menyusui,
-          ),
-        },
-      ];
+        info.requestedDoctor,
+        info.complaint,
+        info.allergy,
+        info.previousMedication,
+        info.pregnant,
+        info.breastfeeding,
+        info.note,
+      ].some((value) => this.hasMedicalValue(value));
     },
 
     onlineRegistrationPhotos() {
@@ -2402,7 +2860,7 @@ export default {
         jenis_konsultasi_label:
           onlinePayload?.jenis_konsultasi_label ||
           data?.jenis_konsultasi_label ||
-          "Konsultasi Online",
+          null,
         channel_konsultasi:
           onlinePayload?.channel_konsultasi ?? data?.channel_konsultasi ?? null,
         channel_label:
@@ -2978,10 +3436,7 @@ export default {
         data?.perawat_awal || data?.perawatAwal || data?.perawat || {};
 
       const headerPerawatId =
-        data?.perawat_awal_id ??
-        data?.perawat_id ??
-        headerPerawat?.id ??
-        null;
+        data?.perawat_awal_id ?? data?.perawat_id ?? headerPerawat?.id ?? null;
 
       const headerPerawatNama =
         data?.nama_perawat ||
@@ -3030,10 +3485,7 @@ export default {
 
       this.perawatOptions = this.uniqueOptions([
         ...this.perawatOptions,
-        ...this.normalizePerawatOptions([
-          ...selectedOptions,
-          ...headerOption,
-        ]),
+        ...this.normalizePerawatOptions([...selectedOptions, ...headerOption]),
       ]);
     },
 
@@ -3947,9 +4399,165 @@ export default {
     },
 
     goToPengkajianAwal() {
-      this.$router.push(
-        `/pelayanan-medis/antrian-dokter/${this.antrianId}/isi-pengkajian-awal`,
-      );
+      if (!this.pasienId) {
+        this.showSnackbar("Data pasien belum tersedia.", "error");
+        return;
+      }
+
+      this.$router.push({
+        name: "Pengkajian Pasien",
+        params: { id: this.pasienId },
+      });
+    },
+
+    async openSkinAnalyzer() {
+      if (!this.pasienId) {
+        this.showSnackbar("Data pasien belum tersedia.", "error");
+        return;
+      }
+
+      this.skinAnalyzerDialog = true;
+      this.skinAnalyzerError = "";
+      this.skinAnalyzerLink = "";
+
+      await this.$nextTick();
+      this.$refs.skinAnalyzerForm?.resetValidation();
+      await this.loadSkinAnalyzer();
+    },
+
+    closeSkinAnalyzer() {
+      if (this.skinAnalyzerSaving) {
+        return;
+      }
+
+      this.skinAnalyzerDialog = false;
+      this.skinAnalyzerError = "";
+      this.skinAnalyzerLink = "";
+      this.$refs.skinAnalyzerForm?.resetValidation();
+    },
+
+    async loadSkinAnalyzer() {
+      if (!this.pasienId) {
+        this.skinAnalyzerItems = [];
+        return;
+      }
+
+      this.skinAnalyzerLoading = true;
+      this.skinAnalyzerError = "";
+
+      try {
+        const response = await api.get(
+          `/administrasi/pasien/${this.pasienId}/skin-analyzer`,
+        );
+
+        if (!response.data?.status) {
+          throw new Error(
+            response.data?.message ||
+              "Data Skin Analyzer pasien gagal diambil.",
+          );
+        }
+
+        this.skinAnalyzerItems = Array.isArray(response.data?.data)
+          ? response.data.data
+          : [];
+      } catch (error) {
+        this.skinAnalyzerItems = [];
+        this.skinAnalyzerError = this.getErrorMessage(
+          error,
+          "Data Skin Analyzer pasien gagal diambil.",
+        );
+      } finally {
+        this.skinAnalyzerLoading = false;
+      }
+    },
+
+    async saveSkinAnalyzer() {
+      if (this.skinAnalyzerSaving || !this.pasienId) {
+        return;
+      }
+
+      const validation = await this.$refs.skinAnalyzerForm?.validate();
+
+      if (!validation?.valid) {
+        this.showSnackbar("Periksa kembali link hasil Skin Analyzer.", "error");
+        return;
+      }
+
+      this.skinAnalyzerSaving = true;
+      this.skinAnalyzerError = "";
+
+      try {
+        const response = await api.post(
+          `/administrasi/pasien/${this.pasienId}/skin-analyzer`,
+          { url: String(this.skinAnalyzerLink || "").trim() },
+        );
+
+        if (!response.data?.status) {
+          throw new Error(
+            response.data?.message ||
+              "Link hasil Skin Analyzer gagal disimpan.",
+          );
+        }
+
+        this.skinAnalyzerLink = "";
+        this.$refs.skinAnalyzerForm?.resetValidation();
+        await this.loadSkinAnalyzer();
+
+        this.showSnackbar(
+          response.data?.message ||
+            "Link hasil Skin Analyzer berhasil disimpan.",
+          "success",
+        );
+      } catch (error) {
+        const message = this.getErrorMessage(
+          error,
+          "Link hasil Skin Analyzer gagal disimpan.",
+        );
+
+        this.skinAnalyzerError = message;
+        this.showSnackbar(message, "error");
+      } finally {
+        this.skinAnalyzerSaving = false;
+      }
+    },
+
+    openSkinAnalyzerResult(item) {
+      const url = String(item?.url || "").trim();
+
+      if (!/^https?:\/\/[^\s]+$/i.test(url)) {
+        this.showSnackbar("Link hasil Skin Analyzer tidak valid.", "error");
+        return;
+      }
+
+      const popup = window.open("", "_blank");
+
+      if (!popup) {
+        this.showSnackbar("Popup diblokir browser.", "error");
+        return;
+      }
+
+      popup.opener = null;
+      popup.location.href = url;
+    },
+
+    formatSkinAnalyzerDateTime(value) {
+      if (!value) {
+        return "-";
+      }
+
+      const date = new Date(String(value).replace(" ", "T"));
+
+      if (Number.isNaN(date.getTime())) {
+        return String(value);
+      }
+
+      return new Intl.DateTimeFormat("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(date);
     },
 
     resolveServiceDate(data = {}) {
@@ -4859,6 +5467,20 @@ export default {
       }
 
       return value;
+    },
+
+    medicalConditionColor(value) {
+      const normalized = this.normalizeText(value);
+
+      if (normalized === "ya") {
+        return "warning";
+      }
+
+      if (normalized === "tidak") {
+        return "success";
+      }
+
+      return "grey";
     },
 
     normalizeOnlinePhoto(photo, label, key) {

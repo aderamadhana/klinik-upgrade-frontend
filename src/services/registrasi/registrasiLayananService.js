@@ -118,12 +118,22 @@ const normalizeTreatmentItem = (item = {}) => {
   const jumlah = toNumber(item.jumlah || item.qty || 1);
   const total = toNumber(item.total || harga * jumlah);
 
-  const perawatId =
+  const rawPerawatId =
     item.perawat_id ??
     item.beautician_id ??
     item.nurse_id ??
     item.pelaksana_id ??
     null;
+
+  const parsedPerawatId = Number(rawPerawatId);
+  const perawatId =
+    rawPerawatId !== null &&
+    rawPerawatId !== undefined &&
+    rawPerawatId !== "" &&
+    Number.isFinite(parsedPerawatId) &&
+    parsedPerawatId > 0
+      ? parsedPerawatId
+      : null;
 
   return {
     treatment_toko_id: treatmentTokoId,
@@ -143,14 +153,8 @@ const normalizeTreatmentItem = (item = {}) => {
       item.tindakan_nama ||
       item.nama ||
       "",
-    harga,
-    jumlah: jumlah <= 0 ? 1 : jumlah,
-    total,
 
-    perawat_id:
-      perawatId === null || perawatId === undefined || perawatId === ""
-        ? null
-        : Number(perawatId),
+    perawat_id: perawatId,
     perawat_nama:
       item.perawat_nama ||
       item.beautician_nama ||
@@ -160,6 +164,9 @@ const normalizeTreatmentItem = (item = {}) => {
     perawat_jabatan_kode: item.perawat_jabatan_kode || item.kode_jabatan || "",
     perawat_jabatan_nama: item.perawat_jabatan_nama || item.nama_jabatan || "",
 
+    harga,
+    jumlah: jumlah <= 0 ? 1 : jumlah,
+    total,
     perlu_tindakan_perawat: toBoolPayload(
       item.perlu_tindakan_perawat ||
         item.is_tindakan_perawat ||
