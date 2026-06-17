@@ -1,16 +1,25 @@
 <template>
-  <v-card variant="flat" class="mb-4 border">
-    <v-card-text class="pa-5">
-      <div class="d-flex align-center justify-space-between mb-4">
-        <div>
-          <div class="text-subtitle-1 font-weight-bold">Obat</div>
-          <div class="text-body-2 text-medium-emphasis mt-1">
-            Produk dari registrasi layanan
+  <v-card variant="flat" rounded="lg" class="mb-4 border">
+    <v-card-text class="pa-4">
+      <div
+        class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4"
+      >
+        <div class="d-flex align-center ga-3">
+          <v-avatar color="blue-lighten-5" size="40">
+            <v-icon icon="mdi-pill" color="primary" size="22" />
+          </v-avatar>
+
+          <div>
+            <div class="text-subtitle-1 font-weight-bold">Obat/Produk</div>
+            <div class="text-body-2 text-medium-emphasis">
+              Produk dari registrasi layanan atau resep dokter
+            </div>
           </div>
         </div>
 
         <v-btn
           color="primary"
+          variant="tonal"
           size="small"
           prepend-icon="mdi-plus"
           @click="$emit('add-item')"
@@ -23,7 +32,7 @@
         v-if="stockErrorMessage"
         type="error"
         variant="tonal"
-        density="comfortable"
+        density="compact"
         border="start"
         closable
         class="mb-4"
@@ -40,7 +49,7 @@
           <v-icon size="30" color="grey" icon="mdi-pill-off" />
         </v-avatar>
         <div class="text-subtitle-2 font-weight-bold mb-1">Belum ada obat</div>
-        <div class="text-body-2 text-medium-emphasis mt-1">
+        <div class="text-body-2 text-medium-emphasis">
           Produk/obat dari registrasi layanan atau resep dokter akan muncul di
           sini.
         </div>
@@ -55,43 +64,46 @@
         "
         variant="outlined"
         rounded="lg"
-        class="mb-4"
+        class="mb-3"
       >
-        <v-card-item class="px-4 py-3">
-          <template #prepend>
-            <v-avatar color="primary-lighten-5" size="36">
-              <v-icon icon="mdi-pill" size="20" color="primary" />
-            </v-avatar>
-          </template>
+        <v-sheet color="grey-lighten-4" class="px-4 py-3">
+          <div class="d-flex align-center justify-space-between ga-3">
+            <div class="d-flex align-center ga-3 flex-grow-1">
+              <v-avatar color="blue-lighten-5" size="36">
+                <v-icon icon="mdi-pill" size="20" color="primary" />
+              </v-avatar>
 
-          <div class="text-subtitle-1 font-weight-bold">
-            Obat #{{ index + 1 }}
-          </div>
+              <div class="flex-grow-1">
+                <div class="d-flex align-center flex-wrap ga-2">
+                  <div class="text-subtitle-2 font-weight-bold">
+                    Obat/Produk #{{ index + 1 }}
+                  </div>
 
-          <v-card-subtitle class="text-caption pa-0 mt-1">
-            Detail produk, qty, diskon, aturan pakai, dan subtotal
-          </v-card-subtitle>
+                  <v-chip
+                    v-if="item.nama"
+                    size="x-small"
+                    variant="tonal"
+                    :color="getItemStockColor(item)"
+                  >
+                    Stok {{ getItemStockText(item) }}
+                  </v-chip>
 
-          <div v-if="item.nama" class="d-flex flex-wrap ga-2 mt-2">
-            <v-chip
-              size="small"
-              variant="tonal"
-              :color="getItemStockColor(item)"
-            >
-              Stok {{ getItemStockText(item) }}
-            </v-chip>
+                  <v-chip
+                    v-if="getItemStockStatus(item)"
+                    size="x-small"
+                    variant="tonal"
+                    :color="getItemStockColor(item)"
+                  >
+                    {{ getItemStockStatus(item) }}
+                  </v-chip>
+                </div>
 
-            <v-chip
-              v-if="getItemStockStatus(item)"
-              size="small"
-              variant="tonal"
-              :color="getItemStockColor(item)"
-            >
-              {{ getItemStockStatus(item) }}
-            </v-chip>
-          </div>
+                <div class="text-caption text-medium-emphasis mt-1">
+                  Isi produk, jumlah, diskon, dan aturan pemakaian
+                </div>
+              </div>
+            </div>
 
-          <template #append>
             <v-btn
               icon="mdi-delete-outline"
               size="small"
@@ -99,10 +111,8 @@
               color="error"
               @click.stop="$emit('remove-item', index)"
             />
-          </template>
-        </v-card-item>
-
-        <v-divider />
+          </div>
+        </v-sheet>
 
         <v-card-text class="pa-4">
           <v-alert
@@ -110,13 +120,14 @@
             type="error"
             variant="tonal"
             density="compact"
+            border="start"
             class="mb-4"
           >
             {{ getItemStockError(item) }}
           </v-alert>
 
           <v-row dense>
-            <v-col cols="12" md="5">
+            <v-col cols="12" md="6">
               <v-autocomplete
                 :model-value="item.nama"
                 :items="normalizedObatList"
@@ -124,10 +135,10 @@
                 item-value="value"
                 :item-props="getObatItemProps"
                 :custom-filter="filterObat"
-                label="Nama Obat"
-                placeholder="Pilih obat"
+                label="Nama Obat/Produk"
+                placeholder="Pilih obat atau produk"
                 variant="outlined"
-                density="comfortable"
+                density="compact"
                 prepend-inner-icon="mdi-pill"
                 hide-details="auto"
                 clearable
@@ -156,7 +167,7 @@
                 min="1"
                 :max="getItemStockMax(item)"
                 variant="outlined"
-                density="comfortable"
+                density="compact"
                 prepend-inner-icon="mdi-counter"
                 hide-details="auto"
                 :error-messages="getItemQtyError(item)"
@@ -169,22 +180,27 @@
                 :model-value="item.unit || getItemUnit(item) || 'pcs'"
                 label="Unit"
                 variant="outlined"
-                density="comfortable"
+                density="compact"
                 prepend-inner-icon="mdi-package-variant-closed"
                 hide-details="auto"
                 readonly
               />
             </v-col>
 
-            <v-col cols="12" sm="4" md="3">
-              <v-sheet rounded="lg" border class="pa-3 h-100">
+            <v-col cols="12" sm="4" md="2">
+              <v-sheet
+                border
+                rounded="lg"
+                min-height="48"
+                class="h-100 px-3 py-2 d-flex flex-column justify-center"
+              >
                 <div
-                  class="d-flex align-center ga-2 text-caption text-medium-emphasis mb-1"
+                  class="d-flex align-center ga-2 text-caption text-medium-emphasis"
                 >
-                  <v-icon icon="mdi-cash" size="16" />
+                  <v-icon icon="mdi-cash" size="15" />
                   Harga
                 </div>
-                <div class="text-body-1 font-weight-bold text-high-emphasis">
+                <div class="text-body-2 font-weight-bold mt-1">
                   {{ formatCurrency(Number(item.harga || 0)) }}
                 </div>
               </v-sheet>
@@ -198,7 +214,7 @@
                 :items="diskonTypeList"
                 label="Tipe Diskon"
                 variant="outlined"
-                density="comfortable"
+                density="compact"
                 prepend-inner-icon="mdi-percent-outline"
                 hide-details="auto"
                 :readonly="discountReadonly"
@@ -212,7 +228,7 @@
                 type="number"
                 min="0"
                 variant="outlined"
-                density="comfortable"
+                density="compact"
                 prepend-inner-icon="mdi-sale-outline"
                 :model-value="displayDiskonValue(item)"
                 :prefix="displayDiskonType(item) === 'Rp' ? 'Rp' : ''"
@@ -232,7 +248,7 @@
                 label="Frekuensi"
                 placeholder="Pilih frekuensi"
                 variant="outlined"
-                density="comfortable"
+                density="compact"
                 prepend-inner-icon="mdi-clock-outline"
                 hide-details="auto"
                 clearable
@@ -241,53 +257,58 @@
             </v-col>
 
             <v-col cols="12" sm="6" md="3">
-              <v-sheet
-                rounded="lg"
-                border
-                color="blue-lighten-5"
-                class="pa-3 h-100"
-              >
-                <div
-                  class="d-flex align-center ga-2 text-caption text-blue-darken-2 mb-1"
-                >
-                  <v-icon icon="mdi-calculator" size="16" />
-                  Subtotal
-                </div>
-                <div class="text-body-1 font-weight-black text-blue-darken-4">
-                  {{ formatCurrency(displaySubtotal(item)) }}
-                </div>
-              </v-sheet>
-            </v-col>
-          </v-row>
-
-          <v-row dense class="mt-1">
-            <v-col cols="12" md="4">
               <v-select
                 :model-value="item.waktu_pakai"
                 :items="waktuPakaiList"
                 item-title="title"
                 item-value="value"
                 label="Waktu Pakai"
-                placeholder="Pilih waktu pakai"
+                placeholder="Pilih waktu"
                 variant="outlined"
-                density="comfortable"
+                density="compact"
                 prepend-inner-icon="mdi-white-balance-sunny"
                 hide-details="auto"
                 clearable
                 @update:model-value="updateField(index, 'waktu_pakai', $event)"
               />
             </v-col>
+          </v-row>
 
+          <v-row dense class="mt-1">
             <v-col cols="12" md="8">
-              <v-sheet rounded="lg" border class="pa-3 h-100">
+              <v-sheet
+                color="blue-grey-lighten-5"
+                rounded="lg"
+                border
+                min-height="64"
+                class="h-100 px-3 py-2"
+              >
                 <div
-                  class="d-flex align-center ga-2 text-caption text-medium-emphasis mb-1"
+                  class="d-flex align-center ga-2 text-caption text-medium-emphasis"
                 >
-                  <v-icon icon="mdi-clipboard-text-outline" size="16" />
+                  <v-icon icon="mdi-clipboard-text-outline" size="15" />
                   Ringkasan Aturan Pakai
                 </div>
-                <div class="text-body-2 font-weight-bold text-high-emphasis">
+                <div class="text-body-2 font-weight-medium mt-2">
                   {{ aturanPakaiText(item) }}
+                </div>
+              </v-sheet>
+            </v-col>
+
+            <v-col cols="12" md="4">
+              <v-sheet
+                color="blue-lighten-5"
+                rounded="lg"
+                border
+                min-height="64"
+                class="h-100 px-3 py-2 d-flex flex-column justify-center"
+              >
+                <div class="d-flex align-center ga-2 text-caption text-primary">
+                  <v-icon icon="mdi-calculator" size="15" />
+                  Subtotal
+                </div>
+                <div class="text-subtitle-1 font-weight-bold text-primary mt-1">
+                  {{ formatCurrency(displaySubtotal(item)) }}
                 </div>
               </v-sheet>
             </v-col>
@@ -300,7 +321,7 @@
                 label="Instruksi Pemakaian"
                 placeholder="Contoh: diminum setelah makan"
                 variant="outlined"
-                density="comfortable"
+                density="compact"
                 prepend-inner-icon="mdi-note-text-outline"
                 hide-details="auto"
                 rows="2"

@@ -1591,9 +1591,10 @@ export default {
       const params = { toko_id: this.header.toko_id };
 
       try {
-        const [produk, treatment] = await Promise.all([
+        const [produk, treatment, nurseBeautician] = await Promise.all([
           referenceService.produkByToko(params),
           referenceService.treatmentByToko(params),
+          referenceService.nurseBeautician(params),
         ]);
 
         this.obatList = this.extractRows(produk)
@@ -1621,6 +1622,47 @@ export default {
           raw: item,
         }));
 
+        this.perawatList = this.extractRows(nurseBeautician)
+          .map((item) => {
+            const value = item.value ?? item.id ?? item.karyawan_id ?? null;
+            const nama =
+              item.nama || item.nama_karyawan || item.label || item.title || "";
+            const namaJabatan =
+              item.nama_jabatan ||
+              item.jabatan_nama ||
+              item.jabatan?.nama_jabatan ||
+              item.jabatan?.nama ||
+              "";
+            const title =
+              item.title ||
+              [nama, namaJabatan].filter(Boolean).join(" - ") ||
+              "-";
+
+            return {
+              ...item,
+              id: item.id ?? value,
+              value,
+              title,
+              nama,
+              kode_jabatan:
+                item.kode_jabatan ||
+                item.jabatan_kode ||
+                item.jabatan?.kode_jabatan ||
+                item.jabatan?.kode ||
+                "",
+              nama_jabatan: namaJabatan,
+              raw: item,
+            };
+          })
+          .filter(
+            (item) =>
+              item.value !== null &&
+              item.value !== undefined &&
+              item.value !== "" &&
+              item.title &&
+              item.title !== "-",
+          );
+
         await this.fetchKaryawanByToko();
       } catch (error) {
         console.error("FETCH REFERENCE ITEM ERROR:", error);
@@ -1633,7 +1675,6 @@ export default {
     async fetchKaryawanByToko() {
       if (!this.header.toko_id) {
         this.apiKaryawanList = [];
-        this.perawatList = [];
         this.dokterList = [];
         return;
       }
@@ -1646,23 +1687,6 @@ export default {
         });
 
         this.apiKaryawanList = this.extractRows(response);
-        this.perawatList = this.apiKaryawanList
-          .filter((item) => this.isPerawat(item))
-          .map((item) => ({
-            id: item.id,
-            value: item.id,
-            title: item.nama,
-            nama: item.nama,
-            kode_jabatan: item.jabatan?.kode_jabatan || item.kode_jabatan || "",
-            nama_jabatan:
-              item.jabatan?.nama_jabatan ||
-              item.jabatan?.nama ||
-              item.nama_jabatan ||
-              item.jabatan_nama ||
-              "",
-            raw: item,
-          }));
-
         this.dokterList = this.apiKaryawanList
           .filter((item) => this.isDokter(item))
           .map((item) => ({
@@ -1674,7 +1698,6 @@ export default {
       } catch (error) {
         console.error("FETCH KARYAWAN BY TOKO ERROR:", error);
         this.apiKaryawanList = [];
-        this.perawatList = [];
         this.dokterList = [];
       } finally {
         this.loadingKaryawan = false;

@@ -1,18 +1,13 @@
 <template>
   <div class="mt-3">
-    <v-card variant="flat" class="border mb-4">
+    <v-card variant="flat" class="border mb-4" rounded="lg">
       <v-card-text class="pa-4">
         <div class="d-flex align-center justify-space-between flex-wrap ga-3">
-          <div class="d-flex align-center ga-3">
-            <v-avatar color="info" size="42">
-              <v-icon size="22">mdi-cart-outline</v-icon>
-            </v-avatar>
-
-            <div>
-              <div class="text-subtitle-1 font-weight-bold">Penjualan</div>
-              <div class="text-caption text-medium-emphasis">
-                Tambahkan produk atau obat yang dijual ke pasien
-              </div>
+          <div>
+            <div class="text-h6 font-weight-bold">Daftar Produk</div>
+            <div class="text-body-2 text-medium-emphasis mt-1">
+              {{ produkCount }} produk dipilih · Atur produk dan jumlah pada
+              setiap baris.
             </div>
           </div>
 
@@ -20,6 +15,7 @@
             color="primary"
             variant="flat"
             prepend-icon="mdi-plus"
+            class="text-none"
             :disabled="!activeTokoId"
             @click="addItem"
           >
@@ -36,8 +32,8 @@
       border="start"
       class="mb-4"
     >
-      Cabang belum terpilih. Data produk akan muncul setelah cabang aktif
-      tersedia.
+      Cabang belum terpilih. Produk dan informasi stok akan tersedia setelah
+      cabang aktif dipilih.
     </v-alert>
 
     <v-alert
@@ -56,39 +52,59 @@
       v-for="(item, index) in penjualanItems"
       :key="item.__key || `penjualan-${index}`"
       variant="outlined"
-      class="mb-3"
+      rounded="lg"
+      class="mb-4"
     >
-      <v-card-text class="pa-3">
-        <div
-          class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3"
-        >
-          <div class="d-flex align-center ga-2">
-            <v-chip color="info" size="small" class="font-weight-medium">
-              Produk {{ index + 1 }}
-            </v-chip>
+      <v-card-item class="px-4 py-3">
+        <template #prepend>
+          <v-avatar color="info" variant="tonal" size="38">
+            <span class="text-subtitle-2 font-weight-bold">
+              {{ index + 1 }}
+            </span>
+          </v-avatar>
+        </template>
 
-            <v-chip
-              v-if="item.produk_toko_id"
-              :color="Number(item.stok_tersedia || 0) > 0 ? 'success' : 'error'"
-              size="small"
-            >
-              Stok: {{ formatStock(item.stok_tersedia) }}
-            </v-chip>
-          </div>
+        <v-card-title class="text-subtitle-1 font-weight-bold">
+          {{ item.produk_nama || item.nama_produk || `Produk ${index + 1}` }}
+        </v-card-title>
 
-          <v-btn
-            color="error"
-            size="small"
-            prepend-icon="mdi-delete-outline"
-            :disabled="penjualanItems.length === 1"
-            @click="removeItem(index)"
+        <v-card-subtitle class="text-body-2 mt-1">
+          <template v-if="item.produk_toko_id">
+            {{ item.kode_produk || "Tanpa kode" }} · Stok tersedia
+            {{ formatStock(item.stok_tersedia) }}
+          </template>
+          <template v-else> Pilih produk atau obat yang akan dijual </template>
+        </v-card-subtitle>
+
+        <template #append>
+          <v-tooltip
+            :text="
+              penjualanItems.length === 1
+                ? 'Minimal satu baris produk'
+                : 'Hapus produk'
+            "
+            location="top"
           >
-            Hapus
-          </v-btn>
-        </div>
+            <template #activator="{ props: tooltipProps }">
+              <v-btn
+                v-bind="tooltipProps"
+                color="error"
+                variant="text"
+                icon="mdi-delete-outline"
+                size="small"
+                :disabled="penjualanItems.length === 1"
+                @click="removeItem(index)"
+              />
+            </template>
+          </v-tooltip>
+        </template>
+      </v-card-item>
 
+      <v-divider />
+
+      <v-card-text class="pa-4">
         <v-row dense>
-          <v-col cols="12" md="4">
+          <v-col cols="12" md="8" lg="9">
             <v-autocomplete
               :model-value="item.produk_toko_id"
               :items="produkOptions"
@@ -96,10 +112,10 @@
               item-value="produk_toko_id"
               :item-props="getProdukItemProps"
               :custom-filter="filterProduk"
-              label="Produk"
+              label="Nama Produk / Obat"
               :placeholder="
                 activeTokoId
-                  ? 'Ketik nama produk'
+                  ? 'Cari berdasarkan nama atau kode produk'
                   : 'Pilih cabang terlebih dahulu'
               "
               variant="outlined"
@@ -114,34 +130,51 @@
               @update:modelValue="onProdukChange(index, $event)"
               @click:clear="onProdukChange(index, null)"
             >
+              <template #item="{ props: itemProps, item: option }">
+                <v-list-item
+                  v-bind="itemProps"
+                  :title="
+                    getProdukRaw(option).nama ||
+                    getProdukRaw(option).label_simple ||
+                    '-'
+                  "
+                  :subtitle="`${getProdukRaw(option).kode || '-'} · Stok ${formatStock(
+                    getProdukRaw(option).stok_tersedia,
+                  )}`"
+                >
+                  <template #append>
+                    <v-chip
+                      :color="
+                        Number(getProdukRaw(option).stok_tersedia || 0) > 0
+                          ? 'success'
+                          : 'error'
+                      "
+                      variant="tonal"
+                      size="small"
+                    >
+                      {{ getProdukRaw(option).status_stok || "TERSEDIA" }}
+                    </v-chip>
+                  </template>
+                </v-list-item>
+              </template>
+
               <template #message>
-                Produk kosong tetap tampil, tetapi tidak bisa dipilih.
+                Produk dengan stok kosong tetap ditampilkan, tetapi tidak dapat
+                dipilih.
               </template>
 
               <template #no-data>
-                <div class="pa-3 text-body-2 text-medium-emphasis">
+                <div class="pa-4 text-body-2 text-medium-emphasis">
                   Produk tidak ditemukan.
                 </div>
               </template>
             </v-autocomplete>
           </v-col>
 
-          <v-col cols="12" sm="6" md="2">
-            <v-text-field
-              :model-value="formatRupiah(item.harga)"
-              label="Harga"
-              variant="outlined"
-              density="comfortable"
-              prepend-inner-icon="mdi-cash"
-              readonly
-              hide-details="auto"
-            />
-          </v-col>
-
-          <v-col cols="12" sm="6" md="2">
+          <v-col cols="12" md="4" lg="3">
             <v-text-field
               :model-value="item.jumlah"
-              label="Qty"
+              label="Jumlah"
               type="number"
               min="1"
               :max="item.stok_tersedia || undefined"
@@ -157,28 +190,77 @@
                   v-if="item.produk_toko_id"
                   class="text-caption text-medium-emphasis"
                 >
-                  Maks: {{ formatStock(item.stok_tersedia) }}
+                  Maksimal {{ formatStock(item.stok_tersedia) }} item
                 </span>
               </template>
             </v-text-field>
           </v-col>
+        </v-row>
 
-          <v-col cols="12" md="4">
-            <v-text-field
-              :model-value="formatRupiah(getItemSubtotal(item))"
-              label="Subtotal"
-              variant="outlined"
-              density="comfortable"
-              prepend-inner-icon="mdi-calculator-variant-outline"
-              readonly
-              hide-details="auto"
-            />
+        <v-row dense class="mt-2">
+          <v-col cols="12" sm="6">
+            <v-sheet
+              color="grey-lighten-5"
+              border
+              rounded="lg"
+              class="pa-3 h-100"
+            >
+              <div class="d-flex align-center ga-3">
+                <v-avatar color="grey" variant="tonal" size="36">
+                  <v-icon size="20">mdi-cash</v-icon>
+                </v-avatar>
+
+                <div>
+                  <div class="text-caption text-medium-emphasis">
+                    Harga Satuan
+                  </div>
+                  <div class="text-subtitle-1 font-weight-bold mt-1">
+                    {{ formatRupiah(item.harga) }}
+                  </div>
+                </div>
+              </div>
+            </v-sheet>
+          </v-col>
+
+          <v-col cols="12" sm="6">
+            <v-sheet
+              color="blue-lighten-5"
+              border
+              rounded="lg"
+              class="pa-3 h-100"
+            >
+              <div class="d-flex align-center justify-space-between ga-3">
+                <div class="d-flex align-center ga-3">
+                  <v-avatar color="primary" variant="tonal" size="36">
+                    <v-icon size="20">mdi-calculator-variant-outline</v-icon>
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Subtotal
+                    </div>
+                    <div class="text-h6 font-weight-bold text-primary mt-1">
+                      {{ formatRupiah(getItemSubtotal(item)) }}
+                    </div>
+                  </div>
+                </div>
+
+                <v-chip
+                  v-if="item.produk_toko_id"
+                  color="primary"
+                  variant="tonal"
+                  size="small"
+                >
+                  {{ item.jumlah }} × {{ formatRupiah(item.harga) }}
+                </v-chip>
+              </div>
+            </v-sheet>
           </v-col>
         </v-row>
       </v-card-text>
     </v-card>
 
-    <v-card color="primary" class="mt-4">
+    <v-card color="primary" variant="tonal" rounded="lg" class="mt-4">
       <v-card-text class="pa-4">
         <div class="d-flex align-center justify-space-between flex-wrap ga-3">
           <div class="d-flex align-center ga-3">
@@ -190,13 +272,13 @@
               <div class="text-subtitle-1 font-weight-bold">
                 Total Penjualan
               </div>
-              <div class="text-caption text-medium-emphasis text-white">
-                Total dari seluruh produk yang dipilih
+              <div class="text-body-2 text-medium-emphasis">
+                Akumulasi {{ produkCount }} produk yang dipilih
               </div>
             </div>
           </div>
 
-          <div class="text-h5 font-weight-bold">
+          <div class="text-h5 font-weight-bold text-primary">
             Rp {{ formatNumberSafe(displayTotalPenjualan) }}
           </div>
         </div>
@@ -306,6 +388,10 @@ export default {
       });
 
       return unique;
+    },
+
+    produkCount() {
+      return this.penjualanItems.filter((item) => item.produk_toko_id).length;
     },
 
     displayTotalPenjualan() {

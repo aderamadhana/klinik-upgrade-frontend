@@ -1,9 +1,7 @@
 <template>
   <div class="mt-3">
-    <v-alert type="info" density="comfortable" border="start" class="mb-4">
-      Pilih treatment. Nurse / beautician bersifat opsional per baris dan akan
-      diteruskan ke antrian dokter, pembayaran, serta laporan insentif bila
-      dipilih.
+    <v-alert type="info" density="compact" border="start" class="mb-4">
+      Nurse / beautician bersifat opsional dan dipilih untuk setiap treatment.
     </v-alert>
 
     <v-expand-transition>
@@ -11,20 +9,21 @@
         v-if="!layananState.ada_treatment"
         variant="flat"
         class="border mb-4"
+        rounded="lg"
       >
         <v-card-text class="pa-4">
           <div class="d-flex align-center ga-3">
-            <v-avatar color="warning" size="42">
-              <v-icon size="22">mdi-alert-outline</v-icon>
+            <v-avatar color="warning" variant="tonal" size="40">
+              <v-icon size="21">mdi-alert-outline</v-icon>
             </v-avatar>
 
             <div>
               <div class="text-subtitle-1 font-weight-bold">
-                Treatment Belum Diaktifkan
+                Treatment belum diaktifkan
               </div>
-              <div class="text-caption text-medium-emphasis">
-                Aktifkan layanan treatment di tahap pilih layanan jika memang
-                dibutuhkan pada kunjungan ini.
+              <div class="text-body-2 text-medium-emphasis">
+                Aktifkan layanan treatment pada tahap pilih layanan untuk mulai
+                menambahkan tindakan.
               </div>
             </div>
           </div>
@@ -33,22 +32,14 @@
     </v-expand-transition>
 
     <template v-if="layananState.ada_treatment">
-      <v-card variant="flat" class="border mb-4">
+      <v-card variant="flat" class="border mb-4" rounded="lg">
         <v-card-text class="pa-4">
           <div class="d-flex align-center justify-space-between flex-wrap ga-3">
-            <div class="d-flex align-center ga-3">
-              <v-avatar color="success" size="42">
-                <v-icon size="22">mdi-spa</v-icon>
-              </v-avatar>
-
-              <div>
-                <div class="text-subtitle-1 font-weight-bold">
-                  Daftar Treatment
-                </div>
-                <div class="text-caption text-medium-emphasis">
-                  Nurse atau beautician dapat dipilih pada masing-masing
-                  treatment bila ada pelaksana.
-                </div>
+            <div>
+              <div class="text-h6 font-weight-bold">Daftar Treatment</div>
+              <div class="text-body-2 text-medium-emphasis mt-1">
+                {{ treatmentCount }} treatment dipilih · Atur tindakan,
+                pelaksana, dan jumlah pada setiap baris.
               </div>
             </div>
 
@@ -56,6 +47,7 @@
               color="success"
               variant="flat"
               prepend-icon="mdi-plus"
+              class="text-none"
               :disabled="!activeTokoId"
               @click="addItem"
             >
@@ -72,8 +64,8 @@
         border="start"
         class="mb-4"
       >
-        Cabang belum terpilih. Treatment dan nurse / beautician akan muncul
-        setelah cabang aktif tersedia.
+        Cabang belum terpilih. Treatment dan nurse / beautician akan tersedia
+        setelah cabang aktif dipilih.
       </v-alert>
 
       <v-alert
@@ -92,54 +84,64 @@
         v-for="(item, index) in localTreatment.items"
         :key="item.__key"
         variant="outlined"
-        class="mb-3"
+        rounded="lg"
+        class="mb-4"
       >
-        <v-card-text class="pa-3">
-          <div
-            class="d-flex align-center justify-space-between flex-wrap ga-2 mb-3"
-          >
-            <div class="d-flex align-center flex-wrap ga-2">
-              <v-chip color="success" size="small" class="font-weight-medium">
-                Treatment {{ index + 1 }}
-              </v-chip>
+        <v-card-item class="px-4 py-3">
+          <template #prepend>
+            <v-avatar color="success" variant="tonal" size="38">
+              <span class="text-subtitle-2 font-weight-bold">
+                {{ index + 1 }}
+              </span>
+            </v-avatar>
+          </template>
 
-              <v-chip
-                v-if="item.treatment_toko_id || item.tindakan_id"
-                color="primary"
-                size="small"
-              >
-                Rp {{ formatCurrency(item.total || 0) }}
-              </v-chip>
+          <v-card-title class="text-subtitle-1 font-weight-bold">
+            {{ item.nama_tindakan || `Treatment ${index + 1}` }}
+          </v-card-title>
 
-              <v-chip
-                v-if="item.perawat_id"
-                color="secondary"
-                size="small"
-                prepend-icon="mdi-account-heart-outline"
-              >
-                {{ item.perawat_nama || "Pelaksana dipilih" }}
-              </v-chip>
-            </div>
+          <v-card-subtitle class="text-body-2 mt-1">
+            <template v-if="item.perawat_nama">
+              Pelaksana: {{ item.perawat_nama }}
+            </template>
+            <template v-else> Pilih tindakan dan pelaksana treatment </template>
+          </v-card-subtitle>
 
-            <v-btn
-              color="error"
-              size="small"
-              prepend-icon="mdi-delete-outline"
-              :disabled="localTreatment.items.length === 1"
-              @click="removeItem(index)"
+          <template #append>
+            <v-tooltip
+              :text="
+                localTreatment.items.length === 1
+                  ? 'Minimal satu baris treatment'
+                  : 'Hapus treatment'
+              "
+              location="top"
             >
-              Hapus
-            </v-btn>
-          </div>
+              <template #activator="{ props: tooltipProps }">
+                <v-btn
+                  v-bind="tooltipProps"
+                  color="error"
+                  variant="text"
+                  icon="mdi-delete-outline"
+                  size="small"
+                  :disabled="localTreatment.items.length === 1"
+                  @click="removeItem(index)"
+                />
+              </template>
+            </v-tooltip>
+          </template>
+        </v-card-item>
 
+        <v-divider />
+
+        <v-card-text class="pa-4">
           <v-row dense>
-            <v-col cols="12" md="5">
+            <v-col cols="12" lg="6">
               <v-autocomplete
                 :model-value="item.treatment_toko_id || item.tindakan_id"
                 label="Nama Tindakan"
                 :placeholder="
                   activeTokoId
-                    ? 'Cari / pilih treatment'
+                    ? 'Cari atau pilih treatment'
                     : 'Pilih cabang terlebih dahulu'
                 "
                 :items="tindakanOptions"
@@ -167,10 +169,10 @@
               </v-autocomplete>
             </v-col>
 
-            <v-col cols="12" md="4">
+            <v-col cols="12" md="8" lg="4">
               <v-autocomplete
                 :model-value="item.perawat_id"
-                label="Nurse / Beautician"
+                label="Nurse / Beautician (Opsional)"
                 :placeholder="
                   item.tindakan_id
                     ? 'Pilih pelaksana treatment'
@@ -205,7 +207,7 @@
               </v-autocomplete>
             </v-col>
 
-            <v-col cols="12" md="3">
+            <v-col cols="12" md="4" lg="2">
               <v-text-field
                 :model-value="item.jumlah"
                 label="Jumlah"
@@ -220,35 +222,70 @@
             </v-col>
           </v-row>
 
-          <v-row dense class="mt-1">
+          <v-row dense class="mt-2">
             <v-col cols="12" sm="6">
-              <v-text-field
-                :model-value="formatRupiah(item.harga)"
-                label="Harga"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-cash"
-                readonly
-                hide-details="auto"
-              />
+              <v-sheet
+                color="grey-lighten-5"
+                border
+                rounded="lg"
+                class="pa-3 h-100"
+              >
+                <div class="d-flex align-center ga-3">
+                  <v-avatar color="grey" variant="tonal" size="36">
+                    <v-icon size="20">mdi-cash</v-icon>
+                  </v-avatar>
+
+                  <div>
+                    <div class="text-caption text-medium-emphasis">
+                      Harga Satuan
+                    </div>
+                    <div class="text-subtitle-1 font-weight-bold mt-1">
+                      {{ formatRupiah(item.harga) }}
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
             </v-col>
 
             <v-col cols="12" sm="6">
-              <v-text-field
-                :model-value="formatRupiah(item.total)"
-                label="Total"
-                variant="outlined"
-                density="comfortable"
-                prepend-inner-icon="mdi-calculator-variant-outline"
-                readonly
-                hide-details="auto"
-              />
+              <v-sheet
+                color="green-lighten-5"
+                border
+                rounded="lg"
+                class="pa-3 h-100"
+              >
+                <div class="d-flex align-center justify-space-between ga-3">
+                  <div class="d-flex align-center ga-3">
+                    <v-avatar color="success" variant="tonal" size="36">
+                      <v-icon size="20">mdi-calculator-variant-outline</v-icon>
+                    </v-avatar>
+
+                    <div>
+                      <div class="text-caption text-medium-emphasis">
+                        Subtotal
+                      </div>
+                      <div class="text-h6 font-weight-bold text-success mt-1">
+                        {{ formatRupiah(item.total) }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <v-chip
+                    v-if="item.tindakan_id"
+                    color="success"
+                    variant="tonal"
+                    size="small"
+                  >
+                    {{ item.jumlah }} × {{ formatRupiah(item.harga) }}
+                  </v-chip>
+                </div>
+              </v-sheet>
             </v-col>
           </v-row>
         </v-card-text>
       </v-card>
 
-      <v-card color="success" class="mt-4">
+      <v-card color="success" variant="tonal" rounded="lg" class="mt-4">
         <v-card-text class="pa-4">
           <div class="d-flex align-center justify-space-between flex-wrap ga-3">
             <div class="d-flex align-center ga-3">
@@ -260,13 +297,13 @@
                 <div class="text-subtitle-1 font-weight-bold">
                   Total Treatment
                 </div>
-                <div class="text-caption text-white">
-                  Total dari seluruh treatment yang dipilih
+                <div class="text-body-2 text-medium-emphasis">
+                  Akumulasi {{ treatmentCount }} treatment yang dipilih
                 </div>
               </div>
             </div>
 
-            <div class="text-h5 font-weight-bold">
+            <div class="text-h5 font-weight-bold text-success">
               Rp {{ formatCurrency(totalTreatment) }}
             </div>
           </div>
@@ -278,19 +315,20 @@
           v-if="validationMessages.length"
           variant="flat"
           class="border mt-4"
+          rounded="lg"
         >
           <v-card-text class="pa-4">
             <div class="d-flex align-center ga-3 mb-3">
-              <v-avatar color="error" size="38">
+              <v-avatar color="error" variant="tonal" size="38">
                 <v-icon size="20">mdi-alert-circle-outline</v-icon>
               </v-avatar>
 
               <div>
                 <div class="text-subtitle-2 font-weight-bold text-error">
-                  Yang masih harus dilengkapi
+                  Data treatment belum lengkap
                 </div>
-                <div class="text-caption text-medium-emphasis">
-                  Lengkapi data berikut sebelum melanjutkan.
+                <div class="text-body-2 text-medium-emphasis">
+                  Lengkapi informasi berikut sebelum melanjutkan.
                 </div>
               </div>
             </div>
