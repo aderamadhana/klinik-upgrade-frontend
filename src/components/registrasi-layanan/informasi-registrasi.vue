@@ -718,9 +718,7 @@ export default {
         jabatan_text: jabatanTitle,
         toko_id: penempatanAktif?.toko_id || item.toko_id || null,
         nama_toko: namaToko,
-        text: [nama, jabatanTitle, namaToko || kode]
-          .filter(Boolean)
-          .join(" - "),
+        text: nama,
       };
     },
 
