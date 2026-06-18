@@ -13,13 +13,16 @@ const authService = {
 
   logout() {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("token_type");
+    localStorage.removeItem("token_expires_at");
+    localStorage.removeItem("last_activity_at");
+    localStorage.removeItem("must_change_password");
     localStorage.removeItem("user");
     localStorage.removeItem("access");
     localStorage.removeItem("selected_toko_id");
     localStorage.removeItem("selected_toko");
     localStorage.removeItem("selected_role_id");
     localStorage.removeItem("selected_role");
-
     window.location.href = "/login";
   },
 

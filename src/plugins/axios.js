@@ -39,6 +39,21 @@ function getSelectedTokoId() {
   return null;
 }
 
+function markPasswordChangeRequired() {
+  localStorage.setItem("must_change_password", "1");
+
+  try {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) return;
+
+    const user = JSON.parse(storedUser);
+    user.must_change_password = 1;
+    localStorage.setItem("user", JSON.stringify(user));
+  } catch (error) {
+    // Flag utama sudah tersimpan; abaikan data user lokal yang tidak valid.
+  }
+}
+
 /**
  * REQUEST INTERCEPTOR
  * Otomatis menambahkan token dan toko aktif ke setiap request
@@ -67,12 +82,21 @@ api.interceptors.request.use(
 
 /**
  * RESPONSE INTERCEPTOR
- * Handle error global, terutama 401 Unauthorized
+ * Handle error global untuk autentikasi dan kewajiban ganti password
  */
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
+    const responseCode = error.response?.data?.code;
+
+    if (status === 428 && responseCode === "PASSWORD_CHANGE_REQUIRED") {
+      markPasswordChangeRequired();
+
+      if (window.location.pathname !== "/change-password") {
+        window.location.href = "/change-password";
+      }
+    }
 
     if (status === 401) {
       localStorage.removeItem("access_token");

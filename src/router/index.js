@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
-
 import Login from "@/views/login.vue";
 import NotFound from "@/components/pages/not-found.vue";
+
 import administrasiRoutes from "./modules/administrasi";
 import resepsionisRoutes from "./modules/resepsionis";
 import masterRoutes from "./modules/master";
@@ -30,6 +30,11 @@ const routes = [
     component: () => import("@/views/login.vue"),
   },
   {
+    path: "/change-password",
+    name: "Change Password",
+    component: () => import("@/views/change-password.vue"),
+  },
+  {
     path: "/system",
     component: () => import("@/layouts/main-layout.vue"),
     children: [
@@ -49,15 +54,8 @@ const routes = [
         name: "Dashboard",
         component: () => import("@/views/dashboard.vue"),
       },
-
-      {
-        path: "change-password",
-        name: "Change Password",
-        component: () => import("@/views/change-password.vue"),
-      },
     ],
   },
-
   {
     path: "/antrian",
     component: () => import("@/layouts/main-layout.vue"),
@@ -79,24 +77,20 @@ const routes = [
       },
     ],
   },
-
   {
     path: "/antrian/input",
     name: "Antrian Input",
     component: () => import("@/views/antrian-input.vue"),
   },
-
   {
     path: "/antrian/display",
     name: "Antrian Display",
     component: () => import("@/views/antrian-display.vue"),
   },
-
   {
     path: "/not-found",
     component: () => NotFound,
   },
-
   // Optional: fallback 404
   // {
   //   path: "/:pathMatch(.*)*",
@@ -123,10 +117,8 @@ function clearAuthStorage() {
   localStorage.removeItem("token_expires_at");
   localStorage.removeItem("last_activity_at");
   localStorage.removeItem("must_change_password");
-
   localStorage.removeItem("user");
   localStorage.removeItem("access");
-
   localStorage.removeItem("selected_toko_id");
   localStorage.removeItem("selected_toko");
   localStorage.removeItem("selected_role_id");
@@ -135,7 +127,6 @@ function clearAuthStorage() {
 
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem("access_token");
-
   const publicPages = ["/", "/login", "/not-found"];
   const isPublicPage = publicPages.includes(to.path);
 
@@ -151,7 +142,6 @@ router.beforeEach((to, from, next) => {
   const mustChangePasswordStorage = Number(
     localStorage.getItem("must_change_password") || 0,
   );
-
   const mustChangePassword =
     mustChangePasswordStorage === 1 ||
     Number(user?.must_change_password || 0) === 1;
